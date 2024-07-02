@@ -68,7 +68,8 @@ endif
 all:
 	@$(MAKE) cs > null.log
 	@$(MAKE) cpp > null.log
-	@$(MAKE) bin > null.log
+	@$(MAKE) csbin > null.log
+	@$(MAKE) cppbin > null.log
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 	@del null.log
 else
