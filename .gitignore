@@ -34,3 +34,13 @@
 
 #vs
 *.vs*
+
+#make
+cs
+cpp
+csbin
+cppbin
+
+#logs
+*.log
+*null*
