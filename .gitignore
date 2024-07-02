@@ -31,3 +31,6 @@
 *.bin
 *.app
 *.apk
+
+#vs
+*.vs*

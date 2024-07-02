@@ -1,0 +1,9 @@
+V1.0 {
+    global: _init; _fini;
+        DotNetRuntimeDebugHeader;
+        class1_add;
+        class1_hello;
+        class3_add;
+        class3_hello;
+    local: *;
+};

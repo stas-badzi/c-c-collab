@@ -1,0 +1,7 @@
+  Determining projects to restore...
+  Wszystkie projekty są aktualne na potrzeby przywrócenia.
+  csharp -> C:\Users\sssba\OneDrive\Documents\c++c#\csharp\bin\Release\net8.0\win-x64\csharp.dll
+C:\Users\sssba\.nuget\packages\microsoft.dotnet.ilcompiler\8.0.6\build\Microsoft.DotNet.ILCompiler.SingleEntry.targets(45,5): warning : Delete explicit 'Microsoft.DotNet.ILCompiler' package reference in your project file to avoid versioning problems. [C:\Users\sssba\OneDrive\Documents\c++c#\csharp\csharp.csproj]
+  Generating native code
+     Trwa tworzenie biblioteki bin\Release\net8.0\win-x64\native\csharp.lib i obiektu bin\Release\net8.0\win-x64\native\csharp.exp
+  csharp -> C:\Users\sssba\OneDrive\Documents\c++c#\csharp\bin\Release\net8.0\win-x64\publish\

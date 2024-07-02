@@ -1,0 +1,6 @@
+EXPORTS
+   DotNetRuntimeDebugHeader DATA
+   class1_add
+   class1_hello
+   class3_add
+   class3_hello

@@ -1,0 +1,2 @@
+C:\Users\sssba\OneDrive\Documents\c++c#\csharp\bin\Debug\net8.0\win-x64\publish\csharp.dll
+C:\Users\sssba\OneDrive\Documents\c++c#\csharp\bin\Debug\net8.0\win-x64\publish\csharp.pdb
