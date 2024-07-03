@@ -95,10 +95,9 @@ csrun:
 
 cpp: $(foreach src,$(sources),cplusplus/src/$(src)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
 
-ifeq ($(shell echo "check_quotes"),"check_quotes")
-	@if not exist cs $(MAKE) cs
-else
-	@if [ -f cs ]; than $(MAKE) cs fi
+
+ifneq ("$(wildcard cs)","")
+	@$(MAKE) cs
 endif
 #
 ifeq ($(shell echo "check_quotes"),"check_quotes")
@@ -164,10 +163,8 @@ endif
 
 cppbin: $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc))
 	
-ifeq ($(shell echo "check_quotes"),"check_quotes")
-	@if not exist cpp $(MAKE) cpp
-else
-	@if [ -f cpp ]; than $(MAKE) cpp fi
+ifneq ("$(wildcard cs)","")
+	@$(MAKE) cs
 endif
 
 ifeq ($(shell echo "check_quotes"),"check_quotes")
@@ -207,7 +204,6 @@ ifeq ($(shell echo "check_quotes"),"check_quotes")
 	@del binarysharp\bin\$(binconfig)\net8.0\$(os_name)\publish\$(binfile).$(binary)
 else
 	@cd binarysharp/bin/$(binconfig)/net8.0/$(os_name)/publish && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.pdb && rm *.pdb
-	@mv binarysharp/bin/$(binconfig)/net8.0/$(os_name)/publish/* binarysharp/bin/exe/$(binfile).$(bin)
+	@mv binarysharp/bin/$(binconfig)/net8.0/$(os_name)/publish/* binarysharp/bin/exe/$(binfile).$(binary)
 endif
 	@echo "Version file. Remove to enable recompile" > $@
- 
