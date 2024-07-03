@@ -36,9 +36,9 @@
 *.vs*
 
 #generated code
-binarysharp/bin/*
+*.pdb
+*.json
 binarysharp/obj/*
-csharp/bin/*
 csharp/obj/*
 
 #make
@@ -50,3 +50,6 @@ cppbin
 #logs
 *.log
 *null*
+
+#keep
+!*/.gitkeep

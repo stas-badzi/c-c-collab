@@ -6,28 +6,41 @@ sources = class1.cpp class2.cpp class3.cpp class4.cpp
 headers = class1.hpp class2.hpp class3.hpp class4.hpp
 #> include files
 includes = operating_system.h dynamic_library.h
-#> additional libraries (including the c# one)
-libs = csharp
 #> name the dynamic library
 name = cplusplus
 # *******************************
 
+#******** c++ binary config *****
+#> source files
+binsources = main.cpp
+#> header files
+binheaders = main.hpp
+#> include files
+binincludes = dynamic_library.h
+#> name the binary file
+binname = bpp
+#********************************
+
 #********* c# config ************
+#> name the dynamic library
+filename = csharp
 #> compilation mode
 configuration = Release
-#> generated file (project name)
-filename = csharp
 #>source code files
-files = Class1.cs Class3.cs DllHandle.cs
+files = Class1.cs Class2.cs Class3.cs DllHandle.cs
 # *******************************
 
-#********* c# binary config ************
+#********* c# binary config *****
+#> name the binary file
+binfile = bs
+#>compilation mode
+binconfig = Release
 #>source code files
 binfiles = Program.cs DllHandle.cs
 # *******************************
 
 
-flib = $(foreach lib,$(libs),-l$(lib))
+flib = -l$(filename)
 fsrc = $(foreach src,$(sources),../src/$(src))
 objects = $(foreach file,$(sources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
 
@@ -66,53 +79,71 @@ endif
 endif
 
 all:
-	@$(MAKE) cs > null.log
-	@$(MAKE) cpp > null.log
-	@$(MAKE) csbin > null.log
-	@$(MAKE) cppbin > null.log
-ifeq ($(shell echo "check_quotes"),"check_quotes")
-	@del null.log
-else
-	@rm null.log
-endif
+	@$(MAKE) dll
+	@$(MAKE) cppbin
+	@$(MAKE) csbin
 
-run:
-	@cd cplusplus/bin && ./main.$(binary)
+dll:
+	@$(MAKE) cs
+	@$(MAKE) cpp
+
+cpprun:
+	@cd binaryplus/bin && $(binname).$(binary)
+
+csrun:
+	@cd binarysharp/bin/exe && $(binfile).$(binary)
 
 cpp: $(foreach src,$(sources),cplusplus/src/$(src)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
 
+ifeq ($(shell echo "check_quotes"),"check_quotes")
+	@if not exist cs $(MAKE) cs
+else
+	@if [ -f cs ]; than $(MAKE) cs fi
+endif
 #
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 #windows
 	@cd cplusplus/obj && g++ -w -c -DLIBRARY_EXPORT $(fsrc) -I ../include
-	@cd cplusplus && g++ -w -shared -o bin/lib/$(name).dll $(objects) -L bin/lib $(flib)
+	@cd cplusplus && g++ -w -shared -o bin/$(name).dll $(objects) -L ../csharp/bin/lib $(flib)
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #mingw [ I think same as windows (?) ]
 	@cd cplusplus/obj && g++ -w -c -DLIBRARY_EXPORT $(fsrc) -I ../include
-	@cd cplusplus && g++ -w -shared -o bin/lib/$(name).dll $(objects) -L bin/lib $(flib)
+	@cd cplusplus && g++ -w -shared -o bin/$(name).dll $(objects) -L ../csharp/bin/lib $(flib)
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #cygwin [ I think same as windows (?) ]
 	@cd cplusplus/obj && g++ -w -c -DLIBRARY_EXPORT $(fsrc) -I ../include
-	@cd cplusplus && g++ -w -shared -o bin/lib/$(name).dll $(objects) -L bin/lib $(flib)
+	@cd cplusplus && g++ -w -shared -o bin/$(name).dll $(objects) -L ../csharp/bin/lib $(flib)
 #
 else
 	@cd cplusplus/obj && g++ -w -c -fpic -DLIBRARY_EXPORT -fvisibility=hidden $(fsrc) -I ../include
 ifeq ($(shell uname -s),Darwin)
 #macos
-	@cd cplusplus && g++ -w -dynamiclib -o bin/lib/lib$(name).dylib $(objects) -L bin/lib $(flib)
+	@cd cplusplus && g++ -w -dynamiclib -o bin/lib$(name).dylib $(objects) -L ../csharp/bin/lib $(flib)
 #
 else
 #linux and similar
-	@cd cplusplus && g++ -w -shared -o bin/lib/lib$(name).so $(objects) -L bin/lib $(flib)
+	@cd cplusplus && g++ -w -shared -o bin/lib$(name).so $(objects) -L ../csharp/bin/lib $(flib)
 endif
 endif
 endif
 endif
 #
+
+ifeq ($(shell echo "check_quotes"),"check_quotes")
+#windows
+	@copy cplusplus\bin\$(dllname) binarysharp\bin\exe
+	@copy cplusplus\bin\$(dllname) binaryplus\bin
+else
+#other
+	@cp cplusplus/bin/$(dllname) binarysharp/bin/exe
+	@cp cplusplus/bin/$(dllname) binaryplus/bin
+#
+endif
+
 	@echo "Version file. Remove to enable recompile" > $@
 
 
@@ -120,40 +151,38 @@ cs: $(foreach fl,$(files),csharp/$(fl))
 	@cd csharp && dotnet publish /p:NativeLib=Shared /p:SelfContained=true -r $(os_name) -c $(configuration)
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 	@cd csharp/bin/$(configuration)/net8.0/$(os_name)/native/ && echo . > null.exp && echo . > null.lib && echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(libname)
-	@move csharp\bin\$(configuration)\net8.0\$(os_name)\native\$(libname) csharp/bin/lib
+	@move csharp\bin\$(configuration)\net8.0\$(os_name)\native\$(libname) csharp\bin\lib
+	@copy csharp\bin\lib\$(libname) binarysharp\bin\exe
+	@copy csharp\bin\lib\$(libname) binaryplus\bin
 else
 	@cd csharp/bin/$(configuration)/net8.0/$(os_name)/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
-	@mv csharp/bin/$(configuration)/net8.0/$(os_name)/native/* csharp/bin/lib
+	@mv csharp/bin/$(configuration)/net8.0/$(os_name)/native/* csharp/bin/lib/$(libname)
+	@cp csharp/bin/lib/$(libname) binarysharp/bin/exe
+	@cp csharp/bin/lib/$(libname) binaryplus/bin
 endif
 	@echo "Version file. Remove to enable recompile" > $@
 
-cppbin: binaryplus/src/main.cpp binaryplus/src/main.hpp
-
+cppbin: $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc))
+	
 ifeq ($(shell echo "check_quotes"),"check_quotes")
-	@copy csharp\bin\lib\$(libname) binaryplus\bin
-	@copy cplusplus\bin\lib\$(dllname) binaryplus\bin
+	@if not exist cpp $(MAKE) cpp
 else
-	@cp csharp/bin/lib/$(libname) binaryplus/bin
-	@cp cplusplus/bin/lib/$(dllname) binaryplus/bin
+	@if [ -f cpp ]; than $(MAKE) cpp fi
 endif
 
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 #windows
-#$(error windows c++ binary not yet suppoted)
-	@cd binaryplus && g++ -w -o bin/main.$(binary) src/main.cpp -I include -Lbin -l$(filename) -l$(name)
+	@cd binaryplus && g++ -w -o bin/$(binname).$(binary) src/main.cpp -I include -Lbin -l$(filename) -l$(name)
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
-#	@cd binaryplus/obj && g++ -w -c -DLIBRARY_EXPORT $(fsrc) -I ../include
-	@cd binaryplus && g++ -w -o bin/main.$(binary) src/main.cpp -I include -Lbin -l$(filename) -l$(name)
+	@cd binaryplus && g++ -w -o bin/$(binname).$(binary) src/main.cpp -I include -Lbin -l$(filename) -l$(name)
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #cygwin [ I think same as windows (?) ]
-#	@cd binaryplus/obj && g++ -w -c -DLIBRARY_EXPORT $(fsrc) -I ../include
-	@cd binaryplus && g++ -w -o bin/main.$(binary) src/main.cpp -I include -Lbin -l$(filename) -l$(name)
-$(error mingw c++ binary not yet suppoted)
+	@cd binaryplus && g++ -w -o bin/$.$(binary) src/main.cpp -I include -Lbin -l$(filename) -l$(name)
 #
 else
 #	@cd binaryplus/obj && g++ -w -c -fpic -DLIBRARY_EXPORT -fvisibility=hidden $(fsrc) -I ../include
@@ -168,21 +197,17 @@ endif
 endif
 endif
 endif
-#
-#g++
-#	@cd binaryplus && g++ -w -o bin/main.$(binary) src/main.cpp -I include -Lbin -l$(filename) -l$(name)
-#fix this ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 	@echo "Version file. Remove to enable recompile" > $@
 
 csbin: $(foreach bfl,$(binfiles),binarysharp/$(bfl))
-	@cd binarysharp && dotnet publish /p:PublishSingleFile=true /p:SelfContained=true -r $(os_name) -c $(configuration)
+	@cd binarysharp && dotnet publish /p:PublishSingleFile=true /p:SelfContained=true -r $(os_name) -c $(binconfig)
 ifeq ($(shell echo "check_quotes"),"check_quotes")
-	@cd binarysharp/bin/$(configuration)/net8.0/$(os_name) && del * && cd publish && del *.pdb
-	@copy csharp\bin\lib\$(libname) binarysharp\bin\$(configuration)\net8.0\$(os_name)\publish
-	@copy cplusplus\bin\lib\$(dllname) binarysharp\bin\$(configuration)\net8.0\$(os_name)\publish
+	@cd binarysharp/bin/$(binconfig)/net8.0/$(os_name)/publish && echo . > null.pdb && del *.pdb && ren * $(binfile).$(binary)
+	@copy binarysharp\bin\$(binconfig)\net8.0\$(os_name)\publish\$(binfile).$(binary) binarysharp\bin\exe
+	@del binarysharp\bin\$(binconfig)\net8.0\$(os_name)\publish\$(binfile).$(binary)
 else
-	@cd binarysharp/bin/$(configuration)/net8.0/$(os_name) && rm *.dll && touch binarysharp.null && touch createdump.null && rm binarysharp* && rm createdump* && cd publish && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.pdb && rm *.pdb
-	@cp csharp/bin/lib/$(libname) binarysharp/bin/$(configuration)/net8.0/$(os_name)/publish
-	@cp cplusplus/bin/lib/$(dllname) binarysharp/bin/$(configuration)/net8.0/$(os_name)/publish
+	@cd binarysharp/bin/$(binconfig)/net8.0/$(os_name)/publish && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.pdb && rm *.pdb
+	@mv binarysharp/bin/$(binconfig)/net8.0/$(os_name)/publish/* binarysharp/bin/exe/$(binfile).$(bin)
 endif
 	@echo "Version file. Remove to enable recompile" > $@
+ 

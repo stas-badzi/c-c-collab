@@ -17,6 +17,6 @@ libexport int class2_add(int a, int b) {
     return class2::add(a,b);
 };
 
-libexport  void class2_hello(void) {
+libexport void class2_hello(void) {
     return class2::hello();
 };
