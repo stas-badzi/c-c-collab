@@ -42,6 +42,7 @@ binfiles = Program.cs DllHandle.cs
 
 flib = -l$(filename)
 fsrc = $(foreach src,$(sources),../src/$(src))
+fbsrc = $(foreach bsrc,$(binsources),src/$(bsrc))
 objects = $(foreach file,$(sources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
 
 ifeq ($(shell echo "check_quotes"),"check_quotes")
@@ -88,15 +89,15 @@ dll:
 	@$(MAKE) cpp
 
 cpprun:
-	@cd binaryplus/bin && $(binname).$(binary)
+	@cd binaryplus/bin && ./$(binname).$(binary)
 
 csrun:
-	@cd binarysharp/bin/exe && $(binfile).$(binary)
+	@cd binarysharp/bin/exe && ./$(binfile).$(binary)
 
 cpp: $(foreach src,$(sources),cplusplus/src/$(src)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
 
 
-ifneq ("$(wildcard cs)","")
+ifneq ($(wildcard cs),cs)
 	@$(MAKE) cs
 endif
 #
@@ -163,33 +164,33 @@ endif
 
 cppbin: $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc))
 	
-ifneq ("$(wildcard cs)","")
-	@$(MAKE) cs
+ifneq ($(wildcard cpp),cpp)
+	@$(MAKE) cpp
 endif
 
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 #windows
-	@cd binaryplus && g++ -w -o bin/$(binname).$(binary) src/main.cpp -I include -Lbin -l$(filename) -l$(name)
+	@cd binaryplus && g++ -w -o bin/$(binname).$(binary) $(fbsrc) -I include -Lbin -l$(filename) -l$(name)
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
-	@cd binaryplus && g++ -w -o bin/$(binname).$(binary) src/main.cpp -I include -Lbin -l$(filename) -l$(name)
+	@cd binaryplus && g++ -w -o bin/$(binname).$(binary) $(fbsrc) -I include -Lbin -l$(filename) -l$(name)
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #cygwin [ I think same as windows (?) ]
-	@cd binaryplus && g++ -w -o bin/$.$(binary) src/main.cpp -I include -Lbin -l$(filename) -l$(name)
+	@cd binaryplus && g++ -w -o bin/$(binname).$(binary) $(fbsrc) -I include -Lbin -l$(filename) -l$(name)
 #
 else
 #	@cd binaryplus/obj && g++ -w -c -fpic -DLIBRARY_EXPORT -fvisibility=hidden $(fsrc) -I ../include
 ifeq ($(shell uname -s),Darwin)
 #macos
-	@cd binaryplus && g++ -w -o bin/main.$(binary) src/main.cpp -I include -Lbin -l$(filename) -l$(name)
+	@cd binaryplus && g++ -w -o bin/$(binname).$(binary) $(fbsrc) -I include -Lbin -l$(filename) -l$(name)
 #
 else
 #linux and similar
-	@cd binaryplus && g++ -w -o bin/main.$(binary) src/main.cpp -I include -Lbin -l$(filename) -l$(name)
+	@cd binaryplus && g++ -w -o bin/$(binname).$(binary) $(fbsrc) -I include -Lbin -l$(filename) -l$(name)
 endif
 endif
 endif
