@@ -1,2 +1,0 @@
-/home/marcin/Documents/c++/cpp_cs/c++c#/csharp/bin/Release/net8.0/linux-x64/publish/csharp.so
-/home/marcin/Documents/c++/cpp_cs/c++c#/csharp/bin/Release/net8.0/linux-x64/publish/csharp.pdb

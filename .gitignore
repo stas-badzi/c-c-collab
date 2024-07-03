@@ -35,6 +35,10 @@
 #vs
 *.vs*
 
+#generated code
+*bin*
+*obj*
+
 #make
 cs
 cpp
