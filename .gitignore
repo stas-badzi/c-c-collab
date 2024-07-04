@@ -37,6 +37,7 @@
 
 #generated code
 *.pdb
+*.dbg
 *.json
 binarysharp/obj/*
 csharp/obj/*
