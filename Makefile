@@ -56,6 +56,7 @@ objects = $(foreach file,$(sources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .cp
 
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 #windows
+prefix = .\\
 os_name = win-x64
 dllname = "$(name).dll"
 libname = "$(filename).dll"
@@ -64,6 +65,7 @@ binary = exe
 else
 ifeq ($(findstring NT, $(shell uname -s)),NT)
 #cygwin/mingw
+prefix = ./
 os_name = win-x64
 dllname = "$(name).dll"
 libname = "$(filename).dll"
@@ -72,6 +74,7 @@ binary = exe
 else
 ifeq ($(shell uname -s),Darwin)
 #macos
+prefix = ./
 os_name = osx-x64
 dllname = "lib$(name).dylib"
 libname = "lib$(filename).dylib"
@@ -79,6 +82,7 @@ binary = app
 #
 else
 #linux and similar
+prefix = ./
 os_name = linux-x64
 libname = "lib$(filename).so"
 dllname = "lib$(name).so"
@@ -98,10 +102,10 @@ dll:
 	@$(MAKE) cpp
 
 cpprun:
-	@cd binaryplus/bin && ./$(binname).$(binary)
+	@cd binaryplus/bin && $(prefix)$(binname).$(binary)
 
 csrun:
-	@cd binarysharp/bin/exe && ./$(binfile).$(binary)
+	@cd binarysharp/bin/exe && $(prefix)$(binfile).$(binary)
 
 cpp: $(foreach src,$(sources),cplusplus/src/$(src)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
 
