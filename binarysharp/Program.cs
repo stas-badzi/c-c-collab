@@ -14,8 +14,10 @@ namespace CppCsComTest {
     public class Program {
 
         static void Main(string[] args) {
-            Class3.Hello();
-            Console.WriteLine("Hello from binary.");
+            /*Class3.Hello();
+            Console.WriteLine("Hello from binary.");*/
+            Console.WriteLine("Hello from binarysharp.");
+            FileImport.ImportTxt();
         }
 
     }
