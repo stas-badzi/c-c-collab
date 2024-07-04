@@ -44,22 +44,28 @@ using namespace cpp;
         this->foreground = 7;
         this->background = 0;
     }
+
+    Console::Symbol::Symbol(char attribute) {
+    this->character = L' ';
+    this->SetAttribute(attribute);
+}
 #endif
 
-Console::Symbol::Symbol(wchar_t character = L' ', char foreground = 7, char background = 0) {
+Console::Symbol::Symbol(wchar_t character, char foreground, char background) {
     this->character = character;
     this->foreground = foreground;
     this->background = background;
 }
 
-Console::Symbol::Symbol(char attribute) {
+Console::Symbol::Symbol(void) {
     this->character = L' ';
-    this->SetAttribute(attribute);
+    this->foreground = 7;
+    this->background = 0;
 }
 
 Console::Symbol::~Symbol(void) {
-    this->character = NULL;
-    this->foreground = NULL;
-    this->background = NULL;
+    this->character = -1;
+    this->foreground = -1;
+    this->background = -1;
     //delete this;
 }

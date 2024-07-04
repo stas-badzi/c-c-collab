@@ -20,10 +20,10 @@
     }
 
     // Symbol
-        libexport void* Console_Symbol_Constuct(wchar_t character = L' ', char foreground = 7, char background = 0) {
+        libexport void* Console_Symbol_Constuct(wchar_t character, char foreground = 7, char background = 0) {
             return (void*) new cpp::Console::Symbol(character, foreground, background);
         }
-        
+
         #ifdef _WIN32
             libexport void* Console_Symbol_Constuct$atr(char attribute) {
                 return (void*) new cpp::Console::Symbol(attribute);

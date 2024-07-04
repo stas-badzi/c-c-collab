@@ -1,11 +1,11 @@
 
 #******** c++ config ************
 #> source files
-sources = class1.cpp class2.cpp class3.cpp class4.cpp
+sources = Console.cpp dllmain.cpp
 #> header files
-headers = class1.hpp class2.hpp class3.hpp class4.hpp
+headers = Console.hpp
 #> include files
-includes = operating_system.h dynamic_library.h
+includes = dynamic_library.h
 #> name the dynamic library
 name = cplusplus
 #> Debug?

@@ -19,7 +19,9 @@ namespace cpp {
             char foreground; // 0-16
             char background; // 0-16
 
-            Symbol(wchar_t character = L' ', char foreground = 7, char background = 0);
+            Symbol(void);
+
+            Symbol(wchar_t character, char foreground = 7, char background = 0);
 
             Symbol(char attribute);
 
