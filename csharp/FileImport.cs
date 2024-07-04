@@ -2,11 +2,10 @@ using System.IO;
 using System.Runtime.InteropServices;
 namespace Cs
 {
-    public class FileImport
+    public class FileImport // Impotowanie plików .txt
     {
-        // Impotowanie plików .txt
-        [UnmanagedCallersOnly(EntryPoint = "FileImport_ImportTxt")]
-        public static void ImportTxt()
+        [UnmanagedCallersOnly(EntryPoint = "FileImport_ImportTxt")] // Eksport do binarysharp
+        public static void ImportTxt() // Funkcja
         {
             string? sample;
             string line;
