@@ -41,6 +41,8 @@
 *.json
 binarysharp/obj/*
 csharp/obj/*
+binarysharp/bin/Release/*
+csharp/bin/Release/*
 
 #make
 cs
