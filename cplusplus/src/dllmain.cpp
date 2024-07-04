@@ -3,8 +3,7 @@
 // Console
     #include "Console.hpp"
 
-    libexport std::array<unsigned long,2> Console_FillConsole(cpp::Console::Symbol** symbols) {
-        std::vector<cpp::Console::Symbol*> v1(symbols,);
+    libexport std::array<unsigned long,2> Console_FillConsole(cpp::Console::Symbol** symbols, int width, int height) {
         cpp::Console::FillConsole(symbols);
     }
 
