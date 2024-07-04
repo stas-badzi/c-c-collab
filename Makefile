@@ -8,6 +8,8 @@ headers = class1.hpp class2.hpp class3.hpp class4.hpp
 includes = operating_system.h dynamic_library.h
 #> name the dynamic library
 name = cplusplus
+#> Debug?
+cdebug = 1
 # *******************************
 
 #******** c++ binary config *****
@@ -19,6 +21,8 @@ binheaders = main.hpp
 binincludes = dynamic_library.h
 #> name the binary file
 binname = bpp
+#> Debug?
+bpdebug = 1
 #********************************
 
 #********* c# config ************
@@ -39,7 +43,12 @@ binconfig = Release
 binfiles = Program.cs DllHandle.cs
 # *******************************
 
-
+ifeq ($(cdebug),1)
+cdb = -g
+endif
+ifeq ($(bpdebug),1)
+bpdb = -g
+endif
 flib = -l$(filename)
 fsrc = $(foreach src,$(sources),../src/$(src))
 objects = $(foreach file,$(sources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
@@ -103,23 +112,23 @@ endif
 #
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 #windows
-	@cd cplusplus/obj && g++ -w -c -DLIBRARY_EXPORT $(fsrc) -I ../include
+	@cd cplusplus/obj && g++ -w -c -DLIBRARY_EXPORT $(cdb) $(fsrc) -I ../include
 	@cd cplusplus && g++ -w -shared -o bin/$(name).dll $(objects) -L ../csharp/bin/lib $(flib)
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #mingw [ I think same as windows (?) ]
-	@cd cplusplus/obj && g++ -w -c -DLIBRARY_EXPORT $(fsrc) -I ../include
+	@cd cplusplus/obj && g++ -w -c -DLIBRARY_EXPORT $(cdb) $(fsrc) -I ../include
 	@cd cplusplus && g++ -w -shared -o bin/$(name).dll $(objects) -L ../csharp/bin/lib $(flib)
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #cygwin [ I think same as windows (?) ]
-	@cd cplusplus/obj && g++ -w -c -DLIBRARY_EXPORT $(fsrc) -I ../include
+	@cd cplusplus/obj && g++ -w -c -DLIBRARY_EXPORT $(cdb) $(fsrc) -I ../include
 	@cd cplusplus && g++ -w -shared -o bin/$(name).dll $(objects) -L ../csharp/bin/lib $(flib)
 #
 else
-	@cd cplusplus/obj && g++ -w -c -fpic -DLIBRARY_EXPORT -fvisibility=hidden $(fsrc) -I ../include
+	@cd cplusplus/obj && g++ -w -c -fpic -DLIBRARY_EXPORT $(cdb) -fvisibility=hidden $(fsrc) -I ../include
 ifeq ($(shell uname -s),Darwin)
 #macos
 	@cd cplusplus && g++ -w -dynamiclib -o bin/lib$(name).dylib $(objects) -L ../csharp/bin/lib $(flib)
@@ -172,27 +181,27 @@ endif
 
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 #windows
-	@cd binaryplus && g++ -w -o bin/$(binname).$(binary) src/main.cpp -I include -Lbin -l$(filename) -l$(name)
+	@cd binaryplus && g++ -w $(bpdb) -o bin/$(binname).$(binary) src/main.cpp -I include -Lbin -l$(filename) -l$(name)
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
-	@cd binaryplus && g++ -w -o bin/$(binname).$(binary) src/main.cpp -I include -Lbin -l$(filename) -l$(name)
+	@cd binaryplus && g++ -w $(bpdb) -o bin/$(binname).$(binary) src/main.cpp -I include -Lbin -l$(filename) -l$(name)
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #cygwin [ I think same as windows (?) ]
-	@cd binaryplus && g++ -w -o bin/$.$(binary) src/main.cpp -I include -Lbin -l$(filename) -l$(name)
+	@cd binaryplus && g++ -w $(bpdb) -o bin/$.$(binary) src/main.cpp -I include -Lbin -l$(filename) -l$(name)
 #
 else
 #	@cd binaryplus/obj && g++ -w -c -fpic -DLIBRARY_EXPORT -fvisibility=hidden $(fsrc) -I ../include
 ifeq ($(shell uname -s),Darwin)
 #macos
-	@cd binaryplus && g++ -w -o bin/main.$(binary) src/main.cpp -I include -Lbin -l$(filename) -l$(name)
+	@cd binaryplus && g++ -w $(bpdb) -o bin/main.$(binary) src/main.cpp -I include -Lbin -l$(filename) -l$(name)
 #
 else
 #linux and similar
-	@cd binaryplus && g++ -w -o bin/main.$(binary) src/main.cpp -I include -Lbin -l$(filename) -l$(name)
+	@cd binaryplus && g++ -w $(bpdb) -o bin/main.$(binary) src/main.cpp -I include -Lbin -l$(filename) -l$(name)
 endif
 endif
 endif
