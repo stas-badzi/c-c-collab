@@ -1,21 +1,17 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace CppCsComTest {
+namespace Cpp {
 
     public class Class1 {
-
-        public static int Add(int a, int b, int c) {
-            return Class2.Add( a, Class2.Add(b,c) );
-        }
-
-        public static void Hello() {
-            Class2.Hello();
-            Console.WriteLine("Hello from C# on " + DllHandle.OS + ".");
+/*
+        public static unsafe int Add(List<int> a) {
+            IntPtr pointer = new nint[new int[10]];
         }
         
     }
-
+    */
+/*
     public class ExportClass1 {
 
         [UnmanagedCallersOnly(EntryPoint = "class1_add")]
@@ -27,7 +23,7 @@ namespace CppCsComTest {
         public static void Hello() {
             Class1.Hello();
         }
-        
+    */
     }
 
 }
