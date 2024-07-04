@@ -2,14 +2,11 @@
 using System.Runtime.InteropServices;
 
 namespace CppCsComTest {
-    public class Class3 {
+    public class FlImp {
         private const string DllSource =  @"" + DllHandle.Prefix + "csharp" + DllHandle.Suffix;
         //import
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "class3_hello")]
-        public static extern void Hello();
-        //import
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "class3_add")]
-        public static extern int Add(int a, int b);
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileImport_ImportTxt")]
+        public static extern void Imptxt();
     }
     public class Program {
 
@@ -17,7 +14,7 @@ namespace CppCsComTest {
             /*Class3.Hello();
             Console.WriteLine("Hello from binary.");*/
             Console.WriteLine("Hello from binarysharp.");
-            FileImport.ImportTxt();
+            FlImp.Imptxt();
         }
 
     }

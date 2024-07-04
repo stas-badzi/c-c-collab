@@ -1,10 +1,12 @@
 using System.IO;
+using System.Runtime.InteropServices;
 namespace Cs
 {
     public class FileImport
     {
         // Impotowanie plików .txt
-        public void ImportTxt()
+        [UnmanagedCallersOnly(EntryPoint = "FileImport_ImportTxt")]
+        public static void ImportTxt()
         {
             string? sample;
             string line;
