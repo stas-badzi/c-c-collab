@@ -5,32 +5,30 @@ namespace Cs
     public class FileImport // Impotowanie plików .txt
     {
         [UnmanagedCallersOnly(EntryPoint = "FileImport_ImportTxt")] // Eksport do binarysharp
-        public static void ImportTxt() // Funkcja
+        public static IntPtr ImportText(IntPtr file) // Funkcja
         {
-            string? sample;
+            string str_file = Marshal.PtrToStringAuto(file);
             string line;
-                    Console.Write(@"Przykład ścieżki pliku: C:\Users\Martin\Desktop\sample.txt
-                    Podaj ścieżkę pliku: ");
-                    sample = Console.ReadLine();
+            string result = "";
+
             try
             {
-                StreamReader sr = new StreamReader(sample);
+                StreamReader sr = new StreamReader(str_file);
                 line = sr.ReadLine();
+                result = line;
                 while (line != null)
                 {
-                    Console.WriteLine(line);
                     line = sr.ReadLine();
+                    result = $"{result}\n{line}";
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine("FileImport wyjątek (exception): " + e.Message);
+                Console.WriteLine($"ImportTxt ({file}): Exception " + e.Message);
             }
-            finally
-            {
-                Console.WriteLine("Zakończono importowanie pliku");
-            }
-
+            result += '\n';
+            IntPtr output = Marshal.StringToHGlobalUni(result);
+            return output;
         }
     }
 }

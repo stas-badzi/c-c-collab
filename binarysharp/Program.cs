@@ -6,15 +6,14 @@ namespace CppCsComTest {
         private const string DllSource =  @"" + DllHandle.Prefix + "csharp" + DllHandle.Suffix;
         //import
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileImport_ImportTxt")]
-        public static extern void Imptxt();
+        public static extern IntPtr Imptxt(IntPtr file);
     }
     public class Program {
 
         static void Main(string[] args) {
-            /*Class3.Hello();
-            Console.WriteLine("Hello from binary.");*/
-            Console.WriteLine("Hello from binarysharp.");
-            FlImp.Imptxt();
+            string file = "C:/Users/micha/Desktop/mswindows_script.txt";
+            IntPtr strptr = Marshal.StringToHGlobalUni(file);
+            Console.WriteLine(Marshal.PtrToStringAuto(FlImp.Imptxt(strptr)));
         }
 
     }
