@@ -9,7 +9,20 @@ using namespace cpp;
 
     HANDLE Console::h_console = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
 
-    array<unsigned long,2> Console::FillConsole(vector<vector<Symbol>> symbols) {
+    int cpp::Console::GetWindowWidth(void) {
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+        return csbi.srWindow.Right - csbi.srWindow.Left + 1;
+    }
+
+    int cpp::Console::GetWindowHeight(void) {
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+        return csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+    }
+
+    array<unsigned long, 2> Console::FillScreen(vector<vector<Symbol>> symbols)
+    {
         const size_t height = symbols.size();
         const size_t width = height > 0 ? symbols[0].size() : 0;
 
@@ -18,7 +31,7 @@ using namespace cpp;
 
 		for (auto i = 0; i < height; i++) {
 			for (auto j = 0; j < width; j++) {
-				screen[ i*width + j ] = symbols[i][j].character;
+				screen[ i*width + j ] = L'\u2588';
                 attributes[ i*width + j ] = symbols[i][j].GetAttribute();
 			}
 		}
@@ -34,7 +47,6 @@ using namespace cpp;
         return written;
     }
 
-    
     char Console::Symbol::GetAttribute(void) {
         set_atr_vals;
         return atr_vals[this->foreground][this->background];
