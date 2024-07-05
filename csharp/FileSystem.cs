@@ -30,5 +30,6 @@ namespace Cs
             IntPtr output = Marshal.StringToHGlobalUni(result);
             return output;
         }
+
     }
 }
