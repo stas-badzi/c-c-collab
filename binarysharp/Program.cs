@@ -13,7 +13,7 @@ namespace CsImp {
 namespace Cs {
     public class FileImport {
         public static string ImportText(string file) {
-            return Marshal.PtrToStringAuto(CsImp.FileImport.ImportText(Marshal.StringToHGlobalUni(file)))
+            return Marshal.PtrToStringAuto(CsImp.FileImport.ImportText(Marshal.StringToHGlobalUni(file)));
         }
     }
 
