@@ -30,7 +30,8 @@ namespace Cs {
             string filename = Directory.GetCurrentDirectory() + @"/ha.txt";
             Console.WriteLine("Acessing file: " + filename);
             Console.WriteLine(FileSystem.ImportText(filename));
-            FileSystem.ExportText(Directory.GetCurrentDirectory() + @"/ha.txt", "Hejka");
+            FileSystem.ExportText(filename, "Hejka");
+            Console.WriteLine(FileSystem.ImportText(filename));
         }
 
     }
