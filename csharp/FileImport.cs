@@ -24,7 +24,7 @@ namespace Cs
             }
             catch (Exception e)
             {
-                Console.WriteLine($"ImportTxt ({file}): Exception " + e.Message);
+                Console.WriteLine($"Unhandled exception at Cs.FileImport.ImportText (FileImport.cs): " + e.Message);
             }
             result += '\n';
             IntPtr output = Marshal.StringToHGlobalUni(result);

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime;
 using System.Runtime.InteropServices;
 
 namespace CsImp {
@@ -20,7 +21,8 @@ namespace Cs {
     public class Program {
 
         static void Main(string[] args) {
-            string filename = "C:/Users/micha/Desktop/mswindows_script.txt";
+            string filename = Directory.GetCurrentDirectory() + @"/../../../csbin";
+            Console.WriteLine("Acessing file: " + filename);
             Console.WriteLine(FileImport.ImportText(filename));
         }
 

@@ -1,4 +1,4 @@
-namespace CppCsComTest {
+namespace CsImp {
     //nic do zmieniana
     public class DllHandle {
 
