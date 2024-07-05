@@ -1,21 +1,27 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace CppCsComTest {
-    public class Class3 {
+namespace CsImp {
+    public class FileImport {
         private const string DllSource =  @"" + DllHandle.Prefix + "csharp" + DllHandle.Suffix;
         //import
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "class3_hello")]
-        public static extern void Hello();
-        //import
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "class3_add")]
-        public static extern int Add(int a, int b);
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileImport_ImportTxt")]
+        public static extern IntPtr ImportText(IntPtr file);
     }
+}
+
+namespace Cs {
+    public class FileImport {
+        public static string ImportText(string file) {
+            return Marshal.PtrToStringAuto(CsImp.FileImport.ImportText(Marshal.StringToHGlobalUni(file)))
+        }
+    }
+
     public class Program {
 
         static void Main(string[] args) {
-            Class3.Hello();
-            Console.WriteLine("Hello from binary.");
+            string filename = "C:/Users/micha/Desktop/mswindows_script.txt";
+            Console.WriteLine(FileImport.ImportText(filename));
         }
 
     }
