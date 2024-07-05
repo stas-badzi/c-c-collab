@@ -51,8 +51,7 @@ using namespace cpp;
 }
 #else
 #include <iostream>
-#include "main.hpp"
-array<unsigned long,2> Console::FillConsole(vector<vector<Symbol>> symbols) {
+    array<unsigned long,2> Console::FillConsole(vector<vector<Symbol>> symbols) {
         for (size_t i = 0; i < symbols.size(); i++) {
             for (size_t j = 0; j < symbols[0].size(); j++) {
                 wcout << symbols[i][j].character;
