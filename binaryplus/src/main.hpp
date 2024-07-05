@@ -1,8 +1,41 @@
 #pragma once
+#include <vector>
+#include <array>
 
-class class4 {
-private:
-    
-public:
-    static void hello(void);
-};
+#ifdef _WIN32
+    #include <windows.h>
+#endif
+
+namespace cppi {
+    class Console {
+
+    public:
+        struct Symbol {
+
+            wchar_t character(void);
+            void character(wchar_t val);
+
+            char foreground(void);
+            void foreground(char val);
+
+            char background(void);
+            void background(char val);
+
+            Symbol(void);
+            Symbol(wchar_t character, char foreground = 7, char background = 0);
+            ~Symbol();
+            void* Get();
+
+            #ifdef _WIN32
+                Symbol(char attribute);
+                char GetAttribute(void);
+                void SetAttribute(char attribute);
+            #endif
+
+            private:
+                void* symbol;
+
+        };
+        static std::array<unsigned long,2> FillConsole(std::vector<std::vector<void*>> symbols);
+    };
+}
