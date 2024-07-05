@@ -31,7 +31,7 @@ filename = csharp
 #> compilation mode
 configuration = Release
 #>source code files
-files = DllHandle.cs FileImport.cs 
+files = DllHandle.cs FileSystem.cs 
 # *******************************
 
 #********* c# binary config *****

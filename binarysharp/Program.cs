@@ -6,7 +6,7 @@ namespace CsImp {
     public class FileSystem {
         private const string DllSource =  @"" + DllHandle.Prefix + "csharp" + DllHandle.Suffix;
         //import
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileImport_ImportTxt")]
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_ImportText")]
         public static extern IntPtr ImportText(IntPtr fileptr);
     }
 }
@@ -14,7 +14,7 @@ namespace CsImp {
 namespace Cs {
     public class FileSystem {
         public static string ImportText(string filestr) {
-            return Marshal.PtrToStringAuto(CsImp.FileImport.ImportText(Marshal.StringToHGlobalUni(filestr)));
+            return Marshal.PtrToStringAuto(CsImp.FileSystem.ImportText(Marshal.StringToHGlobalUni(filestr)));
         }
     }
 
