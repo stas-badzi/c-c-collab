@@ -34,6 +34,9 @@
 
 #vs
 *.vs*
+*.vscode*
+*.sln
+vscode.code-workspace
 
 #generated code
 *.pdb

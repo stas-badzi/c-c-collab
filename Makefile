@@ -161,7 +161,7 @@ endif
 
 
 cs: $(foreach fl,$(files),csharp/$(fl))
-	@cd csharp && dotnet publish /p:NativeLib=Shared /p:SelfContained=true -r $(os_name) -c $(configuration)
+	@cd csharp && dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r $(os_name) -c $(configuration)
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 	@cd csharp/bin/$(configuration)/net8.0/$(os_name)/native/ && echo . > null.exp && echo . > null.lib && echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(libname)
 	@move csharp\bin\$(configuration)\net8.0\$(os_name)\native\$(libname) csharp\bin\lib
@@ -169,7 +169,7 @@ ifeq ($(shell echo "check_quotes"),"check_quotes")
 	@copy csharp\bin\lib\$(libname) binaryplus\bin
 else
 	@cd csharp/bin/$(configuration)/net8.0/$(os_name)/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
-	@mv csharp/bin/$(configuration)/net8.0/$(os_name)/native/* csharp/bin/lib/$(libname)
+	@mv -f csharp/bin/$(configuration)/net8.0/$(os_name)/native/* csharp/bin/lib/$(libname)
 	@cp csharp/bin/lib/$(libname) binarysharp/bin/exe
 	@cp csharp/bin/lib/$(libname) binaryplus/bin
 endif
@@ -211,12 +211,12 @@ endif
 	@echo "Version file. Remove to enable recompile" > $@
 
 csbin: $(foreach bfl,$(binfiles),binarysharp/$(bfl))
-	@cd binarysharp && dotnet publish /p:SelfContained=true -r $(os_name) -c $(binconfig)
+	@cd binarysharp && dotnet publish -p:SelfContained=true -r $(os_name) -c $(binconfig)
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 	@cd binarysharp/bin/$(binconfig)/net8.0/$(os_name)/native/ && echo . > null.exp && echo . > null.lib && echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(binfile).$(binary)
 	@move binarysharp\bin\$(binconfig)\net8.0\$(os_name)\native\$(binfile).$(binary) binarysharp\bin\exe
 else
 	@cd binarysharp/bin/$(binconfig)/net8.0/$(os_name)/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
-	@mv binarysharp/bin/$(binconfig)/net8.0/$(os_name)/native/* binarysharp/bin/exe/$(binfile).$(binary)
+	@mv -f binarysharp/bin/$(binconfig)/net8.0/$(os_name)/native/* binarysharp/bin/exe/$(binfile).$(binary)
 endif
 	@echo "Version file. Remove to enable recompile" > $@
