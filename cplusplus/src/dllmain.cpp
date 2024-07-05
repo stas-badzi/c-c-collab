@@ -3,12 +3,12 @@
 // Console
     #include "Console.hpp"
 
-    libexport void* Console_FillConsole$ret2(cpp::Console::Symbol** symbols, int height, int width) {
+    libexport void* Console_FillConsole$ret2(cpp::Console::Symbol*** symbols, int height, int width) {
         std::vector<std::vector<cpp::Console::Symbol>> vecsyms;
         for (int i = 0; i < height; i++) {
             std::vector<cpp::Console::Symbol> vecdsym;
             for (int j = 0; j < width; j++) {
-                vecdsym.push_back(symbols[i][j]);
+                vecdsym.push_back( *(symbols[i][j]) );
             }
             vecsyms.push_back(vecdsym);
         }

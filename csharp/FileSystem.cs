@@ -22,6 +22,7 @@ namespace Cs
                     line = sr.ReadLine();
                     result = $"{result}\n{line}";
                 }
+                sr.Close();
             }
             catch (Exception e)
             {
