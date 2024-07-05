@@ -55,6 +55,7 @@ cppbin
 
 #logs
 *.log
+*.dat
 *null*
 
 #keep
