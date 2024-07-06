@@ -43,6 +43,18 @@ binconfig = Release
 binfiles = Program.cs DllHandle.cs
 # *******************************
 
+#***** shared library config ****
+#> do copy shred libraries
+copylibs = 1
+#> linux shared library path
+linuxlib = /usr/lib
+#> macos shared library path
+macoslib = /usr/local/lib
+#> windows shared library path
+winlib = %SystemRoot%
+#> mysys(mingw)/cygwin shared library path
+unixlib = /usr/lib
+
 ifeq ($(cdebug),1)
 cdb = -g
 endif
@@ -61,6 +73,7 @@ os_name = win-x64
 dllname = "$(name).dll"
 libname = "$(filename).dll"
 binary = exe
+libdir = $(winlib)
 #
 else
 ifeq ($(findstring NT, $(shell uname -s)),NT)
@@ -70,6 +83,7 @@ os_name = win-x64
 dllname = "$(name).dll"
 libname = "$(filename).dll"
 binary = exe
+libdir = $(unixlib)
 #
 else
 ifeq ($(shell uname -s),Darwin)
@@ -79,6 +93,7 @@ os_name = osx-x64
 dllname = "lib$(name).dylib"
 libname = "lib$(filename).dylib"
 binary = app
+libdir = $(macoslib)
 #
 else
 #linux and similar
@@ -87,6 +102,7 @@ os_name = linux-x64
 libname = "lib$(filename).so"
 dllname = "lib$(name).so"
 binary = bin
+libdir = $(linuxlib)
 #
 endif
 endif
@@ -100,6 +116,7 @@ all:
 dll:
 	@$(MAKE) cs
 	@$(MAKE) cpp
+
 
 cpprun:
 	@cd binaryplus/bin && $(prefix)$(binname).$(binary)
@@ -148,13 +165,21 @@ endif
 
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 #windows
+ifeq ($(copylibs),1)
+	@runas /noprofile /user:Administrator copy cplusplus\bin\$(dllname) $(libdir)
+else
 	@copy cplusplus\bin\$(dllname) binarysharp\bin\exe
 	@copy cplusplus\bin\$(dllname) binaryplus\bin
+endif
 else
 #other
+ifeq ($(copylibs),1)
+	@echo "A"
+	@sudo cp cplusplus/bin/$(dllname) $(libdir)
+else
 	@cp cplusplus/bin/$(dllname) binarysharp/bin/exe
 	@cp cplusplus/bin/$(dllname) binaryplus/bin
-#
+endif
 endif
 
 	@echo "Version file. Remove to enable recompile" > $@
@@ -165,13 +190,22 @@ cs: $(foreach fl,$(files),csharp/$(fl))
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 	@cd csharp/bin/$(configuration)/net8.0/$(os_name)/native/ && echo . > null.exp && echo . > null.lib && echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(libname)
 	@move csharp\bin\$(configuration)\net8.0\$(os_name)\native\$(libname) csharp\bin\lib
+ifeq ($(copylibs),1)
+	@runas /noprofile /user:Administrator copy cplusplus\bin\$(dllname) $(libdir)
+else
 	@copy csharp\bin\lib\$(libname) binarysharp\bin\exe
 	@copy csharp\bin\lib\$(libname) binaryplus\bin
+endif
 else
 	@cd csharp/bin/$(configuration)/net8.0/$(os_name)/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
 	@mv -f csharp/bin/$(configuration)/net8.0/$(os_name)/native/* csharp/bin/lib/$(libname)
+ifeq ($(copylibs),1)
+	@echo "A"
+	@sudo cp csharp/bin/lib/$(libname) $(libdir)
+else
 	@cp csharp/bin/lib/$(libname) binarysharp/bin/exe
 	@cp csharp/bin/lib/$(libname) binaryplus/bin
+endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
 

@@ -12,11 +12,11 @@
             }
             vecsyms.push_back(vecdsym);
         }
-        unsigned int out[2];
+        int * out = new int[2];
         std::array<unsigned long int,2> ret = cpp::Console::FillConsole(vecsyms);
         out[0] = ret[0];
         out[1] = ret[1];
-        return (int*)out;
+        return out;
     }
 
     // Symbol

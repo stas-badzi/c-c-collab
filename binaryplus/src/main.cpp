@@ -50,7 +50,7 @@ array<unsigned long,2> Console::FillConsole(vector<vector<void*>> symbols) {
 }
 
 Console::Symbol::Symbol() {
-    symbol = Console_Symbol_Constuct(L' ');
+    symbol = Console_Symbol_Constuct(L'A');
 }
 
 Console::Symbol::~Symbol() {
