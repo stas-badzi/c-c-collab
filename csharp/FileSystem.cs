@@ -8,7 +8,7 @@ namespace Cs
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_ImportText")]
         public static IntPtr ImportText(IntPtr file)
         {
-            string str_file = Marshal.PtrToStringAuto(file);
+            string str_file = Marshal.PtrToStringUni(file);
             string line;
             string result = "";
 
@@ -34,8 +34,8 @@ namespace Cs
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_ExportText")]
         public static void ExportText(IntPtr path, IntPtr content)
         {
-            string str_path = Marshal.PtrToStringAuto(path);
-            string str_content = Marshal.PtrToStringAuto(content);
+            string str_path = Marshal.PtrToStringUni(path);
+            string str_content = Marshal.PtrToStringUni(content);
 
             try
             {
