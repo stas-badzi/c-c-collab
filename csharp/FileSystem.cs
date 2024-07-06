@@ -8,7 +8,7 @@ namespace Cs
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_ImportText")]
         public static IntPtr ImportText(IntPtr file)
         {
-            string str_file = Marshal.PtrToStringAuto(file);
+            string str_file = Marshal.PtrToStringUni(file);
             string line;
             string result = "";
 
@@ -16,19 +16,17 @@ namespace Cs
             {
                 StreamReader sr = new StreamReader(str_file);
                 line = sr.ReadLine();
-                result = line;
-                while (line != null)
-                {
+                result = "";
+                while (line != null) {
+                    result = $"{result}{line}\n";
                     line = sr.ReadLine();
-                    result = $"{result}\n{line}";
                 }
                 sr.Close();
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Unhandled exception at Cs.FileSystem.ImportText (FileSystem.cs): " + e.Message);
+                Environment.FailFast($"Unhandled exception at Cs.FileSystem.ImportText (FileSystem.cs:15): " + e.Message);
             }
-            result += '\n';
             IntPtr output = Marshal.StringToHGlobalUni(result);
             return output;
         }
@@ -36,8 +34,8 @@ namespace Cs
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_ExportText")]
         public static void ExportText(IntPtr path, IntPtr content)
         {
-            string str_path = Marshal.PtrToStringAuto(path);
-            string str_content = Marshal.PtrToStringAuto(content);
+            string str_path = Marshal.PtrToStringUni(path);
+            string str_content = Marshal.PtrToStringUni(content);
 
             try
             {
@@ -52,7 +50,7 @@ namespace Cs
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Unhandled exception at Cs.FileSystem.ExportText (FileImport.cs): " + e.Message);
+                Environment.FailFast($"Unhandled exception at Cs.FileSystem.ExportText (FileSystem.cs:40): " + e.Message);
             }
         }
     }

@@ -17,7 +17,7 @@ namespace CsImp {
 namespace Cs {
     public class FileSystem {
         public static string ImportText(string filestr) {
-            return Marshal.PtrToStringAuto(CsImp.FileSystem.ImportText(Marshal.StringToHGlobalUni(filestr)));
+            return Marshal.PtrToStringUni(CsImp.FileSystem.ImportText(Marshal.StringToHGlobalUni(filestr)));
         }
         public static void ExportText(string pathstr, string contentstr) {
             CsImp.FileSystem.ExportText(Marshal.StringToHGlobalUni(pathstr), Marshal.StringToHGlobalUni(contentstr));
@@ -27,10 +27,10 @@ namespace Cs {
     public class Program {
 
         static void Main(string[] args) {
-            string filename = Directory.GetCurrentDirectory() + @"/ha.dat";
+            string filename = @"Gha.dat";
             Console.WriteLine("Acessing file: " + filename);
-            Console.WriteLine(FileSystem.ImportText(filename));
-            FileSystem.ExportText(filename, "Hejka\njjflajljdl");
+            //Console.WriteLine(FileSystem.ImportText(filename));
+            FileSystem.ExportText(filename, "AHejka\njjflajljdl");
             Console.WriteLine("Acessing file again: " + filename);
             Console.WriteLine(FileSystem.ImportText(filename));
         }
