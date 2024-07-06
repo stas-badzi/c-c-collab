@@ -36,7 +36,7 @@ using namespace cpp;
 			}
 		}
 
-        array<unsigned long,2> written;
+        array<DWORD,2> written;
 				
 		WriteConsoleOutputCharacter(h_console, screen, width*height, { 0,0 }, &(written[0]) );
 		WriteConsoleOutputAttribute(h_console, attributes, width*height, { 0,0 }, &(written[1]) );
