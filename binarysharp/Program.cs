@@ -27,10 +27,12 @@ namespace Cs {
     public class Program {
 
         static void Main(string[] args) {
-            string filename = Directory.GetCurrentDirectory() + @"/../../../csbin";
+            string filename = Directory.GetCurrentDirectory() + @"/ha.dat";
             Console.WriteLine("Acessing file: " + filename);
             Console.WriteLine(FileSystem.ImportText(filename));
-            FileSystem.ExportText((Directory.GetCurrentDirectory() + @"/../../../csharp"), "Hejka");
+            FileSystem.ExportText(filename, "Hejka\njjflajljdl");
+            Console.WriteLine("Acessing file again: " + filename);
+            Console.WriteLine(FileSystem.ImportText(filename));
         }
 
     }

@@ -22,6 +22,7 @@ namespace Cs
                     line = sr.ReadLine();
                     result = $"{result}\n{line}";
                 }
+                sr.Close();
             }
             catch (Exception e)
             {
@@ -40,13 +41,14 @@ namespace Cs
 
             try
             {
-                if (File.Exists(str_path))
-                    File.Delete(str_path);
+                if (File.Exists(str_path)) File.Delete(str_path);
                 
                 using (StreamWriter sw = File.CreateText(str_path))
                 {
                     sw.WriteLine(str_content);
+                    sw.Close();
                 }
+
             }
             catch (Exception e)
             {

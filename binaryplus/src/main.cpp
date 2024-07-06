@@ -4,7 +4,11 @@
 #include <dynamic_library.h>
 #include <string>
 
-libimport int* Console_FillConsole$ret2(void*** symbols, int height, int width);
+libimport int* Console_FillScreen$ret2(void*** symbols, int height, int width);
+
+libimport int Console_GetWindowWidth(void);
+
+libimport int Console_GetWindowHeight(void);
 
 libimport void* Console_Symbol_Constuct(wchar_t character, char foreground = 7, char background = 0);
 
@@ -30,7 +34,7 @@ libimport char Console_Symbol_background$get(void* smb);
 
 libimport void Console_Symbol_Destruct(void* smb);
 
-using namespace cppi;
+using namespace cppimp;
 using namespace std;
 
 array<unsigned long,2> Console::FillConsole(vector<vector<void*>> symbols) {
@@ -40,7 +44,7 @@ array<unsigned long,2> Console::FillConsole(vector<vector<void*>> symbols) {
         vpsym.push_back(symbols[i].data());
     }
     
-    int* ret = Console_FillConsole$ret2(vpsym.data(),symbols.size(),symbols[0].size());
+    int* ret = Console_FillScreen$ret2(vpsym.data(),symbols.size(),symbols[0].size());
     // int* address dissapearing
     array<unsigned long,2> out;
     out[0] = ret[0];
@@ -49,8 +53,20 @@ array<unsigned long,2> Console::FillConsole(vector<vector<void*>> symbols) {
     return out;
 }
 
-Console::Symbol::Symbol() {
+int Console::GetWindowWidth(void) {
+    return Console_GetWindowWidth();
+}
+
+int Console::GetWindowHeight(void) {
+    return Console_GetWindowHeight();
+}
+
+Console::Symbol::Symbol(void) {
     symbol = Console_Symbol_Constuct(L' ');
+}
+
+Console::Symbol::Symbol(wchar_t character, char foreground, char background) {
+    symbol = Console_Symbol_Constuct(character,foreground,background);
 }
 
 Console::Symbol::~Symbol() {
@@ -86,33 +102,42 @@ void* Console::Symbol::Get() {
 }
 
 #ifdef _WIN32
-    char GetAttribute(void) {
+    char Console::Symbol::GetAttribute(void) {
         return Console_Symbol_GetAttribute(symbol);
     }
 
-    void SetAttribute(char attribute) {
+    void Console::Symbol::SetAttribute(char attribute) {
         return Console_Symbol_SetAttribute(symbol,attribute);
     }
 #endif
 
 int main() {
 
-    Console::Symbol sym;
+    Console::Symbol sym(L'\u2588');
 
     //*
-    vector<vector<void*>> smbls;
-    vector<void*> vsm;
+    
 
-    Console::Symbol symb;
-    vsm.push_back(symb.Get());
-    vsm.push_back(symb.Get());
+   
+    while (true) {
+        vector<vector<void*>> smbls;
+        vector<void*> vsm;
+        for (int i = 0; i < Console::GetWindowWidth(); i++)
+        {
+            vsm.push_back(sym.Get());
+        }
+        
+        for (int i = 0; i < Console::GetWindowHeight(); i++)
+        {
+            smbls.push_back(vsm);
+        }
 
-    smbls.push_back(vsm);
-    smbls.push_back(vsm);
-    smbls.push_back(vsm);
+        Console::FillConsole(smbls)[0];
 
-    Console::FillConsole(smbls);
-    //*/
-    //cin.get();
+        cout << Console::GetWindowWidth() << '\n';
+        Sleep(1000);
+    }
+    
+    cin.get();
     return 0;
 }

@@ -3,20 +3,28 @@
 // Console
     #include "Console.hpp"
 
-    libexport void* Console_FillConsole$ret2(cpp::Console::Symbol** symbols, int height, int width) {
+    libexport int* Console_FillScreen$ret2(cpp::Console::Symbol*** symbols, int height, int width) {
         std::vector<std::vector<cpp::Console::Symbol>> vecsyms;
         for (int i = 0; i < height; i++) {
             std::vector<cpp::Console::Symbol> vecdsym;
             for (int j = 0; j < width; j++) {
-                vecdsym.push_back(symbols[i][j]);
+                vecdsym.push_back( *(symbols[i][j]) );
             }
             vecsyms.push_back(vecdsym);
         }
-        unsigned int out[2];
-        std::array<unsigned long int,2> ret = cpp::Console::FillConsole(vecsyms);
+        int* out = new int[2];
+        std::array<unsigned long int,2> ret = cpp::Console::FillScreen(vecsyms);
         out[0] = ret[0];
         out[1] = ret[1];
-        return (int*)out;
+        return out;
+    }
+
+    libexport int Console_GetWindowWidth(void) {
+        return cpp::Console::GetWindowWidth();
+    }
+
+    libexport int Console_GetWindowHeight(void) {
+        return cpp::Console::GetWindowHeight();
     }
 
     // Symbol

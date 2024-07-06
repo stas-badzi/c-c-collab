@@ -6,7 +6,7 @@
     #include <windows.h>
 #endif
 
-namespace cppi {
+namespace cppimp {
     class Console {
 
     public:
@@ -32,10 +32,12 @@ namespace cppi {
                 void SetAttribute(char attribute);
             #endif
 
-            private:
-                void* symbol;
+        private:
+            void* symbol;
 
         };
+        static int GetWindowWidth(void);
+        static int GetWindowHeight(void);
         static std::array<unsigned long,2> FillConsole(std::vector<std::vector<void*>> symbols);
     };
 }
