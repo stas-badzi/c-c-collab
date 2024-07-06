@@ -2,8 +2,8 @@
 
 #if defined _WIN32
     #if defined __cplusplus
-        #define libexport extern "C" __declspec(dllexport) __stdcall
-        #define libimport extern "C" __declspec(dllimport) __stdcall
+        #define libexport extern "C" __declspec(dllexport)
+        #define libimport extern "C" __declspec(dllimport)
     #else
         #define libexport __declspec(dllexport)
         #define libimport __declspec(dllimport)
