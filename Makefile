@@ -207,7 +207,6 @@ else
 	@cd csharp/bin/$(configuration)/net8.0/$(os_name)/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
 	@mv -f csharp/bin/$(configuration)/net8.0/$(os_name)/native/* csharp/bin/lib/$(libname)
 ifeq ($(copylibs),1)
-	@echo "A"
 	@sudo cp csharp/bin/lib/$(libname) $(libdir)
 else
 	@cp csharp/bin/lib/$(libname) binarysharp/bin/exe
