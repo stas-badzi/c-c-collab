@@ -29,7 +29,7 @@ int main() {
             smbls.push_back(vsm);
         }
 
-        array<long unsigned int,2> out = Console::FillConsole(smbls);
+        array<long unsigned int,2> out = Console::FillScreen(smbls);
 
         cout << out[0] << ' ' << out[1] << '\n';
 

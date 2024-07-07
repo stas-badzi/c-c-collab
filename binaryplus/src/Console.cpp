@@ -8,7 +8,7 @@ using namespace cppimp;
 using namespace std;
 
 
-array<unsigned long,2> cpp::Console::FillConsole(vector<vector<void*>> symbols) {
+array<unsigned long,2> cpp::Console::FillScreen(vector<vector<void*>> symbols) {
     
     vector<void**> vpsym;
     for (size_t i = 0; i < symbols.size(); i++) {

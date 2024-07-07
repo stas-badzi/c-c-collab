@@ -37,6 +37,6 @@ namespace cpp {
         };
         static int GetWindowWidth(void);
         static int GetWindowHeight(void);
-        static std::array<unsigned long,2> FillConsole(std::vector<std::vector<void*>> symbols);
+        static std::array<unsigned long,2> FillScreen(std::vector<std::vector<void*>> symbols);
     };
 }
