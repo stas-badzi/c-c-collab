@@ -77,7 +77,7 @@ objects = $(foreach file,$(sources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .cp
 
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 #windows
-admin = gsudo
+admin = sudo
 prefix = .\
 os_name = win-x64
 dllname = "$(name).dll"
@@ -91,7 +91,7 @@ ifeq ($(findstring NT, $(shell uname -s)),NT)
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin only
 libdir = $(cygwinlib)
-admin = gsudo
+admin = sudo
 #
 else
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
@@ -112,7 +112,7 @@ endif
 endif
 #non-cygwin 'NT'
 libdir = $(msyslib)
-admin = gsudo
+admin = sudo
 #
 endif
 #all unix emulators on windows
