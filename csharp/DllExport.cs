@@ -1,5 +1,6 @@
-namespace CppCsComTest {
-    //nic do zmieniana
+using System.Runtime.InteropServices;
+
+namespace CsExp {
     public class DllHandle {
 
     #if _WIN32
@@ -33,4 +34,19 @@ namespace CppCsComTest {
     #endif
 
     }
+
+    public class FileSystem {
+        [UnmanagedCallersOnly(EntryPoint = "FileSystem_ImportText")]
+        public static IntPtr ImportText(IntPtr file)
+        {
+            return Marshal.StringToHGlobalUni(Cs.FileSystem.ImportText(Marshal.PtrToStringUni(file)));
+        }
+        // export
+        [UnmanagedCallersOnly(EntryPoint = "FileSystem_ExportText")]
+        public static void ExportText(IntPtr path, IntPtr content)
+        {
+            Cs.FileSystem.ExportText(Marshal.PtrToStringUni(path),Marshal.PtrToStringUni(content));
+        }
+    }
+
 }

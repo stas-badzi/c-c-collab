@@ -1,7 +1,6 @@
-
 #******** c++ config ************
 #> source files
-sources = Console.cpp dllmain.cpp
+sources = Console.cpp dllexport.cpp
 #> header files
 headers = Console.hpp
 #> include files
@@ -14,9 +13,9 @@ cdebug = 1
 
 #******** c++ binary config *****
 #> source files
-binsources = main.cpp
+binsources = main.cpp Console.cpp
 #> header files
-binheaders = main.hpp
+binheaders = dllimport.hpp Console.hpp
 #> include files
 binincludes = dynamic_library.h
 #> name the binary file
@@ -31,7 +30,7 @@ filename = csharp
 #> compilation mode
 configuration = Release
 #>source code files
-files = DllHandle.cs FileSystem.cs 
+files = DllExport.cs FileSystem.cs 
 # *******************************
 
 #********* c# binary config *****
@@ -40,7 +39,7 @@ binfile = bs
 #>compilation mode
 binconfig = Release
 #>source code files
-binfiles = Program.cs DllHandle.cs
+binfiles = Program.cs DllImport.cs FileSystem.cs
 # *******************************
 
 #***** shared library config ****
@@ -52,8 +51,17 @@ linuxlib = /usr/lib
 macoslib = /usr/local/lib
 #> windows shared library path
 winlib = %SystemRoot%
-#> mysys(mingw)/cygwin shared library path
-unixlib = /usr/lib
+#> mysys(mingw) shared library path
+msyslib = /usr/lib
+#>cygwin shared library path
+cygwinlib = /usr/lib
+#>windows running for symulators generation
+genwin = 1
+#>cygwin path to windows
+symcyglib = /cygdrive/c/Windows
+#>msys2(mingw) path to windows
+symsyslib = /c/Windows
+#*********************************
 
 ifeq ($(cdebug),1)
 cdb = -g
@@ -61,6 +69,7 @@ endif
 ifeq ($(bpdebug),1)
 bpdb = -g
 endif
+flibdir = bin
 flib = -l$(filename)
 fsrc = $(foreach src,$(sources),../src/$(src))
 fbsrc = $(foreach bsrc,$(binsources),src/$(bsrc))
@@ -68,7 +77,8 @@ objects = $(foreach file,$(sources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .cp
 
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 #windows
-prefix = .\\
+admin = gsudo
+prefix = .\
 os_name = win-x64
 dllname = "$(name).dll"
 libname = "$(filename).dll"
@@ -77,17 +87,45 @@ libdir = $(winlib)
 #
 else
 ifeq ($(findstring NT, $(shell uname -s)),NT)
-#cygwin/mingw
+#
+ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
+#cygwin only
+libdir = $(cygwinlib)
+admin = gsudo
+#
+else
+ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
+#msys
+exec = $(shell cygpath -w /msys2.exe)
+#
+else
+#mingw [ond others]
+ifeq ($(findstring MINGW64, $(shell uname -s)),MINGW64)
+# x64 mingw
+exec = $(shell cygpath -w /mingw64.exe)
+#
+else
+# x32 mingw (and others)
+exec = $(shell cygpath -w /mingw32.exe)
+#
+endif
+endif
+#non-cygwin 'NT'
+libdir = $(msyslib)
+admin = gsudo
+#
+endif
+#all unix emulators on windows
 prefix = ./
 os_name = win-x64
 dllname = "$(name).dll"
 libname = "$(filename).dll"
 binary = exe
-libdir = $(unixlib)
 #
 else
 ifeq ($(shell uname -s),Darwin)
 #macos
+admin = sudo
 prefix = ./
 os_name = osx-x64
 dllname = "lib$(name).dylib"
@@ -97,6 +135,7 @@ libdir = $(macoslib)
 #
 else
 #linux and similar
+admin = sudo
 prefix = ./
 os_name = linux-x64
 libname = "lib$(filename).so"
@@ -106,6 +145,18 @@ libdir = $(linuxlib)
 #
 endif
 endif
+endif
+
+ifeq ($(genwin),1)
+ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
+libdir = $(symcyglib)
+else
+libdir = $(symsyslib)
+endif
+endif
+
+ifeq ($(copylibs),1)
+flibdir = $(libdir)
 endif
 
 all:
@@ -134,35 +185,35 @@ endif
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 #windows
 	@cd cplusplus/obj && g++ -c -DUNICODE $(cdb) $(fsrc) -I ../include
-	@cd cplusplus && g++ -shared -o bin/$(name).dll $(objects) -L ../csharp/bin/lib $(flib)
+	@cd cplusplus && g++ -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
 	@cd cplusplus/obj && g++ -c -DUNICODE $(cdb) $(fsrc) -I ../include
-	@cd cplusplus && g++ -shared -o bin/$(name).dll $(objects) -L ../csharp/bin/lib $(flib)
+	@cd cplusplus && g++ -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #mingw [ I think same as windows (?) ]
 	@cd cplusplus/obj && g++ -c -DUNICODE $(cdb) $(fsrc) -I ../include
-	@cd cplusplus && g++ -shared -o bin/$(name).dll $(objects) -L ../csharp/bin/lib $(flib)
+	@cd cplusplus && g++ -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
 #
 else
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys [ I think same as windows (?) ]
 	@cd cplusplus/obj && g++ -c -DUNICODE $(cdb) $(fsrc) -I ../include
-	@cd cplusplus && g++ -shared -o bin/$(name).dll $(objects) -L ../csharp/bin/lib $(flib)
+	@cd cplusplus && g++ -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
 #
 else
 	@cd cplusplus/obj && g++ -c -fpic -DUNICODE $(cdb) -fvisibility=hidden $(fsrc) -I ../include
 ifeq ($(shell uname -s),Darwin)
 #macos
-	@cd cplusplus && g++ -dynamiclib -o bin/lib$(name).dylib $(objects) -L ../csharp/bin/lib $(flib)
+	@cd cplusplus && g++ -dynamiclib -o bin/lib$(name).dylib $(objects) -L$(flibdir) $(flib)
 #
 else
 #linux and similar
-	@cd cplusplus && g++ -shared -o bin/lib$(name).so $(objects) -L ../csharp/bin/lib $(flib)
+	@cd cplusplus && g++ -shared -o bin/lib$(name).so $(objects) -L$(flibdir) $(flib)
 endif
 endif
 endif
@@ -173,7 +224,7 @@ endif
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 #windows
 ifeq ($(copylibs),1)
-	@runas /noprofile /user:Administrator copy cplusplus\bin\$(dllname) $(libdir)
+	@$(admin) copy cplusplus\bin\$(dllname) $(libdir)
 else
 	@copy cplusplus\bin\$(dllname) binarysharp\bin\exe
 	@copy cplusplus\bin\$(dllname) binaryplus\bin
@@ -181,8 +232,7 @@ endif
 else
 #other
 ifeq ($(copylibs),1)
-	@echo "A"
-	@sudo cp cplusplus/bin/$(dllname) $(libdir)
+	@$(admin) cp cplusplus/bin/$(dllname) $(libdir)
 else
 	@cp cplusplus/bin/$(dllname) binarysharp/bin/exe
 	@cp cplusplus/bin/$(dllname) binaryplus/bin
@@ -198,7 +248,7 @@ ifeq ($(shell echo "check_quotes"),"check_quotes")
 	@cd csharp/bin/$(configuration)/net8.0/$(os_name)/native/ && echo . > null.exp && echo . > null.lib && echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(libname)
 	@move csharp\bin\$(configuration)\net8.0\$(os_name)\native\$(libname) csharp\bin\lib
 ifeq ($(copylibs),1)
-	@runas /noprofile /user:Administrator copy cplusplus\bin\$(dllname) $(libdir)
+	@$(admin) copy cplusplus\bin\$(dllname) $(libdir)
 else
 	@copy csharp\bin\lib\$(libname) binarysharp\bin\exe
 	@copy csharp\bin\lib\$(libname) binaryplus\bin
@@ -207,7 +257,7 @@ else
 	@cd csharp/bin/$(configuration)/net8.0/$(os_name)/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
 	@mv -f csharp/bin/$(configuration)/net8.0/$(os_name)/native/* csharp/bin/lib/$(libname)
 ifeq ($(copylibs),1)
-	@sudo cp csharp/bin/lib/$(libname) $(libdir)
+	@$(admin) cp csharp/bin/lib/$(libname) $(libdir)
 else
 	@cp csharp/bin/lib/$(libname) binarysharp/bin/exe
 	@cp csharp/bin/lib/$(libname) binaryplus/bin
@@ -223,32 +273,32 @@ endif
 
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 #windows
-	@cd binaryplus && g++ $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -Lbin -l$(filename) -l$(name)
+	@cd binaryplus && g++ $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
-	@cd binaryplus && g++ $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -Lbin -l$(filename) -l$(name)
+	@cd binaryplus && g++ $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #mingw [ I think same as windows (?) ]
-	@cd binaryplus && g++ $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -Lbin -l$(filename) -l$(name)
+	@cd binaryplus && g++ $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
 #
 else
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys [ I think same as windows (?) ]
-	@cd binaryplus && g++ $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -Lbin -l$(filename) -l$(name)
+	@cd binaryplus && g++ $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
 #
 else
 #	@cd binaryplus/obj && g++ -c -fpic -DUNICODE -fvisibility=hidden $(fsrc) -I ../include
 ifeq ($(shell uname -s),Darwin)
 #macos
-	@cd binaryplus && g++ $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -Lbin -l$(filename) -l$(name)
+	@cd binaryplus && g++ $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
 #
 else
 #linux and similar
-	@cd binaryplus && g++ $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -Lbin -l$(filename) -l$(name)
+	@cd binaryplus && g++ $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
 endif
 endif
 endif

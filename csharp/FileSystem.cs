@@ -1,14 +1,11 @@
 using System.IO;
-using System.Runtime.InteropServices;
+
 namespace Cs
 {
     public class FileSystem // Impotowanie plików .txt
     {
-        // export
-        [UnmanagedCallersOnly(EntryPoint = "FileSystem_ImportText")]
-        public static IntPtr ImportText(IntPtr file)
+        public static string ImportText(string str_file)
         {
-            string str_file = Marshal.PtrToStringUni(file);
             string line;
             string result = "";
 
@@ -27,16 +24,11 @@ namespace Cs
             {
                 Environment.FailFast($"Unhandled exception at Cs.FileSystem.ImportText (FileSystem.cs:15): " + e.Message);
             }
-            IntPtr output = Marshal.StringToHGlobalUni(result);
-            return output;
+            return result;
         }
-        // export
-        [UnmanagedCallersOnly(EntryPoint = "FileSystem_ExportText")]
-        public static void ExportText(IntPtr path, IntPtr content)
+        
+        public static void ExportText(string str_path, string str_content)
         {
-            string str_path = Marshal.PtrToStringUni(path);
-            string str_content = Marshal.PtrToStringUni(content);
-
             try
             {
                 if (File.Exists(str_path)) File.Delete(str_path);

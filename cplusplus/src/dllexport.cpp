@@ -3,7 +3,7 @@
 // Console
     #include "Console.hpp"
 
-    libexport int* Console_FillScreen$ret2(cpp::Console::Symbol*** symbols, int height, int width) {
+    libexport unsigned long int* Console_FillScreen$ret2(cpp::Console::Symbol*** symbols, int height, int width) {
         std::vector<std::vector<cpp::Console::Symbol>> vecsyms;
         for (int i = 0; i < height; i++) {
             std::vector<cpp::Console::Symbol> vecdsym;
@@ -12,7 +12,7 @@
             }
             vecsyms.push_back(vecdsym);
         }
-        int* out = new int[2];
+        unsigned long int* out = new unsigned long int[2];
         std::array<unsigned long int,2> ret = cpp::Console::FillScreen(vecsyms);
         out[0] = ret[0];
         out[1] = ret[1];

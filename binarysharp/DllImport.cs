@@ -1,5 +1,7 @@
+using System.Runtime.InteropServices;
+
 namespace CsImp {
-    //nic do zmieniana
+    
     public class DllHandle {
 
     #if _WIN32
@@ -32,5 +34,16 @@ namespace CsImp {
         public const string OS = "Unknown";
     #endif
 
+    }
+
+
+    public class FileSystem {
+        private const string DllSource =  @"" + DllHandle.Prefix + "csharp" + DllHandle.Suffix;
+
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_ImportText")]
+        public static extern IntPtr ImportText(IntPtr fileptr);
+
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_ExportText")]
+        public static extern void ExportText(IntPtr pathptr, IntPtr contentptr);
     }
 }

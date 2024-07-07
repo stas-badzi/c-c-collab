@@ -1,12 +1,11 @@
 #pragma once
-#include <vector>
 #include <array>
-
+#include <vector>
 #ifdef _WIN32
     #include <windows.h>
 #endif
 
-namespace cppimp {
+namespace cpp {
     class Console {
 
     public:
