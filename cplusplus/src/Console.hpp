@@ -10,10 +10,12 @@
 namespace cpp {
     class Console {
     private:
+        static bool initialised;
         #ifdef _WIN32
             static HANDLE h_console;
         #endif
     public:
+        static void Init(void);
         struct Symbol {
             wchar_t character;
             char foreground; // 0-16
@@ -33,10 +35,9 @@ namespace cpp {
             #endif
 
         };
-
         static int GetWindowWidth(void);
         static int GetWindowHeight(void);
         static std::array<unsigned long,2> FillScreen(std::vector<std::vector<Symbol>> symbols);
+
     };
 } // namespace cpp
-

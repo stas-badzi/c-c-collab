@@ -11,31 +11,45 @@ using namespace std;
 
 int main() {
 
-    Console::Symbol sym(L'\u2588');
+    Console::Init();
 
-    wcout << sym.character();
-
+    Console::Symbol sym0(L'#');
+    Console::Symbol sym1(L' ');
    
     while (true) {
+        //wcin >> sym.character;
+
         vector<vector<void*>> smbls;
-        vector<void*> vsm;
+        vector<void*> vsm0;
         for (int i = 0; i < Console::GetWindowWidth(); i++)
         {
-            vsm.push_back(sym.Get());
+            vsm0.push_back(sym0.Get());
         }
-        
-        for (int i = 0; i < Console::GetWindowHeight(); i++)
+        vector<void*> vsm1 = vsm0;
+        for (int i = 1; i < Console::GetWindowWidth() - 1; i++)
         {
-            smbls.push_back(vsm);
+            vsm1[i] = sym1.Get();
         }
+        smbls.push_back(vsm0);
+        for (int i = 2; i < Console::GetWindowHeight(); i++)
+        {
+            smbls.push_back(vsm1);
+        }
+        smbls.push_back(vsm0);
 
         array<long unsigned int,2> out = Console::FillScreen(smbls);
 
-        cout << out[0] << ' ' << out[1] << '\n';
+        cout << Console::GetWindowWidth() << ' ' << Console::GetWindowHeight() << '|' << vsm1.size() << ' ' << smbls.size() << '\n';
 
-        Sleep(1000);
+        
+
+
+        SHORT state = GetKeyState('0');
+        bool down = state < 0;
+        bool toggle = (state & 1) != 0;
+
+
+        if (down) { sym0.character(L'#'); } else { sym0.character(L'@'); }
     }
-    
-    cin.get();
     return 0;
 }

@@ -35,6 +35,7 @@ namespace cpp {
             void* symbol;
 
         };
+        static void Init(void);
         static int GetWindowWidth(void);
         static int GetWindowHeight(void);
         static std::array<unsigned long,2> FillScreen(std::vector<std::vector<void*>> symbols);

@@ -3,6 +3,10 @@
 // Console
     #include "Console.hpp"
 
+    libexport void Console_Init(void) {
+        cpp::Console::Init();
+    }
+
     libexport unsigned long int* Console_FillScreen$ret2(cpp::Console::Symbol*** symbols, int height, int width) {
         std::vector<std::vector<cpp::Console::Symbol>> vecsyms;
         for (int i = 0; i < height; i++) {

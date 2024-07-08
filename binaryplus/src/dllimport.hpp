@@ -1,6 +1,8 @@
 #include <dynamic_library.h>
 
 namespace cppimp {
+    libimport void Console_Init(void);
+
     libimport unsigned long int* Console_FillScreen$ret2(void*** symbols, int height, int width);
 
     libimport int Console_GetWindowWidth(void);

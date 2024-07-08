@@ -7,6 +7,9 @@
 using namespace cppimp;
 using namespace std;
 
+void cpp::Console::Init(void) {
+    cppimp::Console_Init();
+}
 
 array<unsigned long,2> cpp::Console::FillScreen(vector<vector<void*>> symbols) {
     
