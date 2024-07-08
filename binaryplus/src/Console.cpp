@@ -11,14 +11,19 @@ void cpp::Console::Init(void) {
     cppimp::Console_Init();
 }
 
-array<unsigned long,2> cpp::Console::FillScreen(vector<vector<void*>> symbols) {
-    
-    vector<void**> vpsym;
+array<unsigned long,2> cpp::Console::FillScreen(vector<vector<cpp::Console::Symbol>> symbols) {
+
+    void*** voidsyms = new void**[symbols.size()];
+
     for (size_t i = 0; i < symbols.size(); i++) {
-        vpsym.push_back(symbols[i].data());
+        void** temp = new void*[symbols[0].size()];
+        for (size_t j = 0; j < symbols[0].size(); j++) {
+            temp[j] = symbols[i][j].Get();
+        }
+        voidsyms[i] = temp;
     }
-    
-    long unsigned int* ret = Console_FillScreen$ret2(vpsym.data(),symbols.size(),symbols[0].size());
+
+    long unsigned int* ret = Console_FillScreen$ret2(voidsyms,symbols.size(),symbols[0].size());
     // int* address dissapearing
     array<unsigned long,2> out;
     out[0] = ret[0];
@@ -36,15 +41,25 @@ int cpp::Console::GetWindowHeight(void) {
 }
 
 cpp::Console::Symbol::Symbol(void) {
-    symbol = Console_Symbol_Constuct(L' ');
+    symbol = Console_Symbol_Constuct$cfb(L' ');
+}
+
+cpp::Console::Symbol::Symbol(const Symbol &cp) {
+    symbol = Console_Symbol_Constuct$smb(cp.symbol);
 }
 
 cpp::Console::Symbol::Symbol(wchar_t character, char foreground, char background) {
-    symbol = Console_Symbol_Constuct(character,foreground,background);
+    symbol = Console_Symbol_Constuct$cfb(character,foreground,background);
 }
 
 cpp::Console::Symbol::~Symbol() {
     Console_Symbol_Destruct(symbol);
+}
+
+cpp::Console::Symbol cpp::Console::Symbol::operator=(const cpp::Console::Symbol &src) {
+    Console_Symbol_operator$eq(this->symbol,src.symbol);
+    //set own local variables
+    return *this;
 }
 
 wchar_t cpp::Console::Symbol::character(void) {

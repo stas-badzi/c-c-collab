@@ -32,7 +32,12 @@
     }
 
     // Symbol
-        libexport void* Console_Symbol_Constuct(wchar_t character, char foreground = 7, char background = 0) {
+        libexport void* Console_Symbol_Constuct$smb(cpp::Console::Symbol* src) {
+            return (void*) new cpp::Console::Symbol(*src);
+        }
+
+
+        libexport void* Console_Symbol_Constuct$cfb(wchar_t character, char foreground = 7, char background = 0) {
             return (void*) new cpp::Console::Symbol(character, foreground, background);
         }
 
@@ -75,8 +80,11 @@
         }
 
         libexport void Console_Symbol_Destruct(cpp::Console::Symbol* smb) {
-            smb->~Symbol();
             delete smb;
+        }
+
+        libexport void* Console_Symbol_operator$eq(cpp::Console::Symbol* cp, cpp::Console::Symbol* src) {
+            return (void*) new cpp::Console::Symbol( (*cp) = (*src) );
         }
     // ~Symbol
 

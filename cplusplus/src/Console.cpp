@@ -74,7 +74,22 @@ using namespace cpp;
 }
 #else
 #include <iostream>
-    array<unsigned long,2> Console::FillConsole(vector<vector<Symbol>> symbols) {
+    void Console::Init(void) {
+        if (!initialised) {
+            initialised = true;
+        }
+    }
+
+    int cpp::Console::GetWindowWidth(void) {
+        return 10;
+    }
+
+    int cpp::Console::GetWindowHeight(void) {
+        return 5;
+    }
+
+    array<unsigned long,2> Console::FillScreen(vector<vector<Console::Symbol>> symbols) {
+        system("cls");
         for (size_t i = 0; i < symbols.size(); i++) {
             for (size_t j = 0; j < symbols[0].size(); j++) {
                 wcout << symbols[i][j].character;
@@ -109,5 +124,12 @@ Console::Symbol::~Symbol(void) {
     this->character = -1;
     this->foreground = -1;
     this->background = -1;
-    //delete this;
+}
+
+Console::Symbol & Console::Symbol::operator=(const Console::Symbol & src) {
+    if (this == &src) { return *this; }
+    this->character = src.character;
+    this->background = src.background;
+    this->foreground = src.foreground;
+    return *this;
 }

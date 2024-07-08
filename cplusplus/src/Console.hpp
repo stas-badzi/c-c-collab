@@ -29,6 +29,8 @@ namespace cpp {
 
             ~Symbol(void);
 
+            Symbol & operator=(const Symbol &src);
+
             #ifdef _WIN32
                 char GetAttribute(void);
                 void SetAttribute(char attribute);

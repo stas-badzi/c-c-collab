@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <vector>
+#include <windows.h>
 
 
 
@@ -19,19 +20,24 @@ int main() {
     while (true) {
         //wcin >> sym.character;
 
-        vector<vector<void*>> smbls;
-        vector<void*> vsm0;
-        for (int i = 0; i < Console::GetWindowWidth(); i++)
+        const Console::Symbol csym0 = sym0;
+
+        vector<vector<Console::Symbol>> smbls;
+        vector<Console::Symbol> vsm0;
+        int width = Console::GetWindowWidth();
+        int height = Console::GetWindowHeight();
+
+        for (int i = 0; i < width; i++)
         {
-            vsm0.push_back(sym0.Get());
+            vsm0.push_back(csym0);
         }
-        vector<void*> vsm1 = vsm0;
-        for (int i = 1; i < Console::GetWindowWidth() - 1; i++)
+        vector<Console::Symbol> vsm1 = vsm0;
+        for (int i = 1; i < width - 1; i++)
         {
-            vsm1[i] = sym1.Get();
+            vsm1[i] = sym1;
         }
         smbls.push_back(vsm0);
-        for (int i = 2; i < Console::GetWindowHeight(); i++)
+        for (int i = 2; i < height; i++)
         {
             smbls.push_back(vsm1);
         }
@@ -39,7 +45,7 @@ int main() {
 
         array<long unsigned int,2> out = Console::FillScreen(smbls);
 
-        cout << Console::GetWindowWidth() << ' ' << Console::GetWindowHeight() << '|' << vsm1.size() << ' ' << smbls.size() << '\n';
+        cout << width << ' ' << height << '|' << vsm1.size() << ' ' << smbls.size() << '\n';
 
         
 

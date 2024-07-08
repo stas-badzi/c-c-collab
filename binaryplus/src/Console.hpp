@@ -21,8 +21,12 @@ namespace cpp {
             void background(char val);
 
             Symbol(void);
+            Symbol(const Symbol &cp);
             Symbol(wchar_t character, char foreground = 7, char background = 0);
             ~Symbol();
+
+            Symbol operator=(const Symbol &src);
+
             void* Get();
 
             #ifdef _WIN32
@@ -38,6 +42,6 @@ namespace cpp {
         static void Init(void);
         static int GetWindowWidth(void);
         static int GetWindowHeight(void);
-        static std::array<unsigned long,2> FillScreen(std::vector<std::vector<void*>> symbols);
+        static std::array<unsigned long,2> FillScreen(std::vector<std::vector<Symbol>> symbols);
     };
 }
