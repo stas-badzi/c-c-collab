@@ -13,9 +13,9 @@ cdebug = 1
 
 #******** c++ binary config *****
 #> source files
-binsources = main.cpp Console.cpp
+binsources = main.cpp Console.cpp FileSystem.cpp
 #> header files
-binheaders = dllimport.hpp Console.hpp
+binheaders = dllimport.hpp Console.hpp FileSystem.hpp
 #> include files
 binincludes = dynamic_library.h
 #> name the binary file

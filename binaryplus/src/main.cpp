@@ -1,4 +1,5 @@
 #include "Console.hpp"
+#include "FileSystem.hpp"
 
 #include <iostream>
 #include <vector>
@@ -7,7 +8,7 @@
 
 
 using namespace cpp;
-
+using namespace cs;
 using namespace std;
 
 int main() {
@@ -16,6 +17,11 @@ int main() {
 
     Console::Symbol sym0(L'#');
     Console::Symbol sym1(L' ');
+
+    while (true) {
+        wcout << FileSystem::ImportText(L"text.log")[0];
+    }
+    
    
     while (true) {
         //wcin >> sym.character;

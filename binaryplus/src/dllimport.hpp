@@ -37,3 +37,11 @@ namespace cppimp {
 
     libimport void* Console_Symbol_operator$eq(void* cp, void* src);
 } // namespace cppimp
+
+namespace csimp {
+    libimport wchar_t* FileSystem_ImportText(const wchar_t* file);
+    
+    libimport void FileSystem_ExportText(char* file, char* content);
+
+} // namespace csimp
+
