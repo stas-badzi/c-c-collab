@@ -13,10 +13,13 @@ namespace Cs
             {
                 StreamReader sr = new StreamReader(str_file);
                 line = sr.ReadLine();
-                result = "";
-                while (line != null) {
-                    result = $"{result}{line}\n";
+                if (line != null) {
+                    result = line;
                     line = sr.ReadLine();
+                    while (line != null) {
+                        result = $"{result}\n{line}";
+                        line = sr.ReadLine();
+                    }
                 }
                 sr.Close();
             }
@@ -24,6 +27,7 @@ namespace Cs
             {
                 Environment.FailFast($"Unhandled exception at Cs.FileSystem.ImportText (FileSystem.cs:15): " + e.Message);
             }
+            
             return result;
         }
         

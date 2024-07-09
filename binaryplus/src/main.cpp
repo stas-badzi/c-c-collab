@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <string>
 #include <windows.h>
 
 
@@ -12,16 +13,29 @@ using namespace cs;
 using namespace std;
 
 int main() {
+    wstring filename = L"boo.dat";
+    while (true) {
+        system("cls");
+        vector<wstring> file = FileSystem::ImportText(filename);
+        for (size_t i = 0; i < file.size(); i++) {
+            wcout << file[i] << L'\n';
+        }
+        wcout << L"\nOverwrite file? [Y]\n\t";
+        wchar_t del;
+        wcin >> del;
+        vector<wstring> out;
+        if (del != L'Y' && del != L'y') {
+            out = file;
+        }
+        out.push_back(wstring());
+        wcin >> out.back();
+        FileSystem::ExportText(filename,out);
+    }
 
     Console::Init();
 
     Console::Symbol sym0(L'#');
     Console::Symbol sym1(L' ');
-
-    while (true) {
-        wcout << FileSystem::ImportText(L"text.log")[0];
-    }
-    
    
     while (true) {
         //wcin >> sym.character;
