@@ -95,10 +95,10 @@ namespace CppImp {
         public static extern IntPtr FillScreen(IntPtr symbols, int height, int width);
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_GetWindowWidth")]
-        public static extern int GetWindowWidth();
+        public static extern short GetWindowWidth();
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_GetWindowHeight")]
-        public static extern int GetWindowHeight();
+        public static extern short GetWindowHeight();
 
         public struct Symbol {
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_Constuct$smb")]

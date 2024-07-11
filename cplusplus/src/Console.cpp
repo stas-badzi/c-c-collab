@@ -16,14 +16,14 @@ using namespace cpp;
         }
     }    
 
-    int cpp::Console::GetWindowWidth(void) {
+    short cpp::Console::GetWindowWidth(void) {
         Init();
         CONSOLE_SCREEN_BUFFER_INFO csbi;
         GetConsoleScreenBufferInfo(h_console, &csbi);
         return csbi.srWindow.Right - csbi.srWindow.Left + 1;
     }
 
-    int cpp::Console::GetWindowHeight(void) {
+    short cpp::Console::GetWindowHeight(void) {
         Init();
         CONSOLE_SCREEN_BUFFER_INFO csbi;
         GetConsoleScreenBufferInfo(h_console, &csbi);
@@ -58,17 +58,17 @@ using namespace cpp;
         return written;
     }
 
-    char Console::Symbol::GetAttribute(void) {
+    byte Console::Symbol::GetAttribute(void) {
         set_atr_vals;
         return atr_vals[this->foreground][this->background];
     }
 
-    void Console::Symbol::SetAttribute(char attribute) {
+    void Console::Symbol::SetAttribute(byte attribute) {
         this->foreground = 7;
         this->background = 0;
     }
 
-    Console::Symbol::Symbol(char attribute) {
+    Console::Symbol::Symbol(byte attribute) {
     this->character = L' ';
     this->SetAttribute(attribute);
 }
@@ -108,7 +108,7 @@ using namespace cpp;
 
 bool Console::initialised = false;
 
-Console::Symbol::Symbol(wchar_t character, char foreground, char background) {
+Console::Symbol::Symbol(wchar_t character, byte foreground, byte background) {
     this->character = character;
     this->foreground = foreground;
     this->background = background;

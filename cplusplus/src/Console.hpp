@@ -1,5 +1,6 @@
 #pragma once
 
+#include <custom_defines.h>
 #include <vector>
 #include <array>
 
@@ -18,27 +19,27 @@ namespace cpp {
         static void Init(void);
         struct Symbol {
             wchar_t character;
-            char foreground; // 0-16
-            char background; // 0-16
+            byte foreground; // 0-16
+            byte background; // 0-16
 
             Symbol(void);
 
-            Symbol(wchar_t character, char foreground = 7, char background = 0);
+            Symbol(wchar_t character, byte foreground = 7, byte background = 0);
 
-            Symbol(char attribute);
+            Symbol(byte attribute);
 
             ~Symbol(void);
 
             Symbol & operator=(const Symbol &src);
 
             #ifdef _WIN32
-                char GetAttribute(void);
-                void SetAttribute(char attribute);
+                byte GetAttribute(void);
+                void SetAttribute(byte attribute);
             #endif
 
         };
-        static int GetWindowWidth(void);
-        static int GetWindowHeight(void);
+        static short int GetWindowWidth(void);
+        static short int GetWindowHeight(void);
         static std::array<unsigned long,2> FillScreen(std::vector<std::vector<Symbol>> symbols);
 
     };

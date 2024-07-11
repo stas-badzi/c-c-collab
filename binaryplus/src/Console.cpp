@@ -32,11 +32,11 @@ array<unsigned long,2> cpp::Console::FillScreen(vector<vector<cpp::Console::Symb
     return out;
 }
 
-int cpp::Console::GetWindowWidth(void) {
+short int cpp::Console::GetWindowWidth(void) {
     return Console_GetWindowWidth();
 }
 
-int cpp::Console::GetWindowHeight(void) {
+short int cpp::Console::GetWindowHeight(void) {
     return Console_GetWindowHeight();
 }
 
@@ -48,7 +48,7 @@ cpp::Console::Symbol::Symbol(const Symbol &cp) {
     symbol = Console_Symbol_Constuct$smb(cp.symbol);
 }
 
-cpp::Console::Symbol::Symbol(wchar_t character, char foreground, char background) {
+cpp::Console::Symbol::Symbol(wchar_t character, byte foreground, byte background) {
     symbol = Console_Symbol_Constuct$cfb(character,foreground,background);
 }
 
@@ -70,19 +70,19 @@ void cpp::Console::Symbol::character(wchar_t val) {
     return Console_Symbol_character$set(symbol, val);
 }
 
-char cpp::Console::Symbol::foreground(void) {
+byte cpp::Console::Symbol::foreground(void) {
     return Console_Symbol_foreground$get(symbol);
 }
 
-void cpp::Console::Symbol::foreground(char val) {
+void cpp::Console::Symbol::foreground(byte val) {
     return Console_Symbol_foreground$set(symbol, val);
 }
 
-char cpp::Console::Symbol::background(void) {
+byte cpp::Console::Symbol::background(void) {
     return Console_Symbol_background$get(symbol);
 }
 
-void cpp::Console::Symbol::background(char val) {
+void cpp::Console::Symbol::background(byte val) {
     return Console_Symbol_background$set(symbol, val);
 }
 
@@ -91,11 +91,11 @@ void* cpp::Console::Symbol::Get() {
 }
 
 #ifdef _WIN32
-    char cpp::Console::Symbol::GetAttribute(void) {
+    byte cpp::Console::Symbol::GetAttribute(void) {
         return Console_Symbol_GetAttribute(symbol);
     }
 
-    void cpp::Console::Symbol::SetAttribute(char attribute) {
+    void cpp::Console::Symbol::SetAttribute(byte attribute) {
         return Console_Symbol_SetAttribute(symbol,attribute);
     }
 #endif
