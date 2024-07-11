@@ -30,7 +30,7 @@ filename = csharp
 #> compilation mode
 configuration = Release
 #>source code files
-files = DllExport.cs FileSystem.cs 
+files = DllExport.cs FileSystem.cs
 # *******************************
 
 #********* c# binary config *****
@@ -39,7 +39,7 @@ binfile = bs
 #>compilation mode
 binconfig = Release
 #>source code files
-binfiles = Program.cs DllImport.cs FileSystem.cs
+binfiles = Program.cs DllImport.cs FileSystem.cs CppImport.cs
 # *******************************
 
 #***** shared library config ****

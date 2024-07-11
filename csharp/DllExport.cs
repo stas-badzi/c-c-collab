@@ -1,4 +1,6 @@
+using System;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 namespace CsExp {
     public class DllHandle {
@@ -48,5 +50,4 @@ namespace CsExp {
             Cs.FileSystem.ExportText(Marshal.PtrToStringUni(path),Marshal.PtrToStringUni(content));
         }
     }
-
 }

@@ -46,4 +46,9 @@ namespace CsImp {
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_ExportText")]
         public static extern void ExportText(IntPtr pathptr, IntPtr contentptr);
     }
+
+    public class ConsoleInterop
+    {
+        private const string Dllname = @"" + DllHandle.Prefix + "cplusplus" + DllHandle.Suffix;
+    }
 }
