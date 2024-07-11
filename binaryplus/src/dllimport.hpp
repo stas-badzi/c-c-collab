@@ -9,7 +9,7 @@ namespace cppimp {
 
     libimport int Console_GetWindowHeight(void);
 
-    libimport void* Console_Symbol_Constuct$smb(void* sym);
+    libimport void* Console_Symbol_Constuct$smb(void* smb);
 
     libimport void* Console_Symbol_Constuct$cfb(wchar_t character, char foreground = 7, char background = 0);
 
