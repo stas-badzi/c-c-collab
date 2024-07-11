@@ -1,6 +1,5 @@
 #pragma once
 
-#include <custom_defines.h>
 #include <vector>
 #include <array>
 
@@ -19,22 +18,22 @@ namespace cpp {
         static void Init(void);
         struct Symbol {
             wchar_t character;
-            byte foreground; // 0-16
-            byte background; // 0-16
+            char foreground; // 0-16
+            char background; // 0-16
 
             Symbol(void);
 
-            Symbol(wchar_t character, byte foreground = 7, byte background = 0);
+            Symbol(wchar_t character, char foreground = 7, char background = 0);
 
-            Symbol(byte attribute);
+            Symbol(char attribute);
 
             ~Symbol(void);
 
             Symbol & operator=(const Symbol &src);
 
             #ifdef _WIN32
-                byte GetAttribute(void);
-                void SetAttribute(byte attribute);
+                char GetAttribute(void);
+                void SetAttribute(char attribute);
             #endif
 
         };

@@ -58,17 +58,17 @@ using namespace cpp;
         return written;
     }
 
-    byte Console::Symbol::GetAttribute(void) {
+    char Console::Symbol::GetAttribute(void) {
         set_atr_vals;
         return atr_vals[this->foreground][this->background];
     }
 
-    void Console::Symbol::SetAttribute(byte attribute) {
+    void Console::Symbol::SetAttribute(char attribute) {
         this->foreground = 7;
         this->background = 0;
     }
 
-    Console::Symbol::Symbol(byte attribute) {
+    Console::Symbol::Symbol(char attribute) {
     this->character = L' ';
     this->SetAttribute(attribute);
 }
@@ -108,7 +108,7 @@ using namespace cpp;
 
 bool Console::initialised = false;
 
-Console::Symbol::Symbol(wchar_t character, byte foreground, byte background) {
+Console::Symbol::Symbol(wchar_t character, char foreground, char background) {
     this->character = character;
     this->foreground = foreground;
     this->background = background;

@@ -37,20 +37,20 @@
         }
 
 
-        libexport void* Console_Symbol_Constuct$cfb(wchar_t character, byte foreground = 7, byte background = 0) {
+        libexport void* Console_Symbol_Constuct$cfb(wchar_t character, char foreground = 7, char background = 0) {
             return (void*) new cpp::Console::Symbol(character, foreground, background);
         }
 
         #ifdef _WIN32
-            libexport void* Console_Symbol_Constuct$atr(byte attribute) {
+            libexport void* Console_Symbol_Constuct$atr(char attribute) {
                 return (void*) new cpp::Console::Symbol(attribute);
             }
             
-            libexport void Console_Symbol_SetAttribute(cpp::Console::Symbol* smb, byte attribute) {
+            libexport void Console_Symbol_SetAttribute(cpp::Console::Symbol* smb, char attribute) {
                 smb->SetAttribute(attribute);
             }
 
-            libexport byte Console_Symbol_GetAttribute(cpp::Console::Symbol* smb) {
+            libexport char Console_Symbol_GetAttribute(cpp::Console::Symbol* smb) {
                 return smb->GetAttribute();
             }
         #endif
@@ -59,7 +59,7 @@
             smb->character = character;
         }
 
-        libexport byte Console_Symbol_character$get(cpp::Console::Symbol* smb) {
+        libexport char Console_Symbol_character$get(cpp::Console::Symbol* smb) {
             return smb->character;
         }
 
@@ -67,7 +67,7 @@
             smb->foreground = foreground;
         }
 
-        libexport byte Console_Symbol_foreground$get(cpp::Console::Symbol* smb) {
+        libexport char Console_Symbol_foreground$get(cpp::Console::Symbol* smb) {
             return smb->foreground;
         }
 
@@ -75,7 +75,7 @@
             smb->background = background;
         }
 
-        libexport byte Console_Symbol_background$get(cpp::Console::Symbol* smb) {
+        libexport char Console_Symbol_background$get(cpp::Console::Symbol* smb) {
             return smb->background;
         }
 

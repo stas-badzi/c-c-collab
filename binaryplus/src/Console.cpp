@@ -48,7 +48,7 @@ cpp::Console::Symbol::Symbol(const Symbol &cp) {
     symbol = Console_Symbol_Constuct$smb(cp.symbol);
 }
 
-cpp::Console::Symbol::Symbol(wchar_t character, byte foreground, byte background) {
+cpp::Console::Symbol::Symbol(wchar_t character, char foreground, char background) {
     symbol = Console_Symbol_Constuct$cfb(character,foreground,background);
 }
 
@@ -70,19 +70,19 @@ void cpp::Console::Symbol::character(wchar_t val) {
     return Console_Symbol_character$set(symbol, val);
 }
 
-byte cpp::Console::Symbol::foreground(void) {
+char cpp::Console::Symbol::foreground(void) {
     return Console_Symbol_foreground$get(symbol);
 }
 
-void cpp::Console::Symbol::foreground(byte val) {
+void cpp::Console::Symbol::foreground(char val) {
     return Console_Symbol_foreground$set(symbol, val);
 }
 
-byte cpp::Console::Symbol::background(void) {
+char cpp::Console::Symbol::background(void) {
     return Console_Symbol_background$get(symbol);
 }
 
-void cpp::Console::Symbol::background(byte val) {
+void cpp::Console::Symbol::background(char val) {
     return Console_Symbol_background$set(symbol, val);
 }
 
@@ -91,11 +91,11 @@ void* cpp::Console::Symbol::Get() {
 }
 
 #ifdef _WIN32
-    byte cpp::Console::Symbol::GetAttribute(void) {
+    char cpp::Console::Symbol::GetAttribute(void) {
         return Console_Symbol_GetAttribute(symbol);
     }
 
-    void cpp::Console::Symbol::SetAttribute(byte attribute) {
+    void cpp::Console::Symbol::SetAttribute(char attribute) {
         return Console_Symbol_SetAttribute(symbol,attribute);
     }
 #endif
