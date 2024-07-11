@@ -9,22 +9,43 @@ namespace Cpp
         public ulong[] FillScreen(List<List<Symbol>> symbols) {
             int height = symbols.Count();
             int width = symbols[0].Count();
-            // List[0][0].Get() List[0][1].Get() ...
-            // real functions
-            List<List<IntPtr>> list_list_smb;
 
-            // (IntPtr)(List[0].to_array) (IntPtr)(List[1].to_array) ...
-            // not real functions
+            List<List<IntPtr>> list_list_smb = new(); // Convert 2xlist_Symbol to 2xlist_IntPtr
+            for (int i = 0; i < symbols.Count(); i++)
+            {
+                for (int j = 0; j < symbols[i].Count(); j++)
+                {
+                    list_list_smb[i].Add(symbols[i][j].Get()); // list_list_smb[i] is null -> potential OutOfRangeException
+                }
+            }
+
             List<IntPtr> list_ptr_smb;
+            for (int i = 0; i < list_list_smb.Count(); i++)
+            {
+                IntPtr[] buffer = list_list_smb[i].ToArray(); // jeszcze nie działa
+                unsafe
+                {
+                fixed (IntPtr* p = buffer)
+                {
+                    IntPtr ptr = (IntPtr)p;
+                    // wtf jakas funkcja turecka
+                }
+                }
+                // |
+                // V
+                // list_ptr_smb.Add((IntPtr) list_list_smb[i].to_array);
+            }
             
-            // (IntPtr)(List.to_array)
-            // same as above
             IntPtr ptr_ptr_smb = new IntPtr();
 
-            IntPtr ulongints = CppImp.Console.FillScreen(ptr_ptr_smb, symbols.Count(), symbols[0].Count());
+            // ptr_ptr_smb = (IntPtr) list_ptr_smb.to_array;
+
+            IntPtr ulongints = CppImp.Console.FillScreen(ptr_ptr_smb, symbols.Count(), symbols[0].Count()); // Does the work itself
             
-            // (IntPtr to array, from index 0 to 1 {size 2})
+            // ulongints -> ulongs
             ulong[] ulongs = new ulong[2];
+
+            // ???
 
             return ulongs;
         }
