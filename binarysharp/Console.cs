@@ -7,43 +7,37 @@ namespace Cpp
     class Console
     {
         public ulong[] FillScreen(List<List<Symbol>> symbols) {
+            int ptrsize = Marshal.SizeOf(typeof(IntPtr));
+            int ulngsize = Marshal.SizeOf(typeof(ulong));
             int height = symbols.Count();
             int width = symbols[0].Count();
 
-            List<List<IntPtr>> list_list_smb = new(); // Convert 2xlist_Symbol to 2xlist_IntPtr
-            for (int i = 0; i < symbols.Count(); i++)
+            List<IntPtr> list_ptr = new List<List<IntPtr>>(); // Convert 2xlist_Symbol to 2xlist_IntPtr
+            for (int i = 0; i < height; i++)
             {
-                for (int j = 0; j < symbols[i].Count(); j++)
+                list_ptr.Add(Marshal.AllocHGlobal(width));
+                for (int j = 0; j < width; j++)
                 {
-                    list_list_smb[i].Add(symbols[i][j].Get()); // list_list_smb[i] is null -> potential OutOfRangeException
+                    IntPtr elem = Add(list,j);
+                    Marshal.ReadIntPtr()
                 }
+                list_ptr.Add(list);
             }
 
-            List<IntPtr> list_ptr_smb;
-            for (int i = 0; i < list_list_smb.Count(); i++)
-            {
-                IntPtr[] buffer = list_list_smb[i].ToArray(); // jeszcze nie działa
-                unsafe
-                {
-                fixed (IntPtr* p = buffer)
-                {
-                    IntPtr ptr = (IntPtr)p;
-                    // wtf jakas funkcja turecka
-                }
-                }
-                // |
-                // V
-                // list_ptr_smb.Add((IntPtr) list_list_smb[i].to_array);
-            }
             
             IntPtr ptr_ptr_smb = new IntPtr();
 
             // ptr_ptr_smb = (IntPtr) list_ptr_smb.to_array;
 
-            IntPtr ulongints = CppImp.Console.FillScreen(ptr_ptr_smb, symbols.Count(), symbols[0].Count()); // Does the work itself
+            IntPtr ulongints = CppImp.Console.FillScreen(ptr_ptr_smb, height, width); // Does the work itself
+
+            Marshal.FreeHGlobal(ptr_ptr_smb);
             
             // ulongints -> ulongs
             ulong[] ulongs = new ulong[2];
+
+            ulongs[0] = Marshal.ReadIntPtr(ulongints, 0);
+            ulongs[1] = Marshal.ReadIntPtr(ulongints, ulngsize);
 
             // ???
 
