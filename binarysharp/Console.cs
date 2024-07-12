@@ -15,29 +15,36 @@ namespace Cpp
             List<IntPtr> list_ptr = new List<List<IntPtr>>(); // Convert 2xlist_Symbol to 2xlist_IntPtr
             for (int i = 0; i < height; i++)
             {
-                list_ptr.Add(Marshal.AllocHGlobal(width));
+                list_ptr.Add(Marshal.AllocHGlobal(width * ptrsize));
                 for (int j = 0; j < width; j++)
                 {
-                    IntPtr elem = Add(list,j);
-                    Marshal.ReadIntPtr()
+                    Marshal.WriteIntPtr(list_prt[i], j * ptrsize, symbols[i][j].Get());
                 }
-                list_ptr.Add(list);
             }
 
+            IntPtr ptr_smb = Marshal.AllocHGlobal(height * ptrsize);
             
-            IntPtr ptr_ptr_smb = new IntPtr();
+            for (int i = 0; i < height; i++)
+            {
+                Marshal.WriteIntPtr(ptr_smb, i * ptrsize, list_ptr[i]);
+            }
 
             // ptr_ptr_smb = (IntPtr) list_ptr_smb.to_array;
 
-            IntPtr ulongints = CppImp.Console.FillScreen(ptr_ptr_smb, height, width); // Does the work itself
+            IntPtr ulongints = CppImp.Console.FillScreen(ptr_smb, height, width); // Does the work itself
 
-            Marshal.FreeHGlobal(ptr_ptr_smb);
+            Marshal.FreeHGlobal(ptr_smb);
+
+            for (int i = 0; i < height; i++)
+            {
+                Marshal.FreeHGlobal(list_ptr[i]);
+            }
             
             // ulongints -> ulongs
             ulong[] ulongs = new ulong[2];
 
-            ulongs[0] = Marshal.ReadIntPtr(ulongints, 0);
-            ulongs[1] = Marshal.ReadIntPtr(ulongints, ulngsize);
+            ulongs[0] = Marshal.ReadInt64(ulongints, 0);
+            ulongs[1] = Marshal.ReadInt64(ulongints, ulngsize);
 
             // ???
 
