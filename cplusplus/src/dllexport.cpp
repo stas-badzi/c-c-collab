@@ -32,17 +32,17 @@
     }
 
     // Symbol
-        libexport void* Console_Symbol_Constuct$smb(cpp::Console::Symbol* src) {
+        libexport void* Console_Symbol_Construct$smb(cpp::Console::Symbol* src) {
             return (void*) new cpp::Console::Symbol(*src);
         }
 
 
-        libexport void* Console_Symbol_Constuct$cfb(wchar_t character, char foreground = 7, char background = 0) {
+        libexport void* Console_Symbol_Construct$cfb(wchar_t character, char foreground = 7, char background = 0) {
             return (void*) new cpp::Console::Symbol(character, foreground, background);
         }
 
         #ifdef _WIN32
-            libexport void* Console_Symbol_Constuct$atr(char attribute) {
+            libexport void* Console_Symbol_Construct$atr(char attribute) {
                 return (void*) new cpp::Console::Symbol(attribute);
             }
             

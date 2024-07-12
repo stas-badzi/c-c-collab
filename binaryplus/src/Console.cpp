@@ -41,15 +41,15 @@ short int cpp::Console::GetWindowHeight(void) {
 }
 
 cpp::Console::Symbol::Symbol(void) {
-    symbol = Console_Symbol_Constuct$cfb(L' ');
+    symbol = Console_Symbol_Construct$cfb(L' ');
 }
 
 cpp::Console::Symbol::Symbol(const Symbol &cp) {
-    symbol = Console_Symbol_Constuct$smb(cp.symbol);
+    symbol = Console_Symbol_Construct$smb(cp.symbol);
 }
 
 cpp::Console::Symbol::Symbol(wchar_t character, char foreground, char background) {
-    symbol = Console_Symbol_Constuct$cfb(character,foreground,background);
+    symbol = Console_Symbol_Construct$cfb(character,foreground,background);
 }
 
 cpp::Console::Symbol::~Symbol() {

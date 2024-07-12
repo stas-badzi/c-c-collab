@@ -80,16 +80,16 @@ using namespace cpp;
         }
     }
 
-    int cpp::Console::GetWindowWidth(void) {
+    short cpp::Console::GetWindowWidth(void) {
         return 10;
     }
 
-    int cpp::Console::GetWindowHeight(void) {
+    short cpp::Console::GetWindowHeight(void) {
         return 5;
     }
 
     array<unsigned long,2> Console::FillScreen(vector<vector<Console::Symbol>> symbols) {
-        system("cls");
+        system("clear");
         for (size_t i = 0; i < symbols.size(); i++) {
             for (size_t j = 0; j < symbols[0].size(); j++) {
                 wcout << symbols[i][j].character;

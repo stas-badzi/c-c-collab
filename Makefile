@@ -39,7 +39,7 @@ binfile = bs
 #>compilation mode
 binconfig = Release
 #>source code files
-binfiles = Program.cs DllImport.cs FileSystem.cs CppImport.cs
+binfiles = Program.cs DllImport.cs FileSystem.cs Console.cs
 # *******************************
 
 #***** shared library config ****
@@ -151,7 +151,9 @@ ifeq ($(genwin),1)
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 libdir = $(symcyglib)
 else
+ifeq ($(findstring NT, $(shell uname -s)),NT)
 libdir = $(symsyslib)
+endif
 endif
 endif
 

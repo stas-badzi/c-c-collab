@@ -101,13 +101,13 @@ namespace CppImp {
         public static extern short GetWindowHeight();
 
         public struct Symbol {
-            [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_Constuct$smb")]
+            [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_Construct$smb")]
             public static extern IntPtr Construct(IntPtr smb);
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_Construct$cfb")]
             public static extern IntPtr Construct(char character, byte foreground = 7, byte background = 0);
 
         #if _WIN32
-            [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_Constuct$atr")]
+            [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_Construct$atr")]
             public static extern IntPtr Construct(byte attribute);
 
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_SetAttribute")]

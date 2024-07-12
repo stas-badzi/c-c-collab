@@ -6,9 +6,9 @@ namespace Cpp
 {
     class Console
     {
-        public ulong[] FillScreen(List<List<Symbol>> symbols) {
-            int ptrsize = Marshal.SizeOf(typeof(IntPtr));
-            int ulngsize = Marshal.SizeOf(typeof(ulong));
+        public static ulong[] FillScreen(List<List<Symbol>> symbols) {
+            int ptrsize = IntPtr.Size;
+            int ulngsize = sizeof(ulong);
             int height = symbols.Count();
             int width = symbols[0].Count();
 
@@ -43,19 +43,19 @@ namespace Cpp
             // ulongints -> ulongs
             ulong[] ulongs = new ulong[2];
 
-            ulongs[0] = Marshal.ReadInt64(ulongints, 0);
-            ulongs[1] = Marshal.ReadInt64(ulongints, ulngsize);
+            ulongs[0] = Convert.ToUInt64(Marshal.ReadInt32(ulongints, 0) + 2147483648);
+            ulongs[1] = Convert.ToUInt64(Marshal.ReadInt32(ulongints, ulngsize) + 2147483648);
 
             // ???
 
             return ulongs;
         }
 
-        public short GetWindowWidth() {
+        public static short GetWindowWidth() {
             return CppImp.Console.GetWindowWidth();
         }
 
-        public short GetWindowHeight() {
+        public static short GetWindowHeight() {
             return CppImp.Console.GetWindowHeight();
         }
 
