@@ -32,11 +32,13 @@
 *.app
 *.apk
 
-#vs
+#vs vscode consulo ...
 *.vs*
 *.vscode*
 *.code-workspace
 *.sln
+*.xml
+
 
 #generated code
 *.pdb
