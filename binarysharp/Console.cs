@@ -12,13 +12,13 @@ namespace Cpp
             int height = symbols.Count();
             int width = symbols[0].Count();
 
-            List<IntPtr> list_ptr = new List<List<IntPtr>>(); // Convert 2xlist_Symbol to 2xlist_IntPtr
+            List<IntPtr> list_ptr = new List<IntPtr>(); // Convert 2xlist_Symbol to 2xlist_IntPtr
             for (int i = 0; i < height; i++)
             {
                 list_ptr.Add(Marshal.AllocHGlobal(width * ptrsize));
                 for (int j = 0; j < width; j++)
                 {
-                    Marshal.WriteIntPtr(list_prt[i], j * ptrsize, symbols[i][j].Get());
+                    Marshal.WriteIntPtr(list_ptr[i], j * ptrsize, symbols[i][j].Get());
                 }
             }
 
