@@ -21,9 +21,9 @@ jobs:
           C:/msys64/mingw64.exe make >> C:\out.log
       - name: output
         run: |
-        cd C:\
-        ls
-        type C:\out.log
+          cd C:\
+          ls
+          type C:\out.log
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
