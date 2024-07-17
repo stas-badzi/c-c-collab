@@ -11,7 +11,7 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v3
       - name: Install Programs
-        run: choco install gsudo && echo $PATH && choco list && cd C:\tools\gsudo && ls && C:\msys64\mingw64.exe export PATH=/c/tools/gsudo/Latest:$PATH && C:\msys64\mingw64.exe echo $PATH
+        run: choco install gsudo && echo $PATH && choco list && cd C:\tools\gsudo\Latest && ls && C:\msys64\mingw64.exe export PATH=/c/tools/gsudo/Latest:$PATH && C:\msys64\mingw64.exe echo $PATH
       - name: Compile code
         run: make
       - name: Upload C++ binaries
