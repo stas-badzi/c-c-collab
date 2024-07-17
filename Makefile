@@ -290,16 +290,18 @@ ifeq ($(shell echo "check_quotes"),"check_quotes")
 ifeq ($(copylibs),1)
 	@$(admin) copy cplusplus\bin\$(dllname) $(libdir)
 else
-	@copy cplusplus\bin\$(dllname) binarysharp\bin\exe
 	@copy cplusplus\bin\$(dllname) binaryplus\bin
+	@copy cplusplus\bin\$(dllname) binarysharp\bin\exe
+	@copy cplusplus\bin\$(dllname) csharp\bin\lib
 endif
 else
 #other
 ifeq ($(copylibs),1)
 	@$(admin) cp cplusplus/bin/$(dllname) $(libdir)
 else
-	@cp cplusplus/bin/$(dllname) binarysharp/bin/exe
 	@cp cplusplus/bin/$(dllname) binaryplus/bin
+	@cp cplusplus/bin/$(dllname) binarysharp/bin/exe
+	@cp cplusplus/bin/$(dllname) csharp/bin/lib
 endif
 endif
 
@@ -316,6 +318,7 @@ ifeq ($(copylibs),1)
 else
 	@copy csharp\bin\lib\$(libname) binarysharp\bin\exe
 	@copy csharp\bin\lib\$(libname) binaryplus\bin
+	@copy csharp\bin\lib\$(libname) cplusplus\bin
 endif
 else
 	@cd csharp/bin/$(configuration)/net8.0/$(os_name)/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
@@ -325,6 +328,7 @@ ifeq ($(copylibs),1)
 else
 	@cp csharp/bin/lib/$(libname) binarysharp/bin/exe
 	@cp csharp/bin/lib/$(libname) binaryplus/bin
+	@cp csharp/bin/lib/$(libname) cplusplus/bin
 endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
