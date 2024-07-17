@@ -10,23 +10,11 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-      - name: Setup MSYS2
-        uses: msys2/setup-msys2@v2
-      - name: Install Programs
-        run: |
-          choco install gsudo
-          setx /M PATH "%PATH%;C:\tools\gsudo\Current"
-          msys2 -c "echo 'export PATH=/c/tools/gsudo/Current:$PATH' >> ~/.bashrc"
           
 
       - name: Compile code
         run: |
-          make
-      - name: output
-        run: |
-          cd D:\
-          dir
-          type D:\out.log
+          make release sudo=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:

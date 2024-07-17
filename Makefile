@@ -49,8 +49,6 @@ binfiles = Program.cs DllImport.cs FileSystem.cs Console.cs
 # *******************************
 
 #***** shared library config ****
-#> do copy shred libraries
-copylibs = 1
 #> linux shared library path
 linuxlib = /usr/lib
 #> macos shared library path
@@ -68,6 +66,12 @@ symcyglib = /cygdrive/c/Windows
 #>msys2(mingw) path to windows
 symsyslib = /c/Windows
 #*********************************
+
+ifeq ($(sudo),1) 
+copylibs = 1
+else
+copylibs = 0
+endif
 
 ifeq ($(cdebug),1)
 cdb = -g
