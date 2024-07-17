@@ -12,16 +12,13 @@ jobs:
         uses: actions/checkout@v4
       - name: Install Programs
         run: |
-          C:/msys64/mingw64.exe pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain > D:\out.log
-          cat D:\out.log
-          C:/msys64/mingw64.exe pacman -S sudo > D:\out.log
-          cat D:\out.log
+          C:/msys64/mingw64.exe pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain 
+          C:/msys64/mingw64.exe pacman -S sudo
           
 
       - name: Compile code
         run: |
-          C:/msys64/mingw64.exe make > D:\out.log
-          cat D:\out.log
+          make
       - name: output
         run: |
           cd D:\
