@@ -18,7 +18,7 @@ jobs:
 
       - name: Compile code
         run: |
-          make
+          C:/msys64/mingw64.exe make
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
