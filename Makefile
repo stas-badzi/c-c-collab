@@ -1,6 +1,6 @@
 #******* release config *********
 #> release name
-release = EpicConsoleGame-Binary
+release = Consolegame
 
 #********************************
 
@@ -25,7 +25,7 @@ binheaders = dllimport.hpp Console.hpp FileSystem.hpp
 #> include files
 binincludes = dynamic_library.h
 #> name the binary file
-binname = CplusplusConsoleGame
+binname = cpp-consolegame
 #> Debug?
 bpdebug = 1
 #********************************
@@ -41,7 +41,7 @@ files = DllExport.cs FileSystem.cs
 
 #********* c# binary config *****
 #> name the binary file
-binfile = CsharpConsoleGame
+binfile = cs-consolegame
 #>compilation mode
 binconfig = Release
 #>source code files
@@ -181,8 +181,8 @@ ifeq ($(shell echo "check_quotes"),"check_quotes")
 	@copy cplusplus\bin\$(dllname) bin\cs
 	@copy csharp\bin\lib\$(libname) bin\cs
 
-	@cd bin && zip -r $(os)-C++-$(release).zip cpp
-	@cd bin && zip -r $(os)-C\#-$(release).zip cs
+	@cd bin && zip -r C++-$(release)-$(os).zip cpp
+	@cd bin && zip -r C\#-$(release)-$(os).zip cs
 else
 	@mkdir -p bin/cpp
 	@mkdir -p bin/cs
@@ -195,11 +195,11 @@ else
 	@cp csharp/bin/lib/$(libname) bin/cs
 
 ifeq ($(shell uname -s),Darwin)
-	@cd bin && tar -czvf $(os)-C++-$(release).tgz cpp
-	@cd bin && tar -czvf $(os)-C#-$(release).tgz cs
+	@cd bin && tar -czvf C++-$(release)-$(os).tgz cpp
+	@cd bin && tar -czvf C\#-$(release)-$(os).tgz cs
 else
-	@cd bin && tar -czvf $(os)-C++-$(release).tar.gz cpp
-	@cd bin && tar -czvf $(os)-C#-$(release).tar.gz cs
+	@cd bin && tar -czvf C++-$(release)-$(os).tar.gz cpp
+	@cd bin && tar -czvf C\#-$(release)-$(os).tar.gz cs
 endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
@@ -214,7 +214,7 @@ refresh:
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 	@del /f all
 	@del /f dll
-	@del /f copy
+	@del /f release
 	@del /f cs
 	@del /f csbin
 	@del /f cppbin
@@ -222,7 +222,7 @@ ifeq ($(shell echo "check_quotes"),"check_quotes")
 else
 	@rm -f all
 	@rm -f dll
-	@rm -f copy
+	@rm -f release
 	@rm -f cs
 	@rm -f csbin
 	@rm -f cppbin
