@@ -13,7 +13,7 @@ jobs:
       - name: Install Programs
         run: choco install gsudo
       - name: Compile code
-        run: gsudo make
+        run: echo $PATH && gsudo make
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
