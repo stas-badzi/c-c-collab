@@ -2,10 +2,12 @@ name: Upload Binaries
 
 on:
   push:
+    branches:
+      - main
 
 jobs:
-  build-windows:
-    name: Build program for windows
+  build-msys:
+    name: Build program using MSYS2
     runs-on: windows-latest
     steps:
       - name: Checkout source code
@@ -15,6 +17,28 @@ jobs:
       - name: Compile code
         run: |
           make release sudo=0
+      - name: Upload C++ binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: WindowsCppBin
+          path: bin/*C++*
+      - name: Upload C# binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: WindowsCsBin
+          path: bin/*C#*
+  
+  build-windows:
+    name: Build program using Windows
+    runs-on: windows-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+          
+
+      - name: Compile code
+        run: |
+          "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\*\bin\HostX86\x86\nmake.exe" release sudo=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
