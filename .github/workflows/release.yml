@@ -13,8 +13,8 @@ jobs:
       - name: Install Programs
         run: |
           choco install gsudo
-          msys64/mingw64.exe alias sudo="/c/tools/gsudo/Current/gsudo.exe"
-          msys64/mingw64.exe sudo -v > /c/out.log
+          C:/msys64/mingw64.exe alias sudo="/c/tools/gsudo/Current/gsudo.exe"
+          C:/msys64/mingw64.exe sudo -v > /c/out.log
           type C:\out.log
 
       - name: Compile code
