@@ -16,7 +16,7 @@ jobs:
         run: |
           choco install gsudo
           setx /M PATH "%PATH%;C:\tools\gsudo\Current"
-          msys -c "echo 'export PATH=/c/tools/gsudo/Current:$PATH' >> ~/.bashrc"
+          msys2 -c "echo 'export PATH=/c/tools/gsudo/Current:$PATH' >> ~/.bashrc"
           
 
       - name: Compile code
