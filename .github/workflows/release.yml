@@ -11,7 +11,7 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v3
       - name: Install Programs
-        run: choco install gsudo
+        run: choco install gsudo && export $PATH=$PATH:/c/ProgramData/chocolatey/lib/gsudo/Latest
       - name: Compile code
         run: make
       - name: Upload C++ binaries
