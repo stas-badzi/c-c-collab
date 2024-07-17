@@ -11,7 +11,7 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v3
       - name: Install Programs
-        run: winget install gsudo && alias sudo=gsudo
+        run: winget install gsudo && alias sudo=gsudo && C:\msy64\mingw64.exe alias sudo='"$PROGRAMFILES/gsudo/Current/gsudo.exe"'
       - name: Compile code
         run: make
       - name: Upload C++ binaries
