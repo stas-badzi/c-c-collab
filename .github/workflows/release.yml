@@ -12,8 +12,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Install Programs
         run: |
-          C:/msys64/mingw64.exe pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain 
-          C:/msys64/mingw64.exe pacman -S sudo
+          C:/msys64/msys2.exe pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain 
+          C:/msys64/msys2.exe pacman -S sudo
           C:/msys64/mingw64.exe sudo touch a.txt
           dir
           
