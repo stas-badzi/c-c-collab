@@ -12,13 +12,13 @@ jobs:
         uses: actions/checkout@v4
       - name: Install Programs
         run: |
-          choco install gsudo
-          C:/msys64/mingw64.exe alias sudo="/c/tools/gsudo/Current/gsudo.exe"
+          pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain
+          C:/msys64/mingw64.exe pacman -S sudo
           
 
       - name: Compile code
         run: |
-          C:/msys64/mingw64.exe hkhhk
+          make
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
