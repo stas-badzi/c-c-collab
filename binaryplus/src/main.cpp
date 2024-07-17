@@ -4,7 +4,6 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <windows.h>
 
 
 
@@ -15,7 +14,7 @@ using namespace std;
 int main() {
     wstring filename = L"boo.dat";
     while (true) {
-        system("cls");
+        //system("clear");
         vector<wstring> file = FileSystem::ImportText(filename);
         for (size_t i = 0; i < file.size(); i++) {
             wcout << file[i] << L'\n';
@@ -70,12 +69,12 @@ int main() {
         
 
 
-        SHORT state = GetKeyState('0');
-        bool down = state < 0;
-        bool toggle = (state & 1) != 0;
+        //SHORT state = GetKeyState('0');
+        //bool down = state < 0;
+        //bool toggle = (state & 1) != 0;
 
 
-        if (down) { sym0.character(L'#'); } else { sym0.character(L'@'); }
+        //if (down) { sym0.character(L'#'); } else { sym0.character(L'@'); }
     }
     return 0;
 }

@@ -43,8 +43,8 @@ namespace Cpp
             // ulongints -> ulongs
             ulong[] ulongs = new ulong[2];
 
-            ulongs[0] = Convert.ToUInt64(Marshal.ReadInt32(ulongints, 0) + 2147483648);
-            ulongs[1] = Convert.ToUInt64(Marshal.ReadInt32(ulongints, ulngsize) + 2147483648);
+            ulongs[0] = Convert.ToUInt64(Marshal.ReadInt32(ulongints, 0));
+            ulongs[1] = Convert.ToUInt64(Marshal.ReadInt32(ulongints, ulngsize));
 
             // ???
 

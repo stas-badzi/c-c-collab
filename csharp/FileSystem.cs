@@ -25,7 +25,7 @@ namespace Cs
             }
             catch (Exception e)
             {
-                Environment.FailFast($"Unhandled exception at Cs.FileSystem.ImportText (FileSystem.cs:15): " + e.Message);
+                Environment.FailFast($"Unhandled exception at Cs.FileSystem.ImportText (FileSystem.cs:12): " + e.Message);
             }
             
             return result;

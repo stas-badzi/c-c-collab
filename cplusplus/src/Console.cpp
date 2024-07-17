@@ -99,8 +99,8 @@ using namespace cpp;
         
         array<unsigned long,2> written;
 				
-		written[1] = 0;
-        written[0] = symbols.size()*symbols[0].size();
+		written[0] = symbols.size()*symbols[0].size();
+        written[1] = symbols.size()*symbols[0].size();
 
         return written;
     }

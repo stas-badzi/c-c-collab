@@ -41,6 +41,15 @@ namespace CsExp {
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_ImportText")]
         public static IntPtr ImportText(IntPtr file)
         {
+            /* <-- '/'@here
+            string str_file = new string();
+            
+            char c = '\t';
+            for (int i = 0; c != '\0'; i++)
+            {
+                c = 'a';
+            }
+            return Marshal.StringToHGlobalUni(Cs.FileSystem.ImportText(str_file));//*/
             return Marshal.StringToHGlobalUni(Cs.FileSystem.ImportText(Marshal.PtrToStringUni(file)));
         }
         // export

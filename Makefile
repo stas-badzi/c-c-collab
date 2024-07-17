@@ -1,3 +1,9 @@
+#******* release config *********
+#> release name
+release = EpicConsoleGame-Binary
+
+#********************************
+
 #******** c++ config ************
 #> source files
 sources = Console.cpp dllexport.cpp
@@ -19,7 +25,7 @@ binheaders = dllimport.hpp Console.hpp FileSystem.hpp
 #> include files
 binincludes = dynamic_library.h
 #> name the binary file
-binname = bpp
+binname = CplusplusConsoleGame
 #> Debug?
 bpdebug = 1
 #********************************
@@ -35,7 +41,7 @@ files = DllExport.cs FileSystem.cs
 
 #********* c# binary config *****
 #> name the binary file
-binfile = bs
+binfile = CsharpConsoleGame
 #>compilation mode
 binconfig = Release
 #>source code files
@@ -74,6 +80,7 @@ flib = -l$(filename)
 fsrc = $(foreach src,$(sources),../src/$(src))
 fbsrc = $(foreach bsrc,$(binsources),src/$(bsrc))
 objects = $(foreach file,$(sources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
+os = $(shell echo $$(uname -s)-$$(uname -m))
 
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 #windows
@@ -94,6 +101,7 @@ libdir = $(cygwinlib)
 admin = sudo
 #
 else
+# msys mingw and others
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys
 exec = $(shell cygpath -w /msys2.exe)
@@ -134,7 +142,7 @@ binary = app
 libdir = $(macoslib)
 #
 else
-#linux and similar
+#linux and similar[other]
 admin = sudo
 prefix = ./
 os_name = linux-x64
@@ -161,15 +169,65 @@ ifeq ($(copylibs),1)
 flibdir = $(libdir)
 endif
 
-all:
-	@$(MAKE) dll
-	@$(MAKE) cppbin
-	@$(MAKE) csbin
+release: all
+ifeq ($(shell echo "check_quotes"),"check_quotes")
+	@mkdir bin\cpp
+	@mkdir bin\cs
+	@copy binaryplus\bin\$(binname).$(binary) bin\cpp
+	@copy cplusplus\bin\$(dllname) bin\cpp
+	@copy csharp\bin\lib\$(libname) bin\cpp
 
-dll:
-	@$(MAKE) cs
-	@$(MAKE) cpp
+	@copy binarysharp\bin\exe\$(binfile).$(binary) bin\cs
+	@copy cplusplus\bin\$(dllname) bin\cs
+	@copy csharp\bin\lib\$(libname) bin\cs
 
+	@cd bin && zip -r $(os)-C++-$(release).zip cpp
+	@cd bin && zip -r $(os)-C\#-$(release).zip cs
+else
+	@mkdir -p bin/cpp
+	@mkdir -p bin/cs
+	@cp binaryplus/bin/$(binname).$(binary) bin/cpp
+	@cp cplusplus/bin/$(dllname) bin/cpp
+	@cp csharp/bin/lib/$(libname) bin/cpp
+
+	@cp binarysharp/bin/exe/$(binfile).$(binary) bin/cs
+	@cp cplusplus/bin/$(dllname) bin/cs
+	@cp csharp/bin/lib/$(libname) bin/cs
+
+ifeq ($(shell uname -s),Darwin)
+	@cd bin && tar -czvf $(os)-C++-$(release).tgz cpp
+	@cd bin && tar -czvf $(os)-C#-$(release).tgz cs
+else
+	@cd bin && tar -czvf $(os)-C++-$(release).tar.gz cpp
+	@cd bin && tar -czvf $(os)-C#-$(release).tar.gz cs
+endif
+endif
+	@echo "Version file. Remove to enable recompile" > $@
+
+all: dll cppbin csbin
+	@echo "Version file. Remove to enable recompile" > $@
+
+dll: cs cpp
+	@echo "Version file. Remove to enable recompile" > $@
+
+refresh:
+ifeq ($(shell echo "check_quotes"),"check_quotes")
+	@del /f all
+	@del /f dll
+	@del /f copy
+	@del /f cs
+	@del /f csbin
+	@del /f cppbin
+	@del /f cpp
+else
+	@rm -f all
+	@rm -f dll
+	@rm -f copy
+	@rm -f cs
+	@rm -f csbin
+	@rm -f cppbin
+	@rm -f cpp
+endif
 
 cpprun:
 	@cd binaryplus/bin && $(prefix)$(binname).$(binary)

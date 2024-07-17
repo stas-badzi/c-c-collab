@@ -32,6 +32,11 @@
 *.app
 *.apk
 
+# zipped binaries
+*.zip
+*.tgz
+*.tar.gz
+
 #vs vscode consulo ...
 *.vs*
 *.vscode*
@@ -54,6 +59,9 @@ cs
 cpp
 csbin
 cppbin
+all
+dll
+release
 
 #logs
 *.log
