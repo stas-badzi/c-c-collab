@@ -15,9 +15,6 @@ jobs:
       - name: Install Programs
         shell: msys2 {0}
         run: |
-          touch all.log
-          pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain < all.log
-          rm all.log
           pacman -S sudo
           sudo touch a.txt
           ls
