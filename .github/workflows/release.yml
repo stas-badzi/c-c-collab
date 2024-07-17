@@ -11,9 +11,14 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v3
       - name: Install Programs
-        run: choco install gsudo && gsudo make
+        run: |
+          choco install gsudo
+          msys64/mingw64.exe /c/tools/gsudo/Current/sudo.exe -v > /c/out.log
+          type C:\out.log
+
       - name: Compile code
-        run: echo $PATH
+        run: |
+          make
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
