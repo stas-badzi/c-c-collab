@@ -13,14 +13,14 @@ jobs:
       - name: Install Programs
         run: |
           C:/msys64/mingw64.exe pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain >> out.log
-          C:/msys64/mingw64.exe pacman -S sudo >> out.log
+          C:/msys64/mingw64.exe pacman -S sudo >> /usr/out.log
           
 
       - name: Compile code
         run: |
-          C:/msys64/mingw64.exe make >> out.log
+          C:/msys64/mingw64.exe make >> /usr/out.log
       - name: output
-        run: type out.log
+        run: type C:/msys2/usr/out.log
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
