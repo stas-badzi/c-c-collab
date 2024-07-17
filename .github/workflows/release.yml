@@ -12,17 +12,17 @@ jobs:
         uses: actions/checkout@v4
       - name: Install Programs
         run: |
-          mingw64 pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain >> out.log
-          mingw64 pacman -S sudo >> C:\out.log
+          C:/msys64/mingw64.exe pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain >> out.log
+          C:/msys64/mingw64.exe pacman -S sudo >> C:\out.log
           
 
       - name: Compile code
         run: |
-          mingw64 make >> C:\out.log
+          C:/msys64/mingw64.exe make >> C:\out.log
       - name: output
         run: |
           cd C:\
-          ls
+          dir
           type C:\out.log
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
