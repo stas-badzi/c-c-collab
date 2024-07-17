@@ -13,16 +13,15 @@ jobs:
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
       - name: Install Programs
-        shell: msys2 {0}
         run: |
-          pacman -S sudo
-          sudo touch a.txt
-          ls
+          choco install gsudo
+          setx /M PATH "%PATH%;C:\tools\gsudo\Current"
+          msys -c "echo 'export PATH=/c/tools/gsudo/Current:$PATH' >> ~/.bashrc"
           
 
       - name: Compile code
         run: |
-          make
+          nmake
       - name: output
         run: |
           cd D:\
