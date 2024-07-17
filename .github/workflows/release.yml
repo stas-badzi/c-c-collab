@@ -11,16 +11,16 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v3
       - name: Check uname
-        run: uname -s
+        run: echo $(uname -s)
       - name: Compile code
         run: make
       - name: Upload C++ binaries
-        uses: actions/upload-artifacts@v4
+        uses: actions/upload-artifact@v4
         with:
           name: WindowsCppBin
           path: bin/*C++*
       - name: Upload C# binaries
-        uses: actions/upload-artifacts@v4
+        uses: actions/upload-artifact@v4
         with:
           name: WindowsCsBin
           path: bin/*C#*
