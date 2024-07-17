@@ -14,12 +14,11 @@ jobs:
         run: |
           choco install gsudo
           C:/msys64/mingw64.exe alias sudo="/c/tools/gsudo/Current/gsudo.exe"
-          C:/msys64/mingw64.exe sudo -v > out.log
-          type out.log
+          
 
       - name: Compile code
         run: |
-          make
+          sudo -v
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
