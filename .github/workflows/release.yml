@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Install Programs
         run: |
-          pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain
+          C:/msys64/mingw64.exe pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain
           C:/msys64/mingw64.exe pacman -S sudo
           
 
