@@ -41,6 +41,7 @@ jobs:
         run: |
           for /f %%i in ('dir "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC" /b') do set VCTOOLSVERSION=%%i
           cd "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\%VCTOOLSVERSION%\bin\HostX86\x86"
+          dir
           nmake.exe release sudo=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
