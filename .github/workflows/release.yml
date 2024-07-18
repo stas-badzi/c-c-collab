@@ -17,7 +17,9 @@ jobs:
       - name: Install Programs
         shell: msys2 {0}
         run: |
-          pacman -S make
+          echo Y > yes.in
+          pacman -S make < yes.in
+          del yes.in
       - name: get verisons
         shell: msys2 {0}
         run: |
