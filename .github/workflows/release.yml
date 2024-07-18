@@ -64,9 +64,8 @@ jobs:
         shell: cmd
         run: |
           dir
-          make.exe -v
-          uname.exe -a
-          g++.exe -v
+          make -v
+          uname -a
       - name: Compile code
         shell: cmd
         run: |
