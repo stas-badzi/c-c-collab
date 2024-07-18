@@ -12,20 +12,26 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-          
-
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+      - name: get verisons
+        run: |
+          make -v
+          g++ -v
+          uname -a
       - name: Compile code
+        shell: msys2
         run: |
           make release sudo=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
-          name: WindowsCppBin
+          name: Msys2CppBin
           path: bin/*C++*
       - name: Upload C# binaries
         uses: actions/upload-artifact@v4
         with:
-          name: WindowsCsBin
+          name: Msys2CsBin
           path: bin/*C#*
   
   build-windows:
@@ -42,11 +48,15 @@ jobs:
           del /f make-3.81-bin.zip
           move make\bin\make.exe .
           rmdir /f make
-
+      - name: get verisons
+        run: |
+          make -v
+          g++ -v
+          uname -a
       - name: Compile code
         shell: cmd
         run: |
-          make.exe release sudo=0
+          make release sudo=0
           
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
