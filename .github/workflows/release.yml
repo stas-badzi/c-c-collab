@@ -51,10 +51,10 @@ jobs:
         shell: pwsh
         run: |
           Invoke-WebRequest -Uri "https://deac-fra.dl.sourceforge.net/project/gnuwin32/make/3.81/make-3.81-bin.zip?viasf=1" -OutFile "make-binaries.zip" -Verbose
-          Expand-Archive -Force make-binaries.zip make
+          Expand-Archive -Force make-binaries.zip make-bin
           del make-binaries.zip
           move make\bin\make.exe .
-          rmdir /s make
+          rmdir /s make-bin
       - name: get verisons
         shell: cmd
         run: |
