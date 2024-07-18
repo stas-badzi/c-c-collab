@@ -51,7 +51,6 @@ jobs:
         shell: pwsh
         run: |
           Invoke-WebRequest -Uri "https://deac-fra.dl.sourceforge.net/project/gnuwin32/make/3.81/make-3.81-bin.zip?viasf=1" -OutFile "make-binaries.zip" -Verbose
-          Get-Content -Path make-binaries.zip
           Expand-Archive -Force make-binaries.zip make
           del make-binaries.zip
           move make\bin\make.exe .
