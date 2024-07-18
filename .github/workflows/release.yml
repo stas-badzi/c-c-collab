@@ -63,8 +63,8 @@ jobs:
       - name: get verisons
         shell: cmd
         run: |
-          make -v
-          uname -a
+          make.exe -v
+          uname.exe -a
       - name: Compile code
         shell: cmd
         run: |
