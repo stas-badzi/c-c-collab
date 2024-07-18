@@ -22,12 +22,6 @@ jobs:
           (echo && echo && echo Y) > yes.in 
           pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain < yes.in
           rm yes.in
-      - name: get verisons
-        shell: msys2 {0}
-        run: |
-          make -v
-          /c/msys64/mingw64/bin/g++.exe -v
-          uname -a
       - name: Compile code
         shell: msys2 {0}
         run: |
