@@ -59,8 +59,6 @@ winlib = %SystemRoot%
 msyslib = /usr/lib
 #>cygwin shared library path
 cygwinlib = /usr/lib
-#>windows running for symulators generation
-genwin = 1
 #>cygwin path to windows
 symcyglib = /cygdrive/c/Windows
 #>msys2(mingw) path to windows
@@ -71,6 +69,12 @@ ifeq ($(sudo),1)
 copylibs = 1
 else
 copylibs = 0
+endif
+
+ifeq ($(force-win),1) 
+genwin = 1
+else
+genwin = 0
 endif
 
 ifeq ($(cdebug),1)

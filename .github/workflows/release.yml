@@ -26,7 +26,7 @@ jobs:
         shell: msys2 {0}
         run: |
           make -v
-          g++ -v
+          /c/msys64/mingw64/bin/g++.exe -v
           uname -a
       - name: Compile code
         shell: msys2 {0}
