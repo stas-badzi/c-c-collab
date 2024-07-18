@@ -43,6 +43,11 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+      - name: Install LLVM and Clang
+        uses: KyleMayes/install-llvm-action@v2
+        with:
+          version: "18.1.6"
+          env: 1
       - name: Install Programs
         shell: pwsh
         run: |
@@ -55,20 +60,19 @@ jobs:
           Expand-Archive -Force utils-binaries.zip utils-bin
           del utils-binaries.zip
           move utils-bin\bin\uname.exe .
-
-          cd "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\"
-          ls
 #          copy "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Tools\Llvm\bin\cl.exe" .
 #          ren cl.exe g++.exe
       - name: get verisons
         shell: cmd
         run: |
-          make.exe -v
-          uname.exe -a
+          set PATH=%PATH%;$pwd
+          make -v
+          uname -a
       - name: Compile code
         shell: cmd
         run: |
-          make release sudo=0
+          set PATH=%PATH%;$pwd
+          make release sudo=0 clang=1
           
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4

@@ -65,6 +65,12 @@ symcyglib = /cygdrive/c/Windows
 symsyslib = /c/Windows
 #*********************************
 
+ifeq ($(clang),1) 
+compiler = g++
+else
+compiler = clang++
+endif
+
 ifeq ($(sudo),1) 
 copylibs = 1
 else
@@ -252,36 +258,36 @@ endif
 #
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 #windows
-	@cd cplusplus/obj && g++ -c -DUNICODE $(cdb) $(fsrc) -I ../include
-	@cd cplusplus && g++ -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
+	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include
+	@cd cplusplus && $(compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
-	@cd cplusplus/obj && g++ -c -DUNICODE $(cdb) $(fsrc) -I ../include
-	@cd cplusplus && g++ -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
+	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include
+	@cd cplusplus && $(compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #mingw [ I think same as windows (?) ]
-	@cd cplusplus/obj && g++ -c -DUNICODE $(cdb) $(fsrc) -I ../include
-	@cd cplusplus && g++ -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
+	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include
+	@cd cplusplus && $(compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
 #
 else
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys [ I think same as windows (?) ]
-	@cd cplusplus/obj && g++ -c -DUNICODE $(cdb) $(fsrc) -I ../include
-	@cd cplusplus && g++ -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
+	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include
+	@cd cplusplus && $(compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
 #
 else
-	@cd cplusplus/obj && g++ -c -fpic -DUNICODE $(cdb) -fvisibility=hidden $(fsrc) -I ../include
+	@cd cplusplus/obj && $(compiler) -c -fpic -DUNICODE $(cdb) -fvisibility=hidden $(fsrc) -I ../include
 ifeq ($(shell uname -s),Darwin)
 #macos
-	@cd cplusplus && g++ -dynamiclib -o bin/lib$(name).dylib $(objects) -L$(flibdir) $(flib)
+	@cd cplusplus && $(compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) -L$(flibdir) $(flib)
 #
 else
 #linux and similar
-	@cd cplusplus && g++ -shared -o bin/lib$(name).so $(objects) -L$(flibdir) $(flib)
+	@cd cplusplus && $(compiler) -shared -o bin/lib$(name).so $(objects) -L$(flibdir) $(flib)
 endif
 endif
 endif
@@ -345,32 +351,32 @@ endif
 
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 #windows
-	@cd binaryplus && g++ $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
+	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
-	@cd binaryplus && g++ $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
+	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #mingw [ I think same as windows (?) ]
-	@cd binaryplus && g++ $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
+	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
 #
 else
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys [ I think same as windows (?) ]
-	@cd binaryplus && g++ $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
+	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
 #
 else
-#	@cd binaryplus/obj && g++ -c -fpic -DUNICODE -fvisibility=hidden $(fsrc) -I ../include
+#	@cd binaryplus/obj && $(compiler) -c -fpic -DUNICODE -fvisibility=hidden $(fsrc) -I ../include
 ifeq ($(shell uname -s),Darwin)
 #macos
-	@cd binaryplus && g++ $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
+	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
 #
 else
 #linux and similar
-	@cd binaryplus && g++ $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
+	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
 endif
 endif
 endif
