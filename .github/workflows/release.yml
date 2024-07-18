@@ -56,11 +56,12 @@ jobs:
           del utils-binaries.zip
           move utils-bin\bin\uname.exe .
 
-          echo '"C:\Program Files\Microsoft Visual Studio\2022\EnterpriseVC\Auxiliary\Build\vcvars32.bat" cl.exe' > g++.cmd
 
-          Invoke-WebRequest -Uri "http://www.equation.com/ftpdir/gcc/gcc-12.3.0-64.exe" -OutFile "gcc-binaries.exe" -Verbose
-          dir
-          gcc-binaries.exe
+          git clone git://gcc.gnu.org/git/gcc.git gcc-src
+          mkdir gcc-bin
+          mkdir gcc-obj
+          cd gcc-obj
+          CC="C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Tools\Llvm\bin\cl.exe" CXX="C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Tools\Llvm\bin\cl.exe" bash ..\gcc-src\configure --prefix=..\gcc-bin
 
       - name: get verisons
         shell: cmd
@@ -68,7 +69,7 @@ jobs:
           dir
           ./make.exe -v
           ./uname.exe -a
-          g++ -v
+          ./g++ -v
       - name: Compile code
         shell: cmd
         run: |
