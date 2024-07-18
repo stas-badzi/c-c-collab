@@ -46,6 +46,7 @@ jobs:
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v2
         with:
+          os: win64
           version: "18.1.6"
           env: 1
       - name: Install Programs
