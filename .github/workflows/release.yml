@@ -62,7 +62,7 @@ jobs:
           mkdir gcc-bin
           mkdir gcc-obj
           cd gcc-obj
-          ..\gcc-src\configure --prefix=..\gcc-bin
+          CC=cl CXX=cl ..\gcc-src\configure --prefix=..\gcc-bin
 
       - name: get verisons
         shell: cmd
