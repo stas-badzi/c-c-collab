@@ -56,8 +56,10 @@ jobs:
           del utils-binaries.zip
           move utils-bin\bin\uname.exe .
 
-          copy "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Tools\Llvm\bin\cl.exe" .
-          ren cl.exe g++.exe
+          cd "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Tools\Llvm\bin"
+          ls
+#          copy "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Tools\Llvm\bin\cl.exe" .
+#          ren cl.exe g++.exe
       - name: get verisons
         shell: cmd
         run: |
