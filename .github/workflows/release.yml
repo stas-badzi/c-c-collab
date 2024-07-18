@@ -17,8 +17,9 @@ jobs:
       - name: Install Programs
         shell: msys2 {0}
         run: |
-          echo \nY > yes.in
+          echo Y > yes.in
           pacman -S make < yes.in
+          (echo && echo && echo Y) > yes.in 
           pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain < yes.in
           rm yes.in
       - name: get verisons
