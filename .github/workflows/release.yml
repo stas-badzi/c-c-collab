@@ -49,8 +49,9 @@ jobs:
         shell: pwsh
         run: |
           Invoke-WebRequest -Uri "https://downloads.sourceforge.net/project/gnuwin32/make/3.81/make-3.81-bin.zip?ts=gAAAAABmmED3vfP-Z6dPi2gnspGbYmi-W1HZ3TzET40Wj4yjVg2mQfFjUPxQ3Zo9NzVGjYsp1bA15kKuq8loWjIeUZaNOws31w%3D%3D&use_mirror=altushost-swe&r=" -OutFile "make-binaries.zip" -Verbose
+          Get-Content -Path make-binaries.zip
           unzip make-binaries.zip make
-          del /f make-3.81-bin.zip
+          del /f make-binaries.zip
           move make\bin\make.exe .
           rmdir /f make
       - name: get verisons
