@@ -15,12 +15,13 @@ jobs:
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
       - name: get verisons
+        shell: msys2 {0}
         run: |
           make -v
           g++ -v
           uname -a
       - name: Compile code
-        shell: msys2
+        shell: msys2 {0}
         run: |
           make release sudo=0
       - name: Upload C++ binaries
@@ -41,7 +42,7 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Install Programs
-        shell: pwshs
+        shell: pwsh
         run: |
           wget -Uri "https://downloads.sourceforge.net/project/gnuwin32/make/3.81/make-3.81-bin.zip?ts=gAAAAABmmED3vfP-Z6dPi2gnspGbYmi-W1HZ3TzET40Wj4yjVg2mQfFjUPxQ3Zo9NzVGjYsp1bA15kKuq8loWjIeUZaNOws31w%3D%3D&use_mirror=altushost-swe&r=" -OutFile "make-binaries.zip" -Verbose
           unzip make-binaries.zip make
@@ -49,6 +50,7 @@ jobs:
           move make\bin\make.exe .
           rmdir /f make
       - name: get verisons
+        shell: cmd
         run: |
           make -v
           g++ -v
