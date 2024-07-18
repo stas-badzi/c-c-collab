@@ -56,15 +56,8 @@ jobs:
           del utils-binaries.zip
           move utils-bin\bin\uname.exe .
 
-
-          Invoke-WebRequest -Uri "https://github.com/gcc-mirror/gcc/archive/refs/heads/master.zip" -OutFile gcc-source.zip
-          Expand-Archive -Force gcc-source.zip make-src
-          del gcc-source.zip
-          mkdir gcc-bin
-          mkdir gcc-obj
-          cd gcc-obj
-          CC="C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Tools\Llvm\bin\cl.exe" CXX="C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Tools\Llvm\bin\cl.exe" bash ..\gcc-src\configure --prefix=..\gcc-bin
-
+          copy "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Tools\Llvm\bin\cl.exe" .
+          ren cl.exe g++.exe
       - name: get verisons
         shell: cmd
         run: |
