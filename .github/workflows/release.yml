@@ -19,7 +19,7 @@ jobs:
         run: |
           echo Y > yes.in
           pacman -S make < yes.in
-          del yes.in
+          rm yes.in
       - name: get verisons
         shell: msys2 {0}
         run: |
