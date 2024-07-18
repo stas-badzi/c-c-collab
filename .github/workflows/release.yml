@@ -56,12 +56,27 @@ jobs:
           Expand-Archive -Force make-binaries.zip make-bin
           del make-binaries.zip
           move make-bin\bin\make.exe .
+          
+          Invoke-WebRequest -Uri "https://altushost-swe.dl.sourceforge.net/project/gnuwin32/coreutils/5.3.0/coreutils-5.3.0-bin.zip?viasf=1" -OutFile "utils-binaries.zip" -Verbose
+          Expand-Archive -Force utils-binaries.zip utils-bin
+          del utils-binaries.zip
+          move utils-bin\bin\uname.exe .
+
+          echo "C:\Program Files\Microsoft Visual Studio\2022\EnterpriseVC\Auxiliary\Build\vcvars32.bat" cl.exe > g++.cmd
+
+          git clone git://gcc.gnu.org/git/gcc.git gcc-src
+          mkdir gcc-bin
+          mkdir gcc-obj
+          cd gcc-obj
+          ..\gcc-src\configure --prefix=..\gcc-bin
+
       - name: get verisons
         shell: cmd
         run: |
-          make -v
+          dir
+          ./make.exe -v
+          ./uname.exe -a
           g++ -v
-          uname -a
       - name: Compile code
         shell: cmd
         run: |
