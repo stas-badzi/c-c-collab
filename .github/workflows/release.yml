@@ -57,7 +57,9 @@ jobs:
           move utils-bin\bin\uname.exe .
 
 
-          git clone git://gcc.gnu.org/git/gcc.git gcc-src
+          Invoke-WebRequest -Uri "https://github.com/gcc-mirror/gcc/archive/refs/heads/master.zip" -OutFile gcc-source.zip
+          Expand-Archive -Force gcc-source.zip make-src
+          del gcc-source.zip
           mkdir gcc-bin
           mkdir gcc-obj
           cd gcc-obj
