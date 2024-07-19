@@ -227,9 +227,11 @@ endif
 	@echo "Version file. Remove to enable recompile" > $@
 
 all: dll cppbin csbin
+	@echo $(os)
 	@echo "Version file. Remove to enable recompile" > $@
 
 dll: cs cpp
+	@echo $(os)
 	@echo "Version file. Remove to enable recompile" > $@
 
 refresh:
@@ -258,7 +260,7 @@ csrun:
 	@cd binarysharp/bin/exe && $(prefix)$(binfile).$(binary)
 
 cpp: $(foreach src,$(sources),cplusplus/src/$(src)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
-
+	@echo $(os)
 
 ifneq ($(wildcard cs),cs)
 	@$(MAKE) cs
@@ -327,6 +329,7 @@ endif
 
 
 cs: $(foreach fl,$(files),csharp/$(fl))
+	@echo $(os)
 	@cd csharp && dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r $(os_name) -c $(configuration)
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 	@cd csharp/bin/$(configuration)/net8.0/$(os_name)/native/ && echo . > null.exp && echo . > null.lib && echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(libname)
@@ -352,7 +355,7 @@ endif
 	@echo "Version file. Remove to enable recompile" > $@
 
 cppbin: $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc))
-	
+	@echo $(os)
 ifneq ($(wildcard cpp),cpp)
 	@$(MAKE) cpp
 endif
@@ -393,6 +396,7 @@ endif
 	@echo "Version file. Remove to enable recompile" > $@
 
 csbin: $(foreach bfl,$(binfiles),binarysharp/$(bfl))
+	@echo $(os)
 	@cd binarysharp && dotnet publish -p:SelfContained=true -r $(os_name) -c $(binconfig)
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 	@cd binarysharp/bin/$(binconfig)/net8.0/$(os_name)/native/ && echo . > null.exp && echo . > null.lib && echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(binfile).$(binary)
