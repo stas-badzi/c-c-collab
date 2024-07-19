@@ -28,7 +28,7 @@ array<unsigned long,2> cpp::Console::FillScreen(vector<vector<cpp::Console::Symb
     array<unsigned long,2> out;
     out[0] = ret[0];
     out[1] = ret[1];
-    delete ret;
+    delete[] ret;
     return out;
 }
 

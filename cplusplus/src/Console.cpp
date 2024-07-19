@@ -52,8 +52,8 @@ using namespace cpp;
 		out = WriteConsoleOutputAttribute(h_console, attributes, width*height, { 0,0 }, &(written[1]) );
         if (out == 0) { exit(GetLastError()); }
         
-		delete screen;
-		delete attributes;
+		delete[] screen;
+		delete[] attributes;
 
         return written;
     }
