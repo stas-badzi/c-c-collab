@@ -52,7 +52,7 @@ jobs:
           Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/archive/refs/heads/master.zip" -OutFile "gnuwin32.zip" -Verbose
           Expand-Archive -Force gnuwin32.zip .
           del gnuwin32.zip
-          ren . gnuwin32
+          ren gnuwin32.mirror-master gnuwin32
           echo $env:PATH += ";$PWD\gnuwin32\bin" >> $PROFILE
           
           
