@@ -47,10 +47,7 @@ jobs:
         uses: egor-tensin/setup-clang@v1
       - name: Install Programs
         shell: pwsh
-        env:
-          CC: clang
-          CXX: clang++
-        run: |
+        run:
           Invoke-WebRequest -Uri "https://deac-fra.dl.sourceforge.net/project/gnuwin32/make/3.81/make-3.81-bin.zip?viasf=1" -OutFile "make-binaries.zip" -Verbose
           Expand-Archive -Force make-binaries.zip make-bin
           del make-binaries.zip
@@ -61,18 +58,19 @@ jobs:
           del utils-binaries.zip
           move utils-bin\bin\uname.exe .
           
-          
       - name: get verisons
         shell: cmd
         run: |
-          set PATH=%PATH%;$pwd
-          make -v
-          uname -a
+          .\make.exe -v
+          .\uname -a
       - name: Compile code
         shell: cmd
+        env:
+          CC: clang
+          CXX: clang++
         run: |
           set PATH=%PATH%;$pwd
-          make release sudo=0 clang=1
+          .\make.exe release sudo=0
           
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4

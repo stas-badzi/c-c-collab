@@ -5,6 +5,8 @@ release = Consolegame
 #********************************
 
 #******** c++ config ************
+#> set compiler
+compiler = g++
 #> source files
 sources = Console.cpp dllexport.cpp
 #> header files
@@ -64,12 +66,6 @@ symcyglib = /cygdrive/c/Windows
 #>msys2(mingw) path to windows
 symsyslib = /c/Windows
 #*********************************
-
-ifeq ($(clang),1) 
-compiler = g++
-else
-compiler = clang++
-endif
 
 ifeq ($(sudo),1) 
 copylibs = 1
