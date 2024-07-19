@@ -59,6 +59,7 @@ jobs:
         shell: cmd
         run: |
           set PATH="%PATH%;$PWD\gnuwin32\bin"
+          echo %PATH%
           make -v
           uname -a
       - name: Compile code
