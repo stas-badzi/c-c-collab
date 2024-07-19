@@ -90,6 +90,7 @@ jobs:
       - name: get verisons
         shell: cmd
         run: |
+          echo "check quotes"
           .\make.exe -v
           .\uname.exe -a
       - name: Compile code
