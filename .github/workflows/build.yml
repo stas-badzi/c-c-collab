@@ -85,6 +85,7 @@ jobs:
           del gnuwin32.zip
           ren gnuwin32.mirror-master gnuwin32
           copy gnuwin32\bin\* .
+          del echo.exe
           
       - name: get verisons
         shell: cmd
