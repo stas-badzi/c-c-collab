@@ -25,7 +25,7 @@ jobs:
       - name: Compile code
         shell: msys2 {0}
         run: |
-          export PATH="/c/Program Files/dotnet:$PATH"
+          export PATH="/c/Program Files/dotnet:/ucrt64/bin:$PATH"
           make release sudo=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
