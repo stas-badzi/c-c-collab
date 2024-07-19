@@ -22,10 +22,10 @@ jobs:
           (echo && echo && echo Y) > yes.in 
           pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain < yes.in
           rm yes.in
-          echo 'export PATH="/c/Program Files/dotnet:/ucrt64/bin:$PATH"' >> ~/.bashsrc
       - name: Compile code
         shell: msys2 {0}
         run: |
+          export PATH="/c/Program Files/dotnet:/ucrt64/bin:$PATH"
           make release sudo=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
@@ -53,12 +53,11 @@ jobs:
           Expand-Archive -Force gnuwin32.zip .
           del gnuwin32.zip
           ren gnuwin32.mirror-master gnuwin32
-          Write "$env:PATH += `";$PWD\gnuwin32\bin`"" | Out-File $PROFILE -Append
-          
           
       - name: get verisons
-        shell: cmd
+        shell: pwsh
         run: |
+          $env:PATH += `";$PWD\gnuwin32\bin`"
           make -v
           uname -a
       - name: Compile code
@@ -67,8 +66,8 @@ jobs:
           CC: clang
           CXX: clang++
         run: |
-          set PATH=%PATH%;$pwd
-          .\make.exe release sudo=0
+          set PATH="%PATH%;$PWD\gnuwin32\bin"
+          make release sudo=0
           
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
