@@ -23,8 +23,9 @@ jobs:
           pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain < yes.in
           rm yes.in
       - name: Compile code
-        shell: cmd
+        shell: msys2 {0}
         run: |
+          export PATH="/c/Program Files/dotnet:$PATH"
           make release sudo=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
