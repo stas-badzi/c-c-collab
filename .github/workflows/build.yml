@@ -92,8 +92,7 @@ jobs:
         run: |
           set PATH="%PATH%;C:\Program Files\gnuwin32\bin"
           echo %PATH%
-          cd "C:\Program Files\gnuwin32\bin"
-          dir
+          cd "C:\Program Files\gnuwin32\bin" && dir
           make -v
           uname -a
       - name: Compile code
