@@ -1,4 +1,4 @@
-name: Upload Binaries
+name: Build & Upload Binaries
 
 on:
   push:
@@ -22,10 +22,10 @@ jobs:
           (echo && echo && echo Y) > yes.in 
           pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain < yes.in
           rm yes.in
+          echo 'export PATH="/c/Program Files/dotnet:/ucrt64/bin:$PATH"' > .bashsrc
       - name: Compile code
         shell: msys2 {0}
         run: |
-          export PATH="/c/Program Files/dotnet:/ucrt64/bin:$PATH"
           make release sudo=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
@@ -49,20 +49,18 @@ jobs:
       - name: Install Programs
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri "https://deac-fra.dl.sourceforge.net/project/gnuwin32/make/3.81/make-3.81-bin.zip?viasf=1" -OutFile "make-binaries.zip" -Verbose
-          Expand-Archive -Force make-binaries.zip make-bin
-          del make-binaries.zip
-          move make-bin\bin\make.exe .
-          Invoke-WebRequest -Uri "https://altushost-swe.dl.sourceforge.net/project/gnuwin32/coreutils/5.3.0/coreutils-5.3.0-bin.zip?viasf=1" -OutFile "utils-binaries.zip" -Verbose
-          Expand-Archive -Force utils-binaries.zip utils-bin
-          del utils-binaries.zip
-          move utils-bin\bin\uname.exe .
+          Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/archive/refs/heads/master.zip" -OutFile "gnuwin32.zip" -Verbose
+          Expand-Archive -Force gnuwin32.zip .
+          del gnuwin32.zip
+          ren . gnuwin32
+          echo $env:PATH += ";$PWD\gnuwin32\bin" >> $PROFILE
+          
           
       - name: get verisons
         shell: cmd
         run: |
-          .\make.exe -v
-          .\uname -a
+          make -v
+          uname -a
       - name: Compile code
         shell: cmd
         env:
