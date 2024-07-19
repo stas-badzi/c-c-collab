@@ -22,7 +22,7 @@ jobs:
           (echo && echo && echo Y) > yes.in 
           pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain < yes.in
           rm yes.in
-          echo 'export PATH="/c/Program Files/dotnet:/ucrt64/bin:$PATH"' > .bashsrc
+          echo 'export PATH="/c/Program Files/dotnet:/ucrt64/bin:$PATH"' >> ~/.bashsrc
       - name: Compile code
         shell: msys2 {0}
         run: |
