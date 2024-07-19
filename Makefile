@@ -329,7 +329,7 @@ endif
 
 
 cs: $(foreach fl,$(files),csharp/$(fl))
-	@echo $(os)
+	@echo $(os_name)
 	@cd csharp && dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r $(os_name) -c $(configuration)
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 	@cd csharp/bin/$(configuration)/net8.0/$(os_name)/native/ && echo . > null.exp && echo . > null.lib && echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(libname)
@@ -396,7 +396,7 @@ endif
 	@echo "Version file. Remove to enable recompile" > $@
 
 csbin: $(foreach bfl,$(binfiles),binarysharp/$(bfl))
-	@echo $(os)
+	@echo $(os_name)
 	@cd binarysharp && dotnet publish -p:SelfContained=true -r $(os_name) -c $(binconfig)
 ifeq ($(shell echo "check_quotes"),"check_quotes")
 	@cd binarysharp/bin/$(binconfig)/net8.0/$(os_name)/native/ && echo . > null.exp && echo . > null.lib && echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(binfile).$(binary)
