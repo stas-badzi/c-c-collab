@@ -48,12 +48,11 @@ jobs:
         uses: egor-tensin/setup-clang@v1
       - name: Install Programs
         shell: pwsh
-        run:
+        run: |
           Invoke-WebRequest -Uri "https://deac-fra.dl.sourceforge.net/project/gnuwin32/make/3.81/make-3.81-bin.zip?viasf=1" -OutFile "make-binaries.zip" -Verbose
           Expand-Archive -Force make-binaries.zip make-bin
           del make-binaries.zip
           move make-bin\bin\make.exe .
-          
           Invoke-WebRequest -Uri "https://altushost-swe.dl.sourceforge.net/project/gnuwin32/coreutils/5.3.0/coreutils-5.3.0-bin.zip?viasf=1" -OutFile "utils-binaries.zip" -Verbose
           Expand-Archive -Force utils-binaries.zip utils-bin
           del utils-binaries.zip
