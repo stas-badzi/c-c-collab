@@ -81,6 +81,8 @@ jobs:
         shell: pwsh
         run: |
           Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/archive/refs/heads/master.zip" -OutFile "gnuwin32.zip" -Verbose
+          copy gnuwin32.zip "C:\Program Files"
+          cd "C:\Program Files"
           Expand-Archive -Force gnuwin32.zip .
           del gnuwin32.zip
           ren gnuwin32.mirror-master gnuwin32
@@ -88,8 +90,7 @@ jobs:
       - name: get verisons
         shell: cmd
         run: |
-          set PATH="%PATH%;$PWD\gnuwin32\bin"
-          echo %PATH%
+          set PATH="%PATH%;C:\Program Files\gnuwin32\bin"
           make -v
           uname -a
       - name: Compile code
