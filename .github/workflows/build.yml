@@ -53,7 +53,7 @@ jobs:
           Expand-Archive -Force gnuwin32.zip .
           del gnuwin32.zip
           ren gnuwin32.mirror-master gnuwin32
-          echo $env:PATH += ";$PWD\gnuwin32\bin" >> $PROFILE
+          Write "$env:PATH += `";$PWD\gnuwin32\bin`"" | Out-File $PROFILE -Append
           
           
       - name: get verisons
