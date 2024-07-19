@@ -92,7 +92,7 @@ fbsrc = $(foreach bsrc,$(binsources),src/$(bsrc))
 objects = $(foreach file,$(sources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
 os = $(shell echo $$(uname -s)-$$(uname -m))
 
-ifeq ($(shell echo "check_quotes"),"check_quotes")
+ifeq ($(findstring indows, $(shell uname -s)),indows)
 #windows
 admin = sudo
 prefix = .\
@@ -180,7 +180,7 @@ flibdir = $(libdir)
 endif
 
 release: all
-ifeq ($(shell echo "check_quotes"),"check_quotes")
+ifeq ($(findstring indows, $(shell uname -s)),indows)
 	@mkdir bin\cpp
 	@mkdir bin\cs
 	@copy binaryplus\bin\$(binname).$(binary) bin\cpp
@@ -227,15 +227,13 @@ endif
 	@echo "Version file. Remove to enable recompile" > $@
 
 all: dll cppbin csbin
-	@echo $(os)
 	@echo "Version file. Remove to enable recompile" > $@
 
 dll: cs cpp
-	@echo $(os)
 	@echo "Version file. Remove to enable recompile" > $@
 
 refresh:
-ifeq ($(shell echo "check_quotes"),"check_quotes")
+ifeq ($(findstring indows, $(shell uname -s)),indows)
 	@del /f all
 	@del /f dll
 	@del /f release
@@ -260,13 +258,13 @@ csrun:
 	@cd binarysharp/bin/exe && $(prefix)$(binfile).$(binary)
 
 cpp: $(foreach src,$(sources),cplusplus/src/$(src)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
-	@echo $(os)
+
 
 ifneq ($(wildcard cs),cs)
 	@$(MAKE) cs
 endif
 #
-ifeq ($(shell echo "check_quotes"),"check_quotes")
+ifeq ($(findstring indows, $(shell uname -s)),indows)
 #windows
 	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include
 	@cd cplusplus && $(compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
@@ -305,7 +303,7 @@ endif
 endif
 #
 
-ifeq ($(shell echo "check_quotes"),"check_quotes")
+ifeq ($(findstring indows, $(shell uname -s)),indows)
 #windows
 ifeq ($(copylibs),1)
 	@$(admin) copy cplusplus\bin\$(dllname) $(libdir)
@@ -329,9 +327,8 @@ endif
 
 
 cs: $(foreach fl,$(files),csharp/$(fl))
-	@echo $(os_name)
 	@cd csharp && dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r $(os_name) -c $(configuration)
-ifeq ($(shell echo "check_quotes"),"check_quotes")
+ifeq ($(findstring indows, $(shell uname -s)),indows)
 	@cd csharp/bin/$(configuration)/net8.0/$(os_name)/native/ && echo . > null.exp && echo . > null.lib && echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(libname)
 	@move csharp\bin\$(configuration)\net8.0\$(os_name)\native\$(libname) csharp\bin\lib
 ifeq ($(copylibs),1)
@@ -355,12 +352,12 @@ endif
 	@echo "Version file. Remove to enable recompile" > $@
 
 cppbin: $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc))
-	@echo $(os)
+	
 ifneq ($(wildcard cpp),cpp)
 	@$(MAKE) cpp
 endif
 
-ifeq ($(shell echo "check_quotes"),"check_quotes")
+ifeq ($(findstring indows, $(shell uname -s)),indows)
 #windows
 	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
 #
@@ -396,9 +393,8 @@ endif
 	@echo "Version file. Remove to enable recompile" > $@
 
 csbin: $(foreach bfl,$(binfiles),binarysharp/$(bfl))
-	@echo $(os_name)
 	@cd binarysharp && dotnet publish -p:SelfContained=true -r $(os_name) -c $(binconfig)
-ifeq ($(shell echo "check_quotes"),"check_quotes")
+ifeq ($(findstring indows, $(shell uname -s)),indows)
 	@cd binarysharp/bin/$(binconfig)/net8.0/$(os_name)/native/ && echo . > null.exp && echo . > null.lib && echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(binfile).$(binary)
 	@copy binarysharp\bin\$(binconfig)\net8.0\$(os_name)\native\$(binfile).$(binary) binarysharp\bin\exe
 	@del binarysharp\bin\$(binconfig)\net8.0\$(os_name)\native\$(binfile).$(binary)
