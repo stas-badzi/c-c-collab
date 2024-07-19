@@ -112,3 +112,28 @@ jobs:
         with:
           name: WindowsCsBin
           path: bin/*C#*
+
+  build-ubuntu:
+    name: Build program using Ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+      - name: Install Programs
+        shell: sh
+        run: |
+          sudo apt-get install -y dotnet-sdk-8.0
+      - name: Compile code
+        shell: bash
+        run: |
+          make release sudo=0
+      - name: Upload C++ binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ubuntu2CppBin
+          path: bin/*C++*
+      - name: Upload C# binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: UbuntuCsBin
+          path: bin/*C#*
