@@ -327,7 +327,7 @@ endif
 
 
 cs: $(foreach fl,$(files),csharp/$(fl))
-	@cd csharp && dotnet publish /p:NativeLib=Shared /p:SelfContained=true -r $(os_name) -c $(configuration)
+	@cd csharp && dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r $(os_name) -c $(configuration)
 ifeq ($(findstring indows, $(shell uname -s)),indows)
 	@cd csharp/bin/$(configuration)/net8.0/$(os_name)/native/ && echo . > null.exp && echo . > null.lib && echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(libname)
 	@move csharp\bin\$(configuration)\net8.0\$(os_name)\native\$(libname) csharp\bin\lib
@@ -393,7 +393,7 @@ endif
 	@echo "Version file. Remove to enable recompile" > $@
 
 csbin: $(foreach bfl,$(binfiles),binarysharp/$(bfl))
-	@cd binarysharp && dotnet publish /p:SelfContained=true /r $(os_name) -c $(binconfig)
+	@cd binarysharp && dotnet publish -p:SelfContained=true -r $(os_name) -c $(binconfig)
 ifeq ($(findstring indows, $(shell uname -s)),indows)
 	@cd binarysharp/bin/$(binconfig)/net8.0/$(os_name)/native/ && echo . > null.exp && echo . > null.lib && echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(binfile).$(binary)
 	@copy binarysharp\bin\$(binconfig)\net8.0\$(os_name)\native\$(binfile).$(binary) binarysharp\bin\exe
