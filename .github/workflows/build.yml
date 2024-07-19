@@ -133,7 +133,7 @@ jobs:
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
-          name: Ubuntu2CppBin
+          name: UbuntuCppBin
           path: bin/*C++*
       - name: Upload C# binaries
         uses: actions/upload-artifact@v4

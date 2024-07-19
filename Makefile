@@ -191,8 +191,12 @@ ifeq ($(shell echo "check_quotes"),"check_quotes")
 	@copy cplusplus\bin\$(dllname) bin\cs
 	@copy csharp\bin\lib\$(libname) bin\cs
 
-	@cd bin && zip -r C++-$(release)-$(os).zip cpp
-	@cd bin && zip -r C\#-$(release)-$(os).zip cs
+	@ren cpp C++-$(release)-$(os)
+	@ren cs C\#-$(release)-$(os)
+
+	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)-$(os)
+	@cd bin && zip -r C\#-$(release)-$(os).zip C\#-$(release)-$(os)
+
 else
 	@mkdir -p bin/cpp
 	@mkdir -p bin/cs
@@ -203,16 +207,20 @@ else
 	@cp binarysharp/bin/exe/$(binfile).$(binary) bin/cs
 	@cp cplusplus/bin/$(dllname) bin/cs
 	@cp csharp/bin/lib/$(libname) bin/cs
+
+	@mv cpp C++-$(release)-$(os)
+	@mv cs C\#-$(release)-$(os)
+
 ifeq ($(findstring NT, $(shell uname -s)),NT)
-	@cd bin && zip -r C++-$(release)-$(os).zip cpp
-	@cd bin && zip -r C\#-$(release)-$(os).zip cs
+	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)-$(os)
+	@cd bin && zip -r C\#-$(release)-$(os).zip C\#-$(release)-$(os)
 else
 ifeq ($(shell uname -s),Darwin)
-	@cd bin && tar -czvf C++-$(release)-$(os).tgz cpp
-	@cd bin && tar -czvf C\#-$(release)-$(os).tgz cs
+	@cd bin && tar -czvf C++-$(release)-$(os).tgz C++-$(release)-$(os)
+	@cd bin && tar -czvf C\#-$(release)-$(os).tgz C\#-$(release)-$(os)
 else
-	@cd bin && tar -czvf C++-$(release)-$(os).tar.gz cpp
-	@cd bin && tar -czvf C\#-$(release)-$(os).tar.gz cs
+	@cd bin && tar -czvf C++-$(release)-$(os).tar.gz C++-$(release)-$(os)
+	@cd bin && tar -czvf C\#-$(release)-$(os).tar.gz C\#-$(release)-$(os)
 endif
 endif
 endif
