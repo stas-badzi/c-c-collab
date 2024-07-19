@@ -32,12 +32,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Msys2CppBin
-          path: bin/*C++*
+          path: bin/*C++*.zip
       - name: Upload C# binaries
         uses: actions/upload-artifact@v4
         with:
           name: Msys2CsBin
-          path: bin/*C#*
+          path: bin/*C#*.zip
 
   build-cygwin:
     name: Build program using Cygwin
@@ -62,12 +62,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Cygwin2CppBin
-          path: bin/*C++*
+          path: bin/*C++*.zip
       - name: Upload C# binaries
         uses: actions/upload-artifact@v4
         with:
           name: Cygwin2CsBin
-          path: bin/*C#*
+          path: bin/*C#*.zip
   
   build-windows:
     name: Build program using Windows
@@ -90,7 +90,7 @@ jobs:
       - name: get verisons
         shell: cmd
         run: |
-          set PATH="%PATH%;C:\Program Files\gnuwin32\bin"\
+          set PATH="%PATH%;C:\Program Files\gnuwin32\bin"
           echo %PATH%
           cd "C:\Program Files\gnuwin32\bin"
           dir
@@ -109,12 +109,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: WindowsCppBin
-          path: bin/*C++*
+          path: bin/*C++*.zip
       - name: Upload C# binaries
         uses: actions/upload-artifact@v4
         with:
           name: WindowsCsBin
-          path: bin/*C#*
+          path: bin/*C#*.zip
 
   build-ubuntu:
     name: Build program using Ubuntu
@@ -134,9 +134,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: UbuntuCppBin
-          path: bin/*C++*
+          path: bin/*C++*.tar.gz
       - name: Upload C# binaries
         uses: actions/upload-artifact@v4
         with:
           name: UbuntuCsBin
-          path: bin/*C#*
+          path: bin/*C#*.tar.gz
