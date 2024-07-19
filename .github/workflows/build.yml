@@ -56,9 +56,9 @@ jobs:
           ren gnuwin32.mirror-master gnuwin32
           
       - name: get verisons
-        shell: pwsh
+        shell: cmd
         run: |
-          $env:PATH += `";$PWD\gnuwin32\bin`"
+          set PATH="%PATH%;$PWD\gnuwin32\bin"
           make -v
           uname -a
       - name: Compile code
