@@ -203,13 +203,17 @@ else
 	@cp binarysharp/bin/exe/$(binfile).$(binary) bin/cs
 	@cp cplusplus/bin/$(dllname) bin/cs
 	@cp csharp/bin/lib/$(libname) bin/cs
-
+ifeq ($(findstring NT, $(shell uname -s)),NT)
+	@cd bin && zip -r C++-$(release)-$(os).zip cpp
+	@cd bin && zip -r C\#-$(release)-$(os).zip cs
+else
 ifeq ($(shell uname -s),Darwin)
 	@cd bin && tar -czvf C++-$(release)-$(os).tgz cpp
 	@cd bin && tar -czvf C\#-$(release)-$(os).tgz cs
 else
 	@cd bin && tar -czvf C++-$(release)-$(os).tar.gz cpp
 	@cd bin && tar -czvf C\#-$(release)-$(os).tar.gz cs
+endif
 endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
