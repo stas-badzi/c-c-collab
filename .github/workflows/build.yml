@@ -38,6 +38,36 @@ jobs:
         with:
           name: Msys2CsBin
           path: bin/*C#*
+
+  build-cygwin:
+    name: Build program using Cygwin
+    runs-on: windows-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+      - name: Set up Cygwin
+        uses: egor-tensin/setup-cygwin@v4
+          with:
+            packages: gcc-g++
+      - name: Install Programs
+        shell: C:\tools\cygwin\bin\bash.exe --login -o igncr '{0}'
+        run: |
+          make -v
+      - name: Compile code
+        shell: C:\tools\cygwin\bin\bash.exe --login -o igncr '{0}'
+        run: |
+          export PATH="/c/Program Files/dotnet:$PATH"
+          make release sudo=0
+      - name: Upload C++ binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: Msys2CppBin
+          path: bin/*C++*
+      - name: Upload C# binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: Msys2CsBin
+          path: bin/*C#*
   
   build-windows:
     name: Build program using Windows
