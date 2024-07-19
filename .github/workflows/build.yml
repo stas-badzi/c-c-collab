@@ -48,16 +48,19 @@ jobs:
       - name: Set up Cygwin
         uses: egor-tensin/setup-cygwin@v4
         with:
-          packages: gcc-g++
+          packages: gcc-g++ curl uzip zip
       - name: Install Programs
         shell: C:\tools\cygwin\bin\bash.exe --login -o igncr '{0}'
         run: |
-          ls
+          curl -o make-bin.zip "https://github.com/maweil/MakeForWindows/releases/download/v4.4.1/make-bin-win64.zip"
+          unzip make-bin.zip
+          cp make-4.4.1/dist/* .
+
       - name: Compile code
         shell: C:\tools\cygwin\bin\bash.exe --login -o igncr '{0}'
         run: |
           export PATH="/c/Program Files/dotnet:$PATH"
-          make
+          ./make.exe release sudo=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
