@@ -61,6 +61,7 @@ jobs:
         shell: C:\tools\cygwin\bin\bash.exe --login -o igncr '{0}'
         run: |
           export PATH="/c/Program Files/dotnet:$PATH"
+          ls
           ./make.exe release sudo=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
@@ -93,9 +94,7 @@ jobs:
       - name: get verisons
         shell: cmd
         run: |
-          echo "check quotes"
-          .\make.exe -v
-          .\uname.exe -a
+          g++ -v
       - name: Compile code
         shell: cmd
         env:
