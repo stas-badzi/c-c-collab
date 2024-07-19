@@ -61,12 +61,12 @@ jobs:
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
-          name: Msys2CppBin
+          name: Cygwin2CppBin
           path: bin/*C++*
       - name: Upload C# binaries
         uses: actions/upload-artifact@v4
         with:
-          name: Msys2CsBin
+          name: Cygwin2CsBin
           path: bin/*C#*
   
   build-windows:
