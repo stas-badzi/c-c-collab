@@ -191,8 +191,8 @@ ifeq ($(shell echo "check_quotes"),"check_quotes")
 	@copy cplusplus\bin\$(dllname) bin\cs
 	@copy csharp\bin\lib\$(libname) bin\cs
 
-	@ren cpp C++-$(release)-$(os)
-	@ren cs C\#-$(release)-$(os)
+	@cd bin && ren cpp C++-$(release)-$(os)
+	@cd bin && ren cs C\#-$(release)-$(os)
 
 	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)-$(os)
 	@cd bin && zip -r C\#-$(release)-$(os).zip C\#-$(release)-$(os)
@@ -208,8 +208,8 @@ else
 	@cp cplusplus/bin/$(dllname) bin/cs
 	@cp csharp/bin/lib/$(libname) bin/cs
 
-	@mv cpp C++-$(release)-$(os)
-	@mv cs C\#-$(release)-$(os)
+	@mv bin/cpp bin/C++-$(release)-$(os)
+	@mv bin/cs bin/C\#-$(release)-$(os)
 
 ifeq ($(findstring NT, $(shell uname -s)),NT)
 	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)-$(os)
