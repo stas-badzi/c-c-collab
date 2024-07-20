@@ -73,6 +73,16 @@ else
 copylibs = 0
 endif
 
+ifeq ($(findstring arm, $(shell uname -m)),arm)
+arch = arm64
+else
+ifeq ($(findstring aarch, $(shell uname -m)),aarch)
+arch = arm64
+else
+arch = x64
+endif
+endif
+
 ifeq ($(force-win),1) 
 genwin = 1
 else
@@ -96,7 +106,7 @@ ifeq ($(findstring indows, $(shell uname -s)),indows)
 #windows
 admin = sudo
 prefix = .\
-os_name = win-x64
+os_name = win-$(arch)
 dllname = "$(name).dll"
 libname = "$(filename).dll"
 binary = exe
@@ -135,7 +145,7 @@ admin = sudo
 endif
 #all unix emulators on windows
 prefix = ./
-os_name = win-x64
+os_name = win-$(arch)
 dllname = "$(name).dll"
 libname = "$(filename).dll"
 binary = exe
@@ -145,7 +155,7 @@ ifeq ($(shell uname -s),Darwin)
 #macos
 admin = sudo
 prefix = ./
-os_name = osx-x64
+os_name = osx-$(arch)
 dllname = "lib$(name).dylib"
 libname = "lib$(filename).dylib"
 binary = app
@@ -155,7 +165,7 @@ else
 #linux and similar[other]
 admin = sudo
 prefix = ./
-os_name = linux-x64
+os_name = linux-$(arch)
 libname = "lib$(filename).so"
 dllname = "lib$(name).so"
 binary = bin
