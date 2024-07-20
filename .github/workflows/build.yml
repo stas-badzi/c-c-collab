@@ -78,7 +78,7 @@ jobs:
       - name: Set up Cygwin
         uses: egor-tensin/setup-cygwin@v4
         with:
-          packages: gcc-g++
+          packages: gcc-g++ zip
       - name: Install Programs
         shell: pwsh
         run: |
