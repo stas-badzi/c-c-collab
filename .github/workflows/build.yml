@@ -88,6 +88,7 @@ jobs:
           Expand-Archive -Force make-bin.zip .
           del make-bin.zip
           copy make-4.4.1\dist\* .
+          dir
 
       - name: Compile code
         shell: C:\tools\cygwin\bin\bash.exe --login -o igncr '{0}'
@@ -95,7 +96,6 @@ jobs:
           CC: gcc
           CXX: g++
         run: |
-          ls
           .\make.exe release sudo=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
