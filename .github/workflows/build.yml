@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  compcs-windows:
+  compile-cs-windows:
     name: Compile C# for Windows
     runs-on: windows-latest
     steps:
@@ -25,6 +25,7 @@ jobs:
 
   build-msys:
     name: Build program using MSYS2
+    needs: compile-cs-windows
     runs-on: windows-latest
     steps:
       - name: Import C# compiled source code
@@ -61,6 +62,7 @@ jobs:
 
   build-cygwin:
     name: Build program using Cygwin
+    needs: compile-cs-windows
     runs-on: windows-latest
     steps:
       - name: Import C# compiled source code
@@ -99,6 +101,7 @@ jobs:
   
   build-windows:
     name: Build program using Windows
+    needs: compile-cs-windows
     runs-on: windows-latest
     steps:
       - name: Import C# compiled source code
