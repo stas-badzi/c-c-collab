@@ -96,16 +96,12 @@ jobs:
         run: |
           cd $(cygpath -u "${{ github.workspace }}")
           ./make release sudo=0
-          cd bin/C++*
-          (ldd *.bin | grep '=> not found') > ldd.log
-          awk (echo $1) ldd.log > libs
-          cat libs
-          cd ../C#*
-          (ldd *.bin | grep '=> not found') > ldd.log
+          cd bin
+          (ldd C++*/*.bin | grep '=> not found') > ldd.log
           awk (echo $1) ldd.log > libs
           cat libs
 
-          cd ../..
+          cd ..
           #rm release
           #./make release
       - name: Upload C++ binaries
@@ -188,8 +184,8 @@ jobs:
           name: UbuntuCsBin
           path: bin/*C#*.tar.gz
   
-  build-macos-arm:
-    name: Build program using arm64 MacOS
+  build-macos:
+    name: Build program using MacOS
     runs-on: macos-latest
     steps:
       - name: Checkout source code
