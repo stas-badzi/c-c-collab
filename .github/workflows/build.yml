@@ -78,7 +78,7 @@ jobs:
       - name: Set up Cygwin
         uses: egor-tensin/setup-cygwin@v4
         with:
-          packages: gcc-g++ zip
+          packages: gcc-g++ zip grep gawk
       - name: Install Programs
         shell: pwsh
         run: |
@@ -96,6 +96,18 @@ jobs:
         run: |
           cd $(cygpath -u "${{ github.workspace }}")
           ./make release sudo=0
+          cd bin/C++*
+          (ldd *.bin | grep '=> not found') > ldd.log
+          awk (echo $1) ldd.log > libs
+          cat libs
+          cd ../C#*
+          (ldd *.bin | grep '=> not found') > ldd.log
+          awk (echo $1) ldd.log > libs
+          cat libs
+
+          cd ../..
+          #rm release
+          #./make release
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -196,40 +208,43 @@ jobs:
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
-          name: MacOSArmCppBin
+          #name: MacOSArmCppBin
+          name: MacOSCppBin
           path: bin/*C++*.tgz
       - name: Upload C# binaries
         uses: actions/upload-artifact@v4
         with:
-          name: MacOSArmCsBin
+          #name: MacOSArmCsBin
+          name: MacOSCsBin
           path: bin/*C#*.tgz
   
-  build-macos-amd:
-    name: Build program using x64 MacOS
-    runs-on: macos-latest
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
-      - name: Install Programs
-        shell: sh
-        run: |
-          arch -x86_64 zsh
-          brew install --cask dotnet-sdk
-      - name: Compile code
-        shell: bash
-        env:
-          CC: gcc
-          CXX: g++
-        run: |
-          arch -x86_64 zsh
-          make release sudo=0
-      - name: Upload C++ binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: MacOSx64CppBin
-          path: bin/*C++*.tgz
-      - name: Upload C# binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: MacOSx64CsBin
-          path: bin/*C#*.tgz
+#  build-macos-amd:
+#    name: Build program using x64 MacOS
+#    runs-on: macos-latest
+#    steps:
+#      - name: Checkout source code
+#        uses: actions/checkout@v4
+#      - name: Install Programs
+#        shell: sh
+#        run: |
+#          arch -x86_64 zsh
+#          brew install --cask dotnet-sdk
+#      - name: Compile code
+#        shell: bash
+#        env:
+#          CC: gcc
+#          CXX: g++
+#        run: |
+#          arch -x86_64 zsh
+#          make release sudo=0
+#      - name: Upload C++ binaries
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: MacOSx64CppBin
+#          path: bin/*C++*.tgz
+#      - name: Upload C# binaries
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: MacOSx64CsBin
+#          path: bin/*C#*.tgz
+#
