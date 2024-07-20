@@ -94,6 +94,7 @@ jobs:
           CC: gcc
           CXX: g++
         run: |
+          pwd
           ./make release sudo=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
