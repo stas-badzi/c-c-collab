@@ -47,6 +47,9 @@ jobs:
           rm yes.in
       - name: Compile code
         shell: msys2 {0}
+        env:
+          CC: gcc
+          CXX: g++
         run: |
           export PATH="/ucrt64/bin:$PATH"
           make release sudo=0
@@ -85,8 +88,10 @@ jobs:
 
       - name: Compile code
         shell: C:\tools\cygwin\bin\bash.exe --login -o igncr '{0}'
+        env:
+          CC: gcc
+          CXX: g++
         run: |
-          ls
           make.exe release sudo=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
@@ -119,11 +124,6 @@ jobs:
           del gnuwin32.zip
           ren gnuwin32.mirror-master gnuwin32
           copy gnuwin32\bin\* .
-          
-      - name: get verisons
-        shell: cmd
-        run: |
-          clang++ -v
       - name: Compile code
         shell: cmd
         env:
@@ -155,6 +155,9 @@ jobs:
           sudo apt-get install -y dotnet-sdk-8.0
       - name: Compile code
         shell: bash
+        env:
+          CC: gcc
+          CXX: g++
         run: |
           make release sudo=0
       - name: Upload C++ binaries
@@ -180,6 +183,9 @@ jobs:
           brew install --cask dotnet-sdk
       - name: Compile code
         shell: bash
+        env:
+          CC: gcc
+          CXX: g++
         run: |
           make release sudo=0
       - name: Upload C++ binaries
