@@ -176,7 +176,7 @@ jobs:
       - name: Install Programs
         shell: sh
         run: |
-          sudo brew install --cask dotnet-sdk
+          brew install --cask dotnet-sdk
       - name: Compile code
         shell: bash
         run: |
