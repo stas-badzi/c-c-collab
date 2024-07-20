@@ -295,8 +295,8 @@ endif
 #
 ifeq ($(findstring indows, $(shell uname -s)),indows)
 #windows
-#	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
-#	@cd cplusplus && $(compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
+	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
+	@cd cplusplus && $(compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
@@ -337,9 +337,9 @@ ifeq ($(findstring indows, $(shell uname -s)),indows)
 ifeq ($(copylibs),1)
 	@$(admin) copy cplusplus\bin\$(dllname) $(libdir)
 else
-	@copy cplusplus\bin\$(dllname) binaryplus\bin
-	@copy cplusplus\bin\$(dllname) binarysharp\bin\exe
-	@copy cplusplus\bin\$(dllname) csharp\bin\lib
+#	@copy cplusplus\bin\$(dllname) binaryplus\bin
+#	@copy cplusplus\bin\$(dllname) binarysharp\bin\exe
+#	@copy cplusplus\bin\$(dllname) csharp\bin\lib
 endif
 else
 #other
