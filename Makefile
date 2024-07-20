@@ -276,25 +276,25 @@ endif
 #
 ifeq ($(findstring indows, $(shell uname -s)),indows)
 #windows
-	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include
+	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
 	@cd cplusplus && $(compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
-	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include
+	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
 	@cd cplusplus && $(compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #mingw [ I think same as windows (?) ]
-	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include
+	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
 	@cd cplusplus && $(compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
 #
 else
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys [ I think same as windows (?) ]
-	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include
+	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
 	@cd cplusplus && $(compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
 #
 else
@@ -369,32 +369,32 @@ endif
 
 ifeq ($(findstring indows, $(shell uname -s)),indows)
 #windows
-	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
+	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name) -std=c++20
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
-	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
+	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name) -std=c++20
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #mingw [ I think same as windows (?) ]
-	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
+	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name) -std=c++20
 #
 else
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys [ I think same as windows (?) ]
-	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
+	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name) -std=c++20
 #
 else
 #	@cd binaryplus/obj && $(compiler) -c -fpic -DUNICODE -fvisibility=hidden $(fsrc) -I ../include
 ifeq ($(shell uname -s),Darwin)
 #macos
-	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
+	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name) -std=c++20
 #
 else
 #linux and similar
-	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name)
+	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name) -std=c++20
 endif
 endif
 endif
