@@ -135,7 +135,7 @@ jobs:
           CC: clang
           CXX: clang++
         run: |
-          make.exe release sudo=0
+          .\make.exe release sudo=0
           
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
