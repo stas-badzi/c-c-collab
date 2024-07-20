@@ -197,9 +197,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: MacOSCppBin
-          path: bin/*C++*.tar.gz
+          path: bin/*C++*.tgz
       - name: Upload C# binaries
         uses: actions/upload-artifact@v4
         with:
           name: MacOSCsBin
-          path: bin/*C#*.tar.gz
+          path: bin/*C#*.tgz
