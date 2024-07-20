@@ -295,8 +295,8 @@ endif
 #
 ifeq ($(findstring indows, $(shell uname -s)),indows)
 #windows
-	@echo "Windows\n\n\n\n"
-	@cd cplusplus && $(compiler) -shared -o bin/$(name).dll -DUNICODE $(cdb) $(wfsrc) -I include -std=c++20 -L$(flibdir) $(flib)
+	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
+	@cd cplusplus && $(compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
