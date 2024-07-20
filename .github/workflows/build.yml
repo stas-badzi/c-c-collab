@@ -177,6 +177,8 @@ jobs:
         shell: sh
         run: |
           brew install --cask dotnet-sdk
+          env /usr/bin/arch -x86_64 /bin/zsh —-login
+          arch
       - name: Compile code
         shell: bash
         run: |
