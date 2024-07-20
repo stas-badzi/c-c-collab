@@ -80,9 +80,11 @@ jobs:
           Invoke-WebRequest -Uri "https://github.com/maweil/MakeForWindows/releases/download/v4.4.1/make-bin-win64.zip" -OutFile "make-bin.zip" -Verbose
           Expand-Archive -Force make-bin.zip .
           del make-bin.zip
-          ls -lR
+          cd make-4.4.1\dist
+          ls
+          cd ..\..
           copy make-4.4.1\dist\* .
-          ls -lR
+          ls
 
       - name: Compile code
         shell: C:\tools\cygwin\bin\bash.exe --login -o igncr '{0}'
@@ -119,7 +121,7 @@ jobs:
           del gnuwin32.zip
           ren gnuwin32.mirror-master gnuwin32
           copy gnuwin32\bin\* .
-          ls -lR
+          dir
           
       - name: get verisons
         shell: cmd
