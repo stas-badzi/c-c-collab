@@ -6,12 +6,32 @@ on:
       - main
 
 jobs:
-  build-msys:
-    name: Build program using MSYS2
+  compcs-windows:
+    name: Compile C# for Windows
     runs-on: windows-latest
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+      - name: Compile c#
+        shell: cmd
+        run: |
+          make cs sudo=0
+          make csbin sudo=0
+      - name: Export binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: DotNetBinaries
+          path: .
+
+  build-msys:
+    name: Build program using MSYS2
+    runs-on: windows-latest
+    steps:
+      - name: Import C# compiled source code
+        uses: actions/download-artifact@v4
+        with:
+          name: DotNetBinaries
+          path: .
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
       - name: Install Programs
@@ -43,8 +63,11 @@ jobs:
     name: Build program using Cygwin
     runs-on: windows-latest
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
+      - name: Import C# compiled source code
+        uses: actions/download-artifact@v4
+        with:
+          name: DotNetBinaries
+          path: .
       - name: Set up Cygwin
         uses: egor-tensin/setup-cygwin@v4
         with:
@@ -66,20 +89,23 @@ jobs:
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
-          name: Cygwin2CppBin
+          name: CygwinCppBin
           path: bin/*C++*.zip
       - name: Upload C# binaries
         uses: actions/upload-artifact@v4
         with:
-          name: Cygwin2CsBin
+          name: CygwinCsBin
           path: bin/*C#*.zip
   
   build-windows:
     name: Build program using Windows
     runs-on: windows-latest
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
+      - name: Import C# compiled source code
+        uses: actions/download-artifact@v4
+        with:
+          name: DotNetBinaries
+          path: .
       - name: Set up Clang
         uses: egor-tensin/setup-clang@v1
       - name: Install Programs
