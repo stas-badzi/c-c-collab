@@ -43,6 +43,6 @@ namespace cpp {
         static void Init(void);
         static short int GetWindowWidth(void);
         static short int GetWindowHeight(void);
-        static std::array<unsigned long,2> FillScreen(std::vector<std::vector<Symbol>> symbols);
+        static std::array<unsigned long,2> FillScreen(std::vector<std::vector<Symbol> > symbols);
     };
 }

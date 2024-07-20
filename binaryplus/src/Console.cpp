@@ -11,7 +11,7 @@ void cpp::Console::Init(void) {
     cppimp::Console_Init();
 }
 
-array<unsigned long,2> cpp::Console::FillScreen(vector<vector<cpp::Console::Symbol>> symbols) {
+array<unsigned long,2> cpp::Console::FillScreen(vector<vector<cpp::Console::Symbol> > symbols) {
 
     void*** voidsyms = new void**[symbols.size()];
 

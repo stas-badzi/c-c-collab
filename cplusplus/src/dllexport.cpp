@@ -8,7 +8,7 @@
     }
 
     libexport unsigned long int* Console_FillScreen$ret2(cpp::Console::Symbol*** symbols, int height, int width) {
-        std::vector<std::vector<cpp::Console::Symbol>> vecsyms;
+        std::vector<std::vector<cpp::Console::Symbol> > vecsyms;
         for (int i = 0; i < height; i++) {
             std::vector<cpp::Console::Symbol> vecdsym;
             for (int j = 0; j < width; j++) {

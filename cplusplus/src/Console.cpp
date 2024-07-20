@@ -30,7 +30,7 @@ using namespace cpp;
         return csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
     }
 
-    array<unsigned long, 2> Console::FillScreen(vector<vector<Symbol>> symbols) {
+    array<unsigned long, 2> Console::FillScreen(vector<vector<Symbol> > symbols) {
         Init();
 
         const size_t height = symbols.size();
@@ -88,7 +88,7 @@ using namespace cpp;
         return 5;
     }
 
-    array<unsigned long,2> Console::FillScreen(vector<vector<Console::Symbol>> symbols) {
+    array<unsigned long,2> Console::FillScreen(vector<vector<Console::Symbol> > symbols) {
         system("clear");
         for (size_t i = 0; i < symbols.size(); i++) {
             for (size_t j = 0; j < symbols[0].size(); j++) {

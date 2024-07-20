@@ -41,7 +41,7 @@ int main() {
 
         const Console::Symbol csym0 = sym0;
 
-        vector<vector<Console::Symbol>> smbls;
+        vector<vector<Console::Symbol> > smbls;
         vector<Console::Symbol> vsm0;
         int width = Console::GetWindowWidth();
         int height = Console::GetWindowHeight();
