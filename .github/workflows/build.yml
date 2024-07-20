@@ -94,7 +94,7 @@ jobs:
           CC: gcc
           CXX: g++
         run: |
-          cd $(cygpath -u "${{ github.workspace }}"")
+          cd $(cygpath -u "${{ github.workspace }}")
           ./make release sudo=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
@@ -176,8 +176,8 @@ jobs:
           name: UbuntuCsBin
           path: bin/*C#*.tar.gz
   
-  build-macos:
-    name: Build program using MacOS
+  build-macos-arm:
+    name: Build program using arm64 MacOS
     runs-on: macos-latest
     steps:
       - name: Checkout source code
@@ -201,5 +201,34 @@ jobs:
       - name: Upload C# binaries
         uses: actions/upload-artifact@v4
         with:
-          name: MacOSCsBin
+          name: MacOSArmCsBin
+          path: bin/*C#*.tgz
+  
+  build-macos-amd:
+    name: Build program using x64 MacOS
+    runs-on: macos-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+      - name: Install Programs
+        shell: sh
+        run: |
+          brew install --cask dotnet-sdk
+      - name: Compile code
+        shell: bash
+        env:
+          CC: gcc
+          CXX: g++
+        run: |
+          env /usr/bin/arch -x86_64 /bin/zsh —-login
+          make release sudo=0
+      - name: Upload C++ binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: MacOSx64CppBin
+          path: bin/*C++*.tgz
+      - name: Upload C# binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: MacOSx64ArmCsBin
           path: bin/*C#*.tgz
