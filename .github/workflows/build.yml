@@ -213,6 +213,7 @@ jobs:
       - name: Install Programs
         shell: sh
         run: |
+          arch -x86_64 zsh
           brew install --cask dotnet-sdk
       - name: Compile code
         shell: bash
@@ -220,7 +221,7 @@ jobs:
           CC: gcc
           CXX: g++
         run: |
-          env /usr/bin/arch -x86_64 /bin/zsh --login
+          arch -x86_64 zsh
           make release sudo=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
