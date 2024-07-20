@@ -80,16 +80,13 @@ jobs:
           Invoke-WebRequest -Uri "https://github.com/maweil/MakeForWindows/releases/download/v4.4.1/make-bin-win64.zip" -OutFile "make-bin.zip" -Verbose
           Expand-Archive -Force make-bin.zip .
           del make-bin.zip
-          cd make-4.4.1\dist
-          ls
-          cd ..\..
           copy make-4.4.1\dist\* .
-          ls
 
       - name: Compile code
         shell: C:\tools\cygwin\bin\bash.exe --login -o igncr '{0}'
         run: |
-          ./make.exe release sudo=0
+          ls
+          make.exe release sudo=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -121,20 +118,18 @@ jobs:
           del gnuwin32.zip
           ren gnuwin32.mirror-master gnuwin32
           copy gnuwin32\bin\* .
-          dir
           
       - name: get verisons
         shell: cmd
         run: |
-          g++ -v
+          clang++ -v
       - name: Compile code
         shell: cmd
         env:
           CC: clang
           CXX: clang++
         run: |
-          set PATH="%PATH%;$PWD\gnuwin32\bin"
-          make release sudo=0
+          make.exe release sudo=0
           
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
@@ -170,4 +165,29 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: UbuntuCsBin
+          path: bin/*C#*.tar.gz
+  
+  build-macos:
+    name: Build program using MacOS
+    runs-on: macos-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+      - name: Install Programs
+        shell: sh
+        run: |
+          sudo brew install --cask dotnet-sdk
+      - name: Compile code
+        shell: bash
+        run: |
+          make release sudo=0
+      - name: Upload C++ binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: MacOSCppBin
+          path: bin/*C++*.tar.gz
+      - name: Upload C# binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: MacOSCsBin
           path: bin/*C#*.tar.gz
