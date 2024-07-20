@@ -98,6 +98,7 @@ endif
 flibdir = bin
 flib = -l$(filename)
 fsrc = $(foreach src,$(sources),../src/$(src))
+wfsrc = $(foreach src,$(sources),src/$(src))
 fbsrc = $(foreach bsrc,$(binsources),src/$(bsrc))
 objects = $(foreach file,$(sources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
 os = $(shell echo $$(uname -s)-$$(uname -m))
@@ -276,7 +277,7 @@ endif
 #
 ifeq ($(findstring indows, $(shell uname -s)),indows)
 #windows
-	@cd cplusplus && $(compiler) -shared -o bin/$(name).dll -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20 -L$(flibdir) $(flib)
+	@cd cplusplus && $(compiler) -shared -o bin/$(name).dll -DUNICODE $(cdb) $(wfsrc) -I ../include -std=c++20 -L$(flibdir) $(flib)
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
