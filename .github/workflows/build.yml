@@ -38,7 +38,8 @@ jobs:
       - name: Install Programs
         shell: msys2 {0}
         run: |
-          ls
+          touch cs
+          touch csbin
           echo Y > yes.in
           pacman -S make < yes.in
           pacman -S zip < yes.in
@@ -81,6 +82,8 @@ jobs:
       - name: Install Programs
         shell: pwsh
         run: |
+          echo $null >> cs
+          echo $null >> csbin
           Invoke-WebRequest -Uri "https://github.com/maweil/MakeForWindows/releases/download/v4.4.1/make-bin-win64.zip" -OutFile "make-bin.zip" -Verbose
           Expand-Archive -Force make-bin.zip .
           del make-bin.zip
@@ -119,6 +122,8 @@ jobs:
       - name: Install Programs
         shell: pwsh
         run: |
+          echo $null >> cs
+          echo $null >> csbin
           Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/archive/refs/heads/master.zip" -OutFile "gnuwin32.zip" -Verbose
           Expand-Archive -Force gnuwin32.zip .
           del gnuwin32.zip
