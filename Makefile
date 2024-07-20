@@ -73,12 +73,19 @@ else
 copylibs = 0
 endif
 
+
 ifeq ($(findstring arm, $(shell uname -m)),arm)
 arch = arm64
 else
 ifeq ($(findstring aarch, $(shell uname -m)),aarch)
 arch = arm64
 else
+arch = x64
+endif
+endif
+
+ifeq ($(shell uname -s),Darwin)
+ifeq ($(shell arch), x86_64)
 arch = x64
 endif
 endif
@@ -102,6 +109,17 @@ wfsrc = $(foreach src,$(sources),src/$(src))
 fbsrc = $(foreach bsrc,$(binsources),src/$(bsrc))
 objects = $(foreach file,$(sources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
 os = $(shell echo $$(uname -s)-$$(uname -m))
+
+ifeq ($(shell uname -s),Darwin)
+ifeq ($(findstring arm, $(shell uname -m)),arm)
+ifeq ($(findstring aarch, $(shell uname -m)),aarch)
+ifeq ($(shell arch), x86_64)
+os = $(shell echo $$(uname -s)-$$(arch))
+endif
+endif
+endif
+endif
+
 
 ifeq ($(findstring indows, $(shell uname -s)),indows)
 #windows
