@@ -80,7 +80,9 @@ jobs:
           Invoke-WebRequest -Uri "https://github.com/maweil/MakeForWindows/releases/download/v4.4.1/make-bin-win64.zip" -OutFile "make-bin.zip" -Verbose
           Expand-Archive -Force make-bin.zip .
           del make-bin.zip
+          ls -lR
           copy make-4.4.1\dist\* .
+          ls -lR
 
       - name: Compile code
         shell: C:\tools\cygwin\bin\bash.exe --login -o igncr '{0}'
