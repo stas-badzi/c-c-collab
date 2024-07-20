@@ -143,9 +143,6 @@ jobs:
           del gnuwin32.zip
           ren gnuwin32.mirror-master gnuwin32
           copy gnuwin32\bin\* .
-          del *.exe
-          copy gnuwin32\bin\make.exe .
-          copy gnuwin32\bin\uname.exe .
       - name: Compile code
         shell: cmd
         env:

@@ -262,7 +262,7 @@ dll: cs cpp
 	@echo "Version file. Remove to enable recompile" > $@
 
 refresh:
-ifeq ($(findstring indows, $(shell uname -s)),indows)
+ifeq ($(shell echo "check quotes"),"check quotes")
 	@del /f all
 	@del /f dll
 	@del /f release
@@ -332,14 +332,14 @@ endif
 endif
 #
 
-ifeq ($(findstring indows, $(shell uname -s)),indows)
+ifeq ($(shell echo "check quotes"),"check quotes")
 #windows
 ifeq ($(copylibs),1)
 	@$(admin) copy cplusplus\bin\$(dllname) $(libdir)
 else
-#	@copy cplusplus\bin\$(dllname) binaryplus\bin
-#	@copy cplusplus\bin\$(dllname) binarysharp\bin\exe
-#	@copy cplusplus\bin\$(dllname) csharp\bin\lib
+	@copy cplusplus\bin\$(dllname) binaryplus\bin
+	@copy cplusplus\bin\$(dllname) binarysharp\bin\exe
+	@copy cplusplus\bin\$(dllname) csharp\bin\lib
 endif
 else
 #other
@@ -423,7 +423,7 @@ endif
 
 csbin: $(foreach bfl,$(binfiles),binarysharp/$(bfl))
 	@cd binarysharp && dotnet publish -p:SelfContained=true -r $(os_name) -c $(binconfig)
-ifeq ($(findstring indows, $(shell uname -s)),indows)
+ifeq ($(shell echo "check quotes"),"check quotes")
 	@cd binarysharp/bin/$(binconfig)/net8.0/$(os_name)/native/ && echo . > null.exp && echo . > null.lib && echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(binfile).$(binary)
 	@copy binarysharp\bin\$(binconfig)\net8.0\$(os_name)\native\$(binfile).$(binary) binarysharp\bin\exe
 	@del binarysharp\bin\$(binconfig)\net8.0\$(os_name)\native\$(binfile).$(binary)
