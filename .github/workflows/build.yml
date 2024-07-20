@@ -38,6 +38,7 @@ jobs:
       - name: Install Programs
         shell: msys2 {0}
         run: |
+          ls
           echo Y > yes.in
           pacman -S make < yes.in
           pacman -S zip < yes.in
