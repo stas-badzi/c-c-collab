@@ -3,10 +3,13 @@ using System.Runtime.InteropServices;
 namespace Cs {
     public class FileSystem {
         public static string ImportText(string filestr) {
-            return Marshal.PtrToStringUni(CsImp.FileSystem.ImportText(Marshal.StringToHGlobalUni(filestr)));
+            String^ unfilestr = gcnew String(filestr);
+            return new String(CsImp.FileSystem.ImportText(unfilestr));
         }
         public static void ExportText(string pathstr, string contentstr) {
-            CsImp.FileSystem.ExportText(Marshal.StringToHGlobalUni(pathstr), Marshal.StringToHGlobalUni(contentstr));
+            String^ unpathstr = gcnew String(pathstr);
+            String^ uncontentstr = gcnew String(contentstr);
+            CsImp.FileSystem.ExportText(unpathstr, uncontentstr);
         }
     }
 }

@@ -39,7 +39,7 @@ namespace CsExp {
 
     public class FileSystem {
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_ImportText")]
-        public static IntPtr ImportText(IntPtr file)
+        public static [MarshalAs(UnmanagedType::LPWStr)]String^ ImportText([MarshalAs(UnmanagedType::LPWStr)]String^ file)
         {
             /* <-- '/'@here
             string str_file = new string();
@@ -50,7 +50,7 @@ namespace CsExp {
                 c = 'a';
             }
             return Marshal.StringToHGlobalUni(Cs.FileSystem.ImportText(str_file));//*/
-            return Marshal.StringToHGlobalUni(Cs.FileSystem.ImportText(Marshal.PtrToStringUni(file)));
+            return gcnew String(Cs.FileSystem.ImportText(new string(file)));
         }
         // export
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_ExportText")]

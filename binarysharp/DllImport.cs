@@ -41,10 +41,10 @@ namespace CsImp {
         private const string DllSource =  @"" + DllHandle.Prefix + "csharp" + DllHandle.Suffix;
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_ImportText")]
-        public static extern IntPtr ImportText(IntPtr fileptr);
+        public static extern [MarshalAs(UnmanagedType::LPWStr)]String^ ImportText([MarshalAs(UnmanagedType::LPWStr)]String^ fileptr);
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_ExportText")]
-        public static extern void ExportText(IntPtr pathptr, IntPtr contentptr);
+        public static extern void ExportText([MarshalAs(UnmanagedType::LPWStr)]String^ pathptr, [MarshalAs(UnmanagedType::LPWStr)]String^ contentptr);
     }
 }
 

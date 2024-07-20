@@ -23,10 +23,7 @@ namespace BinarySharp {
                 }
             }
 
-            Console.WriteLine(Cpp.Console.FillScreen(smbls)[0]);
-            Console.WriteLine(Cpp.Console.FillScreen(smbls)[1]);
-            Console.WriteLine(width);
-            Console.WriteLine(height);
+            Cpp.Console.FillScreen(smbls);
         }
     }
 }
