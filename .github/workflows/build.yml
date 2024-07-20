@@ -94,7 +94,7 @@ jobs:
           CC: gcc
           CXX: g++
         run: |
-          pwd
+          cd $(cygpath -u "${{ github.workspace }}"")
           ./make release sudo=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4

@@ -89,7 +89,7 @@ using namespace cpp;
     }
 
     array<unsigned long,2> Console::FillScreen(vector<vector<Console::Symbol> > symbols) {
-        system("clear");
+        cout << "\e[H";
         for (size_t i = 0; i < symbols.size(); i++) {
             for (size_t j = 0; j < symbols[0].size(); j++) {
                 wcout << symbols[i][j].character;
