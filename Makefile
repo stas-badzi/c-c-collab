@@ -266,8 +266,8 @@ endif
 	@cp cplusplus/bin/$(dllname) bin/cs
 	@cp csharp/bin/lib/$(libname) bin/cs
 
-	@cd bin && rename -f -v 's/cpp/C++-$(release)-$(os)/' *
-	@cd bin && rename -f -v 's/cs/C#-$(release)-$(os)/' *
+	@cd bin && mv cpp C++-$(release)-$(os)
+	@cd bin && mv cs C#-$(release)-$(os)
 
 ifeq ($(shell uname -s),windows32)
 	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)-$(os)
