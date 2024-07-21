@@ -397,7 +397,7 @@ else
 	@cp cplusplus/bin/$(dllname) csharp/bin/lib
 endif
 endif
-
+	@cd binaryplus/bin && ls
 	@echo "Version file. Remove to enable recompile" > $@
 
 
