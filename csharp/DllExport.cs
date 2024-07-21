@@ -39,24 +39,34 @@ namespace CsExp {
 
     public class FileSystem {
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_ImportText")]
-        public static [MarshalAs(UnmanagedType::LPWStr)]String^ ImportText([MarshalAs(UnmanagedType::LPWStr)]String^ file)
+        public static unsafe IntPtr ImportText(char* file)
         {
-            /* <-- '/'@here
-            string str_file = new string();
-            
-            char c = '\t';
-            for (int i = 0; c != '\0'; i++)
-            {
-                c = 'a';
+            String filestr = "";
+            int a = 0;
+            for (int i = 0; a < 10; i++) {
+                filestr += *(file+i);
             }
-            return Marshal.StringToHGlobalUni(Cs.FileSystem.ImportText(str_file));//*/
-            return gcnew String(Cs.FileSystem.ImportText(new string(file)));
+
+            char[] text = Cs.FileSystem.ImportText(filestr).ToCharArray();
+
+            IntPtr textptr = Marshal.AllocHGlobal(text.Length * sizeof(char));
+            Marshal.Copy(text, 0, textptr, text.Length * sizeof(char));
+            return textptr;
         }
         // export
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_ExportText")]
-        public static void ExportText(IntPtr path, IntPtr content)
-        {
-            Cs.FileSystem.ExportText(Marshal.PtrToStringUni(path),Marshal.PtrToStringUni(content));
+        public static unsafe void ExportText(char* path, char* content) {
+            String pathstr = "";
+            for (int i = 0; *(path+i) != '\0'; i++) {
+                pathstr += *(path+i);
+            }
+
+            String contentstr ="";
+            for (int i = 0; *(content+i) != '\0'; i++) {
+                contentstr += *(content+i);
+            }
+
+            Cs.FileSystem.ExportText(pathstr,contentstr);
         }
     }
 }

@@ -121,8 +121,19 @@ endif
 endif
 
 
-ifeq ($(findstring indows, $(shell uname -s)),indows)
+ifeq ($(shell uname -s),windows32)
 #windows
+admin = sudo
+prefix = .\
+os_name = win-$(arch)
+dllname = "$(name).dll"
+libname = "$(filename).dll"
+binary = exe
+libdir = $(winlib)
+#
+else
+ifeq ($(shell uname -s),WINDOWS_NT)
+#windows i think
 admin = sudo
 prefix = .\
 os_name = win-$(arch)
@@ -146,6 +157,11 @@ ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 exec = $(shell cygpath -w /msys2.exe)
 #
 else
+ifeq ($(findstring Windows_NT, $(shell uname -s)),Windows_NT)
+#msys (older version i think)
+exec = $(shell cygpath -w /msys2.exe)
+#
+else
 #mingw [ond others]
 ifeq ($(findstring MINGW64, $(shell uname -s)),MINGW64)
 # x64 mingw
@@ -155,6 +171,7 @@ else
 # x32 mingw (and others)
 exec = $(shell cygpath -w /mingw32.exe)
 #
+endif
 endif
 endif
 #non-cygwin 'NT'
@@ -193,6 +210,7 @@ libdir = $(linuxlib)
 endif
 endif
 endif
+endif
 
 ifeq ($(genwin),1)
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
@@ -209,7 +227,14 @@ flibdir = $(libdir)
 endif
 
 release: all
-ifeq ($(findstring indows, $(shell uname -s)),indows)
+ifeq ($(shell echo "check quotes"),"check quotes")
+
+ifneq ($(wildcard release),release)
+	@del /f bin/*/*
+	@del /f bin/*.zip
+	@rmdir /f bin/*
+	@rmdir /f bin
+endif
 	@mkdir bin\cpp
 	@mkdir bin\cs
 	@copy binaryplus\bin\$(binname).$(binary) bin\cpp
@@ -227,6 +252,10 @@ ifeq ($(findstring indows, $(shell uname -s)),indows)
 	@cd bin && zip -r C\#-$(release)-$(os).zip C\#-$(release)-$(os)
 
 else
+
+ifeq ($(wildcard release),release)
+	@rm -r bin
+endif
 	@mkdir -p bin/cpp
 	@mkdir -p bin/cs
 	@cp binaryplus/bin/$(binname).$(binary) bin/cpp
@@ -237,9 +266,13 @@ else
 	@cp cplusplus/bin/$(dllname) bin/cs
 	@cp csharp/bin/lib/$(libname) bin/cs
 
-	@mv bin/cpp bin/C++-$(release)-$(os)
-	@mv bin/cs bin/C\#-$(release)-$(os)
+	@cd bin && rename -f -v 's/cpp/C++-$(release)-$(os)/' *
+	@cd bin && rename -f -v 's/cs/C#-$(release)-$(os)/' *
 
+ifeq ($(shell uname -s),windows32)
+	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)-$(os)
+	@cd bin && zip -r C\#-$(release)-$(os).zip C\#-$(release)-$(os)
+else
 ifeq ($(findstring NT, $(shell uname -s)),NT)
 	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)-$(os)
 	@cd bin && zip -r C\#-$(release)-$(os).zip C\#-$(release)-$(os)
@@ -250,6 +283,7 @@ ifeq ($(shell uname -s),Darwin)
 else
 	@cd bin && tar -czvf C++-$(release)-$(os).tar.gz C++-$(release)-$(os)
 	@cd bin && tar -czvf C\#-$(release)-$(os).tar.gz C\#-$(release)-$(os)
+endif
 endif
 endif
 endif
@@ -265,7 +299,6 @@ refresh:
 ifeq ($(shell echo "check quotes"),"check quotes")
 	@del /f all
 	@del /f dll
-	@del /f release
 	@del /f cs
 	@del /f csbin
 	@del /f cppbin
@@ -273,7 +306,6 @@ ifeq ($(shell echo "check quotes"),"check quotes")
 else
 	@rm -f all
 	@rm -f dll
-	@rm -f release
 	@rm -f cs
 	@rm -f csbin
 	@rm -f cppbin
@@ -293,7 +325,12 @@ ifneq ($(wildcard cs),cs)
 	@$(MAKE) cs
 endif
 #
-ifeq ($(findstring indows, $(shell uname -s)),indows)
+ifeq ($(shell uname -s),windows32)
+#windows
+	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
+	@cd cplusplus && $(compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
+#
+ifeq ($(shell uname -s),WINDOWS_NT)
 #windows
 	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
 	@cd cplusplus && $(compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
@@ -307,6 +344,12 @@ ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #mingw [ I think same as windows (?) ]
+	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
+	@cd cplusplus && $(compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
+#
+else
+ifeq ($(findstring Windows_NT, $(shell uname -s)),Windows_NT)
+#msys [ i think older ]
 	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
 	@cd cplusplus && $(compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
 #
@@ -325,6 +368,8 @@ ifeq ($(shell uname -s),Darwin)
 else
 #linux and similar
 	@cd cplusplus && $(compiler) -shared -o bin/lib$(name).so $(objects) -L$(flibdir) $(flib)
+endif
+endif
 endif
 endif
 endif
@@ -357,7 +402,7 @@ endif
 
 cs: $(foreach fl,$(files),csharp/$(fl))
 	@cd csharp && dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r $(os_name) -c $(configuration)
-ifeq ($(findstring indows, $(shell uname -s)),indows)
+ifeq ($(shell echo "check quotes"),"check quotes")
 	@cd csharp/bin/$(configuration)/net8.0/$(os_name)/native/ && echo . > null.exp && echo . > null.lib && echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(libname)
 	@move csharp\bin\$(configuration)\net8.0\$(os_name)\native\$(libname) csharp\bin\lib
 ifeq ($(copylibs),1)
@@ -386,13 +431,23 @@ ifneq ($(wildcard cpp),cpp)
 	@$(MAKE) cpp
 endif
 
-ifeq ($(findstring indows, $(shell uname -s)),indows)
+ifeq ($(shell uname -s),windows32)
 #windows
+	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name) -std=c++20
+#
+else
+ifeq ($(shell uname -s),WINDOWS_NT)
+#windows i think
 	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name) -std=c++20
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
+	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name) -std=c++20
+#
+else
+ifeq ($(findstring Windows_NT, $(shell uname -s)),Windows_NT)
+#msys2 [ I think same as windows (?) ]
 	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name) -std=c++20
 #
 else
@@ -414,6 +469,8 @@ ifeq ($(shell uname -s),Darwin)
 else
 #linux and similar
 	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name) -std=c++20
+endif
+endif
 endif
 endif
 endif

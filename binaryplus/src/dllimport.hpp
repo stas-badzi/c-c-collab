@@ -39,6 +39,7 @@ namespace cppimp {
 } // namespace cppimp
 
 namespace csimp {
+    
     libimport wchar_t* FileSystem_ImportText(const wchar_t* file);
     
     libimport void FileSystem_ExportText(const wchar_t* file, const wchar_t* content);

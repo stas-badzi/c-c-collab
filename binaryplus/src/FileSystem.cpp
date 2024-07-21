@@ -25,6 +25,8 @@ vector<wstring> cs::FileSystem::ImportText(wstring filename) {
             break;
         }
     }
+
+    delete[] result;
     return out;
 }
 
