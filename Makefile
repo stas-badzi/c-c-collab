@@ -330,6 +330,7 @@ ifeq ($(shell uname -s),windows32)
 	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
 	@cd cplusplus && $(compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib)
 #
+else
 ifeq ($(shell uname -s),WINDOWS_NT)
 #windows
 	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
