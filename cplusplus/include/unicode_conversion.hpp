@@ -152,11 +152,11 @@ inline utfstr UnicodeToUtf8String (unichar* unicodes) {
     }
 #else
     inline utfstr WStringToNative(std::wstring wstr) {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
+        std::wstring_convert<std::codecvt_utf8<wchar_t> > utf8_conv;
         return utf8_conv.to_bytes(wstr);
     }
     inline utfchar WCharToNative(wchar_t wchar) {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
+        std::wstring_convert<std::codecvt_utf8<wchar_t> > utf8_conv;
         return utf8_conv.to_bytes(wchar);
     }
     inline utfchar ReadUtfChar(utfstr str, size_t offset = 0, size_t* bytes_read = nullptr) {
