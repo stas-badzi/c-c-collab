@@ -11,8 +11,8 @@ release = ConsoleGame
 #********************************
 
 #******** c++ config ************
-#> set compiler
-compiler = g++
+#> set default compiler
+defcomp = c++
 #> source files
 sources = Console.cpp dllexport.cpp
 #> header files
@@ -110,6 +110,11 @@ ldarg =
 else
 ldarg = -fuse-ld=$(linker)
 endif
+
+ifeq ($(compiler),$(empty))
+compiler = $(defcomp)
+endif
+
 
 ifeq ($(force-win),0) 
 genwin = 0
