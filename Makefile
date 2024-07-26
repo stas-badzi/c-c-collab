@@ -104,6 +104,13 @@ arch = x64
 endif
 endif
 
+
+ifeq ($(linker),$(empty))
+ldarg = 
+else
+ldarg = 
+endif
+
 ifeq ($(force-win),0) 
 genwin = 0
 else

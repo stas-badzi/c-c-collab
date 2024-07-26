@@ -150,14 +150,15 @@ jobs:
           del gnuwin32.zip
           ren gnuwin32.mirror-master gnuwin32
           copy gnuwin32\bin\* .
-          del link.exe
       - name: Compile code
         shell: cmd
         env:
           CC: clang
           CXX: clang++
         run: |
-          dir
+          where lld
+          where ld
+          where link
           .\make.exe release sudo=0
           
       - name: Upload C++ binaries
