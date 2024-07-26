@@ -9,5 +9,13 @@ on:
 
 jobs:
   release:
-    
+    name: Release Program
+    runs-on: macos-latest
+    steps:
+      - name: Compress MacOS
+        shell: bash
+        run: |
+          cd ..
+          tar 
+
   

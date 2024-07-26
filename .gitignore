@@ -40,6 +40,8 @@
 #vs vscode consulo ...
 *.vs*
 *.vscode*
+*.vcxproj*
+*x64*
 *.code-workspace
 *.sln
 *.xml
@@ -70,3 +72,4 @@ release
 
 #keep
 !*/.gitkeep
+

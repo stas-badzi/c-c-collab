@@ -19,7 +19,11 @@ namespace uniconv {
     typedef wchar_t utfchar;
     typedef wchar_t unichar;
     typedef std::wstring utfstr;
-    utfstr to_string(utfchar val) { return utfstr(val); }
+    inline utfstr to_string(utfchar val) {
+        utfstr out; 
+        out.push_back(val);
+        return out;
+    }
 #else
     typedef std::string utfchar;
     typedef uint32_t unichar;
@@ -31,7 +35,7 @@ inline unichar Utf8ToUnicode(utfchar utf8_code) {
     
 #ifdef _WIN32
     return (unichar)(utf8_code);
-#endif
+#else
 
     unsigned long utf8_size = utf8_code.length();
     unichar unicode = 0;
@@ -46,6 +50,8 @@ inline unichar Utf8ToUnicode(utfchar utf8_code) {
     }
 
     return unicode;
+
+#endif
 }
 
 
@@ -53,7 +59,7 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
 
 #ifdef _WIN32
     return (utfchar)(unicode);
-#endif
+#else
 
     utfchar s;
 
@@ -125,6 +131,8 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
     }
 
     return "";
+
+#endif
 }
 
 inline unichar* Utf8StringToUnicode (utfstr utf8s) {
@@ -152,11 +160,11 @@ inline utfstr UnicodeToUtf8String (unichar* unicodes) {
     }
 #else
     inline utfstr WStringToNative(std::wstring wstr) {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
+        std::wstring_convert<std::codecvt_utf8<wchar_t> > utf8_conv;
         return utf8_conv.to_bytes(wstr);
     }
     inline utfchar WCharToNative(wchar_t wchar) {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
+        std::wstring_convert<std::codecvt_utf8<wchar_t> > utf8_conv;
         return utf8_conv.to_bytes(wchar);
     }
     inline utfchar ReadUtfChar(utfstr str, size_t offset = 0, size_t* bytes_read = nullptr) {

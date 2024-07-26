@@ -60,7 +60,7 @@ macosbin = /usr/local/bin
 #> windows shared library path
 winlib = %SystemRoot%
 #> windows binary file path
-winbin = "%SProgramFiles%"
+winbin = %SystemRoot%
 #> mysys(mingw) shared library path
 msyslib = /usr/lib
 #> mysys(mingw) binary filepath
@@ -72,11 +72,11 @@ cygwinbin = /usr/bin
 #>cygwin dll path to windows
 symcyglib = /cygdrive/c/Windows
 #>cygwin exe path to windows
-symcygbin = "/cygdrive/c/Program Files"
+symcygbin = /cygdrive/c/Windows
 #>msys2(mingw) dll path to windows
 symsyslib = /c/Windows
 #>msys2(mingw) exe path to windows
-symsysbin = "/c/Program Files"
+symsysbin = /c/Windows
  
 #*********************************
 
