@@ -1,7 +1,8 @@
 #include "Console.hpp"
 
-using namespace std;
 using namespace cpp;
+using namespace uniconv;
+using namespace std;
 
 #ifdef _WIN32
 
@@ -16,14 +17,14 @@ using namespace cpp;
         }
     }    
 
-    short cpp::Console::GetWindowWidth(void) {
+    int16_t cpp::Console::GetWindowWidth(void) {
         Init();
         CONSOLE_SCREEN_BUFFER_INFO csbi;
         GetConsoleScreenBufferInfo(h_console, &csbi);
         return csbi.srWindow.Right - csbi.srWindow.Left + 1;
     }
 
-    short cpp::Console::GetWindowHeight(void) {
+    int16_t cpp::Console::GetWindowHeight(void) {
         Init();
         CONSOLE_SCREEN_BUFFER_INFO csbi;
         GetConsoleScreenBufferInfo(h_console, &csbi);
@@ -58,17 +59,17 @@ using namespace cpp;
         return written;
     }
 
-    char Console::Symbol::GetAttribute(void) {
+    uint8_t Console::Symbol::GetAttribute(void) {
         set_atr_vals;
         return atr_vals[this->foreground][this->background];
     }
 
-    void Console::Symbol::SetAttribute(char attribute) {
+    void Console::Symbol::SetAttribute(uint8_t attribute) {
         this->foreground = 7;
         this->background = 0;
     }
 
-    Console::Symbol::Symbol(char attribute) {
+    Console::Symbol::Symbol(uint8_t attribute) {
     this->character = L' ';
     this->SetAttribute(attribute);
 }
@@ -80,11 +81,11 @@ using namespace cpp;
         }
     }
 
-    short cpp::Console::GetWindowWidth(void) {
+    int16_t cpp::Console::GetWindowWidth(void) {
         return 10;
     }
 
-    short cpp::Console::GetWindowHeight(void) {
+    int16_t cpp::Console::GetWindowHeight(void) {
         return 5;
     }
 
@@ -92,9 +93,9 @@ using namespace cpp;
         cout << "\e[H";
         for (size_t i = 0; i < symbols.size(); i++) {
             for (size_t j = 0; j < symbols[0].size(); j++) {
-                wcout << symbols[i][j].character;
+                cout << symbols[i][j].character;
             }
-            wcout << L'\n';
+            cout << '\n';
         }
         
         array<unsigned long,2> written;
@@ -108,7 +109,7 @@ using namespace cpp;
 
 bool Console::initialised = false;
 
-Console::Symbol::Symbol(wchar_t character, char foreground, char background) {
+Console::Symbol::Symbol(utfchar character, uint8_t foreground, uint8_t background) {
     this->character = character;
     this->foreground = foreground;
     this->background = background;

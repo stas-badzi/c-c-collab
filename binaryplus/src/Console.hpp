@@ -2,6 +2,8 @@
 
 #include <array>
 #include <vector>
+#include <cstdint>
+#include <unicode_conversion.hpp>
 #ifdef _WIN32
     #include <windows.h>
 #endif
@@ -12,18 +14,18 @@ namespace cpp {
     public:
         struct Symbol {
 
-            wchar_t character(void);
-            void character(wchar_t val);
+            uniconv::utfchar character(void);
+            void character(uniconv::utfchar val);
 
-            char foreground(void);
-            void foreground(char val);
+            uint8_t foreground(void);
+            void foreground(uint8_t val);
 
-            char background(void);
-            void background(char val);
+            uint8_t background(void);
+            void background(uint8_t val);
 
             Symbol(void);
             Symbol(const Symbol &cp);
-            Symbol(wchar_t character, char foreground = 7, char background = 0);
+            Symbol(uniconv::utfchar character, uint8_t foreground = 7, uint8_t background = 0);
             ~Symbol();
 
             Symbol operator=(const Symbol &src);
@@ -31,9 +33,9 @@ namespace cpp {
             void* Get();
 
             #ifdef _WIN32
-                Symbol(char attribute);
-                char GetAttribute(void);
-                void SetAttribute(char attribute);
+                Symbol(uint8_t attribute);
+                uint8_t GetAttribute(void);
+                void SetAttribute(uint8_t attribute);
             #endif
 
         private:
@@ -41,8 +43,8 @@ namespace cpp {
 
         };
         static void Init(void);
-        static short int GetWindowWidth(void);
-        static short int GetWindowHeight(void);
+        static int16_t GetWindowWidth(void);
+        static int16_t GetWindowHeight(void);
         static std::array<unsigned long,2> FillScreen(std::vector<std::vector<Symbol> > symbols);
     };
 }

@@ -1,37 +1,38 @@
 #include <dynamic_library.h>
+#include <unicode_conversion.hpp>
 
 namespace cppimp {
     libimport void Console_Init(void);
 
     libimport unsigned long int* Console_FillScreen$ret2(void*** symbols, int height, int width);
 
-    libimport short int Console_GetWindowWidth(void);
+    libimport int16_t Console_GetWindowWidth(void);
 
-    libimport short int Console_GetWindowHeight(void);
+    libimport int16_t Console_GetWindowHeight(void);
 
     libimport void* Console_Symbol_Construct$smb(void* smb);
 
-    libimport void* Console_Symbol_Construct$cfb(wchar_t character, char foreground = 7, char background = 0);
+    libimport void* Console_Symbol_Construct$cfb(uniconv::unichar character, uint8_t foreground = 7, uint8_t background = 0);
 
     #ifdef _WIN32
-        libimport void* Console_Symbol_Construct$atr(char attribute);
+        libimport void* Console_Symbol_Construct$atr(uint8_t attribute);
         
-        libimport void Console_Symbol_SetAttribute(void* smb, char attribute);
+        libimport void Console_Symbol_SetAttribute(void* smb, uint8_t attribute);
 
-        libimport char Console_Symbol_GetAttribute(void* smb);
+        libimport uint8_t Console_Symbol_GetAttribute(void* smb);
     #endif
 
-    libimport void Console_Symbol_character$set(void* smb, wchar_t character);
+    libimport void Console_Symbol_character$set(void* smb, uniconv::unichar character);
 
-    libimport char Console_Symbol_character$get(void* smb);
+    libimport uniconv::unichar Console_Symbol_character$get(void* smb);
 
-    libimport void Console_Symbol_foreground$set(void* smb, wchar_t foreground);
+    libimport void Console_Symbol_foreground$set(void* smb, uint8_t foreground);
 
-    libimport char Console_Symbol_foreground$get(void* smb);
+    libimport uint8_t Console_Symbol_foreground$get(void* smb);
 
-    libimport void Console_Symbol_background$set(void* smb, wchar_t background);
+    libimport void Console_Symbol_background$set(void* smb, uint8_t background);
 
-    libimport char Console_Symbol_background$get(void* smb);
+    libimport uint8_t Console_Symbol_background$get(void* smb);
 
     libimport void Console_Symbol_Destruct(void* smb);
 
@@ -40,9 +41,9 @@ namespace cppimp {
 
 namespace csimp {
     
-    libimport wchar_t* FileSystem_ImportText(const wchar_t* file);
+    libimport uniconv::unichar** FileSystem_ImportText(uniconv::unichar* file);
     
-    libimport void FileSystem_ExportText(const wchar_t* file, const wchar_t* content);
+    libimport void FileSystem_ExportText(uniconv::unichar* file, uniconv::unichar** content);
 
 } // namespace csimp
 

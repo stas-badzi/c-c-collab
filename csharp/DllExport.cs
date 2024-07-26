@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
+using Utility;
 
 namespace CsExp {
     public class DllHandle {
@@ -39,34 +40,42 @@ namespace CsExp {
 
     public class FileSystem {
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_ImportText")]
-        public static unsafe IntPtr ImportText(char* file)
+        public static IntPtr ImportText(IntPtr file)
         {
-            String filestr = "";
-            int a = 0;
-            for (int i = 0; a < 10; i++) {
-                filestr += *(file+i);
+            int intptr_size = IntPtr.Size;
+            List<String> ret = Cs.FileSystem.ImportText(UniConv.PtrToString(file));
+            IntPtr output = Marshal.AllocHGlobal( (ret.Count + 1) * intptr_size);
+            for (int i = 0; i < ret.Count; i++) {
+                IntPtr elem = UniConv.StringToPtr(ret[i]);
+                Marshal.WriteIntPtr(output, intptr_size * i, elem);
             }
+            IntPtr end = UniConv.StringToPtr("\u0000");
+            Marshal.WriteIntPtr(output, intptr_size * ret.Count(), end);
 
-            char[] text = Cs.FileSystem.ImportText(filestr).ToCharArray();
-
-            IntPtr textptr = Marshal.AllocHGlobal(text.Length * sizeof(char));
-            Marshal.Copy(text, 0, textptr, text.Length * sizeof(char));
-            return textptr;
+            return output;
         }
         // export
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_ExportText")]
-        public static unsafe void ExportText(char* path, char* content) {
-            String pathstr = "";
-            for (int i = 0; *(path+i) != '\0'; i++) {
-                pathstr += *(path+i);
+        public static void ExportText(IntPtr path, IntPtr content) {
+            if (path == IntPtr.Zero) {
+                throw new Exception("Intptr $path Empty");
+            }
+            if (content == IntPtr.Zero) {
+                throw new Exception("Intptr $content Empty");
+            }
+            
+            int intptr_size = IntPtr.Size;
+            List<String> text = new List<String>();
+
+            IntPtr elem = Marshal.ReadIntPtr(content,0);
+            String line = UniConv.PtrToString(elem);
+            for (int i = 1; line.Length > 0; i++) {
+                text.Append(line);
+                elem = Marshal.ReadIntPtr(content, i * intptr_size);
+                line = UniConv.PtrToString(elem);
             }
 
-            String contentstr ="";
-            for (int i = 0; *(content+i) != '\0'; i++) {
-                contentstr += *(content+i);
-            }
-
-            Cs.FileSystem.ExportText(pathstr,contentstr);
+            Cs.FileSystem.ExportText(UniConv.PtrToString(path), text);
         }
     }
 }

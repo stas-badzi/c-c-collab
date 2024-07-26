@@ -1,7 +1,11 @@
 #include <dynamic_library.h>
+#include <unicode_conversion.hpp>
+
+#include "Console.hpp"
+
+using namespace uniconv;
 
 // Console
-    #include "Console.hpp"
 
     libexport void Console_Init(void) {
         cpp::Console::Init();
@@ -23,11 +27,11 @@
         return out;
     }
 
-    libexport short int Console_GetWindowWidth(void) {
+    libexport int16_t Console_GetWindowWidth(void) {
         return cpp::Console::GetWindowWidth();
     }
 
-    libexport short int Console_GetWindowHeight(void) {
+    libexport int16_t Console_GetWindowHeight(void) {
         return cpp::Console::GetWindowHeight();
     }
 
@@ -37,45 +41,45 @@
         }
 
 
-        libexport void* Console_Symbol_Construct$cfb(wchar_t character, char foreground = 7, char background = 0) {
-            return (void*) new cpp::Console::Symbol(character, foreground, background);
+        libexport void* Console_Symbol_Construct$cfb(unichar character, uint8_t foreground = 7, uint8_t background = 0) {
+            return (void*) new cpp::Console::Symbol(UnicodeToUtf8(character), foreground, background);
         }
 
         #ifdef _WIN32
-            libexport void* Console_Symbol_Construct$atr(char attribute) {
+            libexport void* Console_Symbol_Construct$atr(uint8_t attribute) {
                 return (void*) new cpp::Console::Symbol(attribute);
             }
             
-            libexport void Console_Symbol_SetAttribute(cpp::Console::Symbol* smb, char attribute) {
+            libexport void Console_Symbol_SetAttribute(cpp::Console::Symbol* smb, uint8_t attribute) {
                 smb->SetAttribute(attribute);
             }
 
-            libexport char Console_Symbol_GetAttribute(cpp::Console::Symbol* smb) {
+            libexport uint8_t Console_Symbol_GetAttribute(cpp::Console::Symbol* smb) {
                 return smb->GetAttribute();
             }
         #endif
 
-        libexport void Console_Symbol_character$set(cpp::Console::Symbol* smb, wchar_t character) {
+        libexport void Console_Symbol_character$set(cpp::Console::Symbol* smb, unichar character) {
             smb->character = character;
         }
 
-        libexport char Console_Symbol_character$get(cpp::Console::Symbol* smb) {
-            return smb->character;
+        libexport unichar Console_Symbol_character$get(cpp::Console::Symbol* smb) {
+            return Utf8ToUnicode(smb->character);
         }
 
-        libexport void Console_Symbol_foreground$set(cpp::Console::Symbol* smb, wchar_t foreground) {
+        libexport void Console_Symbol_foreground$set(cpp::Console::Symbol* smb, uint8_t foreground) {
             smb->foreground = foreground;
         }
 
-        libexport char Console_Symbol_foreground$get(cpp::Console::Symbol* smb) {
+        libexport uint8_t Console_Symbol_foreground$get(cpp::Console::Symbol* smb) {
             return smb->foreground;
         }
 
-        libexport void Console_Symbol_background$set(cpp::Console::Symbol* smb, wchar_t background) {
+        libexport void Console_Symbol_background$set(cpp::Console::Symbol* smb, uint8_t background) {
             smb->background = background;
         }
 
-        libexport char Console_Symbol_background$get(cpp::Console::Symbol* smb) {
+        libexport uint8_t Console_Symbol_background$get(cpp::Console::Symbol* smb) {
             return smb->background;
         }
 

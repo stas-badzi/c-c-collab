@@ -1,11 +1,12 @@
 #pragma once
+
 #include <vector>
-#include <string>
+#include <unicode_conversion.hpp>
 
 namespace cs {
     class FileSystem {
     public:
-        static std::vector<std::wstring> ImportText(std::wstring filename);
-        static void ExportText(std::wstring file, std::vector<std::wstring> lines);
+        static std::vector<uniconv::utfstr> ImportText(uniconv::utfstr filename);
+        static void ExportText(uniconv::utfstr file, std::vector<uniconv::utfstr> lines);
     };
 }

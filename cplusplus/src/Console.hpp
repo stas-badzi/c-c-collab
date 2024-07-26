@@ -2,6 +2,8 @@
 
 #include <vector>
 #include <array>
+#include <cstdint>
+#include <unicode_conversion.hpp>
 
 #ifdef _WIN32
     #include <windows.h>
@@ -17,28 +19,28 @@ namespace cpp {
     public:
         static void Init(void);
         struct Symbol {
-            wchar_t character;
-            char foreground; // 0-16
-            char background; // 0-16
+            uniconv::utfchar character;
+            uint8_t foreground; // 0-16
+            uint8_t background; // 0-16
 
             Symbol(void);
 
-            Symbol(wchar_t character, char foreground = 7, char background = 0);
+            Symbol(uniconv::utfchar character, uint8_t foreground = 7, uint8_t background = 0);
 
-            Symbol(char attribute);
+            Symbol(uint8_t attribute);
 
             ~Symbol(void);
 
             Symbol & operator=(const Symbol &src);
 
             #ifdef _WIN32
-                char GetAttribute(void);
-                void SetAttribute(char attribute);
+                uint8_t GetAttribute(void);
+                void SetAttribute(uint8_t attribute);
             #endif
 
         };
-        static short int GetWindowWidth(void);
-        static short int GetWindowHeight(void);
+        static int16_t GetWindowWidth(void);
+        static int16_t GetWindowHeight(void);
         static std::array<unsigned long,2> FillScreen(std::vector<std::vector<Symbol> > symbols);
 
     };

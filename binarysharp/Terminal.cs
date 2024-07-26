@@ -1,12 +1,14 @@
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
+using Utility;
 
 namespace Cpp
 {
-    class Console
+    class Terminal
     {
         public static ulong[] FillScreen(List<List<Symbol>> symbols) {
+            
             int ptrsize = IntPtr.Size;
             int ulngsize = sizeof(ulong);
             int height = symbols.Count();
@@ -61,29 +63,42 @@ namespace Cpp
 
         public class Symbol
         {
-            public Symbol() {
-                symbol = CppImp.Console.Symbol.Construct(' ');
+            ~Symbol() {
+                CppImp.Console.Symbol.Destruct(symbol);
             }
 
-            public Symbol(char character, byte foreground = 7, byte background = 0) {
-                symbol = CppImp.Console.Symbol.Construct(character,foreground,background);
+            public Symbol() {
+                symbol = CppImp.Console.Symbol.Construct(' ');
             }
 
             public Symbol(Symbol cp) {
                 symbol = CppImp.Console.Symbol.Construct(cp.symbol);
             }
-
-            ~Symbol() {
-                CppImp.Console.Symbol.Destruct(symbol);
+        #if _WIN32
+            public Symbol(char character, byte foreground = 7, byte background = 0) {
+                symbol = CppImp.Console.Symbol.Construct(UniConv.Utf8ToUnicode(character),foreground,background);
             }
 
             public char character() {
-                return CppImp.Console.Symbol.character(symbol);
+                return UniConv.UnicodeToUtf8(CppImp.Console.Symbol.character(symbol));
             }
 
             public void character(char val) {
-                CppImp.Console.Symbol.character(symbol, val);
+                CppImp.Console.Symbol.character(symbol, UniConv.Utf8ToUnicode(val));
             }
+        #else
+            public Symbol(char character, byte foreground = 7, byte background = 0) {
+                symbol = CppImp.Console.Symbol.Construct(UniConv.Utf8ToUnicode(character),foreground,background);
+            }
+
+            public char character() {
+                return UniConv.UnicodeToUtf8(CppImp.Console.Symbol.character(symbol));
+            }
+
+            public void character(char val) {
+                CppImp.Console.Symbol.character(symbol, UniConv.Utf8ToUnicode(val));
+            }
+        #endif
 
             public byte foreground() {
                 return CppImp.Console.Symbol.foreground(symbol);

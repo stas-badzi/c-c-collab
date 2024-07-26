@@ -1,88 +1,20 @@
 using System.Runtime.InteropServices;
+using Utility;
 
 namespace CsImp {
-    
-    public class DllHandle {
-
-    #if _WIN32
-        public const string Prefix = "";
-        public const string Suffix = ".dll";
-    #elif __APPLE__
-        public const string Prefix = "lib";
-        public const string Suffix = ".dylib";
-    #elif __linux__
-        public const string Prefix = "lib";
-        public const string Suffix = ".so";
-    #elif __FreeBSD__
-        public const string Prefix = "lib";
-        public const string Suffix = ".so";
-    #else
-        public const string Prefix = "";
-        public const string Suffix = "";
-    #endif
-
-        
-    #if _WIN32
-        public const string OS = "Windows";
-    #elif __APPLE__
-        public const string OS = "Apple";
-    #elif __linux__
-        public const string OS = "Linux";
-    #elif __FreeBSD__
-        public const string OS = "FreeBSD";
-    #else
-        public const string OS = "Unknown";
-    #endif
-
-    }
-
 
     public class FileSystem {
         private const string DllSource =  @"" + DllHandle.Prefix + "csharp" + DllHandle.Suffix;
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_ImportText", CharSet = CharSet.Unicode)]
-        public static extern unsafe char* ImportText(char* fileptr);
+        public static extern IntPtr ImportText(IntPtr fileptr);
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_ExportText", CharSet = CharSet.Unicode)]
-        public static extern unsafe void ExportText(char* pathptr, char* contentptr);
+        public static extern void ExportText(IntPtr pathptr, IntPtr contentptr);
     }
 }
 
 namespace CppImp {
-
-    public class DllHandle {
-
-    #if _WIN32
-        public const string Prefix = "";
-        public const string Suffix = ".dll";
-    #elif __APPLE__
-        public const string Prefix = "lib";
-        public const string Suffix = ".dylib";
-    #elif __linux__
-        public const string Prefix = "lib";
-        public const string Suffix = ".so";
-    #elif __FreeBSD__
-        public const string Prefix = "lib";
-        public const string Suffix = ".so";
-    #else
-        public const string Prefix = "";
-        public const string Suffix = "";
-    #endif
-
-        
-    #if _WIN32
-        public const string OS = "Windows";
-    #elif __APPLE__
-        public const string OS = "Apple";
-    #elif __linux__
-        public const string OS = "Linux";
-    #elif __FreeBSD__
-        public const string OS = "FreeBSD";
-    #else
-        public const string OS = "Unknown";
-    #endif
-
-    }
 
     public class Console
     {
@@ -104,9 +36,13 @@ namespace CppImp {
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_Construct$smb", CharSet = CharSet.Unicode)]
             public static extern IntPtr Construct(IntPtr smb);
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_Construct$cfb", CharSet = CharSet.Unicode)]
-            public static extern IntPtr Construct(char character, byte foreground = 7, byte background = 0);
 
         #if _WIN32
+            public static extern IntPtr Construct(char character, byte foreground = 7, byte background = 0);
+
+            [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_character$set", CharSet = CharSet.Unicode)]
+            public static extern void character(IntPtr smb, char character);
+
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_Construct$atr", CharSet = CharSet.Unicode)]
             public static extern IntPtr Construct(byte attribute);
 
@@ -115,10 +51,12 @@ namespace CppImp {
 
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_GetAttribute", CharSet = CharSet.Unicode)]
             public static extern byte GetAttribute(IntPtr smb);
-        #endif
+        #else
+            public static extern IntPtr Construct(Int32 character, byte foreground = 7, byte background = 0);
 
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_character$set", CharSet = CharSet.Unicode)]
-            public static extern void character(IntPtr smb, char character);
+            public static extern void character(IntPtr smb, Int32 character);
+        #endif
 
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_character$get", CharSet = CharSet.Unicode)]
             public static extern char character(IntPtr smb);

@@ -42,7 +42,10 @@
     #define OS "Linux"
     #define OS_ "Linux"
     // linux
-#elif __unix__ // all unices not caught above
+#elif __CYGWIN__
+    #define OS "Cygwin"
+    #define OS_ "Cygwin"
+#elif __unix__ // all unixes not caught above
     #define OS "Unix"
     #define OS_ "Unix"
     // Unix

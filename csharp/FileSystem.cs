@@ -4,22 +4,18 @@ namespace Cs
 {
     public class FileSystem // Impotowanie plików .txt
     {
-        public static string ImportText(string str_file)
+        public static List<string> ImportText(string str_file)
         {
             string line;
-            string result = "";
+            List<String> result = new List<String>();
 
             try
             {
                 StreamReader sr = new StreamReader(str_file);
                 line = sr.ReadLine();
-                if (line != null) {
-                    result = line;
+                while (line != null) {
+                    result.Append(line);
                     line = sr.ReadLine();
-                    while (line != null) {
-                        result = $"{result}\n{line}";
-                        line = sr.ReadLine();
-                    }
                 }
                 sr.Close();
             }
@@ -31,7 +27,7 @@ namespace Cs
             return result;
         }
         
-        public static void ExportText(string str_path, string str_content)
+        public static void ExportText(string str_path, List<string> str_content)
         {
             try
             {
@@ -39,7 +35,9 @@ namespace Cs
                 
                 using (StreamWriter sw = File.CreateText(str_path))
                 {
-                    sw.WriteLine(str_content);
+                    for (int i = 0; i < str_content.Count(); ++i) {
+                        sw.WriteLine(str_content[i]);
+                    }
                     sw.Close();
                 }
 
