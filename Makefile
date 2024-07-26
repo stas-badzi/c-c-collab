@@ -493,7 +493,8 @@ ifeq ($(shell uname -s),WINDOWS_NT)
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
-	@cd binaryplus && $(compiler) $(bpdb) -o bin/$(binname).$(binary) $(fbsrc) -I include -L$(flibdir) -l$(filename) -l$(name) -std=c++20
+	@cd binaryplus/obj && $(compiler) -c $(bpdb) $(fbsrc) -I ../include -std=c++20
+	@cd binaryplus && $(compiler) -o bin/$(binname).$(binary) $(fbobj) -I include -L$(flibdir) -l$(filename) -l$(name)
 #
 else
 ifeq ($(findstring Windows_NT, $(shell uname -s)),Windows_NT)
