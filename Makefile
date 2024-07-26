@@ -108,7 +108,7 @@ endif
 ifeq ($(linker),$(empty))
 ldarg = 
 else
-ldarg = 
+ldarg = -fuse-ld=$(linker)
 endif
 
 ifeq ($(force-win),0) 
