@@ -156,10 +156,7 @@ jobs:
           CC: clang
           CXX: clang++
         run: |
-          where lld
-          where ld
-          where link
-          .\make.exe release sudo=0
+          .\make.exe release sudo=0 linker=link
           
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
