@@ -87,6 +87,7 @@ copylibs = 0
 endif
 
 empty =
+space = $(empty) $(empty)
 
 ifeq ($(findstring arm, $(shell uname -m)),arm)
 arch = arm64
@@ -145,7 +146,19 @@ wfsrc = $(foreach src,$(sources),src/$(src))
 objects = $(foreach file,$(sources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
 fbsrc = $(foreach bsrc,$(binsources),../src/$(bsrc))
 fbobj = $(foreach file,$(binsources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
-os = $(shell echo $$(uname -s)-$$(uname -m))
+os = $(subst $(space),_,$(shell echo $$(uname -s)-$$(uname -r)-$$(uname -m)))
+
+ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
+os = $(subst $(space),_,$(shell echo $$(uname -s)-$$(uname -r)))
+else
+ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
+os = $(subst $(space),_,$(shell echo $$(uname -s)-$$(uname -r)))
+else
+ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
+os = $(subst $(space),_,$(shell echo $$(uname -s)-$$(uname -r))) 
+endif
+endif
+endif
 
 ifeq ($(shell uname -s),Darwin)
 ifeq ($(findstring arm, $(shell uname -m)),arm)
