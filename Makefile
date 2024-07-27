@@ -171,7 +171,7 @@ endif
 endif
 
 
-ifeq ($(shell uname -s),windows32)
+ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 #windows
 admin = sudo
 prefix = .\
@@ -304,18 +304,17 @@ endif
 	@copy cplusplus\bin\$(dllname) bin\cs
 	@copy csharp\bin\lib\$(libname) bin\cs
 
-	@cd bin && ren cpp C++-$(release)-$(os)
-	@cd bin && ren cs C\#-$(release)-$(os)
+	@cd bin && ren cpp C++-$(release)
+	@cd bin && ren cs C\#-$(release)
 
 	@cd bin && powershell Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/raw/master/bin/zip.exe" -OutFile "zip.exe" -Verbose
 
-	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)-$(os)
-	@cd bin && zip -r C\#-$(release)-$(os).zip C\#-$(release)-$(os)
-
+	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)
+	@cd bin && zip -r C\#-$(release)-$(os).zip C\#-$(release)
+	
 else
-
 ifeq ($(wildcard release),release)
-	@rm -r bin
+	@rm -rf bin
 endif
 	@mkdir -p bin/cpp
 	@mkdir -p bin/cs
@@ -327,23 +326,23 @@ endif
 	@cp cplusplus/bin/$(dllname) bin/cs
 	@cp csharp/bin/lib/$(libname) bin/cs
 
-	@cd bin && mv cpp C++-$(release)-$(os)
-	@cd bin && mv cs C#-$(release)-$(os)
+	@cd bin && mv cpp C++-$(release)
+	@cd bin && mv cs C#-$(release)
 
-ifeq ($(shell uname -s),windows32)
-	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)-$(os)
-	@cd bin && zip -r C\#-$(release)-$(os).zip C\#-$(release)-$(os)
+ifeq ($(findstring windows32, $(shell uname -s)),windows32)
+	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)
+	@cd bin && zip -r C\#-$(release)-$(os).zip C\#-$(release)
 else
 ifeq ($(findstring NT, $(shell uname -s)),NT)
-	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)-$(os)
-	@cd bin && zip -r C\#-$(release)-$(os).zip C\#-$(release)-$(os)
+	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)
+	@cd bin && zip -r C\#-$(release)-$(os).zip C\#-$(release)
 else
 ifeq ($(shell uname -s),Darwin)
-	@cd bin && tar -czvf C++-$(release)-$(os).tgz C++-$(release)-$(os)
-	@cd bin && tar -czvf C\#-$(release)-$(os).tgz C\#-$(release)-$(os)
+	@cd bin && tar -czvf C++-$(release)-$(os).tgz C++-$(release)
+	@cd bin && tar -czvf C\#-$(release)-$(os).tgz C\#-$(release)
 else
-	@cd bin && tar -czvf C++-$(release)-$(os).tar.gz C++-$(release)-$(os)
-	@cd bin && tar -czvf C\#-$(release)-$(os).tar.gz C\#-$(release)-$(os)
+	@cd bin && tar -czvf C++-$(release)-$(os).tar.gz C++-$(release)
+	@cd bin && tar -czvf C\#-$(release)-$(os).tar.gz C\#-$(release)
 endif
 endif
 endif
@@ -500,7 +499,7 @@ ifneq ($(wildcard cpp),cpp)
 	@$(MAKE) cpp
 endif
 
-ifeq ($(shell uname -s),windows32)
+ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 #windows
 	@cd binaryplus/obj && $(compiler) -c $(bpdb) $(fbsrc) -I ../include -std=c++20
 	@cd binaryplus && $(compiler) -o bin/$(binname).$(binary) $(fbobj) -I include -L$(flibdir) -l$(filename) -l$(name) $(ldarg)
