@@ -48,7 +48,7 @@ jobs:
       - name: Download MacOS Compressed Source Code
         uses: actions/download-artifact@v4
         with:
-          path: $(pwd)
+          path: ..
           name: MacOSSourceCode
       - name: Download Binaries
         uses: dawidd6/action-download-artifact@v6
