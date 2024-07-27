@@ -1,32 +1,22 @@
-name: Download & Publish Binaries
+name: Download & Release Binaries
 
 on:
-  workflow_run:
-    workflows: [Build & Upload Binaries]
-    types:
-      - completed
+  push:
+    tags:
+      - v*.*-zeta
+      - v*.*.*-zeta
+      - v*.*.*-alpha
+      - v*.*-alpha
+      - v*.*.*-alpha
+      - v*.*-beta
+      - v*.*.*-beta
+      - v*.*
+      - v*.*.*
 
 jobs:
-  check-tag:
-    name: Check if the push has a release tag
-    runs-on: ubuntu-latest
-    steps:
-      - name: Generate tag name
-        id: vars
-        run:  echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
-      - name: Debug Tag
-        run: |
-          echo ${{ steps.vars.outputs.tag }}
-      - name: Check tag
-        if: ${{ steps.vars.outputs.tag }} != 'v*.*'
-        uses: actions/github-script@v3
-        with:
-          script: |
-              core.setFailed('This push was not a release!')
   compress-source:
     name: Compress and Upload Source Code
     runs-on: macos-latest
-    needs: check-tag
     steps:
       - uses: actions/checkout@v2
       - name: Set output
