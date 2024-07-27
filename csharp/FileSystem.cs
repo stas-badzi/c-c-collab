@@ -14,7 +14,7 @@ namespace Cs
                 StreamReader sr = new StreamReader(str_file);
                 line = sr.ReadLine();
                 while (line != null) {
-                    result.Append(line);
+                    result.Add(line);
                     line = sr.ReadLine();
                 }
                 sr.Close();

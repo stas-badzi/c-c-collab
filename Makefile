@@ -282,6 +282,7 @@ ifneq ($(wildcard release),release)
 endif
 	@mkdir bin\cpp
 	@mkdir bin\cs
+
 	@copy binaryplus\bin\$(binname).$(binary) bin\cpp
 	@copy cplusplus\bin\$(dllname) bin\cpp
 	@copy csharp\bin\lib\$(libname) bin\cpp
@@ -292,6 +293,8 @@ endif
 
 	@cd bin && ren cpp C++-$(release)-$(os)
 	@cd bin && ren cs C\#-$(release)-$(os)
+
+	@cd bin && powershell Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/raw/master/bin/zip.exe" -OutFile "zip.exe" -Verbose
 
 	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)-$(os)
 	@cd bin && zip -r C\#-$(release)-$(os).zip C\#-$(release)-$(os)

@@ -54,7 +54,7 @@ namespace Utility {
         }
     #endif
         public static String PtrToString(IntPtr ptr) {
-        #if __WIN32
+        #if _WIN32
             return Marshal.PtrToStringUni(ptr);
         #else
             int int32_size = sizeof(Int32);
@@ -82,7 +82,6 @@ namespace Utility {
             IntPtr ptr = Marshal.AllocHGlobal( (str.Length + 1) * int32_size);
             for (int i = 0; i < str.Length; i++) {
                 Int32 textint = Convert.ToInt32(str[i]);
-                Console.WriteLine(textint + " = " + str[i]);
                 Marshal.WriteInt32(ptr, i*int32_size, textint);
             }
             Marshal.WriteInt32(ptr, str.Length * int32_size, 0);

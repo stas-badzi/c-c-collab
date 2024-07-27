@@ -1,21 +1,69 @@
 name: Download & Publish Binaries
 
 on:
-  push:
-    branches:
-      - main
-    tags:
-      - "v*"
+  workflow_run:
+    workflows: [Build & Upload Binaries]
+    types:
+      - completed
 
 jobs:
-  release:
-    name: Release Program
-    runs-on: macos-latest
+  check-tag:
+    name: Check if the push has a release tag
+    runs-on: ubuntu-latest
     steps:
-      - name: Compress MacOS
+      - name: Generate tag name
+        id: vars
+        run: echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+      - name: Check tag
+        if: ${{ steps.vars.outputs.tag }} != 'v*.*'
+        uses: actions/github-script@v3
+        with:
+          script: |
+              core.setFailed('This push was not a release!')
+  compress-source:
+    name: Compress and Upload Source Code
+    runs-on: macos-latest
+    needs: check-tag
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set output
+        id: vars
+        run: echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+      - name: Compress Source for MacOS
         shell: bash
+        env:
+          RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
         run: |
           cd ..
-          tar 
+          mv c-c-collab c-c-collab-$RELEASE_VERSION
+          tar -czvf "Source Code.tgz" c-c-collab-*
+      - name: Upload compressed source code
+        uses: actions/upload-artifact@v4
+        with:
+          name: MacOSSourceCode
+          path: Source Code.tgz
+
+  release:
+    name: Release Compiled Binaries and Source Code
+    runs-on: ubuntu-latest
+    needs: compress-source
+    steps:
+      - name: Clean Files
+        run: |
+          cd ..
+          rm -rf .
+      - name: Download MacOS Compressed Source Code
+        uses: actions/download-artifact@v4
+        with:
+          path: $(pwd)
+          name: MacOSSourceCode
+      - name: Download Binaries
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: build.yml
+          branch: main
+          name: MacOSCppBin
+          path: .
+
 
   

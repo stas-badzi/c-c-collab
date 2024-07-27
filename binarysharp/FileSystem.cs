@@ -11,7 +11,7 @@ namespace Cs {
             IntPtr elem = Marshal.ReadIntPtr(ret, 0);
             String line = UniConv.PtrToString(elem);
             for (int i = 1; line.Length > 0; i++) {
-                text.Append(line);
+                text.Add(line);
                 elem = Marshal.ReadIntPtr(ret, i * intptr_size);
                 line = UniConv.PtrToString(elem);
             }
@@ -25,6 +25,7 @@ namespace Cs {
                 Marshal.WriteIntPtr(output, intptr_size * i, elem);
             }
             IntPtr end = UniConv.StringToPtr("\u0000");
+            Marshal.WriteIntPtr(output, intptr_size * contentstr.Count, end);
             CsImp.FileSystem.ExportText(UniConv.StringToPtr(pathstr), output);
         }
     }

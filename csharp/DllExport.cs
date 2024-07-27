@@ -70,7 +70,7 @@ namespace CsExp {
             IntPtr elem = Marshal.ReadIntPtr(content,0);
             String line = UniConv.PtrToString(elem);
             for (int i = 1; line.Length > 0; i++) {
-                text.Append(line);
+                text.Add(line);
                 elem = Marshal.ReadIntPtr(content, i * intptr_size);
                 line = UniConv.PtrToString(elem);
             }
