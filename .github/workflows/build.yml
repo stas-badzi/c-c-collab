@@ -129,7 +129,7 @@ jobs:
           path: bin/*C#*.zip
   
   build-windows:
-    name: Build program using clang on Windows
+    name: Build dll using clang and exe using g++ on Windows
     needs: compile-cs-windows
     runs-on: windows-latest
     steps:
@@ -156,7 +156,9 @@ jobs:
           CC: clang
           CXX: clang++
         run: |
-          .\make.exe release sudo=0 compiler=clang++
+          .\make.exe cpp sudo=0 compiler=clang++
+          .\make.exe cppbin sudo=0 compiler=g++
+          .\make.exe release sudo=0
           
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
