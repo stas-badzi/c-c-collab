@@ -15,7 +15,8 @@ jobs:
         id: vars
         run:  echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
       - name: Debug Tag
-        run: echo ${{ steps.vars.outputs.tag }}
+        run: |
+          echo ${{ steps.vars.outputs.tag }}
       - name: Check tag
         if: ${{ steps.vars.outputs.tag }} != 'v*.*'
         uses: actions/github-script@v3

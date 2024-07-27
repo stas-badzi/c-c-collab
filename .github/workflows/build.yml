@@ -2,8 +2,6 @@ name: Build & Upload Binaries
 
 on:
   push:
-    branches:
-      - main
 
 jobs:
   compile-cs-windows:
