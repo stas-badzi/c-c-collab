@@ -373,7 +373,7 @@ ifneq ($(wildcard cs),cs)
 	@$(MAKE) cs
 endif
 #
-ifeq ($(shell uname -s),windows32)
+ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 #windows
 	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
 	@cd cplusplus && $(compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)

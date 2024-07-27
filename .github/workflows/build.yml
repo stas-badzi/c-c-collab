@@ -156,7 +156,6 @@ jobs:
           CC: clang
           CXX: clang++
         run: |
-          .\uname.exe -s
           .\make.exe release sudo=0 compiler=clang++
           
       - name: Upload C++ binaries
