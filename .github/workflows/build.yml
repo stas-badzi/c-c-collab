@@ -129,7 +129,7 @@ jobs:
           path: bin/*C#*.zip
   
   build-windows:
-    name: Build program using Windows
+    name: Build program using clang on Windows
     needs: compile-cs-windows
     runs-on: windows-latest
     steps:
@@ -156,6 +156,7 @@ jobs:
           CC: clang
           CXX: clang++
         run: |
+          .\uname.exe -s
           .\make.exe release sudo=0 compiler=clang++
           
       - name: Upload C++ binaries
