@@ -31,14 +31,15 @@ jobs:
           cd ..
           mv c-c-collab c-c-collab-$RELEASE_VERSION
           tar -czvf c-c-collab-$RELEASE_VERSION.tgz c-c-collab-$RELEASE_VERSION
-          mv c-c-collab-$RELEASE_VERSION c-c-collab
+          mkdir c-c-collab
+          cp c-c-collab-$RELEASE_VERSION.tgz c-c-collab
       - name: Upload compressed source code
         env:
           RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
         uses: actions/upload-artifact@v4
         with:
           name: MacOSSourceCode
-          path: ../c-c-collab-$RELEASE_VERSION.tgz
+          path: c-c-collab-$RELEASE_VERSION.tgz
 
   release:
     name: Release Compiled Binaries and Source Code

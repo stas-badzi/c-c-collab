@@ -97,9 +97,9 @@ jobs:
           cd $(cygpath -u "${{ github.workspace }}")
           uname -s
           ./make release sudo=0
-          ls
           
           cd bin
+          ls
           rm *.zip
           rm -r $(ls | grep 'C++')
           rm -r $(ls | grep 'C#')
