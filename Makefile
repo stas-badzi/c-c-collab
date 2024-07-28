@@ -336,8 +336,8 @@ else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)
 	@cd bin && zip -r C\#-$(release)-$(os).zip C\#-$(release)
-	@cd bin && mv C++-$(release)-$(os) C++-$(release)-$(os).zip
-	@cd bin && mv C\#-$(release)-$(os) C\#-$(release)-$(os).zip
+	@cd bin && mv C++-$(release)-$(os) ./C++-$(release)-$(os).zip
+	@cd bin && mv C\#-$(release)-$(os) ./C\#-$(release)-$(os).zip
 else
 ifeq ($(findstring NT, $(shell uname -s)),NT)
 	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)
