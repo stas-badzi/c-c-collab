@@ -18,7 +18,7 @@ jobs:
     name: Compress and Upload Source Code
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set output
         id: vars
         run: echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
@@ -34,12 +34,10 @@ jobs:
           mkdir c-c-collab
           cp c-c-collab-$RELEASE_VERSION.tgz c-c-collab
       - name: Upload compressed source code
-        env:
-          RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
         uses: actions/upload-artifact@v4
         with:
           name: MacOSSourceCode
-          path: c-c-collab-$RELEASE_VERSION.tgz
+          path: c-c-collab-${{ steps.vars.outputs.tag }}.tgz
 
   release:
     name: Release Compiled Binaries and Source Code
@@ -53,11 +51,10 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         env:
-          RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
         with:
-          tag_name: $RELEASE_VERSION
-          release_name: Release $RELEASE_VERSION
+          tag_name: ${{ steps.vars.outputs.tag }}
+          release_name: Release ${{ steps.vars.outputs.tag }}
           body: |
             This release was automaticly generated.
             Read the README.md from source code for changes
@@ -71,14 +68,18 @@ jobs:
         with:
           path: .
           name: MacOSSourceCode
+      - name: Get Name of MacOSSourceCode
+        shell: sh
+        id: macos-cpp-src-name
+        run: "path=$(echo ls) >> $GITHUB_OUTPUT"
       - name: Upload MacOSSourceCode
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: '*.tgz'
-          asset_name: Source Code (tgz)
+          asset_path: ${{ steps.macos-cpp-src-name.outputs.path }}
+          asset_name: ${{ steps.macos-cpp-src-name.outputs.path }}
           asset_content_type: application/x-tar
       - name: Clean MacOSSourceCode
         shell: sh
@@ -99,11 +100,10 @@ jobs:
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ASSET_NAME: ${{ steps.macos-cpp-bin-name.outputs.path }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: $ASSET_NAME
-          asset_name: Source Code (tgz)
+          asset_path: ${{ steps.macos-cpp-bin-name.outputs.path }}
+          asset_name: ${{ steps.macos-cpp-bin-name.outputs.path }}
           asset_content_type: application/x-tar
       - name: Clean MacOSCppBin
         shell: sh
@@ -124,11 +124,10 @@ jobs:
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ASSET_NAME: ${{ steps.macos-cs-bin-name.outputs.path }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: $ASSET_NAME
-          asset_name: Source Code (tgz)
+          asset_path: ${{ steps.macos-cs-bin-name.outputs.path }}
+          asset_name: ${{ steps.macos-cs-bin-name.outputs.path }}
           asset_content_type: application/x-tar
       - name: Clean MacOSCsBin
         shell: sh
@@ -149,11 +148,10 @@ jobs:
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ASSET_NAME: ${{ steps.ubuntu-cpp-bin-name.outputs.path }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: $ASSET_NAME
-          asset_name: Source Code (tgz)
+          asset_path: ${{ steps.ubuntu-cpp-bin-name.outputs.path }}
+          asset_name: ${{ steps.ubuntu-cpp-bin-name.outputs.path }}
           asset_content_type: application/x-tar
       - name: Clean UbuntuCppBin
         shell: sh
@@ -174,11 +172,10 @@ jobs:
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ASSET_NAME: ${{ steps.ubuntu-cs-bin-name.outputs.path }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: $ASSET_NAME
-          asset_name: Source Code (tgz)
+          asset_path: ${{ steps.ubuntu-cs-bin-name.outputs.path }}
+          asset_name: ${{ steps.ubuntu-cs-bin-name.outputs.path }}
           asset_content_type: application/x-tar
       - name: Clean UbuntuCsBin
         shell: sh
@@ -199,12 +196,11 @@ jobs:
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ASSET_NAME: ${{ steps.msys-cpp-bin-name.outputs.path }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: $ASSET_NAME
-          asset_name: Source Code (tgz)
-          asset_content_type: application/x-tar
+          asset_path: ${{ steps.msys-cpp-bin-name.outputs.path }}
+          asset_name: ${{ steps.msys-cpp-bin-name.outputs.path }}
+          asset_content_type: application/zip
       - name: Clean Msys2CppBin
         shell: sh
         run: rm -rf .
@@ -224,12 +220,11 @@ jobs:
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ASSET_NAME: ${{ steps.msys-cs-bin-name.outputs.path }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: $ASSET_NAME
-          asset_name: Source Code (tgz)
-          asset_content_type: application/x-tar
+          asset_path: ${{ steps.msys-cs-bin-name.outputs.path }}
+          asset_name: ${{ steps.msys-cs-bin-name.outputs.path }}
+          asset_content_type: application/zip
       - name: Clean Msys2CsBin
         shell: sh
         run: rm -rf .
