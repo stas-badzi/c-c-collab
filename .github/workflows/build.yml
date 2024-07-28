@@ -97,6 +97,7 @@ jobs:
           cd $(cygpath -u "${{ github.workspace }}")
           uname -s
           ./make release sudo=0
+          ls
           
           cd bin
           rm *.zip
@@ -129,37 +130,37 @@ jobs:
           name: CygwinCsBin
           path: bin/*C#*.zip
   
-  build-windows:
-    name: Build dll using clang and exe using g++ on Windows
-    needs: compile-cs-windows
-    runs-on: windows-latest
-    steps:
-      - name: Import C# compiled source code
-        uses: actions/download-artifact@v4
-        with:
-          name: DotNetBinaries
-          path: .
-      - name: Set up Clang
-        uses: egor-tensin/setup-clang@v1
-      - name: Install Programs
-        shell: pwsh
-        run: |
-          echo $null >> cs
-          echo $null >> csbin
-          Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/archive/refs/heads/master.zip" -OutFile "gnuwin32.zip" -Verbose
-          Expand-Archive -Force gnuwin32.zip .
-          del gnuwin32.zip
-          ren gnuwin32.mirror-master gnuwin32
-          copy gnuwin32\bin\* .
-      - name: Compile code
-        shell: cmd
-        env:
-          CC: clang
-          CXX: clang++
-        run: |
-          .\make.exe cpp sudo=0 compiler=clang++
-          .\make.exe cppbin sudo=0 compiler=g++
-          .\make.exe release sudo=0
+#  build-windows:
+#    name: Build dll using clang and exe using g++ on Windows
+#    needs: compile-cs-windows
+#    runs-on: windows-latest
+#    steps:
+#      - name: Import C# compiled source code
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: DotNetBinaries
+#          path: .
+#      - name: Set up Clang
+#        uses: egor-tensin/setup-clang@v1
+#      - name: Install Programs
+#        shell: pwsh
+#        run: |
+#          echo $null >> cs
+#          echo $null >> csbin
+#          Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/archive/refs/heads/master.zip" -OutFile "gnuwin32.zip" -Verbose
+#          Expand-Archive -Force gnuwin32.zip .
+#          del gnuwin32.zip
+#          ren gnuwin32.mirror-master gnuwin32
+#          copy gnuwin32\bin\* .
+#      - name: Compile code
+#        shell: cmd
+#        env:
+#          CC: clang
+#          CXX: clang++
+#        run: |
+#          .\make.exe cpp sudo=0 compiler=clang++
+#          .\make.exe cppbin sudo=0 compiler=g++
+#          .\make.exe release sudo=0
           
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4

@@ -311,7 +311,7 @@ endif
 
 	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)
 	@cd bin && zip -r C\#-$(release)-$(os).zip C\#-$(release)
-	
+
 else
 ifeq ($(wildcard release),release)
 	@rm -rf bin
@@ -333,6 +333,10 @@ ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)
 	@cd bin && zip -r C\#-$(release)-$(os).zip C\#-$(release)
 else
+ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
+	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)
+	@cd bin && zip -r C\#-$(release)-$(os).zip C\#-$(release)
+else
 ifeq ($(findstring NT, $(shell uname -s)),NT)
 	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)
 	@cd bin && zip -r C\#-$(release)-$(os).zip C\#-$(release)
@@ -343,6 +347,7 @@ ifeq ($(shell uname -s),Darwin)
 else
 	@cd bin && tar -czvf C++-$(release)-$(os).tar.gz C++-$(release)
 	@cd bin && tar -czvf C\#-$(release)-$(os).tar.gz C\#-$(release)
+endif
 endif
 endif
 endif
