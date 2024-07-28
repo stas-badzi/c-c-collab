@@ -95,6 +95,7 @@ jobs:
           CXX: g++
         run: |
           cd $(cygpath -u "${{ github.workspace }}")
+          uname -s
           ./make release sudo=0
           
           cd bin
