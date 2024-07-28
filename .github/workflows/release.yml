@@ -27,6 +27,8 @@ jobs:
         env:
           RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
         run: |
+          rm -rf .git
+          rmdir bin
           cd ..
           mv c-c-collab c-c-collab-$RELEASE_VERSION
           tar -czvf c-c-collab-$RELEASE_VERSION.tgz c-c-collab-$RELEASE_VERSION
@@ -36,7 +38,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: MacOSSourceCode
-          path: c-c-collab-$RELEASE_VERSION.tgz
+          path: ../c-c-collab-$RELEASE_VERSION.tgz
 
   release:
     name: Release Compiled Binaries and Source Code
