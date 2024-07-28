@@ -28,7 +28,6 @@ jobs:
           RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
         run: |
           rm -rf .git
-          rmdir bin
           cd ..
           mv c-c-collab c-c-collab-$RELEASE_VERSION
           tar -czvf c-c-collab-$RELEASE_VERSION.tgz c-c-collab-$RELEASE_VERSION
