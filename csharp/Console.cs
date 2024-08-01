@@ -8,7 +8,7 @@ namespace Cpp
     class Terminal
     {
         public static ulong[] FillScreen(List<List<Symbol>> symbols) {
-            
+
             int ptrsize = IntPtr.Size;
             int ulngsize = sizeof(ulong);
             int height = symbols.Count();
@@ -25,7 +25,7 @@ namespace Cpp
             }
 
             IntPtr ptr_smb = Marshal.AllocHGlobal(height * ptrsize);
-            
+
             for (int i = 0; i < height; i++)
             {
                 Marshal.WriteIntPtr(ptr_smb, i * ptrsize, list_ptr[i]);
@@ -41,7 +41,7 @@ namespace Cpp
             {
                 Marshal.FreeHGlobal(list_ptr[i]);
             }
-            
+
             // ulongints -> ulongs
             ulong[] ulongs = new ulong[2];
 
