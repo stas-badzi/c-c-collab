@@ -2,8 +2,6 @@ name: Download & Release Binaries
 
 on:
   push:
-    branches:
-      - main
     tags:
       - v*.*-zeta
       - v*.*.*-zeta
