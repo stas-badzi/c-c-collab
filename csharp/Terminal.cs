@@ -5,7 +5,7 @@ using Utility;
 
 namespace Cpp
 {
-    class Terminal
+    public class Terminal
     {
         public static ulong[] FillScreen(List<List<Symbol>> symbols) {
 

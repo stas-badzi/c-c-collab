@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.CommandLine;
+using Cpp;
 
 namespace Cs
 {
@@ -51,80 +52,53 @@ namespace Cs
             }
         }
         
-        // !!
-        // Comments soon to be deleted when finished function
-        public static List<List<Symbol>> TextureFromFile(int width, int height, string filename)
+        public static List<List<Terminal.Symbol>> TextureFromFile(int width, int height, string filename)
         {
-            // Tworzymy siatkę tekstury o wymiarach width x height
-            List<List<Symbol>> texture = new List<List<Symbol>>();
-            for (int i = 0; i < height; i++)
+            var fileImported = ImportText(filename); // Imported List<string>
+            var file = new List<List<char>>(); // Every character of file
+            var symbols = new List<List<Terminal.Symbol>>(); // Final symbol list
+
+            for (int i = 0; i < fileImported.Count; i++) // Assign var file
             {
-                texture.Add(new List<Symbol>());
-                for (int j = 0; j < width; j++)
-                {
-                    // Wypełniamy domyślnymi symbolami (spacja z białym kolorem na czarnym tle)
-                    texture[i].Add(new Symbol(' ', ConsoleColor.Gray, ConsoleColor.Black));
-                }
+                file.Add(ToCharList(fileImported[i])); // Add a ToCharList from a file line
             }
 
-            try
+            int remainingSymbols = width * height;
+            for (int i = 0; i < file.Count; i++)
             {
-                // Otwieramy plik do odczytu
-                using (StreamReader sr = new StreamReader(filename))
+                
+                var symbolLine = new List<Terminal.Symbol>();
+
+                for (int j = 0; j < file[i].Count; j++)
                 {
-                    int currentRow = 0; // Aktualny wiersz w siatce
-                    int currentCol = 0; // Aktualna kolumna w siatce
-                    int totalCells = width * height; // Liczba komórek do wypełnienia
-
-                    while (!sr.EndOfStream && totalCells > 0)
+                    symbolLine.Add(new Terminal.Symbol(file[i][j]));
+                    remainingSymbols--;
+                    if (remainingSymbols == 0)
                     {
-                        char c = (char)sr.Read(); // Odczytujemy jeden znak
-                        if (c == '\n' || c == '\r') continue; // Pomijamy znaki nowej linii
-
-                        // Konwertujemy znak na symbol z odpowiednimi kolorami
-                        Symbol symbol = CharToSymbol(c);
-                        texture[currentRow][currentCol] = symbol;
-
-                        // Przechodzimy do następnej komórki
-                        currentCol++;
-                        if (currentCol >= width) // Jeśli dotarliśmy do końca wiersza
-                        {
-                            currentCol = 0; // Przechodzimy do pierwszej kolumny
-                            currentRow++; // Przechodzimy do następnego wiersza
-                        }
-                        totalCells--; // Zmniejszamy liczbę komórek do wypełnienia
+                        symbols.Add(symbolLine);
+                        return symbols; // Finalize if finished width * height number of symbols
                     }
                 }
+                symbols.Add(symbolLine);
             }
-            catch (Exception e)
+            
+
+            return symbols; // Finalize all
+        }
+
+        public static List<char> ToCharList(string input)
+        {
+            var array = input.ToCharArray();
+            var list = new List<char>();
+            for (int i  = 0; i < array.Length; i++)
             {
-                Environment.FailFast($"Unhandled exception at Cs.FileSystem.TextureFromFile: " + e.Message);
+                if (array[i] != '\n') // DOESN'T ADD NEW LINE CHARACTERS (Correct if wrong)
+                    list.Add(array[i]);
+                else
+                    break;
             }
 
-            return texture;
+            return list;
         }
-
-        // Funkcja do konwertowania znaków na symbole z kolorami
-        public static Symbol CharToSymbol(char input)
-        {
-            // Mapujemy każdy znak na symbol z domyślnymi kolorami
-            return new Symbol(input, ConsoleColor.White, ConsoleColor.Black); // Domyślne kolory
-        }
-    }
-
-    // Klasa reprezentująca symbol z kolorem
-    public class Symbol
-    {
-        public char Character { get; }
-        public ConsoleColor ForegroundColor { get; }
-        public ConsoleColor BackgroundColor { get; }
-
-        public Symbol(char character, ConsoleColor foregroundColor, ConsoleColor backgroundColor)
-        {
-            Character = character;
-            ForegroundColor = foregroundColor;
-            BackgroundColor = backgroundColor;
-        }
-
     }
 }
