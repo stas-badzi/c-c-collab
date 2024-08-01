@@ -56,11 +56,15 @@ namespace Cs
         {
             var fileImported = ImportText(filename); // Imported List<string>
             var file = new List<List<char>>(); // Every character of file
+            var front = new List<List<int>>();
+            var back = new List<List<int>>();
             var symbols = new List<List<Terminal.Symbol>>(); // Final symbol list
 
             for (int i = 0; i < fileImported.Count; i++) // Assign var file
             {
                 file.Add(ToCharList(fileImported[i])); // Add a ToCharList from a file line
+                //back.Add((int)Char.GetNumericValue(fileImported[i + 1])); <---------
+                //front.Add((int)Char.GetNumericValue(fileImported[i+3])); <---------
             }
 
             int remainingSymbols = width * height;
@@ -71,7 +75,7 @@ namespace Cs
 
                 for (int j = 0; j < file[i].Count; j++)
                 {
-                    symbolLine.Add(new Terminal.Symbol(file[i][j]));
+                    symbolLine.Add(new Terminal.Symbol(file[i][j], (byte) front[i][j], (byte) back[i][j])); // <--------
                     remainingSymbols--;
                     if (remainingSymbols == 0)
                     {
