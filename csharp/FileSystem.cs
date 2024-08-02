@@ -2,7 +2,9 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.CommandLine;
+//using Microsoft.VisualBasic.FileIO;
 using Cpp;
+using Microsoft.VisualBasic.FileIO;
 
 namespace Cs
 {
@@ -80,7 +82,46 @@ namespace Cs
             return symbols;
         }
 
-        public static List<char> ToCharList(string input)
+        public static void FileFromTexture(string filename, string dirName, List<List<Terminal.Symbol>> texture)
+        {
+            var file = new FileInfo(Path.Combine(dirName, filename));
+            int width, height;
+
+            if (file.Exists) // Move to recycle bin if exists (safety issues)
+            Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(file.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+            file.Create();
+
+            try
+            {
+                using (StreamWriter sw = file.CreateText())
+                {
+                    width = texture[0].Count;
+                    sw.WriteLine(width);
+
+                    height = texture.Count;
+                    sw.WriteLine(height);
+
+                    for (int i = 0; i < height - 2; i++)
+                    {
+                        for (int j = 0; j < texture[i].Count; j++)
+                        {
+                            sw.Write(texture[i][j].character());
+                            sw.Write(ByteToHex(texture[i][j].foreground()));
+                            sw.Write(ByteToHex(texture[i][j].background()));
+                        }
+                        sw.Write('\n');
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Environment.FailFast($"Unhandled exception at Cs.FileSystem.FileFromTexture (FileSystem.cs:118): " + e.Message);
+            }
+
+            Console.WriteLine($"{file.FullName}: Texture saved");
+        }
+
+        private static List<char> ToCharList(string input)
         {
             var array = input.ToCharArray();
             var list = new List<char>();
@@ -95,7 +136,7 @@ namespace Cs
             return list;
         }
 
-        public static byte HexToByte(char input)
+        private static byte HexToByte(char input)
         {
             byte num;
             if (byte.TryParse(input.ToString(), out num)) // 0-9
@@ -112,6 +153,23 @@ namespace Cs
                 case 'E': return 14;
                 case 'F': return 15;
                 default: return 16;
+            }
+        }
+        private static char ByteToHex(byte input)
+        {;
+            if (input >= 0 && input <= 9) // 0-9
+            {
+                return input.ToString().ToCharArray()[0];
+            }
+            switch (input) // A-F
+            {
+                case 10: return 'A';
+                case 11: return 'B';
+                case 12: return 'C';
+                case 13: return 'D';
+                case 14: return 'E';
+                case 15: return 'F';
+                default: return ' ';
             }
         }
     }
