@@ -71,7 +71,7 @@ namespace Cs
 
                 for (int j = 0; j < width * 3; j+=3)
                 {
-                    symbolLine.Add(new Terminal.Symbol(file[i][j], HexToByte(file[i][j+1]), HexToByte (file[i][j+2])));
+                    symbolLine.Add(new Terminal.Symbol(file[i][j], HexToByte(file[i][j+1]), HexToByte(file[i][j+2])));
                 }
                 symbols.Add(symbolLine);
             }
@@ -93,6 +93,26 @@ namespace Cs
             }
 
             return list;
+        }
+
+        public static byte HexToByte(char input)
+        {
+            byte num;
+            if (byte.TryParse(input.ToString(), out num)) // 0-9
+            {
+                if (num >= 0 && num <= 9)
+                return num;
+            }
+            switch (input) // A-F
+            {
+                case 'A': return 10;
+                case 'B': return 11;
+                case 'C': return 12;
+                case 'D': return 13;
+                case 'E': return 14;
+                case 'F': return 15;
+                default: return 16;
+            }
         }
     }
 }
