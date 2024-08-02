@@ -56,38 +56,28 @@ namespace Cs
         {
             var fileImported = ImportText(filename); // Imported List<string>
             var file = new List<List<char>>(); // Every character of file
-            var front = new List<List<int>>();
-            var back = new List<List<int>>();
             var symbols = new List<List<Terminal.Symbol>>(); // Final symbol list
 
             for (int i = 0; i < fileImported.Count; i++) // Assign var file
             {
-                file.Add(ToCharList(fileImported[i])); // Add a ToCharList from a file line
-                //back.Add((int)Char.GetNumericValue(fileImported[i + 1])); <---------
-                //front.Add((int)Char.GetNumericValue(fileImported[i+3])); <---------
+                file.Add(ToCharList(fileImported[i]));
             }
 
-            int remainingSymbols = width * height;
-            for (int i = 0; i < file.Count; i++)
+            int remainingSymbols = width * 3 * height;
+            for (int i = 0; i < height; i++)
             {
                 
                 var symbolLine = new List<Terminal.Symbol>();
 
-                for (int j = 0; j < file[i].Count; j++)
+                for (int j = 0; j < width * 3; j+=3)
                 {
-                    symbolLine.Add(new Terminal.Symbol(file[i][j], (byte) front[i][j], (byte) back[i][j])); // <--------
-                    remainingSymbols--;
-                    if (remainingSymbols == 0)
-                    {
-                        symbols.Add(symbolLine);
-                        return symbols; // Finalize if finished width * height number of symbols
-                    }
+                    symbolLine.Add(new Terminal.Symbol(file[i][j], HexToByte(file[i][j+1]), HexToByte (file[i][j+2])));
                 }
                 symbols.Add(symbolLine);
             }
             
 
-            return symbols; // Finalize all
+            return symbols;
         }
 
         public static List<char> ToCharList(string input)
