@@ -54,13 +54,18 @@ namespace Cs
             }
         }
         
-        public static List<List<Terminal.Symbol>> TextureFromFile(int width, int height, string filename)
+        public static List<List<Terminal.Symbol>> TextureFromFile(dtring filename)
         {
+            int width, height;
+
             var fileImported = ImportText(filename); // Imported List<string>
             var file = new List<List<char>>(); // Every character of file
             var symbols = new List<List<Terminal.Symbol>>(); // Final symbol list
 
-            for (int i = 0; i < fileImported.Count; i++) // Assign var file
+            width = int.TryParse(FileImported[0]);
+            height = int.TryParse(FileImported[1]);
+
+            for (int i = 2; i < fileImported.Count; i++) // Assign var file
             {
                 file.Add(ToCharList(fileImported[i]));
             }
@@ -169,7 +174,7 @@ namespace Cs
                 case 13: return 'D';
                 case 14: return 'E';
                 case 15: return 'F';
-                default: return ' ';
+                default: return '-';
             }
         }
     }
