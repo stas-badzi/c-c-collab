@@ -82,9 +82,9 @@ namespace Cs
             return symbols;
         }
 
-        public static void FileFromTexture(string filename, string dirName, List<List<Terminal.Symbol>> texture)
+        public static void FileFromTexture(string filepath, List<List<Terminal.Symbol>> texture)
         {
-            var file = new FileInfo(Path.Combine(dirName, filename));
+            var file = new FileInfo(filepath);
             int width, height;
 
             if (file.Exists) // Move to recycle bin if exists (safety issues)
@@ -101,7 +101,7 @@ namespace Cs
                     height = texture.Count;
                     sw.WriteLine(height);
 
-                    for (int i = 0; i < height - 2; i++)
+                    for (int i = 0; i < height; i++)
                     {
                         for (int j = 0; j < texture[i].Count; j++)
                         {
@@ -111,6 +111,7 @@ namespace Cs
                         }
                         sw.Write('\n');
                     }
+                    sw.Close();
                 }
             }
             catch (Exception e)
@@ -118,7 +119,6 @@ namespace Cs
                 Environment.FailFast($"Unhandled exception at Cs.FileSystem.FileFromTexture (FileSystem.cs:118): " + e.Message);
             }
 
-            Console.WriteLine($"{file.FullName}: Texture saved");
         }
 
         private static List<char> ToCharList(string input)
