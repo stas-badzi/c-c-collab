@@ -132,6 +132,26 @@ namespace Cs
 
         }
 
+        public static void DrawTextureToScreen(int x, int y, List<List<Terminal.Symbol>> texture, List<List<Terminal.Symbol>> screen)
+        {
+            int? width, height;
+
+            width = texture[0].Count;
+            height = texture.Count;            
+            for (int i = 0; i < y; i++)
+            {
+                for (int j = 0; j < x; j++)
+                {
+                    if (x+i > 0 && x+i < height && y+j > 0 && y+j < height && texture[i][j].foreground() < 16)
+                    {
+                        screen[i+x][y+j] = texture[i][j];
+                    }
+                    else
+                        screen[i][j] = texture[i][j];
+                }
+            }
+        }
+
         private static List<char> ToCharList(string input)
         {
             var array = input.ToCharArray();
