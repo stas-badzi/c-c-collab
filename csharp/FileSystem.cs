@@ -134,15 +134,16 @@ namespace Cs
 
         public static void DrawTextureToScreen(int x, int y, List<List<Terminal.Symbol>> texture, List<List<Terminal.Symbol>> screen)
         {
-            int? width, height;
+            int? width = texture[0].Count;
+            int? scrWidth = screen[0].Count;
+            int? height = texture.Count;
+            int? scrHeight = screen.Count;
 
-            width = texture[0].Count;
-            height = texture.Count;            
-            for (int i = 0; i < y; i++)
+            for (int i = 0; i < height; i++)
             {
-                for (int j = 0; j < x; j++)
+                for (int j = 0; j < width; j++)
                 {
-                    if (x+i > 0 && x+i < height && y+j > 0 && y+j < height && texture[i][j].foreground() < 16)
+                    if (i > 0 && i < scrHeight && j > 0 && j < scrHeight && texture[i][j].foreground() < 16)
                     {
                         screen[i+x][y+j] = texture[i][j];
                     }
