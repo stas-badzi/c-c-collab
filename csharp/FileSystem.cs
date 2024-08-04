@@ -54,7 +54,7 @@ namespace Cs
             }
         }
         
-        public static List<List<Terminal.Symbol>> TextureFromFile(dtring filename)
+        public static List<List<Terminal.Symbol>>? TextureFromFile(string filename)
         {
             int width, height;
 
@@ -62,8 +62,14 @@ namespace Cs
             var file = new List<List<char>>(); // Every character of file
             var symbols = new List<List<Terminal.Symbol>>(); // Final symbol list
 
-            width = int.TryParse(FileImported[0]);
-            height = int.TryParse(FileImported[1]);
+            if (!int.TryParse(fileImported[0], out width))
+            {
+                return null;
+            }
+            if (!int.TryParse(fileImported[1], out height))
+            {
+                return null;
+            }
 
             for (int i = 2; i < fileImported.Count; i++) // Assign var file
             {
@@ -87,13 +93,13 @@ namespace Cs
             return symbols;
         }
 
-        public static void FileFromTexture(string filepath, List<List<Terminal.Symbol>> texture)
+        public static void FileFromTexture(string filepath, List<List<Terminal.Symbol>> texture, bool recycle = false)
         {
             var file = new FileInfo(filepath);
             int width, height;
 
             if (file.Exists) // Move to recycle bin if exists (safety issues)
-            Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(file.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+            Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(file.FullName, UIOption.OnlyErrorDialogs, recycle?RecycleOption.SendToRecycleBin:RecycleOption.DeletePermanently);
             file.Create();
 
             try
