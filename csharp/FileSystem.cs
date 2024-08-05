@@ -1,9 +1,11 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
-using Cpp;
+using CSCore;
+using CSCore.Codecs;
+using CSCore.SoundOut;
 using Microsoft.VisualBasic.FileIO;
-using System.Media;
+using Cpp;
 
 namespace Cs
 {
@@ -142,16 +144,15 @@ namespace Cs
             {
                 for (int j = 0; j < width; j++)
                 {
-                    if (y+i >= 0 && y+i < scrHeight && x+j => 0 && x+j < scrWidth)
+                    if (y+i >= 0 && y+i < scrHeight && x+j >= 0 && x+j < scrWidth)
                     {
-                        if (texture[i][j].character() != '\t')
-                        {
+                        if (texture[i][j].character() != '\t') {
                             screen[i][j].character(texture[i][j].character());
-              }
-                      if (texture[i][j].foreground() < 16) {
+                        }
+                        if (texture[i][j].foreground() < 16) {
                             screen[i][j].foreground(texture[i][j].foreground());
-}
-if (texture[i][j].background() < 16) {
+                        }
+                        if (texture[i][j].background() < 16) {
                             screen[i][j].background(texture[i][j].background());
                         }
                     }
@@ -159,11 +160,27 @@ if (texture[i][j].background() < 16) {
             }
         }
 
-        public void PlayMP3(string filePath)
+        public static void PlayMP3(string filePath)
         {
-            SoundPlayer musicPlayer = new SoundPlayer();
-            musicPlayer.SoundLocation = filePath;
-            musicPlayer.Play();
+            var file = new FileInfo(filePath);
+            if (!file.Exists)
+            {
+                Environment.FailFast("PlayMP3: Filepath not found");
+                return;
+            }
+            using (var audioFile = CodecFactory.Instance.GetCodec(filePath))
+            using (var soundOut = new WasapiOut())
+            {
+                var playbackFinished = new ManualResetEvent(false);
+
+                soundOut.Initialize(audioFile);
+                soundOut.Stopped += (s, e) =>
+                {
+                    playbackFinished.Set();
+                };
+                soundOut.Play();
+                playbackFinished.WaitOne();
+            }
         }
 
         private static List<char> ToCharList(string input)

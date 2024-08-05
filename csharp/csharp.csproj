@@ -13,9 +13,9 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="8.0.6" />
   </ItemGroup>
-
+  
   <ItemGroup>
-    <PackageReference Include="System.Windows.Extensions" Version="8.0.0" />
+    <PackageReference Include="CSCore" Version="1.2.1" />
   </ItemGroup>
 
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
