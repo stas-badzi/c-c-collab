@@ -1,10 +1,9 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
-using System.CommandLine;
-//using Microsoft.VisualBasic.FileIO;
 using Cpp;
 using Microsoft.VisualBasic.FileIO;
+using System.Media;
 
 namespace Cs
 {
@@ -158,6 +157,13 @@ if (texture[i][j].background() < 16) {
                     }
                 }
             }
+        }
+
+        public void PlayMP3(string filePath)
+        {
+            SoundPlayer musicPlayer = new SoundPlayer();
+            musicPlayer.SoundLocation = filePath;
+            musicPlayer.Play();
         }
 
         private static List<char> ToCharList(string input)
