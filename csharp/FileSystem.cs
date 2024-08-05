@@ -143,13 +143,16 @@ namespace Cs
             {
                 for (int j = 0; j < width; j++)
                 {
-                    if (y+i > 0 && y+i < scrHeight && x+j > 0 && x+j < scrWidth && texture[i][j].foreground() < 16)
+                    if (y+i >= 0 && y+i < scrHeight && x+j => 0 && x+j < scrWidth)
                     {
-                        screen[i+y][y+x] = texture[i][j];
-                        if (HexToByte(texture[i][j].character()) < 16)
+                        if (texture[i][j].character() != '\t')
                         {
                             screen[i][j].character(texture[i][j].character());
+              }
+                      if (texture[i][j].foreground() < 16) {
                             screen[i][j].foreground(texture[i][j].foreground());
+}
+if (texture[i][j].background() < 16) {
                             screen[i][j].background(texture[i][j].background());
                         }
                     }
