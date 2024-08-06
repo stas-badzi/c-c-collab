@@ -74,6 +74,10 @@ namespace Cpp
             public Symbol(Symbol cp) {
                 symbol = CppImp.Console.Symbol.Construct(cp.symbol);
             }
+         
+            public Symbol(IntPtr ptr) {
+                symbol = CppImp.Console.Symbol.Construct(ptr);
+            }
         #if _WIN32
             public Symbol(char character, byte foreground = 7, byte background = 0) {
                 symbol = CppImp.Console.Symbol.Construct(UniConv.Utf8ToUnicode(character),foreground,background);
