@@ -160,7 +160,7 @@ namespace Cs
             }
         }
 
-        public static void PlayMP3(string filePath)
+        public static void PlayMP3(string? filePath)
         {
             var file = new FileInfo(filePath);
             if (!file.Exists)

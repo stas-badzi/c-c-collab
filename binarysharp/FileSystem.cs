@@ -28,5 +28,9 @@ namespace Cs {
             Marshal.WriteIntPtr(output, intptr_size * contentstr.Count, end);
             CsImp.FileSystem.ExportText(UniConv.StringToPtr(pathstr), output);
         }
+        public static void PlayMP3(string filePathStr)
+        {
+            CsImp.FileSystem.PlayMP3(UniConv.StringToPtr(filePathStr));
+        }
     }
 }

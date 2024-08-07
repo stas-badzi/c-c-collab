@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 using Utility;
+using Cs;
 
 namespace CsExp {
     public class DllHandle {
@@ -76,6 +77,16 @@ namespace CsExp {
             }
 
             Cs.FileSystem.ExportText(UniConv.PtrToString(path), text);
+        }
+        [UnmanagedCallersOnly(EntryPoint = "FileSystem_PlayMP3")]
+        public static void PlayMP3(IntPtr filePathPtr)
+        {
+            if (filePathPtr == IntPtr.Zero) {
+                throw new Exception("Intptr $filePathPtr Empty");
+            }
+            
+            string? filePath = Marshal.PtrToStringAnsi(filePathPtr);
+            Cs.FileSystem.PlayMP3(filePath);
         }
     }
 }
