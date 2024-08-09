@@ -85,7 +85,7 @@ namespace CsExp {
                 throw new Exception("Intptr $filePathPtr Empty");
             }
             
-            string? filePath = Marshal.PtrToStringAnsi(filePathPtr);
+            string? filePath = UniConv.PtrToString(filePathPtr);
             Cs.FileSystem.PlayMP3(filePath);
         }
     }
