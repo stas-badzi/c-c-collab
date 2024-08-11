@@ -16,7 +16,7 @@ using namespace std;
 
 int main() {
     Console::Symbol sym;
-    sym.character("#");
+    sym.character(WCharToNative(L'#'));
     vector<vector<Console::Symbol>> list;
     for (int l = 0; l < 5; l++) {
         vector<Console::Symbol> row;
