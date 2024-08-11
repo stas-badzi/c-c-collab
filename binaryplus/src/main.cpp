@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <random>
 
 
 using namespace uniconv;
@@ -14,6 +15,21 @@ using namespace cs;
 using namespace std;
 
 int main() {
+    Console::Symbol sym;
+    sym.character("#");
+    vector<vector<Console::Symbol>> list;
+    for (int l = 0; l < 5; l++) {
+        vector<Console::Symbol> row;
+        for (int i = 0; i < 10; i++) {
+            row.push_back(sym);
+            row.back().foreground(rand() % 16);
+            row.back().background(rand() % 16);
+        }
+        list.push_back(row);
+    }
     
+    Console::FillScreen(list);
+    
+
     return 0;
 }

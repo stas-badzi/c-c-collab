@@ -387,7 +387,7 @@ cpp: $(foreach src,$(sources),cplusplus/src/$(src)) $(foreach head,$(headers),cp
 
 
 ifneq ($(wildcard cs),cs)
-	@$(MAKE) cs
+	@$(MAKE) cs sudo=$(sudp) forcewin=$(forcewin) debug=$(debug)
 endif
 #
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
@@ -501,7 +501,7 @@ endif
 cppbin: $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc))
 	
 ifneq ($(wildcard cpp),cpp)
-	@$(MAKE) cpp
+	@$(MAKE) cpp sudo=$(sudp) forcewin=$(forcewin) debug=$(debug)
 endif
 
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)

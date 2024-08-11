@@ -6,7 +6,42 @@ using namespace std;
 
 #ifdef _WIN32
 
-    #define set_atr_vals WORD atr_vals[16][16] = { { 0x0000 } }; for (auto i1 = 0; i1 < 16; i1++) { for (auto i2 = 0; i2 < 16; i2++) { WORD val = 0x0000; if (i1 == 0) { val |= 0x0000; } if (i1 == 1) { val |= FOREGROUND_RED; } if (i1 == 2) { val |= FOREGROUND_GREEN; } if (i1 == 3) { val |= FOREGROUND_RED | FOREGROUND_GREEN; } if (i1 == 4) { val |= FOREGROUND_BLUE; } if (i1 == 5) { val |= FOREGROUND_RED | FOREGROUND_BLUE; } if (i1 == 6) { val |= FOREGROUND_BLUE | FOREGROUND_GREEN; } if (i1 == 7) { val |= FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; } if (i1 == 8) { val |= FOREGROUND_INTENSITY; } if (i1 == 9) { val |= FOREGROUND_RED | FOREGROUND_INTENSITY; } if (i1 == 10) { val |= FOREGROUND_GREEN | FOREGROUND_INTENSITY; } if (i1 == 11) { val |= FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY; } if (i1 == 12) { val |= FOREGROUND_BLUE | FOREGROUND_INTENSITY; } if (i1 == 13) { val |= FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY; } if (i1 == 14) { val |= FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY; } if (i1 == 15) { val |= FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY; } if (i2 == 0) { val |= 0x0000; } if (i2 == 1) { val |= BACKGROUND_RED; } if (i2 == 2) { val |= BACKGROUND_GREEN; } if (i2 == 3) { val |= BACKGROUND_RED | BACKGROUND_GREEN; } if (i2 == 4) { val |= BACKGROUND_BLUE; } if (i2 == 5) { val |= BACKGROUND_RED | BACKGROUND_BLUE; } if (i2 == 6) { val |= BACKGROUND_BLUE | BACKGROUND_GREEN; } if (i2 == 7) { val |= BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE; } if (i2 == 8) { val |= BACKGROUND_INTENSITY; } if (i2 == 9) { val |= BACKGROUND_RED | BACKGROUND_INTENSITY; } if (i2 == 10) { val |= BACKGROUND_GREEN | BACKGROUND_INTENSITY; } if (i2 == 11) { val |= BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_INTENSITY; } if (i2 == 12) { val |= BACKGROUND_BLUE | BACKGROUND_INTENSITY; } if (i2 == 13) { val |= BACKGROUND_RED | BACKGROUND_BLUE | BACKGROUND_INTENSITY; } if (i2 == 14) { val |= BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_INTENSITY; } if (i2 == 15) { val |= BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY; } atr_vals[i1][i2] = val; } } bool atr_vals_defined = 1
+    inline uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2) {
+        uint8_t val;
+        if (i1 == 0) { val |= 0x0000; }
+        if (i1 == 1) { val |= FOREGROUND_RED; }
+        if (i1 == 2) { val |= FOREGROUND_GREEN; }
+        if (i1 == 3) { val |= FOREGROUND_RED | FOREGROUND_GREEN; }
+        if (i1 == 4) { val |= FOREGROUND_BLUE; }
+        if (i1 == 5) { val |= FOREGROUND_RED | FOREGROUND_BLUE; }
+        if (i1 == 6) { val |= FOREGROUND_BLUE | FOREGROUND_GREEN; }
+        if (i1 == 7) { val |= FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; }
+        if (i1 == 8) { val |= FOREGROUND_INTENSITY; }
+        if (i1 == 9) { val |= FOREGROUND_RED | FOREGROUND_INTENSITY; }
+        if (i1 == 10) { val |= FOREGROUND_GREEN | FOREGROUND_INTENSITY; }
+        if (i1 == 11) { val |= FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY; }
+        if (i1 == 12) { val |= FOREGROUND_BLUE | FOREGROUND_INTENSITY; }
+        if (i1 == 13) { val |= FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY; }
+        if (i1 == 14) { val |= FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY; }
+        if (i1 == 15) { val |= FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY; }
+        if (i2 == 0) { val |= 0x0000; }
+        if (i2 == 1) { val |= BACKGROUND_RED; }
+        if (i2 == 2) { val |= BACKGROUND_GREEN; }
+        if (i2 == 3) { val |= BACKGROUND_RED | BACKGROUND_GREEN; }
+        if (i2 == 4) { val |= BACKGROUND_BLUE; }
+        if (i2 == 5) { val |= BACKGROUND_RED | BACKGROUND_BLUE; }
+        if (i2 == 6) { val |= BACKGROUND_BLUE | BACKGROUND_GREEN; }
+        if (i2 == 7) { val |= BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE; }
+        if (i2 == 8) { val |= BACKGROUND_INTENSITY; }
+        if (i2 == 9) { val |= BACKGROUND_RED | BACKGROUND_INTENSITY; }
+        if (i2 == 10) { val |= BACKGROUND_GREEN | BACKGROUND_INTENSITY; }
+        if (i2 == 11) { val |= BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_INTENSITY; }
+        if (i2 == 12) { val |= BACKGROUND_BLUE | BACKGROUND_INTENSITY; }
+        if (i2 == 13) { val |= BACKGROUND_RED | BACKGROUND_BLUE | BACKGROUND_INTENSITY; }
+        if (i2 == 14) { val |= BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_INTENSITY; }
+        if (i2 == 15) { val |= BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY; }
+        return val;
+    }
 
     HANDLE Console::h_console = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
 
@@ -60,8 +95,7 @@ using namespace std;
     }
 
     uint8_t Console::Symbol::GetAttribute(void) {
-        set_atr_vals;
-        return atr_vals[this->foreground][this->background];
+        return GenerateAtrVal(this->foreground,this->background);
     }
 
     void Console::Symbol::SetAttribute(uint8_t attribute) {
@@ -74,7 +108,29 @@ using namespace std;
     this->SetAttribute(attribute);
 }
 #else
-#include <iostream>
+
+    inline string GenerateEscapeSequence(uint8_t i1, uint8_t i2) {
+        string val = "\033[";
+        if (i1 < 8) {
+            val.append(to_string(30 + i1));
+        } else if (i1 < 16) {
+            val.append(to_string(90 + i1));
+        } else {
+            val.append("39");
+        }
+        val.push_back(';');
+        if (i2 < 8) {
+            val.append(to_string(40 + i2));
+        } else if (i2 < 16) {
+            val.append(to_string(100 + i2));
+        } else {
+            val.append("49");
+        }
+        val.push_back('m');
+        cout << val;
+        return val;
+    }
+
     void Console::Init(void) {
         if (!initialised) {
             initialised = true;
@@ -93,9 +149,9 @@ using namespace std;
         cout << "\e[H";
         for (size_t i = 0; i < symbols.size(); i++) {
             for (size_t j = 0; j < symbols[0].size(); j++) {
-                cout << symbols[i][j].character;
+                cout << GenerateEscapeSequence(symbols[i][j].foreground, symbols[i][j].background) << symbols[i][j].character;
             }
-            cout << '\n';
+            cout << "\033[0m\n";
         }
         
         array<unsigned long,2> written;
