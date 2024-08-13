@@ -162,16 +162,16 @@ jobs:
 #          .\make.exe cppbin sudo=0 compiler=g++
 #          .\make.exe release sudo=0
           
-      - name: Upload C++ binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: WindowsCppBin
-          path: bin/*C++*.zip
-      - name: Upload C# binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: WindowsCsBin
-          path: bin/*C#*.zip
+#      - name: Upload C++ binaries
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: WindowsCppBin
+#          path: bin/*C++*.zip
+#      - name: Upload C# binaries
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: WindowsCsBin
+#          path: bin/*C#*.zip
 
   build-ubuntu:
     name: Build program using Ubuntu
@@ -199,6 +199,30 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: UbuntuCsBin
+          path: bin/*C#*.tar.gz
+
+  build-debian:
+    name: Build program using Debian
+    runs-on: debian-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+      - name: Compile code
+        shell: bash
+        env:
+          CC: gcc
+          CXX: g++
+        run: |
+          make release sudo=0
+      - name: Upload C++ binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: DebianCppBin
+          path: bin/*C++*.tar.gz
+      - name: Upload C# binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: DebianCsBin
           path: bin/*C#*.tar.gz
   
   build-macos:

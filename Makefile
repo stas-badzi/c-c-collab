@@ -284,6 +284,11 @@ ifeq ($(copylibs),1)
 flibdir = $(libdir)
 endif
 
+package: release
+
+
+	@echo "Version file. Remove to enable recompile" > $@
+
 release: all
 ifeq ($(shell echo "check quotes"),"check quotes")
 
