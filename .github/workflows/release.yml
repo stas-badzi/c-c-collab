@@ -27,7 +27,7 @@ jobs:
         env:
           RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
         run: |
-          rm -rf .git
+          rm -rf *git
           cd ..
           mv c-c-collab c-c-collab-$RELEASE_VERSION
           tar -czvf c-c-collab-$RELEASE_VERSION.tgz c-c-collab-$RELEASE_VERSION
@@ -63,7 +63,7 @@ jobs:
           draft: false
           prerelease: false
       - name: Clean Files
-        run: rm -rf .
+        run: rm -rf *
 
       - name: Download MacOS Compressed Source Code
         uses: actions/download-artifact@v4
@@ -85,7 +85,7 @@ jobs:
           asset_content_type: application/x-tar
       - name: Clean MacOSSourceCode
         shell: sh
-        run: rm -rf .
+        run: rm -rf *
 
       - name: Download MacOSCppBin
         uses: dawidd6/action-download-artifact@v6
@@ -109,7 +109,7 @@ jobs:
           asset_content_type: application/x-tar
       - name: Clean MacOSCppBin
         shell: sh
-        run: rm -rf .
+        run: rm -rf *
 
       - name: Download MacOSCsBin
         uses: dawidd6/action-download-artifact@v6
@@ -133,7 +133,7 @@ jobs:
           asset_content_type: application/x-tar
       - name: Clean MacOSCsBin
         shell: sh
-        run: rm -rf .
+        run: rm -rf *
 
       - name: Download UbuntuCppBin
         uses: dawidd6/action-download-artifact@v6
@@ -157,7 +157,7 @@ jobs:
           asset_content_type: application/x-tar
       - name: Clean UbuntuCppBin
         shell: sh
-        run: rm -rf .
+        run: rm -rf *
 
       - name: Download UbuntuCsBin
         uses: dawidd6/action-download-artifact@v6
@@ -181,7 +181,7 @@ jobs:
           asset_content_type: application/x-tar
       - name: Clean UbuntuCsBin
         shell: sh
-        run: rm -rf .
+        run: rm -rf *
 
       - name: Download Msys2CppBin
         uses: dawidd6/action-download-artifact@v6
@@ -205,7 +205,7 @@ jobs:
           asset_content_type: application/zip
       - name: Clean Msys2CppBin
         shell: sh
-        run: rm -rf .
+        run: rm -rf *
 
       - name: Download Msys2CsBin
         uses: dawidd6/action-download-artifact@v6
@@ -229,7 +229,7 @@ jobs:
           asset_content_type: application/zip
       - name: Clean Msys2CsBin
         shell: sh
-        run: rm -rf .
+        run: rm -rf *
       
 
 
