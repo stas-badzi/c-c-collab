@@ -73,7 +73,7 @@ jobs:
       - name: Get Name of MacOSSourceCode
         shell: sh
         id: macos-cpp-src-name
-        run: "path=$(echo ls) >> $GITHUB_OUTPUT"
+        run: "echo path=$(ls) >> $GITHUB_OUTPUT"
       - name: Upload MacOSSourceCode
         uses: actions/upload-release-asset@v1
         env:
@@ -97,7 +97,7 @@ jobs:
       - name: Get Name of MacOSCppBin
         shell: sh
         id: macos-cpp-bin-name
-        run: "path=$(echo ls) >> $GITHUB_OUTPUT"
+        run: "echo path=$(ls) >> $GITHUB_OUTPUT"
       - name: Upload MacOSCppBin
         uses: actions/upload-release-asset@v1
         env:
@@ -121,7 +121,7 @@ jobs:
       - name: Get Name of MacOSCsBin
         shell: sh
         id: macos-cs-bin-name
-        run: "path=$(echo ls) >> $GITHUB_OUTPUT"
+        run: "echo path=$(ls) >> $GITHUB_OUTPUT"
       - name: Upload MacOSCsBin
         uses: actions/upload-release-asset@v1
         env:
@@ -145,7 +145,7 @@ jobs:
       - name: Get Name of UbuntuCppBin
         shell: sh
         id: ubuntu-cpp-bin-name
-        run: "path=$(echo ls) >> $GITHUB_OUTPUT"
+        run: "echo path=$(ls) >> $GITHUB_OUTPUT"
       - name: Upload UbuntuCppBin
         uses: actions/upload-release-asset@v1
         env:
@@ -169,7 +169,7 @@ jobs:
       - name: Get Name of UbuntuCsBin
         shell: sh
         id: ubuntu-cs-bin-name
-        run: "path=$(echo ls) >> $GITHUB_OUTPUT"
+        run: "echo path=$(ls) >> $GITHUB_OUTPUT"
       - name: Upload UbuntuCsBin
         uses: actions/upload-release-asset@v1
         env:
@@ -193,7 +193,7 @@ jobs:
       - name: Get Name of Msys2CppBin
         shell: sh
         id: msys-cpp-bin-name
-        run: "path=$(echo ls) >> $GITHUB_OUTPUT"
+        run: "echo path=$(ls) >> $GITHUB_OUTPUT"
       - name: Upload Msys2CppBin
         uses: actions/upload-release-asset@v1
         env:
@@ -217,7 +217,7 @@ jobs:
       - name: Get Name of Msys2CsBin
         shell: sh
         id: msys-cs-bin-name
-        run: "path=$(echo ls) >> $GITHUB_OUTPUT"
+        run: "echo path=$(ls) >> $GITHUB_OUTPUT"
       - name: Upload Msys2CsBin
         uses: actions/upload-release-asset@v1
         env:
