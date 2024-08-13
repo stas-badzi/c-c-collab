@@ -228,8 +228,15 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+      - name: Install Programs
+        shell: sh
+        run: |
+          brew install --cask dotnet-sdk
       - name: Compile code
         shell: bash
+        env:
+          CC: gcc
+          CXX: g++
         run: |
           make release sudo=0
       - name: Upload C++ binaries
@@ -249,16 +256,8 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-      - name: Install Programs
-        shell: sh
-        run: |
-          arch -x86_64 zsh
-          brew install --cask dotnet-sdk
       - name: Compile code
         shell: bash
-        env:
-          CC: gcc
-          CXX: g++
         run: |
           make release sudo=0
       - name: Upload C++ binaries
