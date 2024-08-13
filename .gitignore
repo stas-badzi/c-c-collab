@@ -46,6 +46,7 @@
 *.code-workspace
 *.sln
 *.xml
+*.DS_Store
 
 
 #generated code
