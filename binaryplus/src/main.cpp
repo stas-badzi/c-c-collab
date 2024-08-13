@@ -18,9 +18,9 @@ int main() {
     Console::Symbol sym;
     sym.character(WCharToNative(L'#'));
     vector<vector<Console::Symbol>> list;
-    for (int l = 0; l < 5; l++) {
+    for (int l = 0; l < Console::GetWindowHeight(); l++) {
         vector<Console::Symbol> row;
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < Console::GetWindowWidth(); i++) {
             row.push_back(sym);
             row.back().foreground(rand() % 16);
             row.back().background(rand() % 16);

@@ -285,8 +285,6 @@ flibdir = $(libdir)
 endif
 
 package: release
-
-
 	@echo "Version file. Remove to enable recompile" > $@
 
 release: all

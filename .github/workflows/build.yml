@@ -203,7 +203,7 @@ jobs:
 
   build-debian:
     name: Build program using Debian
-    runs-on: debian-latest
+    runs-on: [self-hosted, debian]
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -225,8 +225,8 @@ jobs:
           name: DebianCsBin
           path: bin/*C#*.tar.gz
   
-  build-macos:
-    name: Build program using MacOS
+  build-macos-arm64:
+    name: Build program using Arm64 MacOS
     runs-on: macos-latest
     steps:
       - name: Checkout source code
@@ -245,43 +245,39 @@ jobs:
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
-          #name: MacOSArmCppBin
-          name: MacOSCppBin
+          name: MacOSArmCppBin
           path: bin/*C++*.tgz
       - name: Upload C# binaries
         uses: actions/upload-artifact@v4
         with:
-          #name: MacOSArmCsBin
-          name: MacOSCsBin
+          name: MacOSArmCsBin
           path: bin/*C#*.tgz
   
-#  build-macos-amd:
-#    name: Build program using x64 MacOS
-#    runs-on: macos-latest
-#    steps:
-#      - name: Checkout source code
-#        uses: actions/checkout@v4
-#      - name: Install Programs
-#        shell: sh
-#        run: |
-#          arch -x86_64 zsh
-#          brew install --cask dotnet-sdk
-#      - name: Compile code
-#        shell: bash
-#        env:
-#          CC: gcc
-#          CXX: g++
-#        run: |
-#          arch -x86_64 zsh
-#          make release sudo=0
-#      - name: Upload C++ binaries
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: MacOSx64CppBin
-#          path: bin/*C++*.tgz
-#      - name: Upload C# binaries
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: MacOSx64CsBin
-#          path: bin/*C#*.tgz
-#
+  build-macos-amd64:
+    name: Build program using x64 MacOS
+    runs-on: [self-hosted, macOS, X64]
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+      - name: Install Programs
+        shell: sh
+        run: |
+          arch -x86_64 zsh
+          brew install --cask dotnet-sdk
+      - name: Compile code
+        shell: bash
+        env:
+          CC: gcc
+          CXX: g++
+        run: |
+          make release sudo=0
+      - name: Upload C++ binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: MacOSAmdCppBin
+          path: bin/*C++*.tgz
+      - name: Upload C# binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: MacOSAmdCsBin
+          path: bin/*C#*.tgz
