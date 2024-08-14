@@ -138,26 +138,35 @@ using namespace std;
     }
 
     int16_t cpp::Console::GetWindowWidth(void) {
-        return 10;
+        struct winsize size;
+        ioctl(STDOUT_FILENO, TIOCGWINSZ, &size);
+        return size.ws_col;
     }
 
     int16_t cpp::Console::GetWindowHeight(void) {
-        return 5;
+        struct winsize size;
+        ioctl(STDOUT_FILENO, TIOCGWINSZ, &size);
+        return size.ws_row;
     }
 
     array<unsigned long,2> Console::FillScreen(vector<vector<Console::Symbol> > symbols) {
         cout << "\e[H";
-        for (size_t i = 0; i < symbols.size(); i++) {
-            for (size_t j = 0; j < symbols[0].size(); j++) {
+        size_t width = GetWindowWidth(), height = GetWindowHeight();
+        for (size_t i = 0; i < height; i++) {
+            for (size_t j = 0; j < width; j++) {
+                if (i >= symbols.size() || j >= symbols[0].size()) {
+                    cout << "\033[0m ";
+                    continue;
+                }
                 cout << GenerateEscapeSequence(symbols[i][j].foreground, symbols[i][j].background) << symbols[i][j].character;
             }
-            cout << "\033[0m\n";
         }
+        cout << "\033[0m";
         
         array<unsigned long,2> written;
 				
-		written[0] = symbols.size()*symbols[0].size();
-        written[1] = symbols.size()*symbols[0].size();
+		written[0] = width*height;
+        written[1] = width*height + 1;
 
         return written;
     }

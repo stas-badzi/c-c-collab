@@ -9,6 +9,8 @@
     #include <windows.h>
 #else
     #include <iostream>
+    #include <sys/ioctl.h>
+    #include <unistd.h>
 #endif
 
 namespace cpp {
