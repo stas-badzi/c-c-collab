@@ -24,6 +24,7 @@ using namespace std;
         if (i1 == 13) { val |= FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY; }
         if (i1 == 14) { val |= FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY; }
         if (i1 == 15) { val |= FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY; }
+        if (i1 >= 16) { val |= 0x0000; }
         if (i2 == 0) { val |= 0x0000; }
         if (i2 == 1) { val |= BACKGROUND_RED; }
         if (i2 == 2) { val |= BACKGROUND_GREEN; }
@@ -40,6 +41,7 @@ using namespace std;
         if (i2 == 13) { val |= BACKGROUND_RED | BACKGROUND_BLUE | BACKGROUND_INTENSITY; }
         if (i2 == 14) { val |= BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_INTENSITY; }
         if (i2 == 15) { val |= BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY; }
+        if (i2 >= 16) { val |= BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE; }
         return val;
     }
 
@@ -53,30 +55,31 @@ using namespace std;
     }    
 
     int16_t cpp::Console::GetWindowWidth(void) {
-        Init();
         CONSOLE_SCREEN_BUFFER_INFO csbi;
         GetConsoleScreenBufferInfo(h_console, &csbi);
         return csbi.srWindow.Right - csbi.srWindow.Left + 1;
     }
 
     int16_t cpp::Console::GetWindowHeight(void) {
-        Init();
         CONSOLE_SCREEN_BUFFER_INFO csbi;
         GetConsoleScreenBufferInfo(h_console, &csbi);
         return csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
     }
 
     array<unsigned long, 2> Console::FillScreen(vector<vector<Symbol> > symbols) {
-        Init();
+        Symbol empty_sym = Symbol(L' ', 16, 16);
+        const size_t win_width = GetWindowWidth(), win_height = GetWindowHeight(), height = symbols.size(), width = height > 0 ? symbols[0].size() : 0;
 
-        const size_t height = symbols.size();
-        const size_t width = height > 0 ? symbols[0].size() : 0;
+        wchar_t* screen = new wchar_t[win_height*win_width];
+        WORD* attributes = new WORD[win_height*win_width];
 
-        wchar_t* screen = new wchar_t[width*height];
-        WORD* attributes = new WORD[width*height];
-
-		for (auto i = 0; i < height; i++) {
-			for (auto j = 0; j < width; j++) {
+		for (auto i = 0; i < win_height; i++) {
+			for (auto j = 0; j < win_width; j++) {
+                if (i >= height || j >= width) {
+                    screen[ i*width + j ] =  empty_sym.character;
+                    attributes[ i*width + j ] = empty_sym.GetAttribute();
+                    continue;
+                }
 				screen[ i*width + j ] = symbols[i][j].character;
                 attributes[ i*width + j ] = symbols[i][j].GetAttribute();
 			}
