@@ -58,12 +58,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Msys2CppBin
-          path: bin/*C++*.zip
+          path: bin/Cpp.*.zip
       - name: Upload C# binaries
         uses: actions/upload-artifact@v4
         with:
           name: Msys2CsBin
-          path: bin/*C#*.zip
+          path: bin/Cs.*.zip
 
   build-cygwin:
     name: Build program using Cygwin
@@ -123,12 +123,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: CygwinCppBin
-          path: bin/*C++*.zip
+          path: bin/Cpp.*.zip
       - name: Upload C# binaries
         uses: actions/upload-artifact@v4
         with:
           name: CygwinCsBin
-          path: bin/*C#*.zip
+          path: bin/Cs.*.zip
   
 #  build-windows:
 #    name: Build dll using clang and exe using g++ on Windows
@@ -166,12 +166,12 @@ jobs:
 #        uses: actions/upload-artifact@v4
 #        with:
 #          name: WindowsCppBin
-#          path: bin/*C++*.zip
+#          path: bin/Cpp.*.zip
 #      - name: Upload C# binaries
 #        uses: actions/upload-artifact@v4
 #        with:
 #          name: WindowsCsBin
-#          path: bin/*C#*.zip
+#          path: bin/Cs.*.zip
 
   build-ubuntu:
     name: Build program using Ubuntu
@@ -194,12 +194,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: UbuntuCppBin
-          path: bin/*C++*.tar.gz
+          path: bin/Cpp.*.tar.gz
       - name: Upload C# binaries
         uses: actions/upload-artifact@v4
         with:
           name: UbuntuCsBin
-          path: bin/*C#*.tar.gz
+          path: bin/Cs.*.tar.gz
 
   build-debian:
     name: Build program using Debian
@@ -215,12 +215,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: DebianCppBin
-          path: bin/*C++*.tar.gz
+          path: bin/Cpp.*.tar.gz
       - name: Upload C# binaries
         uses: actions/upload-artifact@v4
         with:
           name: DebianCsBin
-          path: bin/*C#*.tar.gz
+          path: bin/Cs.*.tar.gz
   
   build-macos-arm64:
     name: Build program using Arm64 MacOS
@@ -243,12 +243,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: MacOSArmCppBin
-          path: bin/*C++*.tgz
+          path: bin/Cpp.*.tgz
       - name: Upload C# binaries
         uses: actions/upload-artifact@v4
         with:
           name: MacOSArmCsBin
-          path: bin/*C#*.tgz
+          path: bin/Cs.*.tgz
   
   build-macos-amd64:
     name: Build program using x64 MacOS
@@ -264,9 +264,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: MacOSAmdCppBin
-          path: bin/*C++*.tgz
+          path: bin/Cpp.*.tgz
       - name: Upload C# binaries
         uses: actions/upload-artifact@v4
         with:
           name: MacOSAmdCsBin
-          path: bin/*C#*.tgz
+          path: bin/Cs.*.tgz
