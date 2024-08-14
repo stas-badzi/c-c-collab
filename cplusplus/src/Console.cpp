@@ -130,12 +130,12 @@ using namespace std;
             val.append("49");
         }
         val.push_back('m');
-        cout << val;
         return val;
     }
 
     void Console::Init(void) {
         if (!initialised) {
+            cout.sync_with_stdio(false);
             initialised = true;
         }
     }
@@ -153,18 +153,21 @@ using namespace std;
     }
 
     array<unsigned long,2> Console::FillScreen(vector<vector<Console::Symbol> > symbols) {
-        cout << "\e[H";
+        string screen = "\e[H";
         size_t width = GetWindowWidth(), height = GetWindowHeight();
         for (size_t i = 0; i < height; i++) {
             for (size_t j = 0; j < width; j++) {
                 if (i >= symbols.size() || j >= symbols[0].size()) {
-                    cout << "\033[0m ";
+                    screen.append("\033[0m ");
                     continue;
                 }
-                cout << GenerateEscapeSequence(symbols[i][j].foreground, symbols[i][j].background) << symbols[i][j].character;
+                screen.append( GenerateEscapeSequence(symbols[i][j].foreground, symbols[i][j].background) );
+                screen.append(symbols[i][j].character);
             }
         }
-        cout << "\033[0m";
+        screen.append("\033[0m");
+
+        cout << screen;
         
         array<unsigned long,2> written;
 				
