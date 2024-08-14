@@ -25,7 +25,12 @@ array<unsigned long,2> cpp::Console::FillScreen(vector<vector<cpp::Console::Symb
     }
 
     long unsigned int* ret = Console_FillScreen$ret2(voidsyms,symbols.size(),symbols[0].size());
-    // int* address dissapearing
+    
+    for (size_t i = 0; i < symbols.size(); i++) {
+        delete[] voidsyms[i];
+    }
+    delete[] voidsyms;
+
     array<unsigned long,2> out;
     out[0] = ret[0];
     out[1] = ret[1];

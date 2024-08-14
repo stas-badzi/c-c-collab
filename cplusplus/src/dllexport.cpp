@@ -60,7 +60,7 @@ using namespace uniconv;
         #endif
 
         libexport void Console_Symbol_character$set(cpp::Console::Symbol* smb, unichar character) {
-            smb->character = character;
+            smb->character = UnicodeToUtf8(character);
         }
 
         libexport unichar Console_Symbol_character$get(cpp::Console::Symbol* smb) {

@@ -192,6 +192,12 @@ Console::Symbol::Symbol(void) {
     this->background = 0;
 }
 
+Console::Symbol::Symbol(const Symbol& sym) {
+    this->character = sym.character;
+    this->foreground = sym.foreground;
+    this->background = sym.background;
+}
+
 Console::Symbol::~Symbol(void) {
     this->character = -1;
     this->foreground = -1;
