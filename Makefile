@@ -6,7 +6,7 @@
 
 #******* release config *********
 #> release name
-release = ConsoleGame
+release = FactoryRush
 
 #********************************
 
@@ -146,7 +146,7 @@ wfsrc = $(foreach src,$(sources),src/$(src))
 objects = $(foreach file,$(sources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
 fbsrc = $(foreach bsrc,$(binsources),../src/$(bsrc))
 fbobj = $(foreach file,$(binsources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
-os = $(subst $(space),-,$(shell echo $$(uname -s)_$$(uname -r).$$(uname -m)))
+os = $(subst $(space),-,$(shell echo $$(uname -s) $$(uname -r).$$(uname -m)))
 
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 os = $(subst $(space),-,$(shell echo $$(uname -s)_$$(uname -r)))
@@ -306,13 +306,13 @@ endif
 	@copy cplusplus\bin\$(dllname) bin\cs
 	@copy csharp\bin\lib\$(libname) bin\cs
 
-	@cd bin && ren cpp C++-$(release)
-	@cd bin && ren cs C\#-$(release)
+	@cd bin && ren cpp Cpp.$(release)
+	@cd bin && ren cs Cs.$(release)
 
 	@cd bin && powershell Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/raw/master/bin/zip.exe" -OutFile "zip.exe" -Verbose
 
-	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)
-	@cd bin && zip -r C\#-$(release)-$(os).zip C\#-$(release)
+	@cd bin && zip -r Cpp.$(release).$(os).zip Cpp.$(release)
+	@cd bin && zip -r Cs.$(release).$(os).zip Cs.$(release)
 
 else
 ifeq ($(wildcard release),release)
@@ -328,27 +328,27 @@ endif
 	@cp cplusplus/bin/$(dllname) bin/cs
 	@cp csharp/bin/lib/$(libname) bin/cs
 
-	@cd bin && mv cpp C++-$(release)
-	@cd bin && mv cs C#-$(release)
+	@cd bin && mv cpp Cpp.$(release)
+	@cd bin && mv cs Cs.$(release)
 
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
-	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)
-	@cd bin && zip -r C\#-$(release)-$(os).zip C\#-$(release)
+	@cd bin && zip -r Cpp.$(release).$(os).zip Cpp.$(release)
+	@cd bin && zip -r Cs.$(release).$(os).zip Cs.$(release)
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
-	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)
-	@cd bin && zip -r C\#-$(release)-$(os).zip C\#-$(release)
+	@cd bin && zip -r Cpp.$(release).$(os).zip Cpp.$(release)
+	@cd bin && zip -r Cs.$(release).$(os).zip Cs.$(release)
 else
 ifeq ($(findstring NT, $(shell uname -s)),NT)
-	@cd bin && zip -r C++-$(release)-$(os).zip C++-$(release)
-	@cd bin && zip -r C\#-$(release)-$(os).zip C\#-$(release)
+	@cd bin && zip -r Cpp.$(release).$(os).zip Cpp.$(release)
+	@cd bin && zip -r Cs.$(release).$(os).zip Cs.$(release)
 else
 ifeq ($(shell uname -s),Darwin)
-	@cd bin && tar -czvf C++-$(release)-$(os).tgz C++-$(release)
-	@cd bin && tar -czvf C\#-$(release)-$(os).tgz C\#-$(release)
+	@cd bin && tar -czvf Cpp.$(release).$(os).tgz Cpp.$(release)
+	@cd bin && tar -czvf Cs.$(release).$(os).tgz Cs.$(release)
 else
-	@cd bin && tar -czvf C++-$(release)-$(os).tar.gz C++-$(release)
-	@cd bin && tar -czvf C\#-$(release)-$(os).tar.gz C\#-$(release)
+	@cd bin && tar -czvf Cpp.$(release).$(os).tar.gz Cpp.$(release)
+	@cd bin && tar -czvf Cs.$(release).$(os).tar.gz Cs.$(release)
 endif
 endif
 endif
