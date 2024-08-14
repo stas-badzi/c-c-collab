@@ -19,7 +19,7 @@ int main() {
 
     //while (true) {
         Console::Symbol sym;
-        sym.character(WCharToNative(L'▒'));
+        sym.character(WCharToNative(L'▚'));
         vector<vector<Console::Symbol>> list;
         for (int l = 0; l < Console::GetWindowHeight(); l++) {
             vector<Console::Symbol> row;

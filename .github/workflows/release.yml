@@ -18,6 +18,8 @@ jobs:
     name: Release Compiled Binaries and Source Code
     runs-on: ubuntu-latest
     steps:
+      - name: checkout last commit
+        uses: actions/checkout@v4
       - name: Set output
         id: vars
         run: echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
@@ -31,9 +33,7 @@ jobs:
           repo: c-c-collab
           tag_name: ${{ steps.vars.outputs.tag }}
           release_name: Release ${{ steps.vars.outputs.tag }}
-          body: |
-            This release was automaticly generated.
-            Read the README.md from source code for changes
+          body_path: Release.md
           draft: false
           prerelease: false
       - name: Clean Files
