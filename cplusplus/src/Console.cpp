@@ -5,9 +5,9 @@ using namespace uniconv;
 using namespace std;
 
 #ifdef _WIN32
-
+#include <iostream>
     inline uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2) {
-        uint8_t val;
+        uint8_t val = 0x0000;
         if (i1 == 0) { val |= 0x0000; }
         if (i1 == 1) { val |= FOREGROUND_RED; }
         if (i1 == 2) { val |= FOREGROUND_GREEN; }
@@ -73,13 +73,14 @@ using namespace std;
         wchar_t* screen = new wchar_t[win_height*win_width];
         WORD* attributes = new WORD[win_height*win_width];
 
-		for (auto i = 0; i < win_height; i++) {
-			for (auto j = 0; j < win_width; j++) {
+		for (size_t i = 0; i < win_height; i++) {
+			for (size_t j = 0; j < win_width; j++) {
                 if (i >= height || j >= width) {
                     screen[ i*width + j ] =  empty_sym.character;
                     attributes[ i*width + j ] = empty_sym.GetAttribute();
                     continue;
                 }
+                cout << (short)symbols[i][j].foreground << '|' << (short)symbols[i][j].background << '&' << (short)symbols[i][j].GetAttribute() << '/' << (short)GenerateAtrVal(symbols[i][j].foreground,symbols[i][j].background) << '\n';
 				screen[ i*width + j ] = symbols[i][j].character;
                 attributes[ i*width + j ] = symbols[i][j].GetAttribute();
 			}
