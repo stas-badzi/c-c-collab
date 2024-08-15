@@ -17,9 +17,7 @@ using namespace std;
 
 int main() {
     Console::Init();
-    //cout << Console::GetWindowHeight() << '\n' << Console::GetWindowWidth();
-    //return 0;
-    //while (true) {
+    while (true) {
         Console::Symbol sym;
         sym.character(WCharToNative(L'▚'));
         vector<vector<Console::Symbol>> list;
@@ -32,21 +30,10 @@ int main() {
             }
             list.push_back(row);
         }
-        /*
-        cout << list.size() << ' ' << list[0].size() << '\n';
-        for (int i = 0; i < list.size(); i++)
-        {
-            for (int j = 0; j < list[0].size(); j++)
-            {
-             wcout << L'\x9626';
-            }
-        }*/
-        
         
         Console::FillScreen(list);
-        Sleep(10000);
 
-    //}
+    }
 
     return 0;
 }
