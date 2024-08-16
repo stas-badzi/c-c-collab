@@ -79,7 +79,7 @@ namespace Cpp
                 symbol = CppImp.Console.Symbol.Construct(sym);
             }
         #if _WIN32
-            public Symbol(char character, byte atr = 0x0000) {
+            public Symbol(byte atr = 0x0000) {
                 symbol = CppImp.Console.Symbol.Construct(atr);
             }
         #endif
