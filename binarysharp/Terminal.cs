@@ -79,30 +79,28 @@ namespace Cpp
                 symbol = CppImp.Console.Symbol.Construct(sym);
             }
         #if _WIN32
-            public Symbol(char character, byte foreground = 7, byte background = 0) {
-                symbol = CppImp.Console.Symbol.Construct(UniConv.Utf8ToUnicode(character),foreground,background);
+            public Symbol(char character, byte atr = 0x0000) {
+                symbol = CppImp.Console.Symbol.Construct(atr);
             }
-
-            public char character() {
-                return UniConv.UnicodeToUtf8(CppImp.Console.Symbol.character(symbol));
+            public void GetAttribute(byte atr) {
+                CppImp.Console.Symbol.SetAttribute(symbol, atr);
             }
-
-            public void character(char val) {
-                CppImp.Console.Symbol.character(symbol, UniConv.Utf8ToUnicode(val));
-            }
-        #else
-            public Symbol(char character, byte foreground = 7, byte background = 0) {
-                symbol = CppImp.Console.Symbol.Construct(UniConv.Utf8ToUnicode(character),foreground,background);
-            }
-
-            public char character() {
-                return UniConv.UnicodeToUtf8(CppImp.Console.Symbol.character(symbol));
-            }
-
-            public void character(char val) {
-                CppImp.Console.Symbol.character(symbol, UniConv.Utf8ToUnicode(val));
+            public byte GetAttribute() {
+                return CppImp.Console.Symbol.GetAttribute(symbol);
             }
         #endif
+
+            public Symbol(char character, byte foreground = 7, byte background = 0) {
+                symbol = CppImp.Console.Symbol.Construct(UniConv.Utf8ToUnicode(character),foreground,background);
+            }
+
+            public char character() {
+                return UniConv.UnicodeToUtf8(CppImp.Console.Symbol.character(symbol));
+            }
+
+            public void character(char val) {
+                CppImp.Console.Symbol.character(symbol, UniConv.Utf8ToUnicode(val));
+            }
 
             public byte foreground() {
                 return CppImp.Console.Symbol.foreground(symbol);

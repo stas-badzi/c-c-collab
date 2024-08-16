@@ -23,13 +23,9 @@ namespace CppImp {
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_Construct$smb", CharSet = CharSet.Unicode)]
             public static extern IntPtr Construct(IntPtr smb);
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_Construct$cfb", CharSet = CharSet.Unicode)]
+            public static extern IntPtr Construct(Int32 character, byte foreground = 7, byte background = 0);
 
         #if _WIN32
-            public static extern IntPtr Construct(char character, byte foreground = 7, byte background = 0);
-
-            [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_character$set", CharSet = CharSet.Unicode)]
-            public static extern void character(IntPtr smb, char character);
-
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_Construct$atr", CharSet = CharSet.Unicode)]
             public static extern IntPtr Construct(byte attribute);
 
@@ -38,15 +34,13 @@ namespace CppImp {
 
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_GetAttribute", CharSet = CharSet.Unicode)]
             public static extern byte GetAttribute(IntPtr smb);
-        #else
-            public static extern IntPtr Construct(Int32 character, byte foreground = 7, byte background = 0);
+        #endif
 
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_character$set", CharSet = CharSet.Unicode)]
             public static extern void character(IntPtr smb, Int32 character);
-        #endif
 
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_character$get", CharSet = CharSet.Unicode)]
-            public static extern Int32 character(IntPtr smb);
+            public static extern int character(IntPtr smb);
 
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_foreground$set", CharSet = CharSet.Unicode)]
             public static extern void foreground(IntPtr smb, byte foreground);
