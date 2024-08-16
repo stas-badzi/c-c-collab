@@ -46,7 +46,7 @@ namespace CppImp {
         #endif
 
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_character$get", CharSet = CharSet.Unicode)]
-            public static extern char character(IntPtr smb);
+            public static extern Int32 character(IntPtr smb);
 
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_foreground$set", CharSet = CharSet.Unicode)]
             public static extern void foreground(IntPtr smb, byte foreground);

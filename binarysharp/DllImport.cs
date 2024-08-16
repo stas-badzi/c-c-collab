@@ -6,6 +6,21 @@ namespace CsImp {
     public class FileSystem {
         private const string DllSource =  @"" + DllHandle.Prefix + "csharp" + DllHandle.Suffix;
 
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_Add", CharSet = CharSet.Unicode)]
+        public static extern ulong Add(uint arg1, byte arg2);
+
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_DoSomething", CharSet = CharSet.Unicode)]
+        public static extern int DoSomething(bool arg1, int arg2);
+
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_DoSomeThings", CharSet = CharSet.Unicode)]
+        public static extern nint DoSomeThings(nint arg1, nint arg2);
+
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_DoMoreThings", CharSet = CharSet.Unicode)]
+        public static extern nint DoMoreThings(nint arg1);
+
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_RevertColors", CharSet = CharSet.Unicode)]
+        public static extern nint RevertColors(nint sym);
+
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_ImportText", CharSet = CharSet.Unicode)]
         public static extern IntPtr ImportText(IntPtr fileptr);
 
@@ -61,7 +76,7 @@ namespace CppImp {
         #endif
 
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_character$get", CharSet = CharSet.Unicode)]
-            public static extern char character(IntPtr smb);
+            public static extern int character(IntPtr smb);
 
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_foreground$set", CharSet = CharSet.Unicode)]
             public static extern void foreground(IntPtr smb, byte foreground);

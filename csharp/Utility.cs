@@ -61,7 +61,9 @@ namespace Utility
         public static String PtrToString(IntPtr ptr)
         {
         #if _WIN32
-            return Marshal.PtrToStringUni(ptr);
+            string output = Marshal.PtrToStringUni(ptr);
+            Marshal.FreeHGlobal(ptr);
+            return output;
         #else
             int int32_size = sizeof(Int32);
 
@@ -74,7 +76,7 @@ namespace Utility
                 }
                 str += Convert.ToChar(intg);
             }
-            
+            Marshal.FreeHGlobal(ptr);
             return str;
         #endif
         }

@@ -5,7 +5,7 @@ using Utility;
 
 namespace Cpp
 {
-    class Terminal
+    public class Terminal
     {
         public static ulong[] FillScreen(List<List<Symbol>> symbols) {
             
@@ -73,6 +73,10 @@ namespace Cpp
 
             public Symbol(Symbol cp) {
                 symbol = CppImp.Console.Symbol.Construct(cp.symbol);
+            }
+
+            public Symbol(nint sym) {
+                symbol = CppImp.Console.Symbol.Construct(sym);
             }
         #if _WIN32
             public Symbol(char character, byte foreground = 7, byte background = 0) {

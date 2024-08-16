@@ -11,9 +11,47 @@ namespace Cs
 {
     public class FileSystem // Impotowanie plików .txt
     {
+        public static ulong Add(uint a, byte b) {
+            return a + b;
+        }
+
+        public static char DoSomething(bool tak, char c) {
+            if (tak) {return 'Y';}
+            return c;
+        }
+
+        public static string DoSomeThings(List<bool> taki, string s) {
+            string o = "";
+            for (int i = 0; i < s.Length; i++) {
+                if (i < taki.Count && taki[i]) {
+                    o += '#';
+                } else {
+                    o += s[i];
+                }
+            }
+            return o;
+        }
+
+        public static List<ulong> DoMoreThings(List<string> ls) {
+            List<ulong> output = new List<ulong>();
+
+            for (int i = 0; i < ls.Count; ++i) {
+                output.Add(Convert.ToUInt64(ls[i].Length) * Convert.ToUInt64(ls[i].Length));
+            }
+
+            return output;
+        }
+
+        public static Terminal.Symbol RevertColors(Terminal.Symbol sym) {
+            Terminal.Symbol outsym = new Terminal.Symbol(sym);
+            outsym.background(sym.foreground());
+            outsym.foreground(sym.background());
+            return outsym;
+        }
+
         public static List<string> ImportText(string str_file)
         {
-            string line;
+            string? line;
             List<String> result = new List<String>();
 
             try
@@ -160,7 +198,7 @@ namespace Cs
             }
         }
 
-        public static void PlayMP3(string? filePath)
+        public static void PlayMP3(string filePath)
         {
             var file = new FileInfo(filePath);
             if (!file.Exists)

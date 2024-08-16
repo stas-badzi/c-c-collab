@@ -3,6 +3,8 @@ using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 using Utility;
 using Cs;
+using System.Drawing;
+using Cpp;
 
 namespace CsExp {
     public class DllHandle {
@@ -40,6 +42,70 @@ namespace CsExp {
     }
 
     public class FileSystem {
+        [UnmanagedCallersOnly(EntryPoint = "FileSystem_Add")]
+        public static ulong Add(uint a, byte b) {
+            return Cs.FileSystem.Add(a,b);
+        }
+
+        [UnmanagedCallersOnly(EntryPoint = "FileSystem_DoSomething")]
+        public static int DoSomething(bool yes, int ch) {
+            return UniConv.Utf8ToUnicode(Cs.FileSystem.DoSomething(yes, UniConv.UnicodeToUtf8(ch)));
+        }
+
+        [UnmanagedCallersOnly(EntryPoint = "FileSystem_DoSomeThings")]
+        public static nint DoSomeThings(nint yeses, nint str) {
+            int int32_size = sizeof(Int32);
+            int byte_size = sizeof(byte);
+
+            List<bool> input = new List<bool>();
+            Int32 size = Marshal.ReadInt32(yeses);
+
+            for (int i = 0; i < size; i++) {
+                byte by = Marshal.ReadByte(yeses, int32_size + (i*byte_size));
+                bool b = false;
+                if (by > 0) {b = true;}
+                input.Add(b);
+            }
+
+            Marshal.FreeHGlobal(yeses);
+
+            return UniConv.StringToPtr(Cs.FileSystem.DoSomeThings(input, UniConv.PtrToString(str)));
+        }
+
+        [UnmanagedCallersOnly(EntryPoint = "FileSystem_DoMoreThings")]
+        public static nint DoMoreThings(nint list_str) {
+            int nint_size = nint.Size;
+            int int32_size = sizeof(Int32);
+            int uint64_size = sizeof(UInt64);
+
+            List<string> input = new List<string>();
+
+            Int32 size = Marshal.ReadInt32(list_str);
+            for (int i = 0; i < size; i++) {
+                nint ptr = Marshal.ReadIntPtr(list_str, int32_size + (i*nint_size));
+                input.Add(UniConv.PtrToString(ptr));
+            }
+
+            Marshal.FreeHGlobal(list_str);
+
+            List<ulong> ret = Cs.FileSystem.DoMoreThings(input);
+
+            nint output = Marshal.AllocHGlobal(int32_size + (ret.Count * uint64_size));
+
+            Marshal.WriteInt32(output, ret.Count);
+
+            for (int i = 0; i < ret.Count; i++) {
+                Marshal.WriteInt64(output, int32_size + (i * uint64_size), Convert.ToInt64(ret[i]));
+            }
+
+            return output;
+        }
+
+        [UnmanagedCallersOnly(EntryPoint = "FileSystem_RevertColors")]
+        public static nint RevertColors(nint sym) {
+            return Cs.FileSystem.RevertColors(new Terminal.Symbol(sym)).Get();
+        }
+
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_ImportText")]
         public static IntPtr ImportText(IntPtr file)
         {
@@ -55,6 +121,9 @@ namespace CsExp {
 
             return output;
         }
+
+        
+
         // export
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_ExportText")]
         public static void ExportText(IntPtr path, IntPtr content) {
