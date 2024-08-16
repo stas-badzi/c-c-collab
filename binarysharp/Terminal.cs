@@ -82,12 +82,6 @@ namespace Cpp
             public Symbol(char character, byte atr = 0x0000) {
                 symbol = CppImp.Console.Symbol.Construct(atr);
             }
-            public void GetAttribute(byte atr) {
-                CppImp.Console.Symbol.SetAttribute(symbol, atr);
-            }
-            public byte GetAttribute() {
-                return CppImp.Console.Symbol.GetAttribute(symbol);
-            }
         #endif
 
             public Symbol(char character, byte foreground = 7, byte background = 0) {
