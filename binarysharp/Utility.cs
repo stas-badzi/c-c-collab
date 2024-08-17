@@ -1,7 +1,9 @@
 using System.Runtime.InteropServices;
 
-namespace Utility {
-    public class DllHandle {
+namespace Utility
+{
+    public class DllHandle
+    {
 
     #if _WIN32
         public const string Prefix = "";
@@ -20,7 +22,7 @@ namespace Utility {
         public const string Suffix = "";
     #endif
 
-        
+
     #if _WIN32
         public const string OS = "Windows";
     #elif __APPLE__
@@ -35,13 +37,16 @@ namespace Utility {
 
     }
 
-    class UniConv {
+    class UniConv
+    {
     #if _WIN32
-        public static char UnicodeToUtf8(char uni) {
+        public static char UnicodeToUtf8(char uni)
+        {
             return uni;
         }
 
-        public static char Utf8ToUnicode(char utf) {
+        public static char Utf8ToUnicode(char utf)
+        {
             return utf;
         }
     #else
@@ -53,9 +58,12 @@ namespace Utility {
             return Convert.ToInt32(utf);
         }
     #endif
-        public static String PtrToString(IntPtr ptr) {
+        public static String PtrToString(IntPtr ptr)
+        {
         #if _WIN32
-            return Marshal.PtrToStringUni(ptr);
+            string output = Marshal.PtrToStringUni(ptr);
+            Marshal.FreeHGlobal(ptr);
+            return output;
         #else
             int int32_size = sizeof(Int32);
 
@@ -68,15 +76,16 @@ namespace Utility {
                 }
                 str += Convert.ToChar(intg);
             }
-            
+            Marshal.FreeHGlobal(ptr);
             return str;
         #endif
         }
 
-        public static IntPtr StringToPtr(String str) {
-        #if _WIN32
+        public static IntPtr StringToPtr(String str)
+        {
+    #if _WIN32
             return Marshal.StringToHGlobalUni(str);
-        #else
+    #else
             int int32_size = sizeof(Int32);
 
             IntPtr ptr = Marshal.AllocHGlobal( (str.Length + 1) * int32_size);
@@ -87,8 +96,8 @@ namespace Utility {
             Marshal.WriteInt32(ptr, str.Length * int32_size, 0);
 
             return ptr;
-        #endif
+    #endif
         }
     }
-    
+
 }

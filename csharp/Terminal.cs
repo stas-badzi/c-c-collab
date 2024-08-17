@@ -8,7 +8,7 @@ namespace Cpp
     public class Terminal
     {
         public static ulong[] FillScreen(List<List<Symbol>> symbols) {
-
+            
             int ptrsize = IntPtr.Size;
             int ulngsize = sizeof(ulong);
             int height = symbols.Count();
@@ -25,7 +25,7 @@ namespace Cpp
             }
 
             IntPtr ptr_smb = Marshal.AllocHGlobal(height * ptrsize);
-
+            
             for (int i = 0; i < height; i++)
             {
                 Marshal.WriteIntPtr(ptr_smb, i * ptrsize, list_ptr[i]);
@@ -41,7 +41,7 @@ namespace Cpp
             {
                 Marshal.FreeHGlobal(list_ptr[i]);
             }
-
+            
             // ulongints -> ulongs
             ulong[] ulongs = new ulong[2];
 
@@ -74,35 +74,33 @@ namespace Cpp
             public Symbol(Symbol cp) {
                 symbol = CppImp.Console.Symbol.Construct(cp.symbol);
             }
-         
-            public Symbol(IntPtr ptr) {
-                symbol = CppImp.Console.Symbol.Construct(ptr);
+
+            public Symbol(nint sym) {
+                symbol = CppImp.Console.Symbol.Construct(sym);
             }
         #if _WIN32
-            public Symbol(char character, byte foreground = 7, byte background = 0) {
-                symbol = CppImp.Console.Symbol.Construct(UniConv.Utf8ToUnicode(character),foreground,background);
+            public Symbol(byte atr = 0x0000) {
+                symbol = CppImp.Console.Symbol.Construct(atr);
             }
-
-            public char character() {
-                return UniConv.UnicodeToUtf8(CppImp.Console.Symbol.character(symbol));
+            public void GetAttribute(byte atr) {
+                CppImp.Console.Symbol.SetAttribute(symbol, atr);
             }
-
-            public void character(char val) {
-                CppImp.Console.Symbol.character(symbol, UniConv.Utf8ToUnicode(val));
-            }
-        #else
-            public Symbol(char character, byte foreground = 7, byte background = 0) {
-                symbol = CppImp.Console.Symbol.Construct(UniConv.Utf8ToUnicode(character),foreground,background);
-            }
-
-            public char character() {
-                return UniConv.UnicodeToUtf8(CppImp.Console.Symbol.character(symbol));
-            }
-
-            public void character(char val) {
-                CppImp.Console.Symbol.character(symbol, UniConv.Utf8ToUnicode(val));
+            public byte GetAttribute() {
+                return CppImp.Console.Symbol.GetAttribute(symbol);
             }
         #endif
+
+            public Symbol(char character, byte foreground = 7, byte background = 0) {
+                symbol = CppImp.Console.Symbol.Construct(UniConv.Utf8ToUnicode(character),foreground,background);
+            }
+
+            public char character() {
+                return UniConv.UnicodeToUtf8(CppImp.Console.Symbol.character(symbol));
+            }
+
+            public void character(char val) {
+                CppImp.Console.Symbol.character(symbol, UniConv.Utf8ToUnicode(val));
+            }
 
             public byte foreground() {
                 return CppImp.Console.Symbol.foreground(symbol);
