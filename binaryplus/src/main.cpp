@@ -16,6 +16,8 @@ using namespace cs;
 using namespace std;
 
 int main() {
+    cout << Utf8ToUnicode("▚");
+    return 0;
     Console::Init();
     while (true) {
         Console::Symbol sym;
