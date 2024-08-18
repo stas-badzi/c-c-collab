@@ -121,15 +121,7 @@ namespace Cpp
             public IntPtr Get() {
                 return symbol;
             }
-
-        #if _WIN32
-            public byte GetAttribute() {
-                return CppImp.Console.Symbol.GetAttribute(symbol);
-            }
-            public void SetAttribute(byte val) {
-                CppImp.Console.Symbol.SetAttribute(symbol, val);
-            }
-        #endif
+            
             private readonly IntPtr symbol;
         }
     }    

@@ -39,7 +39,7 @@ namespace Utility
 
     class UniConv
     {
-    #if _WIN32
+    /*#if _WIN32
         public static char UnicodeToUtf8(char uni)
         {
             return uni;
@@ -49,7 +49,7 @@ namespace Utility
         {
             return utf;
         }
-    #else
+    #else*/
         public static char UnicodeToUtf8(Int32 uni) {
             return Convert.ToChar(uni);
         }
@@ -57,7 +57,7 @@ namespace Utility
         public static Int32 Utf8ToUnicode(char utf) {
             return Convert.ToInt32(utf);
         }
-    #endif
+    //#endif
         public static String PtrToString(IntPtr ptr)
         {
         #if _WIN32

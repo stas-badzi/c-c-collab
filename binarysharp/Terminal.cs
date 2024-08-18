@@ -82,6 +82,12 @@ namespace Cpp
             public Symbol(byte atr = 0x0000) {
                 symbol = CppImp.Console.Symbol.Construct(atr);
             }
+            public void GetAttribute(byte atr) {
+                CppImp.Console.Symbol.SetAttribute(symbol, atr);
+            }
+            public byte GetAttribute() {
+                return CppImp.Console.Symbol.GetAttribute(symbol);
+            }
         #endif
 
             public Symbol(char character, byte foreground = 7, byte background = 0) {
@@ -115,15 +121,7 @@ namespace Cpp
             public IntPtr Get() {
                 return symbol;
             }
-
-        #if _WIN32
-            public byte GetAttribute() {
-                return CppImp.Console.Symbol.GetAttribute(symbol);
-            }
-            public void SetAttribute(byte val) {
-                CppImp.Console.Symbol.SetAttribute(symbol, val);
-            }
-        #endif
+            
             private readonly IntPtr symbol;
         }
     }    
