@@ -15,9 +15,9 @@
 namespace uniconv {
     
 
+typedef uint32_t unichar;
 #ifdef _WIN32
     typedef wchar_t utfchar;
-    typedef wchar_t unichar;
     typedef std::wstring utfstr;
     inline utfstr to_string(utfchar val) {
         utfstr out; 
@@ -26,7 +26,6 @@ namespace uniconv {
     }
 #else
     typedef std::string utfchar;
-    typedef uint32_t unichar;
     typedef std::string utfstr;
     inline utfstr to_string(utfchar val) { return val; }
 #endif

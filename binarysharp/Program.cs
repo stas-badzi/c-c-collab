@@ -6,7 +6,6 @@ namespace BinarySharp {
     public class Program {
         static int Main(string[] args) {
             List<bool> list = [true, false, false, false, true];
-            Console.WriteLine(UniConv.Utf8ToUnicode('▚'));
             Console.WriteLine(FileSystem.Add(2149312222,255));
             Console.WriteLine(FileSystem.DoSomething(true, '#'));
             Console.WriteLine(FileSystem.DoSomething(false, '#'));
