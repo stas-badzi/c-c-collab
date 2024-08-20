@@ -24,6 +24,10 @@ bool cpp::Console::KeyDown(int key) {
     return cppimp::Console_KeyDown(key);
 }
 
+bool cpp::Console::KeyToggled(int key) {
+    return cppimp::Console_KeyToggled(key);
+}
+
 bool cpp::Console::KeyHit(int key) {
     return cppimp::Console_KeyHit(key);
 }

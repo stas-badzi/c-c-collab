@@ -12,6 +12,8 @@ namespace cppimp {
 
     libimport bool Console_KeyDown(int arg1);
 
+    libimport bool Console_KeyToggled(int arg1);
+
     libimport bool Console_KeyHit(int arg1);
 
     libimport bool Console_KeyReleased(int arg1);

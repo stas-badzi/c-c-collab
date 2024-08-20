@@ -6,11 +6,14 @@
 #include <cstdint>
 #include <thread>
 #include <signal.h>
+#include <stdlib.h>
 
 #include <unicode_conversion.hpp>
 
 #ifdef _WIN32
     #include <windows.h>
+    #define at_quick_exit(func) atexit(func)
+    #define quick_exit(code) exit(code)
 #else
     #include <stdio.h>
     #include <sys/ioctl.h>
@@ -23,15 +26,19 @@
     #include <getfd.h>
 #endif
 
+#define KEYBOARD_MAX 256
+
 namespace cpp {
     class Console {
     private:
         static bool initialised;
-        static std::bitset<256> key_states;
+        static std::bitset<KEYBOARD_MAX*2> key_states;
         static int key_hit;
         static int key_released;
         #ifdef _WIN32
             static HANDLE h_console;
+            static HWND win_console;
+            static HWND GetHwnd(void);
         #else
             static struct termios old_termios;
             static struct termios old_fdterm;
@@ -69,8 +76,12 @@ namespace cpp {
         static std::array<unsigned long,2> FillScreen(std::vector<std::vector<Symbol> > symbols);
         static int HandleKeyboard(void);
         static bool KeyDown(int key);
+        static bool KeyToggled(int key);
         static bool KeyHit(int key);
         static bool KeyReleased(int key);
 
+        #ifdef _WIN32
+        static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+        #endif // DEBUG
     };
 } // namespace cpp

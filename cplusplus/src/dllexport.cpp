@@ -23,6 +23,10 @@ using namespace uniconv;
         return cpp::Console::KeyDown(arg1);
     }
 
+    libexport bool Console_KeyToggled(int arg1) {
+        return cpp::Console::KeyToggled(arg1);
+    }
+
     libexport bool Console_KeyHit(int arg1) {
         return cpp::Console::KeyHit(arg1);
     }

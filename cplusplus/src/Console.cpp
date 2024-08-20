@@ -46,6 +46,26 @@ using namespace std;
     }
 
     HANDLE Console::h_console = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
+    HWND Console::win_console = GetHwnd();
+
+    HWND Console::GetHwnd(void) {
+        #define MY_BUFSIZE 1024
+        HWND hwndFound;
+        wchar_t pszNewWindowTitle[MY_BUFSIZE];
+        wchar_t pszOldWindowTitle[MY_BUFSIZE];
+
+        GetConsoleTitle(pszOldWindowTitle, MY_BUFSIZE);
+
+        wsprintf(pszNewWindowTitle,L"%d/%d",GetTickCount(),GetCurrentProcessId());
+        SetConsoleTitle(pszNewWindowTitle);
+        Sleep(40);
+
+        hwndFound=FindWindow(NULL, pszNewWindowTitle);
+        
+        SetConsoleTitle(pszOldWindowTitle);
+
+        return(hwndFound);
+    }
 
     void Console::Init(void) {
         if (!initialised) {
@@ -60,6 +80,8 @@ using namespace std;
 
     void Console::Fin(void) {
         if (initialised) {
+            SetConsoleActiveScreenBuffer((HANDLE)nullptr);
+
             initialised = false;
         }
     }
@@ -105,6 +127,23 @@ using namespace std;
 		delete[] attributes;
 
         return written;
+    }
+
+    int Console::HandleKeyboard() {
+        int out = -1;
+        key_hit = -1;
+        key_released = -1;
+        for (int i = 0; i < KEYBOARD_MAX; i++) {
+            SHORT keyState = GetKeyState(i);
+            if (!key_states[i] && keyState & 0x8000) key_hit = i;
+            if (!key_states[i] && keyState & 0x8000) out = i;
+            if (key_states[i] && !(keyState & 0x8000)) key_released = i;
+            if (key_states[i] && !(keyState & 0x8000)) out = KEYBOARD_MAX +  i;
+            
+            key_states[i] = keyState & 0x8000;
+            key_states[KEYBOARD_MAX + i] = keyState & 1;
+        }
+        return out;
     }
 
     uint8_t Console::Symbol::GetAttribute(void) {
@@ -256,7 +295,7 @@ using namespace std;
             
             for (int i = 0; i < n; i++) {
                 if (!show_keycodes) {
-                    out *= 256;
+                    out *= KEYBOARD_MAX;
                     out += buf[i];
                 } else {
                     out = buf[i] & 0x7f; // set keycode
@@ -265,18 +304,6 @@ using namespace std;
             }
         return out;
     };
-
-    bool cpp::Console::KeyDown(int key) {
-        return key_states[key];
-    }
-    
-    bool cpp::Console::KeyHit(int key) {
-        return (cpp::Console::key_hit == key);
-    }
-
-    bool cpp::Console::KeyReleased(int key) {
-        return (cpp::Console::key_released == key);
-    }
 
     int cpp::Console::HandleKeyboard(void) {
         int bytes;
@@ -288,9 +315,10 @@ using namespace std;
 
         key_hit = -1;
         key_released = -1;
-        if ( !key_states[parsed % 256] && (parsed / 256) ) key_hit = parsed % 256;
-        if ( key_states[parsed % 256] && !(parsed / 256) ) key_released = parsed % 256;
-        key_states[parsed % 256] = !(parsed / 256);
+        if ( !key_states[parsed % KEYBOARD_MAX] && (parsed / KEYBOARD_MAX) ) key_hit = parsed % KEYBOARD_MAX;
+        if ( key_states[parsed % KEYBOARD_MAX] && !(parsed / KEYBOARD_MAX) ) key_released = parsed % KEYBOARD_MAX;
+        if ( key_hit > 0 ) key_states[KEYBOARD_MAX + keyhit] = !key_states[KEYBOARD_MAX + keyhit];
+        key_states[parsed % KEYBOARD_MAX] = !(parsed / KEYBOARD_MAX);
 
         return parse_input(true,buf,bytes);
 
@@ -352,12 +380,28 @@ using namespace std;
     struct termios Console::old_fdterm = termios();
     int Console::old_kbdmode = int();
     int Console::fd = int();
-    bitset<256> Console::key_states = bitset<256>(0);
-    int Console::key_hit = int();
-    int Console::key_released = int();
 #endif
 
 bool Console::initialised = false;
+bitset<KEYBOARD_MAX*2> Console::key_states = bitset<KEYBOARD_MAX*2>(0);
+int Console::key_hit = int();
+int Console::key_released = int();
+
+bool cpp::Console::KeyDown(int key) {
+        return key_states[key];
+    }
+
+bool cpp::Console::KeyToggled(int key) {
+    return key_states[KEYBOARD_MAX + key];
+}
+
+bool cpp::Console::KeyHit(int key) {
+    return (cpp::Console::key_hit == key);
+}
+
+bool cpp::Console::KeyReleased(int key) {
+    return (cpp::Console::key_released == key);
+}
 
 Console::Symbol::Symbol(utfchar character, uint8_t foreground, uint8_t background) {
     this->character = character;

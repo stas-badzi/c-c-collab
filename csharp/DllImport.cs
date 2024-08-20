@@ -19,6 +19,9 @@ namespace CppImp {
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_KeyDown", CharSet = CharSet.Unicode)]
         public static extern bool KeyDown(int arg1);
 
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_KeyToggled", CharSet = CharSet.Unicode)]
+        public static extern bool KeyToggled(int arg1);
+
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_KeyHit", CharSet = CharSet.Unicode)]
         public static extern bool KeyHit(int arg1);
 

@@ -46,6 +46,7 @@ namespace cpp {
         static void Fin(void);
         static int HandleKeyboard(void);
         static bool KeyDown(int key);
+        static bool KeyToggled(int key);
         static bool KeyHit(int key);
         static bool KeyReleased(int key);
         static int16_t GetWindowWidth(void);
