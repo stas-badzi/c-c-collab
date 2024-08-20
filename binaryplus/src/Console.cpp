@@ -12,6 +12,26 @@ void cpp::Console::Init(void) {
     cppimp::Console_Init();
 }
 
+void cpp::Console::Fin(void) {
+    cppimp::Console_Fin();
+}
+
+int cpp::Console::HandleKeyboard(void) {
+    return cppimp::Console_HandleKeyboard();
+}
+
+bool cpp::Console::KeyDown(int key) {
+    return cppimp::Console_KeyDown(key);
+}
+
+bool cpp::Console::KeyHit(int key) {
+    return cppimp::Console_KeyHit(key);
+}
+
+bool cpp::Console::KeyReleased(int key) {
+    return cppimp::Console_KeyReleased(key);
+}
+
 array<unsigned long,2> cpp::Console::FillScreen(vector<vector<cpp::Console::Symbol> > symbols) {
 
     void*** voidsyms = new void**[symbols.size()];

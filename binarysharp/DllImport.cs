@@ -33,12 +33,27 @@ namespace CsImp {
 
 namespace CppImp {
 
-    public class Console
+    public class Terminal
     {
         private const string DllSource = @"" + DllHandle.Prefix + "cplusplus" + DllHandle.Suffix;
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Init", CharSet = CharSet.Unicode)]
         public static extern void Init();
+
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Fin", CharSet = CharSet.Unicode)]
+        public static extern void Fin();
+
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_HandleKeyBoard", CharSet = CharSet.Unicode)]
+        public static extern int HandleKeyboard();
+
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_KeyDown", CharSet = CharSet.Unicode)]
+        public static extern bool KeyDown(int arg1);
+
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_KeyHit", CharSet = CharSet.Unicode)]
+        public static extern bool KeyHit(int arg1);
+
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_KeyReleased", CharSet = CharSet.Unicode)]
+        public static extern bool KeyReleased(int arg1);
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_FillScreen$ret2", CharSet = CharSet.Unicode)]
         public static extern IntPtr FillScreen(IntPtr symbols, int height, int width);

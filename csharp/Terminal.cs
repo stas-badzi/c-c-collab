@@ -7,6 +7,30 @@ namespace Cpp
 {
     public class Terminal
     {
+        public static void Init() {
+            CppImp.Terminal.Init();
+        }
+
+        public static void Fin() {
+            CppImp.Terminal.Fin();
+        }
+
+        public static int HandleKeyboard() {
+            return CppImp.Terminal.HandleKeyboard();
+        }
+
+        public static bool KeyDown(int key) {
+            return CppImp.Terminal.KeyDown(key);
+        }
+
+        public static bool KeyHit(int key) {
+            return CppImp.Terminal.KeyHit(key);
+        }
+
+        public static bool KeyReleased(int key) {
+            return CppImp.Terminal.KeyReleased(key);
+        }
+
         public static ulong[] FillScreen(List<List<Symbol>> symbols) {
             
             int ptrsize = IntPtr.Size;
@@ -33,7 +57,7 @@ namespace Cpp
 
             // ptr_ptr_smb = (IntPtr) list_ptr_smb.to_array;
 
-            IntPtr ulongints = CppImp.Console.FillScreen(ptr_smb, height, width); // Does the work itself
+            IntPtr ulongints = CppImp.Terminal.FillScreen(ptr_smb, height, width); // Does the work itself
 
             Marshal.FreeHGlobal(ptr_smb);
 
@@ -54,68 +78,68 @@ namespace Cpp
         }
 
         public static short GetWindowWidth() {
-            return CppImp.Console.GetWindowWidth();
+            return CppImp.Terminal.GetWindowWidth();
         }
 
         public static short GetWindowHeight() {
-            return CppImp.Console.GetWindowHeight();
+            return CppImp.Terminal.GetWindowHeight();
         }
 
         public class Symbol
         {
             ~Symbol() {
-                CppImp.Console.Symbol.Destruct(symbol);
+                CppImp.Terminal.Symbol.Destruct(symbol);
             }
 
             public Symbol() {
-                symbol = CppImp.Console.Symbol.Construct(' ');
+                symbol = CppImp.Terminal.Symbol.Construct(' ');
             }
 
             public Symbol(Symbol cp) {
-                symbol = CppImp.Console.Symbol.Construct(cp.symbol);
+                symbol = CppImp.Terminal.Symbol.Construct(cp.symbol);
             }
 
             public Symbol(nint sym) {
-                symbol = CppImp.Console.Symbol.Construct(sym);
+                symbol = CppImp.Terminal.Symbol.Construct(sym);
             }
         #if _WIN32
             public Symbol(byte atr = 0x0000) {
-                symbol = CppImp.Console.Symbol.Construct(atr);
+                symbol = CppImp.Terminal.Symbol.Construct(atr);
             }
             public void GetAttribute(byte atr) {
-                CppImp.Console.Symbol.SetAttribute(symbol, atr);
+                CppImp.Terminal.Symbol.SetAttribute(symbol, atr);
             }
             public byte GetAttribute() {
-                return CppImp.Console.Symbol.GetAttribute(symbol);
+                return CppImp.Terminal.Symbol.GetAttribute(symbol);
             }
         #endif
 
             public Symbol(char character, byte foreground = 7, byte background = 0) {
-                symbol = CppImp.Console.Symbol.Construct(UniConv.Utf8ToUnicode(character),foreground,background);
+                symbol = CppImp.Terminal.Symbol.Construct(UniConv.Utf8ToUnicode(character),foreground,background);
             }
 
             public char character() {
-                return UniConv.UnicodeToUtf8(CppImp.Console.Symbol.character(symbol));
+                return UniConv.UnicodeToUtf8(CppImp.Terminal.Symbol.character(symbol));
             }
 
             public void character(char val) {
-                CppImp.Console.Symbol.character(symbol, UniConv.Utf8ToUnicode(val));
+                CppImp.Terminal.Symbol.character(symbol, UniConv.Utf8ToUnicode(val));
             }
 
             public byte foreground() {
-                return CppImp.Console.Symbol.foreground(symbol);
+                return CppImp.Terminal.Symbol.foreground(symbol);
             }
 
             public void foreground(byte val) {
-                CppImp.Console.Symbol.foreground(symbol, val);
+                CppImp.Terminal.Symbol.foreground(symbol, val);
             }
 
             public byte background() {
-                return CppImp.Console.Symbol.background(symbol);
+                return CppImp.Terminal.Symbol.background(symbol);
             }
 
             public void background(byte val) {
-                CppImp.Console.Symbol.background(symbol, val);
+                CppImp.Terminal.Symbol.background(symbol, val);
             }
 
             public IntPtr Get() {

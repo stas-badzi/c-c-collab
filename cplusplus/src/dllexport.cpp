@@ -11,6 +11,26 @@ using namespace uniconv;
         cpp::Console::Init();
     }
 
+    libexport void Console_Fin(void) {
+        cpp::Console::Fin();
+    }
+
+    libexport int Console_HandleKeyboard(void) {
+        return cpp::Console::HandleKeyboard();
+    }
+
+    libexport bool Console_KeyDown(int arg1) {
+        return cpp::Console::KeyDown(arg1);
+    }
+
+    libexport bool Console_KeyHit(int arg1) {
+        return cpp::Console::KeyHit(arg1);
+    }
+
+    libexport bool Console_KeyReleased(int arg1) {
+        return cpp::Console::KeyReleased(arg1);
+    }
+
     libexport unsigned long int* Console_FillScreen$ret2(cpp::Console::Symbol*** symbols, int height, int width) {
         std::vector<std::vector<cpp::Console::Symbol> > vecsyms;
         for (int i = 0; i < height; i++) {

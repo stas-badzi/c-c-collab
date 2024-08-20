@@ -50,9 +50,19 @@ using namespace std;
     void Console::Init(void) {
         if (!initialised) {
             SetConsoleActiveScreenBuffer(Console::h_console);
+
             initialised = true;
+
+            atexit(Fin);
+            at_quick_exit(Fin);
         }
-    }    
+    }
+
+    void Console::Fin(void) {
+        if (initialised) {
+            initialised = false;
+        }
+    }
 
     int16_t cpp::Console::GetWindowWidth(void) {
         CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -80,8 +90,7 @@ using namespace std;
                     attributes[ i*width + j ] = empty_sym.GetAttribute();
                     continue;
                 }
-                cout << (short)symbols[i][j].foreground << '|' << (short)symbols[i][j].background << '&' << (short)symbols[i][j].GetAttribute() << '/' << (short)GenerateAtrVal(symbols[i][j].foreground,symbols[i][j].background) << '\n';
-				screen[ i*width + j ] = symbols[i][j].character;
+                screen[ i*width + j ] = symbols[i][j].character;
                 attributes[ i*width + j ] = symbols[i][j].GetAttribute();
 			}
 		}
@@ -112,7 +121,6 @@ using namespace std;
     this->SetAttribute(attribute);
 }
 #else
-
     inline string GenerateEscapeSequence(uint8_t i1, uint8_t i2) {
         string val = "\033[";
         if (i1 < 8) {
@@ -136,20 +144,81 @@ using namespace std;
 
     void Console::Init(void) {
         if (!initialised) {
-            cout.sync_with_stdio(false);
+            fd = getfd();
+
+            fwrite("\033[?1049h",sizeof(char), 9, stderr);
+
+            tcgetattr(STDIN_FILENO,&old_termios);
+            termios term_ios = old_termios;
+            term_ios.c_lflag &= ~(ICANON | ECHO);
+            tcsetattr(STDIN_FILENO, TCSANOW, &term_ios);
+
+            tcgetattr(fd,&old_fdterm);
+            term_ios = old_fdterm;
+            term_ios.c_lflag &= ~(ICANON | ECHO | ISIG);
+            term_ios.c_iflag = 0;
+            term_ios.c_cc[VMIN] = 0xff;
+            term_ios.c_cc[VTIME] = 1;
+            tcsetattr(fd, TCSANOW, &term_ios);
+            
+            ioctl(fd, KDGKBMODE, &old_kbdmode);
+            ioctl(fd, KDSETMODE, K_MEDIUMRAW);
+
             initialised = true;
+
+            atexit(Fin);
+            at_quick_exit(Fin);
+
+            signal(SIGHUP, quick_exit);
+            signal(SIGINT, quick_exit);
+            signal(SIGQUIT, quick_exit);
+            signal(SIGILL, quick_exit);
+            signal(SIGTRAP, quick_exit);
+            signal(SIGABRT, quick_exit);
+            signal(SIGIOT, quick_exit);
+            signal(SIGFPE, quick_exit);
+            signal(SIGKILL, quick_exit);
+            signal(SIGUSR1, quick_exit);
+            signal(SIGSEGV, quick_exit);
+            signal(SIGUSR2, quick_exit);
+            signal(SIGPIPE, quick_exit);
+            signal(SIGTERM, quick_exit);
+        #ifdef SIGSTKFLT
+            signal(SIGSTKFLT, quick_exit);
+        #endif
+            signal(SIGCHLD, quick_exit);
+            signal(SIGCONT, quick_exit);
+            signal(SIGSTOP, quick_exit);
+            signal(SIGTSTP, quick_exit);
+            signal(SIGTTIN, quick_exit);
+            signal(SIGTTOU, quick_exit);
+        }
+    }
+    
+
+    void Console::Fin(void) {
+        if (initialised) {
+            
+            ioctl(fd, KDSETMODE, old_kbdmode);
+            tcsetattr(fd,TCSANOW,&old_fdterm);
+
+            tcsetattr(STDIN_FILENO,TCSANOW,&old_termios);
+            
+            fwrite("\033[?1049l",sizeof(char), 9, stderr);
+
+            initialised = false;
         }
     }
 
     int16_t cpp::Console::GetWindowWidth(void) {
         struct winsize size;
-        ioctl(STDOUT_FILENO, TIOCGWINSZ, &size);
+        ioctl(STDERR_FILENO, TIOCGWINSZ, &size);
         return size.ws_col;
     }
 
     int16_t cpp::Console::GetWindowHeight(void) {
         struct winsize size;
-        ioctl(STDOUT_FILENO, TIOCGWINSZ, &size);
+        ioctl(STDERR_FILENO, TIOCGWINSZ, &size);
         return size.ws_row;
     }
 
@@ -167,9 +236,11 @@ using namespace std;
             }
         }
         screen.append("\033[0m");
-
-        cout << screen;
         
+        //FILE * screen_file = fopen( "screen.dat", "w" );
+        fwrite(screen.c_str(), sizeof(char), screen.size(), stderr);
+        //system("cat screen.dat");
+
         array<unsigned long,2> written;
 				
 		written[0] = width*height;
@@ -177,6 +248,113 @@ using namespace std;
 
         return written;
     }
+
+    int parse_input(int show_keycodes, char * buf, int n) {
+        int out = 0;
+        //char buf[16];
+        //int n = read(fd, buf, sizeof(buf));
+            
+            for (int i = 0; i < n; i++) {
+                if (!show_keycodes) {
+                    out *= 256;
+                    out += buf[i];
+                } else {
+                    out = buf[i] & 0x7f; // set keycode
+                    out += buf[i] & 0x80 ? 0x100 : 0x000; // add bit 0 if press bit 1 if release
+                }
+            }
+        return out;
+    };
+
+    bool cpp::Console::KeyDown(int key) {
+        return key_states[key];
+    }
+    
+    bool cpp::Console::KeyHit(int key) {
+        return (cpp::Console::key_hit == key);
+    }
+
+    bool cpp::Console::KeyReleased(int key) {
+        return (cpp::Console::key_released == key);
+    }
+
+    int cpp::Console::HandleKeyboard(void) {
+        int bytes;
+        char buf[16];
+        //ioctl(fileno(stdin), FIONREAD, &bytes);
+        bytes = read(fd, buf, sizeof(buf));
+
+        int parsed = parse_input(true,buf,bytes);
+
+        key_hit = -1;
+        key_released = -1;
+        if ( !key_states[parsed % 256] && (parsed / 256) ) key_hit = parsed % 256;
+        if ( key_states[parsed % 256] && !(parsed / 256) ) key_released = parsed % 256;
+        key_states[parsed % 256] = !(parsed / 256);
+
+        return parse_input(true,buf,bytes);
+
+
+        if (bytes == 0) {
+            return -1;
+        }
+        
+
+        char first_byte = getc(stdin);
+        if (first_byte != 27) { return first_byte; }
+
+        --bytes;
+        if (bytes == 0) { return 27; }
+
+        deque<char> esc_code;
+        while (bytes > 0) {
+            esc_code.push_back(getc(stdin));
+            --bytes;
+        }
+        
+        while (esc_code.size() > 4) {
+			auto width = GetWindowWidth(), height = GetWindowHeight();
+			if (esc_code[0] == '[' && esc_code[1] == '<' && esc_code[2] == '0' && esc_code[3] == ';') { //Mouse event
+				// Handle mouse
+			}
+			else break;
+		}
+        if (esc_code.size() == 0) { return -1; }
+
+        vector<char> code;
+        string str = "";
+        while (esc_code.size() > 0) {
+            printf("%c",esc_code.front());
+            if (esc_code.front() == ';') {
+                code.push_back(stoi(str));
+            } else {
+                str.push_back(esc_code.front());
+            }
+            esc_code.pop_front();
+        }
+        if (str.back() != 'p') {
+            str.pop_back();
+        }
+        int key_code = 0;
+        for (auto i = 0; i < code.size(); i++) {
+            key_code *= 0x100;
+            key_code += code[i];
+        }
+        
+        string print = '\n' + str + "\n" + to_string(code.size()) + "\n" + to_string(key_code) + "\n";
+        
+        
+
+        return key_code;
+    }
+
+    struct termios Console::old_termios = termios();
+    struct termios Console::old_fdterm = termios();
+    int Console::old_kbdmode = int();
+    int Console::fd = int();
+    bitset<256> Console::key_states = bitset<256>(0);
+    int Console::key_hit = int();
+    int Console::key_released = int();
 #endif
 
 bool Console::initialised = false;
@@ -188,7 +366,7 @@ Console::Symbol::Symbol(utfchar character, uint8_t foreground, uint8_t backgroun
 }
 
 Console::Symbol::Symbol(void) {
-    this->character = L' ';
+    this->character = WCharToNative(L' ');
     this->foreground = 7;
     this->background = 0;
 }

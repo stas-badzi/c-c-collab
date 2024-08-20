@@ -18,7 +18,7 @@ sources = Console.cpp dllexport.cpp
 #> header files
 headers = Console.hpp
 #> include files
-includes = dynamic_library.h unicode_conversion.hpp
+includes = dynamic_library.h unicode_conversion.hpp getfd.h
 #> name the dynamic library
 name = cplusplus
 # *******************************
@@ -38,7 +38,7 @@ binname = cpp-consolegame
 #> name the dynamic library
 filename = csharp
 #>source code files
-files = DllExport.cs FileSystem.cs Utility.cs
+files = DllExport.cs DllImport.cs FileSystem.cs Terminal.cs Utility.cs
 # *******************************
 
 #********* c# binary config *****
@@ -449,23 +449,19 @@ ifeq ($(shell echo "check quotes"),"check quotes")
 #windows
 ifeq ($(copylibs),1)
 	@$(admin) copy cplusplus\bin\$(dllname) $(libdir)
-	@$(admin) cd $(libdir) && dir
 else
 	@copy cplusplus\bin\$(dllname) binaryplus\bin
 	@copy cplusplus\bin\$(dllname) binarysharp\bin\exe
 	@copy cplusplus\bin\$(dllname) csharp\bin\lib
-	@cd cplusplus\bin && dir
 endif
 else
 #other
 ifeq ($(copylibs),1)
 	@$(admin) cp cplusplus/bin/$(dllname) $(libdir)
-	@$(admin) cd $(libdir) && ls
 else
 	@cp cplusplus/bin/$(dllname) binaryplus/bin
 	@cp cplusplus/bin/$(dllname) binarysharp/bin/exe
 	@cp cplusplus/bin/$(dllname) csharp/bin/lib
-	@cd cplusplus/bin && ls
 endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
@@ -478,7 +474,6 @@ ifeq ($(shell echo "check quotes"),"check quotes")
 	@move csharp\bin\$(configuration)\net8.0\$(os_name)\native\$(libname) csharp\bin\lib
 ifeq ($(copylibs),1)
 	@$(admin) copy cplusplus\bin\$(dllname) $(libdir)
-	@$(admin) cd $(libdir) && dir
 else
 	@copy csharp\bin\lib\$(libname) binarysharp\bin\exe
 	@copy csharp\bin\lib\$(libname) binaryplus\bin
@@ -490,7 +485,6 @@ else
 	@mv -f csharp/bin/$(configuration)/net8.0/$(os_name)/native/* csharp/bin/lib/$(libname)
 ifeq ($(copylibs),1)
 	@$(admin) cp csharp/bin/lib/$(libname) $(libdir)
-	@$(admin) cd $(libdir) && ls
 else
 	@cp csharp/bin/lib/$(libname) binarysharp/bin/exe
 	@cp csharp/bin/lib/$(libname) binaryplus/bin
@@ -564,16 +558,14 @@ endif
 ifeq ($(shell echo "check quotes"),"check quotes")
 #windows
 ifeq ($(copylibs),1)
-	@$(admin) copy binaryplus\bin\$(binname) $(bindir)
-	@$(admin) cd $(bindir) && dir
+	@$(admin) copy binaryplus\bin\$(binname).$(binary) $(bindir)
 else
 	@cd binaryplus\bin && dir
 endif
 else
 #other
 ifeq ($(copylibs),1)
-	@$(admin) cp binaryplus/bin/$(binname) $(bindir)
-	@$(admin) cd $(bindir) && ls
+	@$(admin) cp binaryplus/bin/$(binname).$(binary) $(bindir)
 else
 	@cd binaryplus/bin && ls
 endif
@@ -595,16 +587,14 @@ endif
 ifeq ($(shell echo "check quotes"),"check quotes")
 #windows
 ifeq ($(copylibs),1)
-	@$(admin) copy binarysharp\bin\exe\$(binfile) $(bindir)
-	@$(admin) cd $(bindir) && dir
+	@$(admin) copy binarysharp\bin\exe\$(binfile).$(binary) $(bindir)
 else
 	@cd binarysharp\bin\exe && dir
 endif
 else
 #other
 ifeq ($(copylibs),1)
-	@$(admin) cp binarysharp/bin/exe/$(binfile) $(bindir)
-	@$(admin) cd $(bindir) && ls
+	@$(admin) cp binarysharp/bin/exe/$(binfile).$(binary) $(bindir)
 else
 	@cd binarysharp/bin/exe && ls
 endif

@@ -2,26 +2,45 @@
 
 #include <vector>
 #include <array>
+#include <bitset>
 #include <cstdint>
+#include <thread>
+#include <signal.h>
+
 #include <unicode_conversion.hpp>
 
 #ifdef _WIN32
     #include <windows.h>
 #else
-    #include <iostream>
+    #include <stdio.h>
     #include <sys/ioctl.h>
     #include <unistd.h>
+    #include <termios.h>
+    #include <deque>
+    #include <string>
+    #include <linux/kd.h>
+    #include <linux/keyboard.h>
+    #include <getfd.h>
 #endif
 
 namespace cpp {
     class Console {
     private:
         static bool initialised;
+        static std::bitset<256> key_states;
+        static int key_hit;
+        static int key_released;
         #ifdef _WIN32
             static HANDLE h_console;
+        #else
+            static struct termios old_termios;
+            static struct termios old_fdterm;
+            static int old_kbdmode;
+            static int fd;
         #endif
     public:
         static void Init(void);
+        static void Fin(void);
         struct Symbol {
             uniconv::utfchar character;
             uint8_t foreground; // 0-16
@@ -48,6 +67,10 @@ namespace cpp {
         static int16_t GetWindowWidth(void);
         static int16_t GetWindowHeight(void);
         static std::array<unsigned long,2> FillScreen(std::vector<std::vector<Symbol> > symbols);
+        static int HandleKeyboard(void);
+        static bool KeyDown(int key);
+        static bool KeyHit(int key);
+        static bool KeyReleased(int key);
 
     };
 } // namespace cpp

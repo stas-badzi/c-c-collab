@@ -43,6 +43,11 @@ namespace cpp {
 
         };
         static void Init(void);
+        static void Fin(void);
+        static int HandleKeyboard(void);
+        static bool KeyDown(int key);
+        static bool KeyHit(int key);
+        static bool KeyReleased(int key);
         static int16_t GetWindowWidth(void);
         static int16_t GetWindowHeight(void);
         static std::array<unsigned long,2> FillScreen(std::vector<std::vector<Symbol> > symbols);

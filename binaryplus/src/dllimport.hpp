@@ -1,8 +1,20 @@
+#include <stdint.h>
+
 #include <dynamic_library.h>
 #include <unicode_conversion.hpp>
 
 namespace cppimp {
     libimport void Console_Init(void);
+
+    libimport void Console_Fin(void);
+
+    libimport int Console_HandleKeyboard(void);
+
+    libimport bool Console_KeyDown(int arg1);
+
+    libimport bool Console_KeyHit(int arg1);
+
+    libimport bool Console_KeyReleased(int arg1);
 
     libimport unsigned long int* Console_FillScreen$ret2(void*** symbols, int height, int width);
 
@@ -37,7 +49,7 @@ namespace cppimp {
     libimport void Console_Symbol_Destruct(void* smb);
 
     libimport void* Console_Symbol_operator$eq(void* cp, void* src);
-} // namespace cppimp
+} // namespace CppImp
 
 namespace csimp {
     
