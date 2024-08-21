@@ -317,11 +317,10 @@ using namespace std;
         key_released = -1;
         if ( !key_states[parsed % KEYBOARD_MAX] && (parsed / KEYBOARD_MAX) ) key_hit = parsed % KEYBOARD_MAX;
         if ( key_states[parsed % KEYBOARD_MAX] && !(parsed / KEYBOARD_MAX) ) key_released = parsed % KEYBOARD_MAX;
-        if ( key_hit > 0 ) key_states[KEYBOARD_MAX + keyhit] = !key_states[KEYBOARD_MAX + keyhit];
+        if ( key_hit > 0 ) key_states[KEYBOARD_MAX + key_hit] = !key_states[KEYBOARD_MAX + key_hit];
         key_states[parsed % KEYBOARD_MAX] = !(parsed / KEYBOARD_MAX);
 
         return parse_input(true,buf,bytes);
-
 
         if (bytes == 0) {
             return -1;
