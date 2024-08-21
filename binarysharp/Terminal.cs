@@ -23,6 +23,10 @@ namespace Cpp
             return CppImp.Terminal.KeyDown(key);
         }
 
+        public static bool KeyToggled(int key) {
+            return CppImp.Terminal.KeyToggled(key);
+        }
+
         public static bool KeyHit(int key) {
             return CppImp.Terminal.KeyHit(key);
         }
