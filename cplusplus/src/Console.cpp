@@ -316,6 +316,10 @@ using namespace std::chrono;
         //ioctl(fileno(stdin), FIONREAD, &bytes);
         bytes = read(fd, buf, sizeof(buf));
 
+        if (bytes == 0) {
+            return -1;
+        }
+
         int parsed = parse_input(true,buf,bytes);
 
         key_hit = -1;
