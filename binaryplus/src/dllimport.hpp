@@ -8,6 +8,8 @@ namespace cppimp {
 
     libimport void Console_Fin(void);
 
+    libimport void Console_Sleep(double seconds);
+
     libimport int Console_HandleKeyboard(void);
 
     libimport bool Console_KeyDown(int arg1);

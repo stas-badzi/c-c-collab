@@ -27,41 +27,8 @@ int main() {
 
     while (true)
     {
-        thread kbd_handle = thread([&] {
-            while (!(Console::KeyDown(29) && Console::KeyHit(16))) {
-                int out = Console::HandleKeyboard();
-                const char * action = (out / 256) ? " up" : " down";
-                if (out > 0) if (!Console::KeyDown(56)) cerr << out % 256 << action << '\n';
-            
-                int action_size = (out / 256) ? 3 : 5;
-                /*if (scr.size() >= Console::GetWindowHeight()) {
-                    scr.erase(scr.begin());
-                }
-                scr.push_back(vector<Console::Symbol>());
-                int out_size = to_string(out % 256).size();
-                if (out > 0) if (!Console::KeyDown(56)) for (int i = 0; i < out_size + action_size; i++) {
-                    if (i < out_size) {
-                        scr[0].push_back(uniconv::WCharToNative(to_wstring(out % 256)[i]));
-                    } else if (i - out_size < action_size) {
-                        scr[0].push_back(uniconv::WCharToNative(action[i - out_size]));
-                    }
-                    
-                }
-                Console::FillScreen(scr);*/
-            }
-        });
-        while (1) {
-            if (Console::KeyDown(125)) cerr << '^' << ':' << Console::KeyDown(29) << ' ' << 'q' << ':' << Console::KeyDown(16) << '\n';
-            if (Console::KeyDown(29) && Console::KeyHit(16)) {
-                cerr << "Exiting";
-                cerr << '.';
-                cerr << '.';
-                cerr << '.';
-                exit(0);
-            }
-        }
-        
-        
+        cerr << "aaaaaaaaaaaa\n";
+        Console::Sleep();
     }
     
 /*

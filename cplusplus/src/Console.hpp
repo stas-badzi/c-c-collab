@@ -7,6 +7,8 @@
 #include <thread>
 #include <signal.h>
 #include <stdlib.h>
+#include <chrono>
+#include <math.h>
 
 #include <unicode_conversion.hpp>
 
@@ -79,9 +81,6 @@ namespace cpp {
         static bool KeyToggled(int key);
         static bool KeyHit(int key);
         static bool KeyReleased(int key);
-
-        #ifdef _WIN32
-        static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-        #endif // DEBUG
+        static void Sleep(double seconds = 1);
     };
 } // namespace cpp

@@ -15,6 +15,10 @@ using namespace uniconv;
         cpp::Console::Fin();
     }
 
+    libexport void Console_Sleep(double seconds) {
+        cpp::Console::Sleep(seconds);
+    }
+
     libexport int Console_HandleKeyboard(void) {
         return cpp::Console::HandleKeyboard();
     }

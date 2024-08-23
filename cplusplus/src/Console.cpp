@@ -3,6 +3,7 @@
 using namespace cpp;
 using namespace uniconv;
 using namespace std;
+using namespace std::chrono;
 
 #ifdef _WIN32
 #include <iostream>
@@ -144,6 +145,10 @@ using namespace std;
             key_states[KEYBOARD_MAX + i] = keyState & 1;
         }
         return out;
+    }
+
+    void SysSleep(int microseconds){
+        Sleep((int)(microseconds/1000));
     }
 
     uint8_t Console::Symbol::GetAttribute(void) {
@@ -375,6 +380,13 @@ using namespace std;
         return key_code;
     }
 
+    void SysSleep(int microseconds){
+        int ret;
+        if (!microseconds % 1000000) ret = 1000000 * sleep(microseconds / 1000000);
+        else ret = usleep(microseconds);
+        if (ret) SysSleep(ret);
+    }
+
     struct termios Console::old_termios = termios();
     struct termios Console::old_fdterm = termios();
     int Console::old_kbdmode = int();
@@ -400,6 +412,33 @@ bool cpp::Console::KeyHit(int key) {
 
 bool cpp::Console::KeyReleased(int key) {
     return (cpp::Console::key_released == key);
+}
+
+void cpp::Console::Sleep(double seconds) {
+
+    static double estimate = 5e-3;
+    static double mean = 5e-3;
+    static double m2 = 0;
+    static int64_t count = 1;
+
+    while (seconds > estimate) {
+        auto start = high_resolution_clock::now();
+        SysSleep(1000);
+        auto end = high_resolution_clock::now();
+
+        double observed = (end - start).count() / 1e9;
+        seconds -= observed;
+
+        ++count;
+        double delta = observed - mean;
+        mean += delta / count;
+        m2   += delta * (observed - mean);
+        double stddev = sqrt(m2 / (count - 1));
+        estimate = mean + stddev;
+    }
+
+    auto start = high_resolution_clock::now();
+    while ((high_resolution_clock::now() - start).count() / 1e9 < seconds);
 }
 
 Console::Symbol::Symbol(utfchar character, uint8_t foreground, uint8_t background) {

@@ -70,6 +70,10 @@ int16_t cpp::Console::GetWindowHeight(void) {
     return Console_GetWindowHeight();
 }
 
+void cpp::Console::Sleep(double seconds){
+    Console_Sleep(seconds);
+}
+
 cpp::Console::Symbol::Symbol(void) {
     symbol = Console_Symbol_Construct$cfb(L' ');
 }

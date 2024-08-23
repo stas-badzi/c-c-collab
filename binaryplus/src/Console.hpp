@@ -51,6 +51,7 @@ namespace cpp {
         static bool KeyReleased(int key);
         static int16_t GetWindowWidth(void);
         static int16_t GetWindowHeight(void);
+        static void Sleep(double seconds = 1.0);
         static std::array<unsigned long,2> FillScreen(std::vector<std::vector<Symbol> > symbols);
     };
 }
