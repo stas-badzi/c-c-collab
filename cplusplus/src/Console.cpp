@@ -76,6 +76,30 @@ using namespace std::chrono;
 
             atexit(Fin);
             at_quick_exit(Fin);
+
+            signal(SIGHUP, quick_exit);
+            signal(SIGINT, quick_exit);
+            signal(SIGQUIT, quick_exit);
+            signal(SIGILL, quick_exit);
+            signal(SIGTRAP, quick_exit);
+            signal(SIGABRT, quick_exit);
+            signal(SIGIOT, quick_exit);
+            signal(SIGFPE, quick_exit);
+            signal(SIGKILL, quick_exit);
+            signal(SIGUSR1, quick_exit);
+            signal(SIGSEGV, quick_exit);
+            signal(SIGUSR2, quick_exit);
+            signal(SIGPIPE, quick_exit);
+            signal(SIGTERM, quick_exit);
+        #ifdef SIGSTKFLT
+            signal(SIGSTKFLT, quick_exit);
+        #endif
+            signal(SIGCHLD, quick_exit);
+            signal(SIGCONT, quick_exit);
+            signal(SIGSTOP, quick_exit);
+            signal(SIGTSTP, quick_exit);
+            signal(SIGTTIN, quick_exit);
+            signal(SIGTTOU, quick_exit);
         }
     }
 
@@ -189,6 +213,18 @@ using namespace std::chrono;
     void Console::Init(void) {
         if (!initialised) {
             fd = getfd();
+
+            if (fd < 0) {
+                char buf[256];
+                int buf_size = readlink( "/proc/self/exe" , buf, 256);
+                string command = "sudo ";
+                command.append(buf);
+                exit(system(command.c_str()));
+                
+                string error = GenerateEscapeSequence(1,16) + "\nCouldn't get a file descriptor referring to the console.\nCheck if you have acces to /dev/tty and /dev/console.\n" + GenerateEscapeSequence(4,16) + "\n\ttry: " + GenerateEscapeSequence(6,16) + "sudo " + buf + "\033[0m\n";
+                throw(runtime_error(error.c_str()));
+            }
+            
 
             fwrite("\033[?1049h",sizeof(char), 9, stderr);
 
@@ -314,7 +350,11 @@ using namespace std::chrono;
         int bytes;
         char buf[16];
         //ioctl(fileno(stdin), FIONREAD, &bytes);
+        printf("b");
+
         bytes = read(fd, buf, sizeof(buf));
+
+        printf("c");
 
         if (bytes == 0) {
             return -1;
@@ -328,6 +368,8 @@ using namespace std::chrono;
         if ( key_states[parsed % KEYBOARD_MAX] && !(parsed / KEYBOARD_MAX) ) key_released = parsed % KEYBOARD_MAX;
         if ( key_hit > 0 ) key_states[KEYBOARD_MAX + key_hit] = !key_states[KEYBOARD_MAX + key_hit];
         key_states[parsed % KEYBOARD_MAX] = !(parsed / KEYBOARD_MAX);
+
+        printf("d");
 
         return parse_input(true,buf,bytes);
 

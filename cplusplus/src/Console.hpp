@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <chrono>
 #include <math.h>
+#include <exception>
 
 #include <unicode_conversion.hpp>
 

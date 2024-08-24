@@ -50,7 +50,7 @@ int main() {
             Console::FillScreen(list);
         });
         //*/
-        thread kbd_handle = thread([&] {
+        cerr << "a\n";
             int out = Console::HandleKeyboard();
             cerr << out << '\n';
             const char * action = (out / 256) ? " up" : " down";
@@ -67,6 +67,9 @@ int main() {
             if (out > 0) if (!Console::KeyDown(56)) cerr << out % 256 << action << '\n';
         
             int action_size = (out / 256) ? 3 : 5;
+
+        thread kbd_handle = thread([&] {
+            
             /*if (scr.size() >= Console::GetWindowHeight()) {
                 scr.erase(scr.begin());
             }
