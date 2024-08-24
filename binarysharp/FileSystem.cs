@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using Utility;
 using Cpp;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Cs {
     public class FileSystem {
@@ -90,6 +91,34 @@ namespace Cs {
             IntPtr end = UniConv.StringToPtr("\u0000");
             Marshal.WriteIntPtr(output, intptr_size * contentstr.Count, end);
             CsImp.FileSystem.ExportText(UniConv.StringToPtr(pathstr), output);
+        }
+
+        public static List<List<Terminal.Symbol>> TextureFromFile(string filename)
+        {
+            const int int32_size = sizeof(int);
+            int intptr_size = nint.Size;
+            int size, count;
+
+            List<List<Terminal.Symbol>> texture = new List<List<Terminal.Symbol>>();
+            
+            nint filenamePtr = UniConv.StringToPtr(filename);  // Convert filename back
+            nint func = CsImp.FileSystem.TextureFromFile(filenamePtr); // Get exported function
+
+            size = Marshal.ReadInt32(func); // Utilize size
+            for (int i = 0; i < size; i++) // Add sizes from func pointer
+                texture.Add(new List<Terminal.Symbol>());
+
+            count = 0; // Utilize count
+            for (int i = 0; i < texture.Count; i++)
+            {
+                for (int j = 0; j < texture[i].Count; j++)
+                {
+                    nint ptr = Marshal.ReadIntPtr(func, (i + 1) * int32_size + count * intptr_size); // Find symbol pointer
+                    texture[i].Add(new Terminal.Symbol(ptr)); // Clone symbol based on the pointer
+                    count++; // Move target place for next symbol
+                }
+            }
+            return texture;
         }
         public static void PlayMP3(string filePathStr)
         {

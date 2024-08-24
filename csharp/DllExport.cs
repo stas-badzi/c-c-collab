@@ -5,6 +5,8 @@ using Utility;
 using Cs;
 using System.Drawing;
 using Cpp;
+// UTF-8: int
+// UNICODE: char
 
 namespace CsExp {
     public class DllHandle {
@@ -48,8 +50,9 @@ namespace CsExp {
         }
 
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_DoSomething")]
-        public static int DoSomething(bool yes, int ch) {
+        public static int DoSomething(bool yes, char ch) {
             return UniConv.Utf8ToUnicode(Cs.FileSystem.DoSomething(yes, UniConv.UnicodeToUtf8(ch)));
+            // return 
         }
 
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_DoSomeThings")]
@@ -146,6 +149,39 @@ namespace CsExp {
             }
 
             Cs.FileSystem.ExportText(UniConv.PtrToString(path), text);
+        }
+        [UnmanagedCallersOnly(EntryPoint = "FileSystem_TextureFromFile")]
+        public static nint TextureFromFile(nint filenamePtr)
+        {
+            const int int32_size = sizeof(int);
+            int intptr_size = nint.Size;
+
+            string filename = UniConv.PtrToString(filenamePtr); // Convert fileName
+            List<List<Terminal.Symbol>> func = Cs.FileSystem.TextureFromFile(filename); // Original function
+
+            int count = func.Count; // For better readability 
+            int size = 0;
+            for (int i = 0; i < func.Count; i++)
+                for (int j = 0; j < func[i].Count; j++) // Count all symbols
+                    size++;
+            
+            // Allocate memory for List<>.Count's and all symbol pointers
+            nint texture = Marshal.AllocHGlobal(count * int32_size + size * intptr_size);
+
+            size = 0; // Reset size
+            Marshal.WriteInt32(texture, count);
+            for (int i = 0; i < count; i++)
+            {
+                count = func[i].Count; // Assign adequate count
+                Marshal.WriteInt32(texture, i * int32_size, count);
+                for (int j = 0; j < count; j++)
+                {
+                    // Write symbol pointer in proper place
+                    Marshal.WriteIntPtr(texture, (i + 1) * int32_size + size * intptr_size, func[i][j].Get());
+                    size++; // Move target place for next symbol
+                }
+            }
+            return texture;
         }
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_PlayMP3")]
         public static void PlayMP3(IntPtr filePathPtr)

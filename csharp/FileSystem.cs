@@ -16,16 +16,19 @@ namespace Cs
         }
 
         public static char DoSomething(bool tak, char c) {
-            if (tak) {return 'Y';}
-            return c;
+            return tak? 'Y' : c;
         }
 
         public static string DoSomeThings(List<bool> taki, string s) {
             string o = "";
-            for (int i = 0; i < s.Length; i++) {
-                if (i < taki.Count && taki[i]) {
+            for (int i = 0; i < s.Length; i++) 
+            {
+                if (i < taki.Count && taki[i]) 
+                {
                     o += '#';
-                } else {
+                } 
+                else 
+                {
                     o += s[i];
                 }
             }
@@ -93,7 +96,7 @@ namespace Cs
             }
         }
         
-        public static List<List<Terminal.Symbol>>? TextureFromFile(string filename)
+        public static List<List<Terminal.Symbol>> TextureFromFile(string filename)
         {
             int width, height;
 
