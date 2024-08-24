@@ -96,11 +96,11 @@ namespace Cs
             }
         }
         
-        public static List<List<Terminal.Symbol>> TextureFromFile(string filename)
+        public static List<List<Terminal.Symbol>> TextureFromFile(string filepath)
         {
             int width, height;
 
-            var fileImported = ImportText(filename); // Imported List<string>
+            var fileImported = ImportText(filepath); // Imported List<string>
             var file = new List<List<char>>(); // Every character of file
             var symbols = new List<List<Terminal.Symbol>>(); // Final symbol list
 
@@ -201,15 +201,15 @@ namespace Cs
             }
         }
 
-        public static void PlayMP3(string filePath)
+        public static void PlayMP3(string filepath)
         {
-            var file = new FileInfo(filePath);
+            var file = new FileInfo(filepath);
             if (!file.Exists)
             {
                 Environment.FailFast("PlayMP3: Filepath not found");
                 return;
             }
-            using (var audioFile = CodecFactory.Instance.GetCodec(filePath))
+            using (var audioFile = CodecFactory.Instance.GetCodec(filepath))
             using (var soundOut = new WasapiOut())
             {
                 var playbackFinished = new ManualResetEvent(false);

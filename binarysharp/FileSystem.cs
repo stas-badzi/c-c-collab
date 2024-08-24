@@ -120,9 +120,40 @@ namespace Cs {
             }
             return texture;
         }
-        public static void PlayMP3(string filePathStr)
+        public static void FileFromTexture(string filepath, List<List<Terminal.Symbol>> texture, bool recycle = false)
         {
-            CsImp.FileSystem.PlayMP3(UniConv.StringToPtr(filePathStr));
+            const int int32_size = sizeof(int);
+            int intptr_size = nint.Size;
+            int size, count;
+
+            nint filepathPtr = UniConv.StringToPtr(filepath);
+
+            size = texture.Count; 
+            count = 0;
+            for (int i = 0; i < size; i++)
+            {
+                count += texture[i].Count;
+            }
+            nint texturePtr = Marshal.AllocHGlobal((size + 1) * int32_size + count * intptr_size);
+            
+            count = 0;
+            Marshal.WriteInt32(texturePtr, size);
+            for (int i = 0; i < size; i++)
+            {
+                Marshal.WriteInt32(texturePtr, (i + 1) * int32_size + count * intptr_size, texture[i].Count);
+                for (int j = 0; j < texture[i].Count; j++)
+                {
+                    Marshal.WriteIntPtr(texturePtr, (i + 2) * int32_size + count * intptr_size, texture[i][j].Get());
+                    count++;
+                }
+            }
+            CsImp.FileSystem.FileFromTexture(filepathPtr, texturePtr, recycle);
+
+            Marshal.FreeHGlobal(texturePtr);
+        }
+        public static void PlayMP3(string filepath)
+        {
+            CsImp.FileSystem.PlayMP3(UniConv.StringToPtr(filepath));
         }
     }
 }

@@ -151,12 +151,15 @@ namespace CsExp {
             Cs.FileSystem.ExportText(UniConv.PtrToString(path), text);
         }
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_TextureFromFile")]
-        public static nint TextureFromFile(nint filenamePtr)
+        public static nint TextureFromFile(nint filepathPtr)
         {
+            if (filepathPtr == IntPtr.Zero)
+                throw new Exception("Intptr $filepathPtr Empty");
+            
             const int int32_size = sizeof(int);
             int intptr_size = nint.Size;
 
-            string filename = UniConv.PtrToString(filenamePtr); // Convert fileName
+            string filename = UniConv.PtrToString(filepathPtr); // Convert filepath
             List<List<Terminal.Symbol>> func = Cs.FileSystem.TextureFromFile(filename); // Original function
 
             int count = func.Count; // For better readability 
@@ -176,22 +179,51 @@ namespace CsExp {
                 Marshal.WriteInt32(texture, i * int32_size, count);
                 for (int j = 0; j < count; j++)
                 {
-                    // Write symbol pointer in proper place
-                    Marshal.WriteIntPtr(texture, (i + 1) * int32_size + size * intptr_size, func[i][j].Get());
+                    // Write symbol pointer in proper place 
+                    Marshal.WriteIntPtr(texture, (i + 2) * int32_size + size * intptr_size, func[i][j].Get());
                     size++; // Move target place for next symbol
                 }
             }
             return texture;
         }
-        [UnmanagedCallersOnly(EntryPoint = "FileSystem_PlayMP3")]
-        public static void PlayMP3(IntPtr filePathPtr)
+        [UnmanagedCallersOnly(EntryPoint = "FileSystem_FileFromTexture")]
+        public static void FileFromTexture(nint filepathPtr, nint texturePtr, bool recycle = false)
         {
-            if (filePathPtr == IntPtr.Zero) {
-                throw new Exception("Intptr $filePathPtr Empty");
+            if (filepathPtr == IntPtr.Zero)
+                throw new Exception("Intptr $filepathPtr Empty");
+            if (texturePtr == IntPtr.Zero)
+                throw new Exception("Intptr $texturePtr Empty");
+
+            const int int32_size = sizeof(int);
+            int intptr_size = nint.Size;
+            int size, count;
+
+            string filePath = UniConv.PtrToString(filepathPtr);
+            var texture = new List<List<Terminal.Symbol>>();
+
+            size = Marshal.ReadInt32(texturePtr);
+            for (int i = 0; i < size; i++)
+                texture.Add(new List<Terminal.Symbol>());
+
+            count = 0;
+            for (int i = 0; i < size; i++)
+            {
+                for (int j = 0; j < texture[i].Count; j++)
+                {
+                    nint ptr = Marshal.ReadIntPtr(texturePtr, (i + 2) * int32_size + count * intptr_size);
+                    texture[i].Add(new Terminal.Symbol(ptr));       
+                    count++;
+                }
             }
-            
-            string? filePath = UniConv.PtrToString(filePathPtr);
-            Cs.FileSystem.PlayMP3(filePath);
+            Cs.FileSystem.FileFromTexture(filePath, texture, recycle);
+        }
+        [UnmanagedCallersOnly(EntryPoint = "FileSystem_PlayMP3")]
+        public static void PlayMP3(IntPtr filepathPtr)
+        {
+            if (filepathPtr == IntPtr.Zero)
+                throw new Exception("Intptr $filepathPtr Empty");
+                
+            Cs.FileSystem.PlayMP3(UniConv.PtrToString(filepathPtr));
         }
     }
 }
