@@ -159,8 +159,8 @@ namespace CsExp {
             const int int32_size = sizeof(int);
             int intptr_size = nint.Size;
 
-            string filename = UniConv.PtrToString(filepathPtr); // Convert filepath
-            List<List<Terminal.Symbol>> func = Cs.FileSystem.TextureFromFile(filename); // Original function
+            string filepath = UniConv.PtrToString(filepathPtr); // Convert filepath
+            List<List<Terminal.Symbol>> func = Cs.FileSystem.TextureFromFile(filepath); // Original function
 
             int count = func.Count; // For better readability 
             int size = 0;
@@ -198,10 +198,11 @@ namespace CsExp {
             int intptr_size = nint.Size;
             int size, count;
 
-            string filePath = UniConv.PtrToString(filepathPtr);
+            string filepath = UniConv.PtrToString(filepathPtr);
+
             var texture = PtrToTexture(texturePtr);
 
-            Cs.FileSystem.FileFromTexture(filePath, texture, recycle);
+            Cs.FileSystem.FileFromTexture(filepath, texture, recycle);
         }
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_DrawTextureToScreen")]
         public static void DrawTextureToScreen(int x, int y, nint texturePtr, nint screenPtr)
@@ -212,7 +213,7 @@ namespace CsExp {
                 throw new Exception("Intptr $screenPtr Empty");
             
             var texture = PtrToTexture(texturePtr);
-            var screen = PtrToTexture(texturePtr);
+            var screen = PtrToTexture(screenPtr);
 
             Cs.FileSystem.DrawTextureToScreen(x, y, texture, screen);
         }

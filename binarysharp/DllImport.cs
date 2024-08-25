@@ -27,7 +27,7 @@ namespace CsImp {
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_ExportText", CharSet = CharSet.Unicode)]
         public static extern void ExportText(IntPtr pathptr, IntPtr contentptr);
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_TextureFromFile", CharSet = CharSet.Unicode)]
-        public static extern nint TextureFromFile(nint filenamePtr);
+        public static extern nint TextureFromFile(nint filepathPtr);
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_FileFromTexture", CharSet = CharSet.Unicode)]
         public static extern void FileFromTexture(nint filepathPtr, nint texturePtr, bool recycle = false);
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_DrawTextureToScreen", CharSet = CharSet.Unicode)]

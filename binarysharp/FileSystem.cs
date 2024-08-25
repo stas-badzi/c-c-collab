@@ -93,7 +93,7 @@ namespace Cs {
             CsImp.FileSystem.ExportText(UniConv.StringToPtr(pathstr), output);
         }
 
-        public static List<List<Terminal.Symbol>> TextureFromFile(string filename)
+        public static List<List<Terminal.Symbol>> TextureFromFile(string filepath)
         {
             const int int32_size = sizeof(int);
             int intptr_size = nint.Size;
@@ -101,8 +101,8 @@ namespace Cs {
 
             List<List<Terminal.Symbol>> texture = new List<List<Terminal.Symbol>>();
             
-            nint filenamePtr = UniConv.StringToPtr(filename);  // Convert filename back
-            nint func = CsImp.FileSystem.TextureFromFile(filenamePtr); // Get exported function
+            nint filepathPtr = UniConv.StringToPtr(filepath);  // Convert filepath back
+            nint func = CsImp.FileSystem.TextureFromFile(filepathPtr); // Get exported function
 
             size = Marshal.ReadInt32(func); // Utilize size
             for (int i = 0; i < size; i++) // Add sizes from func pointer
