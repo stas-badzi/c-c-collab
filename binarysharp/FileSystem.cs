@@ -102,7 +102,10 @@ namespace Cs {
             nint filepathPtr = UniConv.StringToPtr(filepath);  // Convert filepath back
             nint func = CsImp.FileSystem.TextureFromFile(filepathPtr); // Get exported function
 
-            return UniConv.PtrToTexture(func);
+            var texture = UniConv.PtrToTexture(func);
+
+            Marshal.FreeHGlobal(func);
+            return texture;
         }
         public static void FileFromTexture(string filepath, List<List<Terminal.Symbol>> texture, bool recycle = false)
         {
