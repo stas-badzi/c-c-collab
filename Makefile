@@ -38,7 +38,7 @@ binname = cpp-consolegame
 #> name the dynamic library
 filename = csharp
 #>source code files
-files = DllExport.cs DllImport.cs FileSystem.cs Terminal.cs Utility.cs
+files = DllExport.cs DllImport.cs FileSystem.cs Terminal.cs Console.cs Utility.cs
 # *******************************
 
 #********* c# binary config *****

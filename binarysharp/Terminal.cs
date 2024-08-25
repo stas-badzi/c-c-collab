@@ -7,15 +7,15 @@ namespace Cpp
 {
     public class Terminal
     {
-        public static void Init() {
+        public static void Init(void) {
             CppImp.Terminal.Init();
         }
 
-        public static void Fin() {
+        public static void Fin(void) {
             CppImp.Terminal.Fin();
         }
 
-        public static int HandleKeyboard() {
+        public static int HandleKeyboard(void) {
             return CppImp.Terminal.HandleKeyboard();
         }
 
@@ -81,21 +81,21 @@ namespace Cpp
             return ulongs;
         }
 
-        public static short GetWindowWidth() {
+        public static short GetWindowWidth(void) {
             return CppImp.Terminal.GetWindowWidth();
         }
 
-        public static short GetWindowHeight() {
+        public static short GetWindowHeight(void) {
             return CppImp.Terminal.GetWindowHeight();
         }
 
         public class Symbol
         {
-            ~Symbol() {
+            ~Symbol(void) {
                 CppImp.Terminal.Symbol.Destruct(symbol);
             }
 
-            public Symbol() {
+            public Symbol(void) {
                 symbol = CppImp.Terminal.Symbol.Construct(' ');
             }
 
@@ -103,8 +103,10 @@ namespace Cpp
                 symbol = CppImp.Terminal.Symbol.Construct(cp.symbol);
             }
 
-            public Symbol(nint sym) {
-                symbol = CppImp.Terminal.Symbol.Construct(sym);
+            // Direct = do not copy vaues, copy ptr
+            public Symbol(nint sym, bool direct = false) {
+                if (direct) symbol = sym;
+                else symbol = CppImp.Terminal.Symbol.Construct(sym);
             }
         #if _WIN32
             public Symbol(byte atr = 0x0000) {
@@ -113,7 +115,7 @@ namespace Cpp
             public void GetAttribute(byte atr) {
                 CppImp.Terminal.Symbol.SetAttribute(symbol, atr);
             }
-            public byte GetAttribute() {
+            public byte GetAttribute(void) {
                 return CppImp.Terminal.Symbol.GetAttribute(symbol);
             }
         #endif
@@ -122,7 +124,7 @@ namespace Cpp
                 symbol = CppImp.Terminal.Symbol.Construct(UniConv.Utf8ToUnicode(character),foreground,background);
             }
 
-            public char character() {
+            public char character(void) {
                 return UniConv.UnicodeToUtf8(CppImp.Terminal.Symbol.character(symbol));
             }
 
@@ -130,7 +132,7 @@ namespace Cpp
                 CppImp.Terminal.Symbol.character(symbol, UniConv.Utf8ToUnicode(val));
             }
 
-            public byte foreground() {
+            public byte foreground(void) {
                 return CppImp.Terminal.Symbol.foreground(symbol);
             }
 
@@ -138,12 +140,16 @@ namespace Cpp
                 CppImp.Terminal.Symbol.foreground(symbol, val);
             }
 
-            public byte background() {
+            public byte background(void) {
                 return CppImp.Terminal.Symbol.background(symbol);
             }
 
             public void background(byte val) {
                 CppImp.Terminal.Symbol.background(symbol, val);
+            }
+
+            public void ReverseColors(void) {
+                CsImp.Terminal.Symbol.ReverseColors(symbol);
             }
 
             public IntPtr Get() {

@@ -45,13 +45,6 @@ namespace Cs
             return output;
         }
 
-        public static Terminal.Symbol RevertColors(Terminal.Symbol sym) {
-            Terminal.Symbol outsym = new Terminal.Symbol(sym);
-            outsym.background(sym.foreground());
-            outsym.foreground(sym.background());
-            return outsym;
-        }
-
         public static List<string> ImportText(string str_file)
         {
             string? line;

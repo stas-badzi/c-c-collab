@@ -77,10 +77,6 @@ namespace Cs {
             return text;
         }
 
-        public static Terminal.Symbol RevertColors(Terminal.Symbol sym) {
-            return new Terminal.Symbol(CsImp.FileSystem.RevertColors(sym.Get()));
-        }
-
         public static void ExportText(string pathstr, List<string> contentstr) {
             int intptr_size = IntPtr.Size;
             IntPtr output = Marshal.AllocHGlobal( (contentstr.Count + 1) * intptr_size);

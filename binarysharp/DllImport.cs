@@ -3,6 +3,14 @@ using Utility;
 
 namespace CsImp {
 
+    public class Terminal {
+        private const string DllSource =  @"" + DllHandle.Prefix + "csharp" + DllHandle.Suffix;
+        public class Symbol {
+            [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_ReverseColors", CharSet = CharSet.Unicode)]
+            public static extern nint ReverseColors(nint sym);
+        }
+    }
+
     public class FileSystem {
         private const string DllSource =  @"" + DllHandle.Prefix + "csharp" + DllHandle.Suffix;
 
@@ -17,9 +25,6 @@ namespace CsImp {
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_DoMoreThings", CharSet = CharSet.Unicode)]
         public static extern nint DoMoreThings(nint arg1);
-
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_RevertColors", CharSet = CharSet.Unicode)]
-        public static extern nint RevertColors(nint sym);
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_ImportText", CharSet = CharSet.Unicode)]
         public static extern IntPtr ImportText(IntPtr fileptr);

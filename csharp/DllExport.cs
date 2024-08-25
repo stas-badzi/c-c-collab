@@ -5,43 +5,11 @@ using Utility;
 using Cs;
 using System.Drawing;
 using Cpp;
+using Console = Cs.Console;
 // UTF-8: int
 // UNICODE: char
 
 namespace CsExp {
-    public class DllHandle {
-
-    #if _WIN32
-        public const string Prefix = "";
-        public const string Suffix = ".dll";
-    #elif __APPLE__
-        public const string Prefix = "lib";
-        public const string Suffix = ".dylib";
-    #elif __linux__
-        public const string Prefix = "lib";
-        public const string Suffix = ".so";
-    #elif __FreeBSD__
-        public const string Prefix = "lib";
-        public const string Suffix = ".so";
-    #else
-        public const string Prefix = "";
-        public const string Suffix = "";
-    #endif
-
-        
-    #if _WIN32
-        public const string OS = "Windows";
-    #elif __APPLE__
-        public const string OS = "Apple";
-    #elif __linux__
-        public const string OS = "Linux";
-    #elif __FreeBSD__
-        public const string OS = "FreeBSD";
-    #else
-        public const string OS = "Unknown";
-    #endif
-
-    }
 
     public class FileSystem {
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_Add")]
@@ -52,7 +20,6 @@ namespace CsExp {
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_DoSomething")]
         public static int DoSomething(bool yes, char ch) {
             return UniConv.Utf8ToUnicode(Cs.FileSystem.DoSomething(yes, UniConv.UnicodeToUtf8(ch)));
-            // return 
         }
 
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_DoSomeThings")]
@@ -104,9 +71,9 @@ namespace CsExp {
             return output;
         }
 
-        [UnmanagedCallersOnly(EntryPoint = "FileSystem_RevertColors")]
-        public static nint RevertColors(nint sym) {
-            return Cs.FileSystem.RevertColors(new Terminal.Symbol(sym)).Get();
+        [UnmanagedCallersOnly(EntryPoint = "Console_Symbol_ReverseColors")]
+        public static void ReverseColors(nint sym) {
+            Console.ReverseColors(new Terminal.Symbol(sym, true));
         }
 
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_ImportText")]

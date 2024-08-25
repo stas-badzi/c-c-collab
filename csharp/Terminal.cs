@@ -103,8 +103,10 @@ namespace Cpp
                 symbol = CppImp.Terminal.Symbol.Construct(cp.symbol);
             }
 
-            public Symbol(nint sym) {
-                symbol = CppImp.Terminal.Symbol.Construct(sym);
+            // Direct = do not copy vaues, copy ptr
+            public Symbol(nint sym, bool direct = false) {
+                if (direct) symbol = sym;
+                else symbol = CppImp.Terminal.Symbol.Construct(sym);
             }
         #if _WIN32
             public Symbol(byte atr = 0x0000) {
@@ -145,6 +147,8 @@ namespace Cpp
             public void background(byte val) {
                 CppImp.Terminal.Symbol.background(symbol, val);
             }
+
+            public void 
 
             public IntPtr Get() {
                 return symbol;
