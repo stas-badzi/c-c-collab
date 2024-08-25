@@ -73,7 +73,7 @@ namespace CsExp {
 
         [UnmanagedCallersOnly(EntryPoint = "Console_Symbol_ReverseColors")]
         public static void ReverseColors(nint sym) {
-            Console.ReverseColors(new Terminal.Symbol(sym, true));
+            Console.Symbol.ReverseColors(new Terminal.Symbol(sym, true));
         }
 
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_ImportText")]

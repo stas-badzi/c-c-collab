@@ -7,15 +7,15 @@ namespace Cpp
 {
     public class Terminal
     {
-        public static void Init(void) {
+        public static void Init() {
             CppImp.Terminal.Init();
         }
 
-        public static void Fin(void) {
+        public static void Fin() {
             CppImp.Terminal.Fin();
         }
 
-        public static int HandleKeyboard(void) {
+        public static int HandleKeyboard() {
             return CppImp.Terminal.HandleKeyboard();
         }
 
@@ -81,21 +81,21 @@ namespace Cpp
             return ulongs;
         }
 
-        public static short GetWindowWidth(void) {
+        public static short GetWindowWidth() {
             return CppImp.Terminal.GetWindowWidth();
         }
 
-        public static short GetWindowHeight(void) {
+        public static short GetWindowHeight() {
             return CppImp.Terminal.GetWindowHeight();
         }
 
         public class Symbol
         {
-            ~Symbol(void) {
+            ~Symbol() {
                 CppImp.Terminal.Symbol.Destruct(symbol);
             }
 
-            public Symbol(void) {
+            public Symbol() {
                 symbol = CppImp.Terminal.Symbol.Construct(' ');
             }
 
@@ -115,7 +115,7 @@ namespace Cpp
             public void GetAttribute(byte atr) {
                 CppImp.Terminal.Symbol.SetAttribute(symbol, atr);
             }
-            public byte GetAttribute(void) {
+            public byte GetAttribute() {
                 return CppImp.Terminal.Symbol.GetAttribute(symbol);
             }
         #endif
@@ -124,7 +124,7 @@ namespace Cpp
                 symbol = CppImp.Terminal.Symbol.Construct(UniConv.Utf8ToUnicode(character),foreground,background);
             }
 
-            public char character(void) {
+            public char character() {
                 return UniConv.UnicodeToUtf8(CppImp.Terminal.Symbol.character(symbol));
             }
 
@@ -132,7 +132,7 @@ namespace Cpp
                 CppImp.Terminal.Symbol.character(symbol, UniConv.Utf8ToUnicode(val));
             }
 
-            public byte foreground(void) {
+            public byte foreground() {
                 return CppImp.Terminal.Symbol.foreground(symbol);
             }
 
@@ -140,7 +140,7 @@ namespace Cpp
                 CppImp.Terminal.Symbol.foreground(symbol, val);
             }
 
-            public byte background(void) {
+            public byte background() {
                 return CppImp.Terminal.Symbol.background(symbol);
             }
 
@@ -148,7 +148,7 @@ namespace Cpp
                 CppImp.Terminal.Symbol.background(symbol, val);
             }
 
-            public void ReverseColors(void) {
+            public void ReverseColors() {
                 CsImp.Terminal.Symbol.ReverseColors(symbol);
             }
 

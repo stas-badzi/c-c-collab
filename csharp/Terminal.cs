@@ -148,9 +148,7 @@ namespace Cpp
                 CppImp.Terminal.Symbol.background(symbol, val);
             }
 
-            public void 
-
-            public IntPtr Get() {
+            public nint Get() {
                 return symbol;
             }
             
