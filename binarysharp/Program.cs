@@ -1,5 +1,8 @@
 ﻿using Cpp;
 using Cs;
+using CSCore;
+using CSCore.Codecs;
+using CSCore.SoundOut;
 using Utility;
 
 namespace BinarySharp {

@@ -200,8 +200,12 @@ namespace Cs
                 }
             }
         }
-
         public static void PlayMP3(string filepath)
+        {
+            Thread playmp3 = new Thread(() => PlayMP3Thread(filepath));
+            playmp3.Start();
+        }
+        private static void PlayMP3Thread(string filepath)
         {
             var file = new FileInfo(filepath);
             if (!file.Exists)
