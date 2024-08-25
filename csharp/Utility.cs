@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using Cpp;
 
 namespace Utility
 {
@@ -71,9 +72,9 @@ namespace Utility
 
         public static IntPtr StringToPtr(String str)
         {
-    #if _WIN32
+            #if _WIN32
             return Marshal.StringToHGlobalUni(str);
-    #else
+            #else
             int int32_size = sizeof(Int32);
 
             IntPtr ptr = Marshal.AllocHGlobal( (str.Length + 1) * int32_size);
@@ -84,7 +85,61 @@ namespace Utility
             Marshal.WriteInt32(ptr, str.Length * int32_size, 0);
 
             return ptr;
-    #endif
+            #endif
+            
+        }
+        public static List<List<Terminal.Symbol>> PtrToTexture(nint ptr)
+        {
+            const int int32_size = sizeof(int);
+            int intptr_size = nint.Size;
+            int size, count;
+
+            var texture = new List<List<Terminal.Symbol>>();
+
+            size = Marshal.ReadInt32(ptr);
+            for (int i = 0; i < size; i++)
+                texture.Add(new List<Terminal.Symbol>());
+
+            count = 0;
+            for (int i = 0; i < size; i++)
+            {
+                for (int j = 0; j < texture[i].Count; j++)
+                {
+                    nint ni = Marshal.ReadIntPtr(ptr, (i + 2) * int32_size + count * intptr_size);
+                    texture[i].Add(new Terminal.Symbol(ptr));       
+                    count++;
+                }
+            }
+            return texture;
+        }
+
+        public static nint TextureToPtr(List<List<Terminal.Symbol>> texture)
+        {
+            const int int32_size = sizeof(int);
+            int intptr_size = nint.Size;
+            int size, count;
+
+            size = texture.Count; 
+            count = 0;
+            for (int i = 0; i < size; i++)
+            {
+                count += texture[i].Count;
+            }
+            nint texturePtr = Marshal.AllocHGlobal((size + 1) * int32_size + count * intptr_size);
+            
+            count = 0;
+            Marshal.WriteInt32(texturePtr, size);
+            for (int i = 0; i < size; i++)
+            {
+                Marshal.WriteInt32(texturePtr, (i + 1) * int32_size + count * intptr_size, texture[i].Count);
+                for (int j = 0; j < texture[i].Count; j++)
+                {
+                    Marshal.WriteIntPtr(texturePtr, (i + 2) * int32_size + count * intptr_size, texture[i][j].Get());
+                    count++;
+                }
+            }
+            return texturePtr;
+            // ALWAYS use FreeHGlobal after using this pointer
         }
     }
 

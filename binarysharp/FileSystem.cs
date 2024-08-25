@@ -98,27 +98,11 @@ namespace Cs {
             const int int32_size = sizeof(int);
             int intptr_size = nint.Size;
             int size, count;
-
-            List<List<Terminal.Symbol>> texture = new List<List<Terminal.Symbol>>();
             
             nint filepathPtr = UniConv.StringToPtr(filepath);  // Convert filepath back
             nint func = CsImp.FileSystem.TextureFromFile(filepathPtr); // Get exported function
 
-            size = Marshal.ReadInt32(func); // Utilize size
-            for (int i = 0; i < size; i++) // Add sizes from func pointer
-                texture.Add(new List<Terminal.Symbol>());
-
-            count = 0; // Utilize count
-            for (int i = 0; i < texture.Count; i++)
-            {
-                for (int j = 0; j < texture[i].Count; j++)
-                {
-                    nint ptr = Marshal.ReadIntPtr(func, (i + 1) * int32_size + count * intptr_size); // Find symbol pointer
-                    texture[i].Add(new Terminal.Symbol(ptr)); // Clone symbol based on the pointer
-                    count++; // Move target place for next symbol
-                }
-            }
-            return texture;
+            return UniConv.PtrToTexture(func);
         }
         public static void FileFromTexture(string filepath, List<List<Terminal.Symbol>> texture, bool recycle = false)
         {
@@ -127,15 +111,15 @@ namespace Cs {
             int size, count;
 
             nint filepathPtr = UniConv.StringToPtr(filepath);
-            nint texturePtr = TextureToPtr(texture);
+            nint texturePtr = UniConv.TextureToPtr(texture);
 
             CsImp.FileSystem.FileFromTexture(filepathPtr, texturePtr, recycle);
             Marshal.FreeHGlobal(texturePtr);
         }
         public static void DrawTextureToScreen(int x, int y, List<List<Terminal.Symbol>> texture, List<List<Terminal.Symbol>> screen)
         {
-            nint texturePtr = TextureToPtr(texture);
-            nint screenPtr = TextureToPtr(screen);
+            nint texturePtr = UniConv.TextureToPtr(texture);
+            nint screenPtr = UniConv.TextureToPtr(screen);
 
             CsImp.FileSystem.DrawTextureToScreen(x, y, texturePtr, screenPtr);
             Marshal.FreeHGlobal(texturePtr);
@@ -144,34 +128,6 @@ namespace Cs {
         public static void PlayMP3(string filepath)
         {
             CsImp.FileSystem.PlayMP3(UniConv.StringToPtr(filepath));
-        }
-        private static nint TextureToPtr(List<List<Terminal.Symbol>> texture)
-        {
-            const int int32_size = sizeof(int);
-            int intptr_size = nint.Size;
-            int size, count;
-
-            size = texture.Count; 
-            count = 0;
-            for (int i = 0; i < size; i++)
-            {
-                count += texture[i].Count;
-            }
-            nint texturePtr = Marshal.AllocHGlobal((size + 1) * int32_size + count * intptr_size);
-            
-            count = 0;
-            Marshal.WriteInt32(texturePtr, size);
-            for (int i = 0; i < size; i++)
-            {
-                Marshal.WriteInt32(texturePtr, (i + 1) * int32_size + count * intptr_size, texture[i].Count);
-                for (int j = 0; j < texture[i].Count; j++)
-                {
-                    Marshal.WriteIntPtr(texturePtr, (i + 2) * int32_size + count * intptr_size, texture[i][j].Get());
-                    count++;
-                }
-            }
-            return texturePtr;
-            // ALWAYS use FreeHGlobal after using this pointer
         }
     }
 }

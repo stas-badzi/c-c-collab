@@ -162,29 +162,7 @@ namespace CsExp {
             string filepath = UniConv.PtrToString(filepathPtr); // Convert filepath
             List<List<Terminal.Symbol>> func = Cs.FileSystem.TextureFromFile(filepath); // Original function
 
-            int count = func.Count; // For better readability 
-            int size = 0;
-            for (int i = 0; i < func.Count; i++)
-                for (int j = 0; j < func[i].Count; j++) // Count all symbols
-                    size++;
-            
-            // Allocate memory for List<>.Count's and all symbol pointers
-            nint texture = Marshal.AllocHGlobal(count * int32_size + size * intptr_size);
-
-            size = 0; // Reset size
-            Marshal.WriteInt32(texture, count);
-            for (int i = 0; i < count; i++)
-            {
-                count = func[i].Count; // Assign adequate count
-                Marshal.WriteInt32(texture, i * int32_size, count);
-                for (int j = 0; j < count; j++)
-                {
-                    // Write symbol pointer in proper place 
-                    Marshal.WriteIntPtr(texture, (i + 2) * int32_size + size * intptr_size, func[i][j].Get());
-                    size++; // Move target place for next symbol
-                }
-            }
-            return texture;
+            return UniConv.TextureToPtr(func);
         }
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_FileFromTexture")]
         public static void FileFromTexture(nint filepathPtr, nint texturePtr, bool recycle = false)
@@ -200,7 +178,7 @@ namespace CsExp {
 
             string filepath = UniConv.PtrToString(filepathPtr);
 
-            var texture = PtrToTexture(texturePtr);
+            var texture = UniConv.PtrToTexture(texturePtr);
 
             Cs.FileSystem.FileFromTexture(filepath, texture, recycle);
         }
@@ -212,8 +190,8 @@ namespace CsExp {
             if (screenPtr == IntPtr.Zero)
                 throw new Exception("Intptr $screenPtr Empty");
             
-            var texture = PtrToTexture(texturePtr);
-            var screen = PtrToTexture(screenPtr);
+            var texture = UniConv.PtrToTexture(texturePtr);
+            var screen = UniConv.PtrToTexture(screenPtr);
 
             Cs.FileSystem.DrawTextureToScreen(x, y, texture, screen);
         }
@@ -224,30 +202,6 @@ namespace CsExp {
                 throw new Exception("Intptr $filepathPtr Empty");
                 
             Cs.FileSystem.PlayMP3(UniConv.PtrToString(filepathPtr));
-        }
-        private static List<List<Terminal.Symbol>> PtrToTexture(nint ptr) // For easier export
-        {
-            const int int32_size = sizeof(int);
-            int intptr_size = nint.Size;
-            int size, count;
-
-            var texture = new List<List<Terminal.Symbol>>();
-
-            size = Marshal.ReadInt32(ptr);
-            for (int i = 0; i < size; i++)
-                texture.Add(new List<Terminal.Symbol>());
-
-            count = 0;
-            for (int i = 0; i < size; i++)
-            {
-                for (int j = 0; j < texture[i].Count; j++)
-                {
-                    nint ni = Marshal.ReadIntPtr(ptr, (i + 2) * int32_size + count * intptr_size);
-                    texture[i].Add(new Terminal.Symbol(ptr));       
-                    count++;
-                }
-            }
-            return texture;
         }
     }
 }
