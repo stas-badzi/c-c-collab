@@ -19,7 +19,7 @@ namespace CsExp {
 
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_DoSomething")]
         public static int DoSomething(bool yes, char ch) {
-            return UniConv.Utf8ToUnicode(Cs.FileSystem.DoSomething(yes, UniConv.UnicodeToUtf8(ch)));
+            return TypeConvert.Utf8ToUnicode(Cs.FileSystem.DoSomething(yes, TypeConvert.UnicodeToUtf8(ch)));
         }
 
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_DoSomeThings")]
@@ -39,7 +39,7 @@ namespace CsExp {
 
             Marshal.FreeHGlobal(yeses);
 
-            return UniConv.StringToPtr(Cs.FileSystem.DoSomeThings(input, UniConv.PtrToString(str)));
+            return TypeConvert.StringToPtr(Cs.FileSystem.DoSomeThings(input, TypeConvert.PtrToString(str)));
         }
 
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_DoMoreThings")]
@@ -53,7 +53,7 @@ namespace CsExp {
             Int32 size = Marshal.ReadInt32(list_str);
             for (int i = 0; i < size; i++) {
                 nint ptr = Marshal.ReadIntPtr(list_str, int32_size + (i*nint_size));
-                input.Add(UniConv.PtrToString(ptr));
+                input.Add(TypeConvert.PtrToString(ptr));
             }
 
             Marshal.FreeHGlobal(list_str);
@@ -80,13 +80,13 @@ namespace CsExp {
         public static IntPtr ImportText(IntPtr file)
         {
             int intptr_size = IntPtr.Size;
-            List<String> ret = Cs.FileSystem.ImportText(UniConv.PtrToString(file));
+            List<String> ret = Cs.FileSystem.ImportText(TypeConvert.PtrToString(file));
             IntPtr output = Marshal.AllocHGlobal( (ret.Count + 1) * intptr_size);
             for (int i = 0; i < ret.Count; i++) {
-                IntPtr elem = UniConv.StringToPtr(ret[i]);
+                IntPtr elem = TypeConvert.StringToPtr(ret[i]);
                 Marshal.WriteIntPtr(output, intptr_size * i, elem);
             }
-            IntPtr end = UniConv.StringToPtr("\u0000");
+            IntPtr end = TypeConvert.StringToPtr("\u0000");
             Marshal.WriteIntPtr(output, intptr_size * ret.Count(), end);
 
             return output;
@@ -108,14 +108,14 @@ namespace CsExp {
             List<String> text = new List<String>();
 
             IntPtr elem = Marshal.ReadIntPtr(content,0);
-            String line = UniConv.PtrToString(elem);
+            String line = TypeConvert.PtrToString(elem);
             for (int i = 1; line.Length > 0; i++) {
                 text.Add(line);
                 elem = Marshal.ReadIntPtr(content, i * intptr_size);
-                line = UniConv.PtrToString(elem);
+                line = TypeConvert.PtrToString(elem);
             }
 
-            Cs.FileSystem.ExportText(UniConv.PtrToString(path), text);
+            Cs.FileSystem.ExportText(TypeConvert.PtrToString(path), text);
         }
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_TextureFromFile")]
         public static nint TextureFromFile(nint filepathPtr)
@@ -126,10 +126,10 @@ namespace CsExp {
             const int int32_size = sizeof(int);
             int intptr_size = nint.Size;
 
-            string filepath = UniConv.PtrToString(filepathPtr); // Convert filepath
+            string filepath = TypeConvert.PtrToString(filepathPtr); // Convert filepath
             List<List<Terminal.Symbol>> func = Cs.FileSystem.TextureFromFile(filepath); // Original function
 
-            return UniConv.TextureToPtr(func);
+            return TypeConvert.TextureToPtr(func);
         }
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_FileFromTexture")]
         public static void FileFromTexture(nint filepathPtr, nint texturePtr, bool recycle = false)
@@ -143,9 +143,9 @@ namespace CsExp {
             int intptr_size = nint.Size;
             int size, count;
 
-            string filepath = UniConv.PtrToString(filepathPtr);
+            string filepath = TypeConvert.PtrToString(filepathPtr);
 
-            var texture = UniConv.PtrToTexture(texturePtr);
+            var texture = TypeConvert.PtrToTexture(texturePtr);
 
             Cs.FileSystem.FileFromTexture(filepath, texture, recycle);
         }
@@ -157,8 +157,8 @@ namespace CsExp {
             if (screenPtr == IntPtr.Zero)
                 throw new Exception("Intptr $screenPtr Empty");
             
-            var texture = UniConv.PtrToTexture(texturePtr);
-            var screen = UniConv.PtrToTexture(screenPtr);
+            var texture = TypeConvert.PtrToTexture(texturePtr);
+            var screen = TypeConvert.PtrToTexture(screenPtr);
 
             Cs.FileSystem.DrawTextureToScreen(x, y, texture, screen);
         }
@@ -168,7 +168,7 @@ namespace CsExp {
             if (filepathPtr == IntPtr.Zero)
                 throw new Exception("Intptr $filepathPtr Empty");
                 
-            Cs.FileSystem.PlayMP3(UniConv.PtrToString(filepathPtr));
+            Cs.FileSystem.PlayMP3(TypeConvert.PtrToString(filepathPtr));
         }
     }
 }

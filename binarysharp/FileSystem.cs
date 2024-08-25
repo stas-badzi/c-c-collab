@@ -10,7 +10,7 @@ namespace Cs {
         }
 
         public static char DoSomething(bool tak, char c) {
-            return UniConv.UnicodeToUtf8(CsImp.FileSystem.DoSomething(tak, UniConv.Utf8ToUnicode(c)));
+            return TypeConvert.UnicodeToUtf8(CsImp.FileSystem.DoSomething(tak, TypeConvert.Utf8ToUnicode(c)));
         }
 
         public static string DoSomeThings(List<bool> taki, string str) {
@@ -27,7 +27,7 @@ namespace Cs {
                 Marshal.WriteByte(input, int32_size + (i * byte_size), b);
             }
 
-            return UniConv.PtrToString(CsImp.FileSystem.DoSomeThings(input, UniConv.StringToPtr(str)));
+            return TypeConvert.PtrToString(CsImp.FileSystem.DoSomeThings(input, TypeConvert.StringToPtr(str)));
         }
 
         public static List<ulong> DoMoreThings(List<string> ls) {
@@ -39,7 +39,7 @@ namespace Cs {
             Marshal.WriteInt32(input, ls.Count);
 
             for (int i = 0; i < ls.Count; i++) {
-                nint ptr = UniConv.StringToPtr(ls[i]);
+                nint ptr = TypeConvert.StringToPtr(ls[i]);
                 Marshal.WriteIntPtr(input, int_size + (i * nint_size), ptr);
             }
 
@@ -59,16 +59,16 @@ namespace Cs {
         }
 
         public static List<String> ImportText(String filestr) {
-            IntPtr ret = CsImp.FileSystem.ImportText(UniConv.StringToPtr(filestr));
+            IntPtr ret = CsImp.FileSystem.ImportText(TypeConvert.StringToPtr(filestr));
             int intptr_size = IntPtr.Size;
             List<String> text = new List<String>();
 
             IntPtr elem = Marshal.ReadIntPtr(ret, 0);
-            String line = UniConv.PtrToString(elem);
+            String line = TypeConvert.PtrToString(elem);
             for (int i = 1; line.Length > 0; i++) {
                 text.Add(line);
                 elem = Marshal.ReadIntPtr(ret, i * intptr_size);
-                line = UniConv.PtrToString(elem);
+                line = TypeConvert.PtrToString(elem);
                 Marshal.FreeHGlobal(elem);
             }
 
@@ -81,12 +81,12 @@ namespace Cs {
             int intptr_size = IntPtr.Size;
             IntPtr output = Marshal.AllocHGlobal( (contentstr.Count + 1) * intptr_size);
             for (int i = 0; i < contentstr.Count; i++) {
-                IntPtr elem = UniConv.StringToPtr(contentstr[i]);
+                IntPtr elem = TypeConvert.StringToPtr(contentstr[i]);
                 Marshal.WriteIntPtr(output, intptr_size * i, elem);
             }
-            IntPtr end = UniConv.StringToPtr("\u0000");
+            IntPtr end = TypeConvert.StringToPtr("\u0000");
             Marshal.WriteIntPtr(output, intptr_size * contentstr.Count, end);
-            CsImp.FileSystem.ExportText(UniConv.StringToPtr(pathstr), output);
+            CsImp.FileSystem.ExportText(TypeConvert.StringToPtr(pathstr), output);
         }
 
         public static List<List<Terminal.Symbol>> TextureFromFile(string filepath)
@@ -95,10 +95,10 @@ namespace Cs {
             int intptr_size = nint.Size;
             int size, count;
             
-            nint filepathPtr = UniConv.StringToPtr(filepath);  // Convert filepath back
+            nint filepathPtr = TypeConvert.StringToPtr(filepath);  // Convert filepath back
             nint func = CsImp.FileSystem.TextureFromFile(filepathPtr); // Get exported function
 
-            var texture = UniConv.PtrToTexture(func);
+            var texture = TypeConvert.PtrToTexture(func);
 
             Marshal.FreeHGlobal(func);
             return texture;
@@ -109,16 +109,16 @@ namespace Cs {
             int intptr_size = nint.Size;
             int size, count;
 
-            nint filepathPtr = UniConv.StringToPtr(filepath);
-            nint texturePtr = UniConv.TextureToPtr(texture);
+            nint filepathPtr = TypeConvert.StringToPtr(filepath);
+            nint texturePtr = TypeConvert.TextureToPtr(texture);
 
             CsImp.FileSystem.FileFromTexture(filepathPtr, texturePtr, recycle);
             Marshal.FreeHGlobal(texturePtr);
         }
         public static void DrawTextureToScreen(int x, int y, List<List<Terminal.Symbol>> texture, List<List<Terminal.Symbol>> screen)
         {
-            nint texturePtr = UniConv.TextureToPtr(texture);
-            nint screenPtr = UniConv.TextureToPtr(screen);
+            nint texturePtr = TypeConvert.TextureToPtr(texture);
+            nint screenPtr = TypeConvert.TextureToPtr(screen);
 
             CsImp.FileSystem.DrawTextureToScreen(x, y, texturePtr, screenPtr);
             Marshal.FreeHGlobal(texturePtr);
@@ -126,7 +126,7 @@ namespace Cs {
         }
         public static void PlayMP3(string filepath)
         {
-            CsImp.FileSystem.PlayMP3(UniConv.StringToPtr(filepath));
+            CsImp.FileSystem.PlayMP3(TypeConvert.StringToPtr(filepath));
         }
     }
 }

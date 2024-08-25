@@ -38,7 +38,7 @@ namespace Utility
 
     }
 
-    class UniConv
+    class TypeConvert
     {
         public static char UnicodeToUtf8(Int32 uni) {
             return Convert.ToChar(uni);
@@ -72,9 +72,9 @@ namespace Utility
 
         public static IntPtr StringToPtr(String str)
         {
-    #if _WIN32
+            #if _WIN32
             return Marshal.StringToHGlobalUni(str);
-    #else
+            #else
             int int32_size = sizeof(Int32);
 
             IntPtr ptr = Marshal.AllocHGlobal( (str.Length + 1) * int32_size);
@@ -85,24 +85,27 @@ namespace Utility
             Marshal.WriteInt32(ptr, str.Length * int32_size, 0);
 
             return ptr;
-    #endif
+            #endif
+            
         }
-                public static List<List<Terminal.Symbol>> PtrToTexture(nint ptr)
+        public static List<List<Terminal.Symbol>> PtrToTexture(nint ptr)
         {
             const int int32_size = sizeof(int);
             int intptr_size = nint.Size;
-            int size, count;
+            int height, count;
 
             var texture = new List<List<Terminal.Symbol>>();
 
-            size = Marshal.ReadInt32(ptr);
-            for (int i = 0; i < size; i++)
-                texture.Add(new List<Terminal.Symbol>());
+            height = Marshal.ReadInt32(ptr);
 
             count = 0;
-            for (int i = 0; i < size; i++)
+            for (int i = 0; i < height; i++)
             {
-                for (int j = 0; j < texture[i].Count; j++)
+                texture.Add(new List<Terminal.Symbol>());
+                //***************** here ****************************************
+                int width = Marshal.ReadInt32(ptr, (i + 1) * int32_size + count * intptr_size);
+                //***************** end *****************************************
+                for (int j = 0; j < width; j++)
                 {
                     nint ni = Marshal.ReadIntPtr(ptr, (i + 2) * int32_size + count * intptr_size);
                     texture[i].Add(new Terminal.Symbol(ptr));       

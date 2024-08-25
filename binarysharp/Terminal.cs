@@ -121,15 +121,15 @@ namespace Cpp
         #endif
 
             public Symbol(char character, byte foreground = 7, byte background = 0) {
-                symbol = CppImp.Terminal.Symbol.Construct(UniConv.Utf8ToUnicode(character),foreground,background);
+                symbol = CppImp.Terminal.Symbol.Construct(TypeConvert.Utf8ToUnicode(character),foreground,background);
             }
 
             public char character() {
-                return UniConv.UnicodeToUtf8(CppImp.Terminal.Symbol.character(symbol));
+                return TypeConvert.UnicodeToUtf8(CppImp.Terminal.Symbol.character(symbol));
             }
 
             public void character(char val) {
-                CppImp.Terminal.Symbol.character(symbol, UniConv.Utf8ToUnicode(val));
+                CppImp.Terminal.Symbol.character(symbol, TypeConvert.Utf8ToUnicode(val));
             }
 
             public byte foreground() {
