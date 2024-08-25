@@ -30,6 +30,8 @@ namespace CsImp {
         public static extern nint TextureFromFile(nint filenamePtr);
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_FileFromTexture", CharSet = CharSet.Unicode)]
         public static extern void FileFromTexture(nint filepathPtr, nint texturePtr, bool recycle = false);
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_DrawTextureToScreen", CharSet = CharSet.Unicode)]
+        public static extern void DrawTextureToScreen(int x, int y, nint texturePtr, nint screenPtr);
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_PlayMP3", CharSet = CharSet.Unicode)]
         public static extern void PlayMP3(nint filepathPtr);
     }

@@ -199,23 +199,22 @@ namespace CsExp {
             int size, count;
 
             string filePath = UniConv.PtrToString(filepathPtr);
-            var texture = new List<List<Terminal.Symbol>>();
+            var texture = PtrToTexture(texturePtr);
 
-            size = Marshal.ReadInt32(texturePtr);
-            for (int i = 0; i < size; i++)
-                texture.Add(new List<Terminal.Symbol>());
-
-            count = 0;
-            for (int i = 0; i < size; i++)
-            {
-                for (int j = 0; j < texture[i].Count; j++)
-                {
-                    nint ptr = Marshal.ReadIntPtr(texturePtr, (i + 2) * int32_size + count * intptr_size);
-                    texture[i].Add(new Terminal.Symbol(ptr));       
-                    count++;
-                }
-            }
             Cs.FileSystem.FileFromTexture(filePath, texture, recycle);
+        }
+        [UnmanagedCallersOnly(EntryPoint = "FileSystem_DrawTextureToScreen")]
+        public static void DrawTextureToScreen(int x, int y, nint texturePtr, nint screenPtr)
+        {
+            if (texturePtr == IntPtr.Zero)
+                throw new Exception("Intptr $texturePtr Empty");
+            if (screenPtr == IntPtr.Zero)
+                throw new Exception("Intptr $screenPtr Empty");
+            
+            var texture = PtrToTexture(texturePtr);
+            var screen = PtrToTexture(texturePtr);
+
+            Cs.FileSystem.DrawTextureToScreen(x, y, texture, screen);
         }
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_PlayMP3")]
         public static void PlayMP3(IntPtr filepathPtr)
@@ -224,6 +223,30 @@ namespace CsExp {
                 throw new Exception("Intptr $filepathPtr Empty");
                 
             Cs.FileSystem.PlayMP3(UniConv.PtrToString(filepathPtr));
+        }
+        private static List<List<Terminal.Symbol>> PtrToTexture(nint ptr) // For easier export
+        {
+            const int int32_size = sizeof(int);
+            int intptr_size = nint.Size;
+            int size, count;
+
+            var texture = new List<List<Terminal.Symbol>>();
+
+            size = Marshal.ReadInt32(ptr);
+            for (int i = 0; i < size; i++)
+                texture.Add(new List<Terminal.Symbol>());
+
+            count = 0;
+            for (int i = 0; i < size; i++)
+            {
+                for (int j = 0; j < texture[i].Count; j++)
+                {
+                    nint ni = Marshal.ReadIntPtr(ptr, (i + 2) * int32_size + count * intptr_size);
+                    texture[i].Add(new Terminal.Symbol(ptr));       
+                    count++;
+                }
+            }
+            return texture;
         }
     }
 }

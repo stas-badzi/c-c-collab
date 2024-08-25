@@ -127,6 +127,29 @@ namespace Cs {
             int size, count;
 
             nint filepathPtr = UniConv.StringToPtr(filepath);
+            nint texturePtr = TextureToPtr(texture);
+
+            CsImp.FileSystem.FileFromTexture(filepathPtr, texturePtr, recycle);
+            Marshal.FreeHGlobal(texturePtr);
+        }
+        public static void DrawTextureToScreen(int x, int y, List<List<Terminal.Symbol>> texture, List<List<Terminal.Symbol>> screen)
+        {
+            nint texturePtr = TextureToPtr(texture);
+            nint screenPtr = TextureToPtr(screen);
+
+            CsImp.FileSystem.DrawTextureToScreen(x, y, texturePtr, screenPtr);
+            Marshal.FreeHGlobal(texturePtr);
+            Marshal.FreeHGlobal(screenPtr);
+        }
+        public static void PlayMP3(string filepath)
+        {
+            CsImp.FileSystem.PlayMP3(UniConv.StringToPtr(filepath));
+        }
+        private static nint TextureToPtr(List<List<Terminal.Symbol>> texture)
+        {
+            const int int32_size = sizeof(int);
+            int intptr_size = nint.Size;
+            int size, count;
 
             size = texture.Count; 
             count = 0;
@@ -147,13 +170,8 @@ namespace Cs {
                     count++;
                 }
             }
-            CsImp.FileSystem.FileFromTexture(filepathPtr, texturePtr, recycle);
-
-            Marshal.FreeHGlobal(texturePtr);
-        }
-        public static void PlayMP3(string filepath)
-        {
-            CsImp.FileSystem.PlayMP3(UniConv.StringToPtr(filepath));
+            return texturePtr;
+            // ALWAYS use FreeHGlobal after using this pointer
         }
     }
 }
