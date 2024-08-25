@@ -76,6 +76,8 @@ namespace Cpp
             ulongs[0] = Convert.ToUInt64(Marshal.ReadInt32(ulongints, 0));
             ulongs[1] = Convert.ToUInt64(Marshal.ReadInt32(ulongints, ulngsize));
 
+            Marshal.FreeHGlobal(ulongints);
+
             // ???
 
             return ulongs;
