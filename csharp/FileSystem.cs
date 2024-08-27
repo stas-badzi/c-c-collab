@@ -256,7 +256,7 @@ namespace Cs
             }
         }
         private static char ByteToHex(byte input)
-        {;
+        {
             if (input >= 0 && input <= 9) // 0-9
             {
                 return input.ToString().ToCharArray()[0];
