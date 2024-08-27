@@ -1,0 +1,11 @@
+@debian $0/share/$1/bin/
+@ubuntu &debian
+@mint &debian
+@windows !
+@macos !
+@other !
+
+
+@windows $0\$1\assets\bin
+@macos $0/Library/Application Support
+@other $0/assets/$1/bin
