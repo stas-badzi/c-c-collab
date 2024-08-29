@@ -8,7 +8,7 @@ using Utility;
 namespace BinarySharp {
     public class Program {
         static int Main(string[] args) {
-            Cs.FileSystem.PlayMP3("boom.mp3");
+            Cs.FileSystem.PlayMP3("boom.mp3", true);
             return 0;
         }
     }
