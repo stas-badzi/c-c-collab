@@ -1,9 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
-using CSCore;
-using CSCore.Codecs;
-using CSCore.SoundOut;
+using System.Media;
 using Microsoft.VisualBasic.FileIO;
 using Cpp;
 
@@ -193,34 +191,14 @@ namespace Cs
                 }
             }
         }
-        public static void PlayMP3(string filepath, bool wait = false)
+        public static void PlayWAV(string filepath, bool wait = false)
         {
-            if (wait) PlayMP3Thread(filepath);
-            else {
-                Thread playmp3 = new Thread(() => PlayMP3Thread(filepath));
-                playmp3.Start();
-            }
-        }
-        private static void PlayMP3Thread(string filepath)
-        {
-            var file = new FileInfo(filepath);
-            if (!file.Exists)
-            {
-                Environment.FailFast("PlayMP3: Filepath not found");
-                return;
-            }
-            using (var audioFile = CodecFactory.Instance.GetCodec(filepath))
-            using (var soundOut = new WasapiOut())
-            {
-                var playbackFinished = new ManualResetEvent(false);
-
-                soundOut.Initialize(audioFile);
-                soundOut.Stopped += (s, e) =>
-                {
-                    playbackFinished.Set();
-                };
-                soundOut.Play();
-                playbackFinished.WaitOne();
+            if (wait) {
+                SoundPlayer sound = new SoundPlayer(@"c:\Windows\Media\chimes.wav");
+                sound.PlaySync();
+            } else {
+                SoundPlayer sound = new SoundPlayer(@"c:\Windows\Media\chimes.wav");
+                sound.Play();
             }
         }
 

@@ -124,9 +124,9 @@ namespace Cs {
             Marshal.FreeHGlobal(texturePtr);
             Marshal.FreeHGlobal(screenPtr);
         }
-        public static void PlayMP3(string filepath, bool wait = false)
+        public static void PlayWAV(string filepath, bool wait = false)
         {
-            CsImp.FileSystem.PlayMP3(TypeConvert.StringToPtr(filepath),wait);
+            CsImp.FileSystem.PlayWAV(TypeConvert.StringToPtr(filepath),wait);
         }
     }
 }
