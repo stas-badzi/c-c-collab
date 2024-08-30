@@ -1,7 +1,7 @@
 using System;
 using System.Media;
 using Microsoft.VisualBasic.FileIO;
-#if _WIN32
+#if false
     using System.Media;
 #else
     using NetCoreAudio;
