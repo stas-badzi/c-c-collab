@@ -1,11 +1,6 @@
 using System;
-using System.Media;
 using Microsoft.VisualBasic.FileIO;
-#if false
-    using System.Media;
-#else
-    using NetCoreAudio;
-#endif
+using NetCoreAudio;
 using Cpp;
 
 namespace Cs
@@ -196,16 +191,10 @@ namespace Cs
         }
         public static void PlayWAV(string filepath, bool wait = false) {
             string fullpath = Path.GetFullPath(filepath);
-        #if false
-            SoundPlayer sound = new SoundPlayer(fullpath);
-            if (wait) sound.PlaySync();
-            else sound.Play();
-        #else
             Player player = new Player();
             player.Play(filepath);
             TimeSpan shorttime = new TimeSpan(1);
             while (wait && player.Playing) Thread.Sleep(shorttime);
-        #endif
         }
 
         private static List<char> ToCharList(string input)
