@@ -6,6 +6,8 @@ using namespace csimp;
 using namespace uniconv;
 using namespace std;
 using namespace cs;
+using namespace cpp;
+
 
 vector<utfstr> FileSystem::ImportText(utfstr filename) {
     unichar** textptr (FileSystem_ImportText(Utf8StringToUnicode(filename)));
@@ -43,4 +45,37 @@ void FileSystem::ExportText(utfstr file, vector<utfstr> lines) {
     unilines[lines.size()] = new unichar[1]{0};
     
     FileSystem_ExportText(Utf8StringToUnicode(file),unilines);
+}
+
+vector<vector<Console::Symbol>> FileSystem::TextureFromFile(utfstr filepath) {
+    unichar* arg1 = Utf8StringToUnicode(filepath);
+    
+    void * ret = csimp::FileSystem_TextureFromFile(arg1);
+
+    vector<vector<Console::Symbol>> out;
+
+    int int32_size = sizeof(int32_t);
+    int intptr_size = sizeof(void*);
+
+    void* now_ptr = ret;
+
+    int32_t height = *(int32_t*)(now_ptr);
+    now_ptr += int32_size;
+
+    for (size_t i = 0; i < height; i++) {
+        int32_t width = *(int32_t*)(now_ptr);
+        now_ptr += int32_size;
+        out.push_back(vector<Console::Symbol>());
+
+        for (size_t j = 0; j < width; j++) {
+            void* ptr = *(void**)(now_ptr);
+            Console::Symbol sym = Console::Symbol(ptr,true);
+            out.back().push_back(sym);
+            now_ptr += intptr_size;
+        }
+    }
+
+    delete[] ret;
+    
+    return out;
 }

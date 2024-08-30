@@ -25,6 +25,7 @@ namespace cpp {
 
             Symbol(void);
             Symbol(const Symbol &cp);
+            Symbol(void* ptr, bool direct = false);
             Symbol(uniconv::utfchar character, uint8_t foreground = 7, uint8_t background = 0);
             ~Symbol();
 

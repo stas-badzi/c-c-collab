@@ -82,6 +82,12 @@ cpp::Console::Symbol::Symbol(const Symbol &cp) {
     symbol = Console_Symbol_Construct$smb(cp.symbol);
 }
 
+
+cpp::Console::Symbol::Symbol(void* ptr, bool direct) {
+    if (direct) symbol = ptr;
+    else symbol = Console_Symbol_Construct$smb(ptr);
+}
+
 cpp::Console::Symbol::Symbol(utfchar character, uint8_t foreground, uint8_t background) {
     symbol = Console_Symbol_Construct$cfb(Utf8ToUnicode(character),foreground,background);
 }
