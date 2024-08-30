@@ -50,6 +50,8 @@ binfiles = Program.cs DllImport.cs FileSystem.cs Terminal.cs Utility.cs
 # *******************************
 
 #***** application config ****
+#> linux root of application path
+linuxroot = /usr
 #> linux shared library path
 linuxlib = /usr/lib
 #> linux binary file path
@@ -390,8 +392,14 @@ endif
 resources: source/getfd.h source/setkbdmode.c
 ifeq ($(shell uname -s),Linux)
 	@$(c-compiler) -o assets/setkbdmode.$(binary) source/setkbdmode.c -Isource -std=c2x
-	@mkdir -p binaryplus/share/factoryrush/bin
+ifeq ($(copylibs),1)
+	@echo "$(linuxroot)/share/factoryrush/bin"
+	@$(admin) mkdir -p $(linuxroot)/share/factoryrush/bin
+	@$(admin) cp assets/setkbdmode.$(binary) $(linuxroot)/share/factoryrush/bin
+else
+	@mkdir -p binaryplus/bin/../share/factoryrush/bin
 	@cp assets/setkbdmode.$(binary) binaryplus/share/factoryrush/bin
+endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
 
