@@ -5,8 +5,9 @@ using Utility;
 
 namespace BinarySharp {
     public class Program {
+        string exePath = AppContext.BaseDirectory;
         static int Main(string[] args) {
-            FileSystem.PlayWAV(@"c:\Windows\Media\chimes.wav", true);
+            FileSystem.PlayWAV(Path.Combine([exePath,"..","sounds","shoot.wav"]), true);
             return 0;
         }
     }
