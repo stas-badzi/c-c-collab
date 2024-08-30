@@ -85,7 +85,7 @@ namespace Cs
             }
         }
         
-        public static List<List<Terminal.Symbol>> TextureFromFile(string filepath)
+        public static List<List<Terminal.Symbol>>? TextureFromFile(string filepath)
         {
             int width, height;
 
