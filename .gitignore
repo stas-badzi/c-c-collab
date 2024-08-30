@@ -50,6 +50,7 @@
 
 
 #generated code
+binaryplus/bin/*.tux
 *.pdb
 *.dbg
 *.json
