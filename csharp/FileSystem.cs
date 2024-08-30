@@ -1,6 +1,3 @@
-using System;
-using System.IO;
-using System.Collections.Generic;
 using System.Media;
 using Microsoft.VisualBasic.FileIO;
 using Cpp;
@@ -193,13 +190,13 @@ namespace Cs
         }
         public static void PlayWAV(string filepath, bool wait = false)
         {
-            if (wait) {
-                SoundPlayer sound = new SoundPlayer(@"c:\Windows\Media\chimes.wav");
+            #if _WIN32
+            SoundPlayer sound = new SoundPlayer(@"c:\Windows\Media\chimes.wav");
+            if (wait)
                 sound.PlaySync();
-            } else {
-                SoundPlayer sound = new SoundPlayer(@"c:\Windows\Media\chimes.wav");
+            else 
                 sound.Play();
-            }
+            #endif
         }
 
         private static List<char> ToCharList(string input)
