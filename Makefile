@@ -389,7 +389,7 @@ else
 	@rm -f resources
 endif
 
-resources: source/getfd.h source/setkbdmode.c
+resources: source/getfd.h source/setkbdmode.c assets/a.tux
 ifeq ($(shell uname -s),Linux)
 	@$(c-compiler) -o assets/setkbdmode.$(binary) source/setkbdmode.c -Isource -std=c2x
 ifeq ($(copylibs),1)
@@ -400,6 +400,12 @@ else
 	@mkdir -p binaryplus/bin/../share/factoryrush/bin
 	@cp assets/setkbdmode.$(binary) binaryplus/share/factoryrush/bin
 endif
+endif
+
+ifeq ($(shell echo "check quotes"),"check quotes")
+	@copy assets\a.tux binaryplus\bin
+else
+	@cp assets/a.tux binaryplus/bin
 endif
 	@echo "Version file. Remove to enable recompile" > $@
 

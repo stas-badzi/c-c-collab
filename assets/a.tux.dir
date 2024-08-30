@@ -1,8 +1,8 @@
-@debian $/share/$/bin/
+@debian /usr/share/$/assets/textures
 @ubuntu &debian
 @mint &debian
-@windows !
-@macos !
+@windows %programfiles%\$\assets\bin
+@macos ~/Library/Application Support/$/assets/textures
 @other !
 @end
 
