@@ -9,6 +9,8 @@ using namespace cs;
 using namespace std;
 
 int main() {
+    int mode1,mode2,fd,err;
+
     Console::Init();
     vector<vector<Console::Symbol>> screen;
     screen = FileSystem::TextureFromFile("a.dat");

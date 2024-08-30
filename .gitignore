@@ -66,6 +66,7 @@ cppbin
 all
 dll
 release
+resources
 
 #logs
 *.log

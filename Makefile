@@ -12,7 +12,8 @@ release = FactoryRush
 
 #******** c++ config ************
 #> set default compiler
-defcomp = c++
+defcompcxx = c++
+defcompc = cc
 #> source files
 sources = Console.cpp dllexport.cpp
 #> header files
@@ -20,7 +21,7 @@ headers = Console.hpp
 #> include files
 includes = dynamic_library.h unicode_conversion.hpp getfd.h
 #> name the dynamic library
-name = cplusplus
+name = factoryrushplus
 # *******************************
 
 #******** c++ binary config *****
@@ -31,24 +32,26 @@ binheaders = dllimport.hpp Console.hpp FileSystem.hpp
 #> include files
 binincludes = dynamic_library.h unicode_conversion.hpp
 #> name the binary file
-binname = cpp-consolegame
+binname = cpp-factoryrush
 #********************************
 
 #********* c# config ************
 #> name the dynamic library
-filename = csharp
+filename = factoryrushsharp
 #>source code files
 files = DllExport.cs DllImport.cs FileSystem.cs Terminal.cs Console.cs Utility.cs
 # *******************************
 
 #********* c# binary config *****
 #> name the binary file
-binfile = cs-consolegame
+binfile = cs-factoryrush
 #>source code files
 binfiles = Program.cs DllImport.cs FileSystem.cs Terminal.cs Utility.cs
 # *******************************
 
 #***** application config ****
+#> linux root of application path
+linuxroot = /usr
 #> linux shared library path
 linuxlib = /usr/lib
 #> linux binary file path
@@ -112,8 +115,12 @@ else
 ldarg = -fuse-ld=$(linker)
 endif
 
-ifeq ($(compiler),$(empty))
-compiler = $(defcomp)
+ifeq ($(cpp-compiler),$(empty))
+cpp-compiler = $(defcompcxx)
+endif
+
+ifeq ($(c-compiler),$(empty))
+c-compiler = $(defcompc)
 endif
 
 
@@ -141,10 +148,10 @@ endif
 
 flibdir = bin
 flib = -l$(filename)
-fsrc = $(foreach src,$(sources),../src/$(src))
+fsrc = $(foreach src,$(sources),cplusplus/src/$(src))
 wfsrc = $(foreach src,$(sources),src/$(src))
 objects = $(foreach file,$(sources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
-fbsrc = $(foreach bsrc,$(binsources),../src/$(bsrc))
+fbsrc = $(foreach bsrc,$(binsources),binaryplus/src/$(bsrc))
 fbobj = $(foreach file,$(binsources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
 os = $(subst $(space),-,$(shell echo $$(uname -s) $$(uname -r).$$(uname -m)))
 
@@ -179,6 +186,7 @@ os_name = win-$(arch)
 dllname = "$(name).dll"
 libname = "$(filename).dll"
 binary = exe
+movefl = move
 libdir = $(winlib)
 bindir = $(winbin)
 #
@@ -191,6 +199,7 @@ os_name = win-$(arch)
 dllname = "$(name).dll"
 libname = "$(filename).dll"
 binary = exe
+movefl = move
 libdir = $(winlib)
 bindir = $(winbin)
 #
@@ -239,6 +248,7 @@ os_name = win-$(arch)
 dllname = "$(name).dll"
 libname = "$(filename).dll"
 binary = exe
+movefl = move
 #
 else
 ifeq ($(shell uname -s),Darwin)
@@ -249,6 +259,7 @@ os_name = osx-$(arch)
 dllname = "lib$(name).dylib"
 libname = "lib$(filename).dylib"
 binary = app
+movefl = mv
 libdir = $(macoslib)
 bindir = $(macosbin)
 #
@@ -260,6 +271,7 @@ os_name = linux-$(arch)
 libname = "lib$(filename).so"
 dllname = "lib$(name).so"
 binary = bin
+movefl = mv
 libdir = $(linuxlib)
 bindir = $(linuxbin)
 #
@@ -356,7 +368,7 @@ endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
 
-all: dll cppbin csbin
+all: dll cppbin csbin resources
 	@echo "Version file. Remove to enable recompile" > $@
 
 dll: cs cpp
@@ -364,20 +376,38 @@ dll: cs cpp
 
 refresh:
 ifeq ($(shell echo "check quotes"),"check quotes")
-	@del /f all
-	@del /f dll
 	@del /f cs
 	@del /f csbin
 	@del /f cppbin
 	@del /f cpp
+	@del /f resources
 else
-	@rm -f all
-	@rm -f dll
 	@rm -f cs
 	@rm -f csbin
 	@rm -f cppbin
 	@rm -f cpp
+	@rm -f resources
 endif
+
+resources: source/getfd.h source/setkbdmode.c assets/a.tux
+ifeq ($(shell uname -s),Linux)
+	@$(c-compiler) -o assets/setkbdmode.$(binary) source/setkbdmode.c -Isource -std=c2x
+ifeq ($(copylibs),1)
+	@echo "$(linuxroot)/share/factoryrush/bin"
+	@$(admin) mkdir -p $(linuxroot)/share/factoryrush/bin
+	@$(admin) cp assets/setkbdmode.$(binary) $(linuxroot)/share/factoryrush/bin
+else
+	@mkdir -p binaryplus/bin/../share/factoryrush/bin
+	@cp assets/setkbdmode.$(binary) binaryplus/share/factoryrush/bin
+endif
+endif
+
+ifeq ($(shell echo "check quotes"),"check quotes")
+	@copy assets\a.tux binaryplus\bin
+else
+	@cp assets/a.tux binaryplus/bin
+endif
+	@echo "Version file. Remove to enable recompile" > $@
 
 cpprun:
 	@cd binaryplus/bin && $(prefix)$(binname).$(binary)
@@ -394,48 +424,50 @@ endif
 #
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 #windows
-	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
-	@cd cplusplus && $(compiler) -shared -static-libstdc++ -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
+	@cd cplusplus/obj && $(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
+	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
 #
 else
 ifeq ($(shell uname -s),WINDOWS_NT)
 #windows
-	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
-	@cd cplusplus && $(compiler) -shared -static-libstdc++ -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
+	@cd cplusplus/obj && $(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
+	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
-	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
-	@cd cplusplus && $(compiler) -shared -static-libstdc++ -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
+	@cd cplusplus/obj && $(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
+	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #mingw [ I think same as windows (?) ]
-	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
-	@cd cplusplus && $(compiler) -shared -static-libstdc++ -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
+	@cd cplusplus/obj && $(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
+	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
 #
 else
 ifeq ($(findstring Windows_NT, $(shell uname -s)),Windows_NT)
 #msys [ i think older ]
-	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
-	@cd cplusplus && $(compiler) -shared -static-libstdc++ -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
+	@cd cplusplus/obj && $(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
+	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
 #
 else
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys [ I think same as windows (?) ]
-	@cd cplusplus/obj && $(compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
-	@cd cplusplus && $(compiler) -shared -static-libstdc++ -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
+	@cd cplusplus/obj && $(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
+	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
 #
 else
-	@cd cplusplus/obj && $(compiler) -c -fpic -DUNICODE $(cdb) -fvisibility=hidden $(fsrc) -I ../include
+# not windows
+#	@cd cplusplus/obj && $(cpp-compiler) -c -fpic -DUNICODE $(cdb) -fvisibility=hidden $(fsrc) -I ../include -std=c++20
+	@$(cpp-compiler) -c -fpic -DUNICODE $(cdb) -fvisibility=hidden $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
 ifeq ($(shell uname -s),Darwin)
 #macos
-	@cd cplusplus && $(compiler) -dynamiclib -static-libstdc++ -o bin/lib$(name).dylib $(objects) -L$(flibdir) $(flib) $(ldarg)
+	@cd cplusplus && $(cpp-compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) -L$(flibdir) $(flib) $(ldarg)
 #
 else
 #linux and similar
-	@cd cplusplus && $(compiler) -shared -static-libstdc++ -o bin/lib$(name).so $(objects) -L$(flibdir) $(flib) $(ldarg)
+	@cd cplusplus && $(cpp-compiler) -shared -o bin/lib$(name).so $(objects) -L$(flibdir) $(flib) $(ldarg)
 endif
 endif
 endif
@@ -468,6 +500,11 @@ endif
 
 
 cs: $(foreach fl,$(files),csharp/$(fl))
+
+ifneq ($(wildcard assets),assets)
+	@$(MAKE) assets sudo=$(sudp) forcewin=$(forcewin) debug=$(debug)
+endif
+
 	@cd csharp && dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r $(os_name) -c $(configuration)
 ifeq ($(shell echo "check quotes"),"check quotes")
 	@cd csharp/bin/$(configuration)/net8.0/$(os_name)/native/ && echo . > null.exp && echo . > null.lib && echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(libname)
@@ -500,59 +537,16 @@ ifneq ($(wildcard cpp),cpp)
 	@$(MAKE) cpp sudo=$(sudp) forcewin=$(forcewin) debug=$(debug)
 endif
 
-ifeq ($(findstring windows32, $(shell uname -s)),windows32)
-#windows
-	@cd binaryplus/obj && $(compiler) -c $(bpdb) $(fbsrc) -I ../include -std=c++20
-	@cd binaryplus && $(compiler) -static-libstdc++ -o bin/$(binname).$(binary) $(fbobj) -I include -L$(flibdir) -l$(filename) -l$(name) $(ldarg)
+#all
+	@$(cpp-compiler) -c $(bpdb) $(fbsrc) -I binaryplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(fbobj)),&& $(movefl) -f $(obj) binaryplus/obj$(space))
+	@cd binaryplus && $(cpp-compiler) -o bin/$(binname).$(binary) $(fbobj) -I include -L$(flibdir) -l$(filename) -l$(name) $(ldarg)
 #
-else
-ifeq ($(shell uname -s),WINDOWS_NT)
-#windows i think
-	@cd binaryplus/obj && $(compiler) -c $(bpdb) $(fbsrc) -I ../include -std=c++20
-	@cd binaryplus && $(compiler) -static-libstdc++ -o bin/$(binname).$(binary) $(fbobj) -I include -L$(flibdir) -l$(filename) -l$(name) $(ldarg)
-#
-else
-ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
-#cygwin [ I think same as windows (?) ]
-	@cd binaryplus/obj && $(compiler) -c $(bpdb) $(fbsrc) -I ../include -std=c++20
-	@cd binaryplus && $(compiler) -static-libstdc++ -o bin/$(binname).$(binary) $(fbobj) -I include -L$(flibdir) -l$(filename) -l$(name) $(ldarg)
-#
-else
-ifeq ($(findstring Windows_NT, $(shell uname -s)),Windows_NT)
-#msys2 [ I think same as windows (?) ]
-	@cd binaryplus/obj && $(compiler) -c $(bpdb) $(fbsrc) -I ../include -std=c++20
-	@cd binaryplus && $(compiler) -static-libstdc++ -o bin/$(binname).$(binary) $(fbobj) -I include -L$(flibdir) -l$(filename) -l$(name) $(ldarg)
-else
-ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
-#mingw [ I think same as windows (?) ]
-	@cd binaryplus/obj && $(compiler) -c $(bpdb) $(fbsrc) -I ../include -std=c++20
-	@cd binaryplus && $(compiler) -static-libstdc++ -o bin/$(binname).$(binary) $(fbobj) -I include -L$(flibdir) -l$(filename) -l$(name) $(ldarg)
-#
-else
-ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
-#msys [ I think same as windows (?) ]
-	@cd binaryplus/obj && $(compiler) -c $(bpdb) $(fbsrc) -I ../include -std=c++20
-	@cd binaryplus && $(compiler) -static-libstdc++ -o bin/$(binname).$(binary) $(fbobj) -I include -L$(flibdir) -l$(filename) -l$(name) $(ldarg)
-#
-else
-#	@cd binaryplus/obj && $(compiler) -c -fpic -DUNICODE -fvisibility=hidden $(fsrc) -I ../include
+
 ifeq ($(shell uname -s),Darwin)
 #macos
-	@cd binaryplus/obj && $(compiler) -c $(bpdb) $(fbsrc) -I ../include -std=c++20
-	@cd binaryplus && $(compiler) -static-libstdc++ -o bin/$(binname).$(binary) $(fbobj) -I include -L$(flibdir) -l$(filename) -l$(name) $(ldarg)
 	@cd binaryplus/bin && install_name_tool -change $$(otool -l $(binname).$(binary) | grep $(dllname) | sed 's/ (offset 24)//' | sed 's/         name //') @loader_path/$(dllname) $(binname).$(binary)
 	@cd binaryplus/bin && install_name_tool -change $$(otool -l $(binname).$(binary) | grep $(filename).dylib | sed 's/ (offset 24)//' | sed 's/         name //') @loader_path/$(libname) $(binname).$(binary)
 #
-else
-#linux and similar
-	@cd binaryplus/obj && $(compiler) -c $(bpdb) $(fbsrc) -I ../include -std=c++20
-	@cd binaryplus && $(compiler) -static-libstdc++ -o bin/$(binname).$(binary) $(fbobj) -I include -L$(flibdir) -l$(filename) -l$(name) $(ldarg)
-endif
-endif
-endif
-endif
-endif
-endif
 endif
 
 ifeq ($(shell echo "check quotes"),"check quotes")
