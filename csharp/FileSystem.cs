@@ -196,7 +196,7 @@ namespace Cs
         }
         public static void PlayWAV(string filepath, bool wait = false) {
             string fullpath = Path.GetFullPath(filepath);
-        #if _WIN32
+        #if false
             SoundPlayer sound = new SoundPlayer(fullpath);
             if (wait) sound.PlaySync();
             else sound.Play();
