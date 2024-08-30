@@ -191,13 +191,13 @@ namespace Cs
         }
         public static void PlayWAV(string filepath, bool wait = false)
         {            
-            #if _WIN32
-            SoundPlayer sound = new SoundPlayer(@"c:\Windows\Media\chimes.wav");
+        #if _WIN32
+            SoundPlayer sound = new SoundPlayer(filepath);
             if (wait)
                 sound.PlaySync();
             else 
                 sound.Play();
-            #endif
+        #endif
         }
 
         private static List<char> ToCharList(string input)
