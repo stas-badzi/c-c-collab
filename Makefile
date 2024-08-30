@@ -501,8 +501,8 @@ endif
 
 cs: $(foreach fl,$(files),csharp/$(fl))
 
-ifneq ($(wildcard assets),assets)
-	@$(MAKE) assets sudo=$(sudp) forcewin=$(forcewin) debug=$(debug)
+ifneq ($(wildcard resources),resources)
+	@$(MAKE) resources sudo=$(sudp) forcewin=$(forcewin) debug=$(debug)
 endif
 
 	@cd csharp && dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r $(os_name) -c $(configuration)
