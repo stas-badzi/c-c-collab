@@ -49,15 +49,26 @@ void FileSystem::ExportText(utfstr file, vector<utfstr> lines) {
 
 vector<vector<Console::Symbol>> FileSystem::TextureFromFile(utfstr filepath) {
     unichar* arg1 = Utf8StringToUnicode(filepath);
-    
-    void * ret = csimp::FileSystem_TextureFromFile(arg1);
+    void* ret = csimp::FileSystem_TextureFromFile(arg1);
 
-    vector<vector<Console::Symbol>> out;
+    return PtrToTexture(ret);
+}
 
-    int int32_size = sizeof(int32_t);
-    int intptr_size = sizeof(void*);
+void FileSystem::FileFromTexture(utfstr filepath, vector<vector<Console::Symbol>> texture, bool recycle = false) {
+    unichar* filepathPtr = uniconv::Utf8StringToUnicode(filepath);
+    void* texturePtr;
 
-    void* now_ptr = ret;
+    csimp::FileSystem_FileFromTexture(filepathPtr, texturePtr, recycle);
+}
+
+vector<vector<Console::Symbol>> PtrToTexture(void* ptr)
+{
+    vector<vector<Console::Symbol>> ret;
+
+    const int int32_size = sizeof(int32_t);
+    const int intptr_size = sizeof(void*);
+
+    void* now_ptr = ptr;
 
     int32_t height = *(int32_t*)(now_ptr);
     now_ptr += int32_size;
@@ -65,17 +76,30 @@ vector<vector<Console::Symbol>> FileSystem::TextureFromFile(utfstr filepath) {
     for (size_t i = 0; i < height; i++) {
         int32_t width = *(int32_t*)(now_ptr);
         now_ptr += int32_size;
-        out.push_back(vector<Console::Symbol>());
+        ret.push_back(vector<Console::Symbol>());
 
         for (size_t j = 0; j < width; j++) {
             void* ptr = *(void**)(now_ptr);
             Console::Symbol sym = Console::Symbol(ptr,true);
-            out.back().push_back(sym);
+            ret.back().push_back(sym);
             now_ptr += intptr_size;
         }
     }
 
-    delete[] ret;
+    delete[] ptr;
     
-    return out;
+    return ret;
+}
+void* TextureToPtr(vector<vector<Console::Symbol>> texture) {
+    void* ret;
+
+    const int int32_size = sizeof(int32_t);
+    const int intptr_size = sizeof(void*);
+    size_t size, count;
+
+    size = texture.size();
+    count = 0;
+    for (size_t i = 0; i < size; i++) {
+        count += texture[i].size();
+    }
 }
