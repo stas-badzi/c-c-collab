@@ -56,7 +56,7 @@ vector<vector<Console::Symbol>> FileSystem::TextureFromFile(utfstr filepath) {
 
 void FileSystem::FileFromTexture(utfstr filepath, vector<vector<Console::Symbol>> texture, bool recycle = false) {
     unichar* filepathPtr = uniconv::Utf8StringToUnicode(filepath);
-    void* texturePtr;
+    void* texturePtr = TextureToPtr(texture);
 
     csimp::FileSystem_FileFromTexture(filepathPtr, texturePtr, recycle);
 }
@@ -86,13 +86,11 @@ vector<vector<Console::Symbol>> PtrToTexture(void* ptr)
         }
     }
 
-    delete[] ptr;
+    free(ptr);
     
     return ret;
 }
 void* TextureToPtr(vector<vector<Console::Symbol>> texture) {
-    void* ret;
-
     const int int32_size = sizeof(int32_t);
     const int intptr_size = sizeof(void*);
     size_t size, count;
@@ -102,4 +100,16 @@ void* TextureToPtr(vector<vector<Console::Symbol>> texture) {
     for (size_t i = 0; i < size; i++) {
         count += texture[i].size();
     }
+
+    void* ret = malloc((size + 1) * int32_size + count * intptr_size);
+
+    count = 0;
+    //writeint32(ret, size)
+    for (size_t i = 0; i < size; i++) {
+        //writeint32(ret, (i + 1) * int32_size + count * intptr_size, texture[i].size())
+        for (size_t j = 0; j < texture[i].size(); j++) {
+            //writeintptr(ret, (i + 2) * int32_size + count * intptr_size, texture[i][j].Get())
+        }
+    }
+    return ret;
 }
