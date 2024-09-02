@@ -191,27 +191,11 @@ using namespace std::chrono;
     this->SetAttribute(attribute);
 }
 #else
-    inline string GenerateEscapeSequence(uint8_t i1, uint8_t i2) {
-        string val = "\033[";
-        if (i1 < 8) {
-            val.append(to_string(30 + i1));
-        } else if (i1 < 16) {
-            val.append(to_string(90 + i1));
-        } else {
-            val.append("39");
-        }
-        val.push_back(';');
-        if (i2 < 8) {
-            val.append(to_string(40 + i2));
-        } else if (i2 < 16) {
-            val.append(to_string(100 + i2));
-        } else {
-            val.append("49");
-        }
-        val.push_back('m');
-        return val;
-    }
+// Not linux (Probably Posix and Unix)
 
+
+#ifdef __linux__
+// linux
     void Console::Init(void) {
         if (!initialised) {
 
@@ -291,7 +275,6 @@ using namespace std::chrono;
 
         }
     }
-    
 
     void Console::Fin(void) {
         if (initialised) {
@@ -317,63 +300,11 @@ using namespace std::chrono;
         }
     }
 
-    int16_t cpp::Console::GetWindowWidth(void) {
-        struct winsize size;
-        ioctl(STDERR_FILENO, TIOCGWINSZ, &size);
-        return size.ws_col;
-    }
-
-    int16_t cpp::Console::GetWindowHeight(void) {
-        struct winsize size;
-        ioctl(STDERR_FILENO, TIOCGWINSZ, &size);
-        return size.ws_row;
-    }
-
-    array<unsigned long,2> Console::FillScreen(vector<vector<Console::Symbol> > symbols) {
-        string screen = "\e[H";
-        size_t width = GetWindowWidth(), height = GetWindowHeight();
-        for (size_t i = 0; i < height; i++) {
-            for (size_t j = 0; j < width; j++) {
-                if (i >= symbols.size() || j >= symbols[0].size()) {
-                    screen.append("\033[0m ");
-                    continue;
-                }
-                screen.append( GenerateEscapeSequence(symbols[i][j].foreground, symbols[i][j].background) );
-                screen.append(symbols[i][j].character);
-            }
-        }
-        screen.append("\033[0m");
+    int HandleMouse() {
         
-        //FILE * screen_file = fopen( "screen.dat", "w" );
-        fwrite(screen.c_str(), sizeof(char), screen.size(), stderr);
-        //system("cat screen.dat");
-
-        array<unsigned long,2> written;
-				
-		written[0] = width*height;
-        written[1] = width*height + 1;
-
-        return written;
     }
 
-    int parse_input(int show_keycodes, char * buf, int n) {
-        int out = 0;
-        //char buf[16];
-        //int n = read(fd, buf, sizeof(buf));
-            
-            for (int i = 0; i < n; i++) {
-                if (!show_keycodes) {
-                    out *= KEYBOARD_MAX;
-                    out += buf[i];
-                } else {
-                    out = buf[i] & 0x7f; // set keycode
-                    out += buf[i] & 0x80 ? 0x100 : 0x000; // add bit 0 if press bit 1 if release
-                }
-            }
-        return out;
-    };
-
-    int cpp::Console::HandleKeyboard(void) {
+    int Console::HandleKeyboard(void) {
         int bytes;
         char buf[16];
         //ioctl(fileno(stdin), FIONREAD, &bytes);
@@ -445,6 +376,194 @@ using namespace std::chrono;
         
         return key_code;
     }
+
+#elif __APPLE__
+// macOS
+    void Console::Init(void) {
+        if (!initialised) {
+
+            fwrite("\033[?1049h",sizeof(char), 8, stderr);
+
+            tcgetattr(STDIN_FILENO,&old_termios);
+            termios term_ios = old_termios;
+            term_ios.c_lflag &= ~(ICANON | ECHO);
+            tcsetattr(STDIN_FILENO, TCSANOW, &term_ios);
+            
+            initialised = true;
+
+            atexit(Fin);
+            at_quick_exit(Fin);
+
+            signal(SIGHUP, quick_exit);
+            signal(SIGINT, quick_exit);
+            signal(SIGQUIT, quick_exit);
+            signal(SIGILL, quick_exit);
+            signal(SIGTRAP, quick_exit);
+            signal(SIGABRT, quick_exit);
+            signal(SIGIOT, quick_exit);
+            signal(SIGFPE, quick_exit);
+            signal(SIGKILL, quick_exit);
+            signal(SIGUSR1, quick_exit);
+            signal(SIGSEGV, quick_exit);
+            signal(SIGUSR2, quick_exit);
+            signal(SIGPIPE, quick_exit);
+            signal(SIGTERM, quick_exit);
+        #ifdef SIGSTKFLT
+            signal(SIGSTKFLT, quick_exit);
+        #endif
+            signal(SIGCHLD, quick_exit);
+            signal(SIGCONT, quick_exit);
+            signal(SIGSTOP, quick_exit);
+            signal(SIGTSTP, quick_exit);
+            signal(SIGTTIN, quick_exit);
+            signal(SIGTTOU, quick_exit);
+
+        }
+    }
+
+    void Console::Fin(void) {
+        if (initialised) {
+
+            tcsetattr(STDIN_FILENO,TCSANOW,&old_termios);
+            
+            fwrite("\033[?1049l",sizeof(char), 8, stderr);
+
+            initialised = false;
+        }
+    }
+#else
+    void Console::Init(void) {
+        if (!initialised) {
+
+            fwrite("\033[?1049h",sizeof(char), 8, stderr);
+
+            tcgetattr(STDIN_FILENO,&old_termios);
+            termios term_ios = old_termios;
+            term_ios.c_lflag &= ~(ICANON | ECHO);
+            tcsetattr(STDIN_FILENO, TCSANOW, &term_ios);
+            
+            initialised = true;
+
+            atexit(Fin);
+            at_quick_exit(Fin);
+
+            signal(SIGHUP, quick_exit);
+            signal(SIGINT, quick_exit);
+            signal(SIGQUIT, quick_exit);
+            signal(SIGILL, quick_exit);
+            signal(SIGTRAP, quick_exit);
+            signal(SIGABRT, quick_exit);
+            signal(SIGIOT, quick_exit);
+            signal(SIGFPE, quick_exit);
+            signal(SIGKILL, quick_exit);
+            signal(SIGUSR1, quick_exit);
+            signal(SIGSEGV, quick_exit);
+            signal(SIGUSR2, quick_exit);
+            signal(SIGPIPE, quick_exit);
+            signal(SIGTERM, quick_exit);
+        #ifdef SIGSTKFLT
+            signal(SIGSTKFLT, quick_exit);
+        #endif
+            signal(SIGCHLD, quick_exit);
+            signal(SIGCONT, quick_exit);
+            signal(SIGSTOP, quick_exit);
+            signal(SIGTSTP, quick_exit);
+            signal(SIGTTIN, quick_exit);
+            signal(SIGTTOU, quick_exit);
+
+        }
+    }
+
+    void Console::Fin(void) {
+        if (initialised) {
+
+            tcsetattr(STDIN_FILENO,TCSANOW,&old_termios);
+            
+            fwrite("\033[?1049l",sizeof(char), 8, stderr);
+
+            initialised = false;
+        }
+    }
+#endif
+
+// all non windows
+    inline string GenerateEscapeSequence(uint8_t i1, uint8_t i2) {
+        string val = "\033[";
+        if (i1 < 8) {
+            val.append(to_string(30 + i1));
+        } else if (i1 < 16) {
+            val.append(to_string(90 + i1));
+        } else {
+            val.append("39");
+        }
+        val.push_back(';');
+        if (i2 < 8) {
+            val.append(to_string(40 + i2));
+        } else if (i2 < 16) {
+            val.append(to_string(100 + i2));
+        } else {
+            val.append("49");
+        }
+        val.push_back('m');
+        return val;
+    }
+
+
+    int16_t cpp::Console::GetWindowWidth(void) {
+        struct winsize size;
+        ioctl(STDERR_FILENO, TIOCGWINSZ, &size);
+        return size.ws_col;
+    }
+
+    int16_t cpp::Console::GetWindowHeight(void) {
+        struct winsize size;
+        ioctl(STDERR_FILENO, TIOCGWINSZ, &size);
+        return size.ws_row;
+    }
+
+    array<unsigned long,2> Console::FillScreen(vector<vector<Console::Symbol> > symbols) {
+        string screen = "\e[H";
+        size_t width = GetWindowWidth(), height = GetWindowHeight();
+        for (size_t i = 0; i < height; i++) {
+            for (size_t j = 0; j < width; j++) {
+                if (i >= symbols.size() || j >= symbols[0].size()) {
+                    screen.append("\033[0m ");
+                    continue;
+                }
+                screen.append( GenerateEscapeSequence(symbols[i][j].foreground, symbols[i][j].background) );
+                screen.append(symbols[i][j].character);
+            }
+        }
+        screen.append("\033[0m");
+        
+        //FILE * screen_file = fopen( "screen.dat", "w" );
+        fwrite(screen.c_str(), sizeof(char), screen.size(), stderr);
+        //system("cat screen.dat");
+
+        array<unsigned long,2> written;
+				
+		written[0] = width*height;
+        written[1] = width*height + 1;
+
+        return written;
+    }
+
+    int parse_input(int show_keycodes, char * buf, int n) {
+        int out = 0;
+        //char buf[16];
+        //int n = read(fd, buf, sizeof(buf));
+            
+            for (int i = 0; i < n; i++) {
+                if (!show_keycodes) {
+                    out *= KEYBOARD_MAX;
+                    out += buf[i];
+                } else {
+                    out = buf[i] & 0x7f; // set keycode
+                    out += buf[i] & 0x80 ? 0x100 : 0x000; // add bit 0 if press bit 1 if release
+                }
+            }
+        return out;
+    };
 
     void SysSleep(int microseconds){
         int ret;
