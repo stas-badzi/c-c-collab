@@ -189,7 +189,7 @@ namespace Cs
                 }
             }
         }
-        public static void PlayWAV(string filepath, bool wait = false) {
+        public static void PlaySound(string filepath, bool wait = false) {
             string fullpath = Path.GetFullPath(filepath);
             Player player = new Player();
             player.Play(filepath);

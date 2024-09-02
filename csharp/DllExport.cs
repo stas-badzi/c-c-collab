@@ -162,13 +162,13 @@ namespace CsExp {
 
             Cs.FileSystem.DrawTextureToScreen(x, y, texture, screen);
         }
-        [UnmanagedCallersOnly(EntryPoint = "FileSystem_PlayWAV")]
-        public static void PlayWAV(IntPtr filepathPtr, bool wait = false)
+        [UnmanagedCallersOnly(EntryPoint = "FileSystem_PlaySound")]
+        public static void PlaySound(IntPtr filepathPtr, bool wait = false)
         {
             if (filepathPtr == IntPtr.Zero)
                 throw new Exception("Intptr $filepathPtr Empty");
 
-            Cs.FileSystem.PlayWAV(TypeConvert.PtrToString(filepathPtr),wait);
+            Cs.FileSystem.PlaySound(TypeConvert.PtrToString(filepathPtr),wait);
         }
     }
 }
