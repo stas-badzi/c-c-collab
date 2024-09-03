@@ -55,11 +55,28 @@ vector<vector<Console::Symbol>> FileSystem::TextureFromFile(utfstr filepath) {
 }
 
 void FileSystem::FileFromTexture(utfstr filepath, vector<vector<Console::Symbol>> texture, bool recycle = false) {
-    unichar* filepathPtr = uniconv::Utf8StringToUnicode(filepath);
+    unichar* filepathPtr = Utf8StringToUnicode(filepath);
     void* texturePtr = TextureToPtr(texture);
 
     csimp::FileSystem_FileFromTexture(filepathPtr, texturePtr, recycle);
     free(texturePtr);
+}
+
+void FileSystem::DrawTextureToScreen(int x, int y, vector<vector<Console::Symbol>> texture, vector<vector<Console::Symbol>> screen)
+{
+    var texturePtr = TextureToPtr(texture);
+    var screenPTr = TextureToPtr(screen);
+
+    csimp::FileSystem_DrawTextureToScreen(x, y, texturePtr, screenPtr);
+    free(texturePtr);
+    free(screenPtr);
+}
+
+void FileSystem::PlayWAV(utfstr filepath, bool wait = false)
+{
+    var filepathPtr = Utf8StringToUnicode(filepath);
+
+    csimp::FileSystem_PlayWAV(filepathPtr, wait);
 }
 
 vector<vector<Console::Symbol>> PtrToTexture(void* ptr)
@@ -91,6 +108,7 @@ vector<vector<Console::Symbol>> PtrToTexture(void* ptr)
     
     return ret;
 }
+
 void* TextureToPtr(vector<vector<Console::Symbol>> texture) {
     const int int32_size = sizeof(int32_t);
     const int intptr_size = sizeof(void*);
