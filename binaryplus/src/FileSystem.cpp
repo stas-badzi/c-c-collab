@@ -59,6 +59,7 @@ void FileSystem::FileFromTexture(utfstr filepath, vector<vector<Console::Symbol>
     void* texturePtr = TextureToPtr(texture);
 
     csimp::FileSystem_FileFromTexture(filepathPtr, texturePtr, recycle);
+    free(texturePtr);
 }
 
 vector<vector<Console::Symbol>> PtrToTexture(void* ptr)
@@ -104,11 +105,15 @@ void* TextureToPtr(vector<vector<Console::Symbol>> texture) {
     void* ret = malloc((size + 1) * int32_size + count * intptr_size);
 
     count = 0;
-    //writeint32(ret, size)
+    void* where = ret;
+    *(int*) where = size;
+    where += int32_size;
     for (size_t i = 0; i < size; i++) {
-        //writeint32(ret, (i + 1) * int32_size + count * intptr_size, texture[i].size())
+        *(int*) where = texture[i].size();
+        where += int32_size;
         for (size_t j = 0; j < texture[i].size(); j++) {
-            //writeintptr(ret, (i + 2) * int32_size + count * intptr_size, texture[i][j].Get())
+            *(void**) where = texture[i][j].Get();
+            where += intptr_size;
         }
     }
     return ret;
