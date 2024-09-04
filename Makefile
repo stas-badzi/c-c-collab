@@ -14,7 +14,7 @@ release = FactoryRush
 #> set default compiler
 defcomp = c++
 #> source files
-sources = Console.cpp dllexport.cpp
+sources = Console.cpp dllexport.cpp FileSystem.cpp globals.c
 #> header files
 headers = Console.hpp
 #> include files

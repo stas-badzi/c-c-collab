@@ -7,6 +7,7 @@ using namespace std::chrono;
 
 #ifdef _WIN32
 #include <iostream>
+
     inline uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2) {
         uint8_t val = 0x0000;
         if (i1 == 0) { val |= 0x0000; }
@@ -77,29 +78,13 @@ using namespace std::chrono;
             atexit(Fin);
             at_quick_exit(Fin);
 
-            signal(SIGHUP, quick_exit);
             signal(SIGINT, quick_exit);
-            signal(SIGQUIT, quick_exit);
             signal(SIGILL, quick_exit);
-            signal(SIGTRAP, quick_exit);
             signal(SIGABRT, quick_exit);
-            signal(SIGIOT, quick_exit);
             signal(SIGFPE, quick_exit);
-            signal(SIGKILL, quick_exit);
-            signal(SIGUSR1, quick_exit);
             signal(SIGSEGV, quick_exit);
-            signal(SIGUSR2, quick_exit);
-            signal(SIGPIPE, quick_exit);
             signal(SIGTERM, quick_exit);
-        #ifdef SIGSTKFLT
-            signal(SIGSTKFLT, quick_exit);
-        #endif
-            signal(SIGCHLD, quick_exit);
-            signal(SIGCONT, quick_exit);
-            signal(SIGSTOP, quick_exit);
-            signal(SIGTSTP, quick_exit);
-            signal(SIGTTIN, quick_exit);
-            signal(SIGTTOU, quick_exit);
+            signal(SIGBREAK, quick_exit);
         }
     }
 
