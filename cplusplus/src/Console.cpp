@@ -71,10 +71,7 @@ using namespace std::chrono;
 
     void Console::Init(void) {
         if (!initialised) {
-            SetConsoleActiveScreenBuffer(Console::h_console);
-
-            initialised = true;
-
+            
             atexit(Fin);
             at_quick_exit(Fin);
 
@@ -84,7 +81,9 @@ using namespace std::chrono;
             signal(SIGFPE, quick_exit);
             signal(SIGSEGV, quick_exit);
             signal(SIGTERM, quick_exit);
-            signal(SIGBREAK, quick_exit);
+            signal(SIGBREAK, quick_exit);SetConsoleActiveScreenBuffer(Console::h_console);
+
+            initialised = true;
         }
     }
 
@@ -197,6 +196,9 @@ using namespace std::chrono;
 
     void Console::Init(void) {
         if (!initialised) {
+
+            int err;
+
             fd = getfd();
 
             if (fd < 0) {
@@ -209,9 +211,23 @@ using namespace std::chrono;
                 string error = GenerateEscapeSequence(1,16) + "\nCouldn't get a file descriptor referring to the console.\nCheck if you have acces to /dev/tty and /dev/console.\n" + GenerateEscapeSequence(4,16) + "\n\ttry: " + GenerateEscapeSequence(6,16) + "sudo " + buf + "\033[0m\n";
                 throw(runtime_error(error.c_str()));
             }
-            
 
-            fwrite("\033[?1049h",sizeof(char), 9, stderr);
+            char path[256];
+            int path_size = readlink( "/proc/self/exe" , path, 256);
+            string command = path;
+            while (command.back() != '/') command.pop_back();
+            command.append("../share/factoryrush/bin/setkbdmode.bin ");
+            command.push_back('0' + K_MEDIUMRAW);
+
+            if (err = ioctl(fd, KDGKBMODE, &old_kbdmode)) {
+                throw("ioctl KDGKBMODE error");
+            }
+
+            if (system(command.c_str()) < 0) {
+                throw("setkbdmode.bin error");
+            }
+            
+            fwrite("\033[?1049h",sizeof(char), 8, stderr);
 
             tcgetattr(STDIN_FILENO,&old_termios);
             termios term_ios = old_termios;
@@ -226,9 +242,6 @@ using namespace std::chrono;
             term_ios.c_cc[VTIME] = 1;
             tcsetattr(fd, TCSANOW, &term_ios);
             
-            ioctl(fd, KDGKBMODE, &old_kbdmode);
-            ioctl(fd, KDSETMODE, K_MEDIUMRAW);
-
             initialised = true;
 
             atexit(Fin);
@@ -257,6 +270,7 @@ using namespace std::chrono;
             signal(SIGTSTP, quick_exit);
             signal(SIGTTIN, quick_exit);
             signal(SIGTTOU, quick_exit);
+
         }
     }
     
@@ -264,12 +278,22 @@ using namespace std::chrono;
     void Console::Fin(void) {
         if (initialised) {
             
-            ioctl(fd, KDSETMODE, old_kbdmode);
+            //ioctl(fd, KDSETMODE, old_kbdmode);
             tcsetattr(fd,TCSANOW,&old_fdterm);
 
             tcsetattr(STDIN_FILENO,TCSANOW,&old_termios);
             
-            fwrite("\033[?1049l",sizeof(char), 9, stderr);
+            fwrite("\033[?1049l",sizeof(char), 8, stderr);
+
+            char path[256];
+            int path_size = readlink( "/proc/self/exe" , path, 256);
+            string command = path;
+            while (command.back() != '/') command.pop_back();
+            command.append("../share/factoryrush/bin/setkbdmode.bin ");
+            command.push_back('0' + old_kbdmode);
+            if (old_kbdmode = system(command.c_str()) < 0) {
+                throw("setkbdmode.bin error");
+            }
 
             initialised = false;
         }
@@ -335,13 +359,10 @@ using namespace std::chrono;
         int bytes;
         char buf[16];
         //ioctl(fileno(stdin), FIONREAD, &bytes);
-        printf("b");
 
         bytes = read(fd, buf, sizeof(buf));
 
-        printf("c");
-
-        if (bytes == 0) {
+        if (bytes <= 0) {
             return -1;
         }
 
@@ -354,9 +375,7 @@ using namespace std::chrono;
         if ( key_hit > 0 ) key_states[KEYBOARD_MAX + key_hit] = !key_states[KEYBOARD_MAX + key_hit];
         key_states[parsed % KEYBOARD_MAX] = !(parsed / KEYBOARD_MAX);
 
-        printf("d");
-
-        return parse_input(true,buf,bytes);
+        return parsed;
 
         if (bytes == 0) {
             return -1;
@@ -406,8 +425,6 @@ using namespace std::chrono;
         
         string print = '\n' + str + "\n" + to_string(code.size()) + "\n" + to_string(key_code) + "\n";
         
-        
-
         return key_code;
     }
 

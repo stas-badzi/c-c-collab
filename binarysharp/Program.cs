@@ -1,29 +1,14 @@
-﻿using Cpp;
+﻿using System;
+using Cpp;
 using Cs;
-using CSCore;
-using CSCore.Codecs;
-using CSCore.SoundOut;
 using Utility;
 
 namespace BinarySharp {
     public class Program {
         static int Main(string[] args) {
             Terminal.Init();
-            Console.WriteLine("aaaaaaaaaaaaaaaa");
 
-            /*
-            while (true) {
-                Terminal.HandleKeyboard();
-                Console.WriteLine("bbbbbb");
-                Console.WriteLine(Terminal.KeyHit(42));
-                Console.WriteLine("ccccccccccc");
-                Console.WriteLine(Terminal.KeyReleased(57));
-
-                if (false && Terminal.KeyHit(16) && Terminal.KeyDown(29)) {
-                    break;
-                }
-            }
-            */
+            FileSystem.PlaySound(Path.Combine([AppContext.BaseDirectory,"..","sounds","shoot.wav"]), true);
             return 0;
         }
     }

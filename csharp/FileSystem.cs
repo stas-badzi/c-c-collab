@@ -1,10 +1,6 @@
 using System;
-using System.IO;
-using System.Collections.Generic;
-using CSCore;
-using CSCore.Codecs;
-using CSCore.SoundOut;
 using Microsoft.VisualBasic.FileIO;
+using NetCoreAudio;
 using Cpp;
 
 namespace Cs
@@ -81,7 +77,7 @@ namespace Cs
                     }
                     sw.Close();
                 }
-
+                
             }
             catch (Exception e)
             {
@@ -89,7 +85,7 @@ namespace Cs
             }
         }
         
-        public static List<List<Terminal.Symbol>> TextureFromFile(string filepath)
+        public static List<List<Terminal.Symbol>>? TextureFromFile(string filepath)
         {
             int width, height;
 
@@ -193,32 +189,12 @@ namespace Cs
                 }
             }
         }
-        public static void PlayMP3(string filepath)
-        {
-            Thread playmp3 = new Thread(() => PlayMP3Thread(filepath));
-            playmp3.Start();
-        }
-        private static void PlayMP3Thread(string filepath)
-        {
-            var file = new FileInfo(filepath);
-            if (!file.Exists)
-            {
-                Environment.FailFast("PlayMP3: Filepath not found");
-                return;
-            }
-            using (var audioFile = CodecFactory.Instance.GetCodec(filepath))
-            using (var soundOut = new WasapiOut())
-            {
-                var playbackFinished = new ManualResetEvent(false);
-
-                soundOut.Initialize(audioFile);
-                soundOut.Stopped += (s, e) =>
-                {
-                    playbackFinished.Set();
-                };
-                soundOut.Play();
-                playbackFinished.WaitOne();
-            }
+        public static void PlaySound(string filepath, bool wait = false) {
+            string fullpath = Path.GetFullPath(filepath);
+            Player player = new Player();
+            player.Play(filepath);
+            TimeSpan shorttime = new TimeSpan(1);
+            while (wait && player.Playing) Thread.Sleep(shorttime);
         }
 
         private static List<char> ToCharList(string input)

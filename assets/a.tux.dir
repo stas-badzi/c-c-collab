@@ -1,0 +1,11 @@
+@debian /usr/share/$/assets/textures
+@ubuntu &debian
+@mint &debian
+@windows %programfiles%\$\assets\bin
+@macos ~/Library/Application Support/$/assets/textures
+@other !
+@end
+
+@windows $0\$1\assets\bin
+@macos $0/Library/Application Support
+@other $0/assets/$1/bin

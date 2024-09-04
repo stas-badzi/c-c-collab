@@ -50,6 +50,7 @@
 
 
 #generated code
+binaryplus/bin/*.tux
 *.pdb
 *.dbg
 *.json
@@ -66,6 +67,7 @@ cppbin
 all
 dll
 release
+resources
 
 #logs
 *.log

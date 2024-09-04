@@ -24,9 +24,11 @@
     #include <termios.h>
     #include <deque>
     #include <string>
-    #include <linux/kd.h>
-    #include <linux/keyboard.h>
+#ifdef __linux__
     #include <getfd.h>
+    #include <linux/kd.h>
+#else
+#endif
 #endif
 
 #define KEYBOARD_MAX 256

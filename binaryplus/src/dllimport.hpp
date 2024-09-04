@@ -61,5 +61,7 @@ namespace csimp {
     
     libimport void FileSystem_ExportText(uniconv::unichar* file, uniconv::unichar** content);
 
+    libimport void* FileSystem_TextureFromFile(uniconv::unichar* arg1);
+
 } // namespace csimp
 
