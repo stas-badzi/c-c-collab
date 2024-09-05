@@ -57,7 +57,7 @@ vector<vector<Console::Symbol>> FileSystem::TextureFromFile(utfstr filepath) {
     int int32_size = sizeof(int32_t);
     int intptr_size = sizeof(void*);
 
-    void* now_ptr = ret;
+    char* now_ptr = (char*)ret;
 
     int32_t height = *(int32_t*)(now_ptr);
     now_ptr += int32_size;
@@ -75,7 +75,7 @@ vector<vector<Console::Symbol>> FileSystem::TextureFromFile(utfstr filepath) {
         }
     }
 
-    delete[] ret;
+    free(ret);
     
     return out;
 }

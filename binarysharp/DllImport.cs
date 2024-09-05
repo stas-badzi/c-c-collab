@@ -4,7 +4,7 @@ using Utility;
 namespace CsImp {
 
     public class Terminal {
-        private const string DllSource =  @"" + DllHandle.Prefix + "csharp" + DllHandle.Suffix;
+        private const string DllSource =  @"" + DllHandle.Prefix + "factoryrushsharp" + DllHandle.Suffix;
         public class Symbol {
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_ReverseColors", CharSet = CharSet.Unicode)]
             public static extern nint ReverseColors(nint sym);
@@ -12,7 +12,7 @@ namespace CsImp {
     }
 
     public class FileSystem {
-        private const string DllSource =  @"" + DllHandle.Prefix + "csharp" + DllHandle.Suffix;
+        private const string DllSource =  @"" + DllHandle.Prefix + "factoryrushsharp" + DllHandle.Suffix;
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_Add", CharSet = CharSet.Unicode)]
         public static extern ulong Add(uint arg1, byte arg2);
@@ -46,7 +46,7 @@ namespace CppImp {
 
     public class Terminal
     {
-        private const string DllSource = @"" + DllHandle.Prefix + "cplusplus" + DllHandle.Suffix;
+        private const string DllSource = @"" + DllHandle.Prefix + "factoryrushplus" + DllHandle.Suffix;
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Init", CharSet = CharSet.Unicode)]
         public static extern void Init();
@@ -57,17 +57,17 @@ namespace CppImp {
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_HandleKeyBoard", CharSet = CharSet.Unicode)]
         public static extern int HandleKeyboard();
 
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_KeyDown", CharSet = CharSet.Unicode)]
-        public static extern bool KeyDown(int arg1);
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_IsKeyDown", CharSet = CharSet.Unicode)]
+        public static extern bool IsKeyDown(int arg1);
 
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_KeyToggled", CharSet = CharSet.Unicode)]
-        public static extern bool KeyToggled(int arg1);
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_IsKeyToggled", CharSet = CharSet.Unicode)]
+        public static extern bool IsKeyToggled(int arg1);
 
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_KeyHit", CharSet = CharSet.Unicode)]
-        public static extern bool KeyHit(int arg1);
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_KeyPressed", CharSet = CharSet.Unicode)]
+        public static extern int KeyPressed();
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_KeyReleased", CharSet = CharSet.Unicode)]
-        public static extern bool KeyReleased(int arg1);
+        public static extern int KeyReleased();
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_FillScreen$ret2", CharSet = CharSet.Unicode)]
         public static extern IntPtr FillScreen(IntPtr symbols, int height, int width);

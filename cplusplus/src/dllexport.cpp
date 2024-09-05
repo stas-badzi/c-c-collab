@@ -19,24 +19,46 @@ using namespace uniconv;
         cpp::Console::Sleep(seconds);
     }
 
-    libexport int Console_HandleKeyboard(void) {
-        return cpp::Console::HandleKeyboard();
+    libexport void Console_HandleKeyboard(void) {
+        cpp::Console::HandleKeyboard();
     }
 
-    libexport bool Console_KeyDown(int arg1) {
-        return cpp::Console::KeyDown(arg1);
+    libexport bool Console_IsKeyDown(int arg1) {
+        return cpp::Console::IsKeyDown(arg1);
     }
 
-    libexport bool Console_KeyToggled(int arg1) {
-        return cpp::Console::KeyToggled(arg1);
+    libexport bool Console_IsKeyToggled(int arg1) {
+        return cpp::Console::IsKeyToggled(arg1);
     }
 
-    libexport bool Console_KeyHit(int arg1) {
-        return cpp::Console::KeyHit(arg1);
+    libexport int Console_KeyPressed(void) {
+        return cpp::Console::KeyPressed();
     }
 
-    libexport bool Console_KeyReleased(int arg1) {
-        return cpp::Console::KeyReleased(arg1);
+    libexport int Console_KeyReleased(void) {
+        return cpp::Console::KeyReleased();
+    }
+
+    libexport void Console_HandleMouseAndFocus(void) {
+        return cpp::Console::HandleMouseAndFocus();
+    }
+
+    libexport cpp::Console::MouseStatus Console_GetMouseStatus(void) {
+        return cpp::Console::GetMouseStatus();
+    }
+
+    libexport uint8_t* Console_MouseButtonClicked$ret2(void) {
+        std::pair<uint8_t, uint8_t> func = cpp::Console::MouseButtonClicked();
+        uint8_t* ret = new uint8_t[2]{func.first, func.second};
+        return ret;
+    }
+
+    libexport uint8_t Console_MouseButtonReleased(void) {
+        return cpp::Console::MouseButtonReleased();
+    }
+
+    libexport bool Console_IsFocused(void) {
+        return cpp::Console::IsFocused();
     }
 
     libexport unsigned long int* Console_FillScreen$ret2(cpp::Console::Symbol*** symbols, int height, int width) {

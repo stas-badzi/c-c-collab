@@ -7,36 +7,37 @@
 using namespace cppimp;
 using namespace uniconv;
 using namespace std;
+using namespace cpp;
 
-void cpp::Console::Init(void) {
+void Console::Init(void) {
     cppimp::Console_Init();
 }
 
-void cpp::Console::Fin(void) {
+void Console::Fin(void) {
     cppimp::Console_Fin();
 }
 
-int cpp::Console::HandleKeyboard(void) {
+int Console::HandleKeyboard(void) {
     return cppimp::Console_HandleKeyboard();
 }
 
-bool cpp::Console::KeyDown(int key) {
-    return cppimp::Console_KeyDown(key);
+bool Console::IsKeyDown(int key) {
+    return cppimp::Console_IsKeyDown(key);
 }
 
-bool cpp::Console::KeyToggled(int key) {
-    return cppimp::Console_KeyToggled(key);
+bool Console::IsKeyToggled(int key) {
+    return cppimp::Console_IsKeyToggled(key);
 }
 
-bool cpp::Console::KeyHit(int key) {
-    return cppimp::Console_KeyHit(key);
+int Console::KeyPressed(void) {
+    return cppimp::Console_KeyPressed();
 }
 
-bool cpp::Console::KeyReleased(int key) {
-    return cppimp::Console_KeyReleased(key);
+int Console::KeyReleased(void) {
+    return cppimp::Console_KeyReleased();
 }
 
-array<unsigned long,2> cpp::Console::FillScreen(vector<vector<cpp::Console::Symbol> > symbols) {
+array<unsigned long,2> Console::FillScreen(vector<vector<Console::Symbol> > symbols) {
 
     void*** voidsyms = new void**[symbols.size()];
 
@@ -62,80 +63,103 @@ array<unsigned long,2> cpp::Console::FillScreen(vector<vector<cpp::Console::Symb
     return out;
 }
 
-int16_t cpp::Console::GetWindowWidth(void) {
+void Console::HandleMouseAndFocus(void) {
+    return cppimp::Console_HandleMouseAndFocus();
+}
+
+bool Console::IsFocused(void) {
+    return cppimp::Console_IsFocused();
+}
+
+struct ConsoleMouseStatus Console::GetMouseStatus(void) {
+    return cppimp::Console_GetMouseStatus();
+}
+
+pair<uint8_t, uint8_t> Console::MouseButtonClicked(void) {
+    uint8_t* func = cppimp::Console_MouseButtonClicked$ret2();
+    pair<uint8_t, uint8_t> out(func[0],func[1]);
+    delete[] func;
+    return out;
+}
+
+uint8_t Console::MouseButtonReleased(void) {
+    return cppimp::Console_MouseButtonReleased();
+}
+
+int16_t Console::GetWindowWidth(void) {
     return Console_GetWindowWidth();
 }
 
-int16_t cpp::Console::GetWindowHeight(void) {
+int16_t Console::GetWindowHeight(void) {
     return Console_GetWindowHeight();
 }
 
-void cpp::Console::Sleep(double seconds){
+void Console::Sleep(double seconds){
     Console_Sleep(seconds);
 }
 
-cpp::Console::Symbol::Symbol(void) {
+Console::Symbol::Symbol(void) {
     symbol = Console_Symbol_Construct$cfb(L' ');
 }
 
-cpp::Console::Symbol::Symbol(const Symbol &cp) {
+Console::Symbol::Symbol(const Symbol &cp) {
     symbol = Console_Symbol_Construct$smb(cp.symbol);
 }
 
 
-cpp::Console::Symbol::Symbol(void* ptr, bool direct) {
+Console::Symbol::Symbol(void* ptr, bool direct) {
     if (direct) symbol = ptr;
     else symbol = Console_Symbol_Construct$smb(ptr);
 }
 
-cpp::Console::Symbol::Symbol(utfchar character, uint8_t foreground, uint8_t background) {
+Console::Symbol::Symbol(utfchar character, uint8_t foreground, uint8_t background) {
     symbol = Console_Symbol_Construct$cfb(Utf8ToUnicode(character),foreground,background);
 }
 
-cpp::Console::Symbol::~Symbol() {
+Console::Symbol::~Symbol() {
     Console_Symbol_Destruct(symbol);
 }
 
-cpp::Console::Symbol cpp::Console::Symbol::operator=(const cpp::Console::Symbol &src) {
+Console::Symbol Console::Symbol::operator=(const Console::Symbol &src) {
     Console_Symbol_operator$eq(this->symbol,src.symbol);
     //set own local variables
     return *this;
 }
 
-utfchar cpp::Console::Symbol::character(void) {
+utfchar Console::Symbol::character(void) {
     return UnicodeToUtf8(Console_Symbol_character$get(symbol));
 }
 
-void cpp::Console::Symbol::character(utfchar val) {
+void Console::Symbol::character(utfchar val) {
     return Console_Symbol_character$set(symbol, Utf8ToUnicode(val));
 }
 
-uint8_t cpp::Console::Symbol::foreground(void) {
+uint8_t Console::Symbol::foreground(void) {
     return Console_Symbol_foreground$get(symbol);
 }
 
-void cpp::Console::Symbol::foreground(uint8_t val) {
+void Console::Symbol::foreground(uint8_t val) {
     return Console_Symbol_foreground$set(symbol, val);
 }
 
-uint8_t cpp::Console::Symbol::background(void) {
+uint8_t Console::Symbol::background(void) {
     return Console_Symbol_background$get(symbol);
 }
 
-void cpp::Console::Symbol::background(uint8_t val) {
+void Console::Symbol::background(uint8_t val) {
     return Console_Symbol_background$set(symbol, val);
 }
 
-void* cpp::Console::Symbol::Get() {
+void* Console::Symbol::Get() {
     return symbol;
 }
 
 #ifdef _WIN32
-    uint8_t cpp::Console::Symbol::GetAttribute(void) {
+    uint8_t Console::Symbol::GetAttribute(void) {
         return Console_Symbol_GetAttribute(symbol);
     }
 
-    void cpp::Console::Symbol::SetAttribute(uint8_t attribute) {
+    void Console::Symbol::SetAttribute(uint8_t attribute) {
         return Console_Symbol_SetAttribute(symbol,attribute);
     }
 #endif

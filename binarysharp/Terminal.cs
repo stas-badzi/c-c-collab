@@ -19,20 +19,20 @@ namespace Cpp
             return CppImp.Terminal.HandleKeyboard();
         }
 
-        public static bool KeyDown(int key) {
-            return CppImp.Terminal.KeyDown(key);
+        public static bool IsKeyDown(int key) {
+            return CppImp.Terminal.IsKeyDown(key);
         }
 
-        public static bool KeyToggled(int key) {
-            return CppImp.Terminal.KeyToggled(key);
+        public static bool IsKeyToggled(int key) {
+            return CppImp.Terminal.IsKeyToggled(key);
         }
 
-        public static bool KeyHit(int key) {
-            return CppImp.Terminal.KeyHit(key);
+        public static int KeyPressed() {
+            return CppImp.Terminal.KeyPressed();
         }
 
-        public static bool KeyReleased(int key) {
-            return CppImp.Terminal.KeyReleased(key);
+        public static int KeyReleased() {
+            return CppImp.Terminal.KeyReleased();
         }
 
         public static ulong[] FillScreen(List<List<Symbol>> symbols) {

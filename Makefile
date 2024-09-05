@@ -15,9 +15,9 @@ release = FactoryRush
 defcompcxx = c++
 defcompc = cc
 #> source files
-sources = Console.cpp dllexport.cpp
+sources = Console.cpp dllexport.cpp FileSystem.cpp System.cpp
 #> header files
-headers = Console.hpp
+headers = Console.hpp FileSystem.hpp dllimport.hpp System.hpp
 #> include files
 includes = dynamic_library.h unicode_conversion.hpp getfd.h
 #> name the dynamic library
@@ -391,7 +391,7 @@ endif
 
 resources: source/getfd.h source/setkbdmode.c assets/a.tux
 ifeq ($(shell uname -s),Linux)
-	@$(c-compiler) -o assets/setkbdmode.$(binary) source/setkbdmode.c -Isource -std=c2x
+	@$(c-compiler) -o assets/setkbdmode.$(binary) $(cdb) source/setkbdmode.c -Isource -Wimplicit-function-declaration -std=c2x
 ifeq ($(copylibs),1)
 	@echo "$(linuxroot)/share/factoryrush/bin"
 	@$(admin) mkdir -p $(linuxroot)/share/factoryrush/bin

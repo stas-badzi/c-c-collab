@@ -19,20 +19,20 @@ namespace Cpp
             return CppImp.Terminal.HandleKeyboard();
         }
 
-        public static bool KeyDown(int key) {
-            return CppImp.Terminal.KeyDown(key);
+        public static bool IsKeyDown(int key) {
+            return CppImp.Terminal.IsKeyDown(key);
         }
 
-        public static bool KeyToggled(int key) {
-            return CppImp.Terminal.KeyToggled(key);
+        public static bool IsKeyToggled(int key) {
+            return CppImp.Terminal.IsKeyToggled(key);
         }
 
-        public static bool KeyHit(int key) {
-            return CppImp.Terminal.KeyHit(key);
+        public static int KeyPressed() {
+            return CppImp.Terminal.KeyPressed();
         }
 
-        public static bool KeyReleased(int key) {
-            return CppImp.Terminal.KeyReleased(key);
+        public static int KeyReleased() {
+            return CppImp.Terminal.KeyReleased();
         }
 
         public static ulong[] FillScreen(List<List<Symbol>> symbols) {
@@ -95,6 +95,11 @@ namespace Cpp
                 CppImp.Terminal.Symbol.Destruct(symbol);
             }
 
+            // be carefull not to use the struct after it hes been destructed, and that it doesn't get destructed automaticly either
+            public void Destruct() {
+                CppImp.Terminal.Symbol.Destruct(symbol);
+            }
+
             public Symbol() {
                 symbol = CppImp.Terminal.Symbol.Construct(' ');
             }
@@ -124,6 +129,9 @@ namespace Cpp
                 symbol = CppImp.Terminal.Symbol.Construct(TypeConvert.Utf8ToUnicode(character),foreground,background);
             }
 
+            // to edit a Symbol (Console::Symbol too, from;)
+                // too.Destruct(); too = new Symbol(from);
+           
             public char character() {
                 return TypeConvert.UnicodeToUtf8(CppImp.Terminal.Symbol.character(symbol));
             }
@@ -146,6 +154,10 @@ namespace Cpp
 
             public void background(byte val) {
                 CppImp.Terminal.Symbol.background(symbol, val);
+            }
+
+            public void ReverseColors() {
+                Cs.Console.Symbol.ReverseColors(new Symbol(symbol, true));
             }
 
             public nint Get() {
