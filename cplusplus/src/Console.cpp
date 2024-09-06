@@ -47,7 +47,7 @@ using namespace std::chrono;
     }
 
     HANDLE Console::h_console = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
-    HWND Console::win_console = GetHwnd();
+    HWND Console::win_console = Console::GetHwnd();
 
     HWND Console::GetHwnd(void) {
         #define MY_BUFSIZE 1024
