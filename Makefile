@@ -15,7 +15,7 @@ release = FactoryRush
 defcompcxx = c++
 defcompc = cc
 #> source files
-sources = Console.cpp dllexport.cpp FileSystem.cpp System.cpp
+sources = Console.cpp dllexport.cpp FileSystem.cpp System.cpp globals.c
 #> header files
 headers = Console.hpp FileSystem.hpp dllimport.hpp System.hpp
 #> include files

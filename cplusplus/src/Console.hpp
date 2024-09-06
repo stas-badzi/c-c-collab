@@ -3,10 +3,10 @@
 #include <vector>
 #include <array>
 #include <bitset>
+#include <stdlib.h>
 #include <cstdint>
 #include <thread>
 #include <signal.h>
-#include <stdlib.h>
 #include <chrono>
 #include <math.h>
 #include <exception>
@@ -15,9 +15,9 @@
 
 #ifdef _WIN32
     #include <windows.h>
-    #define at_quick_exit(func) atexit(func)
-    #define quick_exit(code) exit(code)
+    #include <quick_exit.h>
 #else
+    #include <signal.h>
     #include <stdio.h>
     #include <sys/ioctl.h>
     #include <unistd.h>
