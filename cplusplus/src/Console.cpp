@@ -151,6 +151,10 @@ using namespace std::chrono;
         }
     }
 
+    void Console::HandleMouseAndFocus(void) {
+        
+    }
+
     void SysSleep(int microseconds){
         Sleep((int)(microseconds/1000));
     }

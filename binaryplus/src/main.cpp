@@ -14,7 +14,7 @@ int main() {
     Console::Init();
     vector<vector<Console::Symbol>> screen;
     while (1) {
-        screen = FileSystem::TextureFromFile("a.tux");
+        screen = FileSystem::TextureFromFile(WStringToNative(L"a.tux"));
         Console::HandleMouseAndFocus();
         struct ConsoleMouseStatus mouse = Console::GetMouseStatus();
         wstring x = to_wstring(mouse.x);

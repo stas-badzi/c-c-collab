@@ -19,10 +19,8 @@ string System::root = System::GetRoot();
     }
 
     string cpp::System::ToNativePath(string path) {
-        char* edit = (char*)path;
-        for (int i = 0; edit[i] != '\0'; i++) if (edit[i] == '/') edit[i] = '\\';
-        string out = (string)(edit);
-        return out;
+        for (int i = 0; path[i] != '\0'; i++) if (path[i] == '/') path[i] = '\\';
+        return path;
     }
 #else
     string System::GetRoot(void) {

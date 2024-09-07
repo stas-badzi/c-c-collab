@@ -108,6 +108,11 @@ arch = x64
 endif
 endif
 
+ifeq ($(shell echo "check quotes"),"check quotes")
+movefl = move
+else
+movefl = mv
+endif
 
 ifeq ($(linker),$(empty))
 ldarg = 
@@ -186,7 +191,6 @@ os_name = win-$(arch)
 dllname = "$(name).dll"
 libname = "$(filename).dll"
 binary = exe
-movefl = move
 libdir = $(winlib)
 bindir = $(winbin)
 #
@@ -199,7 +203,6 @@ os_name = win-$(arch)
 dllname = "$(name).dll"
 libname = "$(filename).dll"
 binary = exe
-movefl = move
 libdir = $(winlib)
 bindir = $(winbin)
 #
@@ -248,7 +251,6 @@ os_name = win-$(arch)
 dllname = "$(name).dll"
 libname = "$(filename).dll"
 binary = exe
-movefl = move
 #
 else
 ifeq ($(shell uname -s),Darwin)
@@ -259,7 +261,6 @@ os_name = osx-$(arch)
 dllname = "lib$(name).dylib"
 libname = "lib$(filename).dylib"
 binary = app
-movefl = mv
 libdir = $(macoslib)
 bindir = $(macosbin)
 #
@@ -271,7 +272,6 @@ os_name = linux-$(arch)
 libname = "lib$(filename).so"
 dllname = "lib$(name).so"
 binary = bin
-movefl = mv
 libdir = $(linuxlib)
 bindir = $(linuxbin)
 #
@@ -424,37 +424,37 @@ endif
 #
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 #windows
-	@cd cplusplus/obj && $(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
+	@$(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
 	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
 #
 else
 ifeq ($(shell uname -s),WINDOWS_NT)
 #windows
-	@cd cplusplus/obj && $(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
+	@$(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
 	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
-	@cd cplusplus/obj && $(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
+	@$(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
 	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #mingw [ I think same as windows (?) ]
-	@cd cplusplus/obj && $(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
+	@$(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
 	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
 #
 else
 ifeq ($(findstring Windows_NT, $(shell uname -s)),Windows_NT)
 #msys [ i think older ]
-	@cd cplusplus/obj && $(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
+	@$(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
 	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
 #
 else
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys [ I think same as windows (?) ]
-	@cd cplusplus/obj && $(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I ../include -std=c++20
+	@$(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
 	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
 #
 else
