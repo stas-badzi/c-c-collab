@@ -132,3 +132,5 @@ namespace cpp {
         static unsigned short GetDoubleClickMaxWait(void);
     };
 } // namespace cpp
+
+void SysSleep(int microseconds);

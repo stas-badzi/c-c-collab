@@ -54,17 +54,10 @@ using namespace std::chrono;
         #define MY_BUFSIZE 1024
         HWND hwndFound;
         wchar_t pszNewWindowTitle[MY_BUFSIZE];
-        wchar_t pszOldWindowTitle[MY_BUFSIZE];
-
-        GetConsoleTitle(pszOldWindowTitle, MY_BUFSIZE);
-
         wsprintf(pszNewWindowTitle,L"%d/%d",GetTickCount(),GetCurrentProcessId());
         SetConsoleTitle(pszNewWindowTitle);
-        Sleep(40);
-
+        SysSleep(40e3);
         hwndFound=FindWindow(NULL, pszNewWindowTitle);
-        
-        SetConsoleTitle(pszOldWindowTitle);
 
         return(hwndFound);
     }
@@ -73,7 +66,10 @@ using namespace std::chrono;
         if (!initialised) {
 
             Console::h_console = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
+            SetConsoleActiveScreenBuffer(Console::h_console);
+
             Console::win_console = Console::GetHwnd();
+
             
             atexit(Console::Fin);
             at_quick_exit(Console::Fin);
@@ -84,8 +80,8 @@ using namespace std::chrono;
             signal(SIGFPE, quick_exit);
             signal(SIGSEGV, quick_exit);
             signal(SIGTERM, quick_exit);
-            signal(SIGBREAK, quick_exit);SetConsoleActiveScreenBuffer(Console::h_console);
-
+            signal(SIGBREAK, quick_exit);
+            
             initialised = true;
         }
     }

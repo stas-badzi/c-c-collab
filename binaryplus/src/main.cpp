@@ -1,7 +1,14 @@
 #include <iostream>
+
+#include "Console.hpp"
+#include "FileSystem.hpp"
+
 using namespace std;
+using namespace cpp;
+using namespace cs;
+
 int main() {
-    cin.get();
-    cout << "Hello, World!" << endl;
+    Console::Init();
+    cerr << "Hello, World!\n";
     return 0;
 }

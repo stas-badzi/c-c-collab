@@ -391,7 +391,7 @@ endif
 
 resources: source/getfd.h source/setkbdmode.c assets/a.tux
 ifeq ($(shell uname -s),Linux)
-	@$(c-compiler) -o assets/setkbdmode.$(binary) $(cdb) source/setkbdmode.c -Isource -Wimplicit-function-declaration -std=c2x
+	@$(c-compiler) -o assets/setkbdmode.$(binary) $(cdb) source/setkbdmode.c -Isource -Wimplicit-function-declaration -std=c2x -static-libgcc
 ifeq ($(copylibs),1)
 	@echo "$(linuxroot)/share/factoryrush/bin"
 	@$(admin) mkdir -p $(linuxroot)/share/factoryrush/bin
@@ -425,37 +425,37 @@ endif
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 #windows
 	@$(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
-	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
+	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
 #
 else
 ifeq ($(shell uname -s),WINDOWS_NT)
 #windows
 	@$(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
-	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
+	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
 	@$(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
-	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
+	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #mingw [ I think same as windows (?) ]
 	@$(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
-	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
+	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
 #
 else
 ifeq ($(findstring Windows_NT, $(shell uname -s)),Windows_NT)
 #msys [ i think older ]
 	@$(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
-	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
+	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
 #
 else
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys [ I think same as windows (?) ]
 	@$(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
-	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) $(ldarg)
+	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
 #
 else
 # not windows
@@ -463,11 +463,11 @@ else
 	@$(cpp-compiler) -c -fpic -DUNICODE $(cdb) -fvisibility=hidden $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
 ifeq ($(shell uname -s),Darwin)
 #macos
-	@cd cplusplus && $(cpp-compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) -L$(flibdir) $(flib) $(ldarg)
+	@cd cplusplus && $(cpp-compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
 #
 else
 #linux and similar
-	@cd cplusplus && $(cpp-compiler) -shared -o bin/lib$(name).so $(objects) -L$(flibdir) $(flib) $(ldarg)
+	@cd cplusplus && $(cpp-compiler) -shared -o bin/lib$(name).so $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
 endif
 endif
 endif
@@ -539,7 +539,7 @@ endif
 
 #all
 	@$(cpp-compiler) -c $(bpdb) $(fbsrc) -I binaryplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(fbobj)),&& $(movefl) -f $(obj) binaryplus/obj$(space))
-	@cd binaryplus && $(cpp-compiler) -o bin/$(binname).$(binary) $(fbobj) -L$(flibdir) $(flib) -l$(name) $(ldarg)
+	@cd binaryplus && $(cpp-compiler) -o bin/$(binname).$(binary) $(fbobj) -L$(flibdir) -l$(name) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
 #
 
 ifeq ($(shell uname -s),Darwin)
