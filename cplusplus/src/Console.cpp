@@ -47,8 +47,8 @@ using namespace std::chrono;
         return val;
     }
 
-    HANDLE Console::h_console = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
-    HWND Console::win_console = Console::GetHwnd();
+    HANDLE Console::h_console = HANDLE();
+    HWND Console::win_console = HWND();
 
     HWND Console::GetHwnd(void) {
         #define MY_BUFSIZE 1024
@@ -71,9 +71,12 @@ using namespace std::chrono;
 
     void Console::Init(void) {
         if (!initialised) {
+
+            Console::h_console = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
+            Console::win_console = Console::GetHwnd();
             
-            atexit(Fin);
-            at_quick_exit(Fin);
+            atexit(Console::Fin);
+            at_quick_exit(Console::Fin);
 
             signal(SIGINT, quick_exit);
             signal(SIGILL, quick_exit);
@@ -152,7 +155,7 @@ using namespace std::chrono;
     }
 
     void Console::HandleMouseAndFocus(void) {
-        
+        return;
     }
 
     void SysSleep(int microseconds){
@@ -427,6 +430,9 @@ using namespace std::chrono;
         return;
     }
 
+    struct termios Console::old_fdterm = termios();
+    int Console::old_kbdmode = int();
+
 #elif __APPLE__
 // macOS
     void Console::Init(void) {
@@ -606,8 +612,6 @@ using namespace std::chrono;
     }
 
     struct termios Console::old_termios = termios();
-    struct termios Console::old_fdterm = termios();
-    int Console::old_kbdmode = int();
     int Console::fd = int();
 #endif
 

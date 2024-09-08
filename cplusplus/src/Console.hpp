@@ -3,9 +3,8 @@
 #include <vector>
 #include <array>
 #include <bitset>
-#include <stdlib.h>
+#include <cstdlib>
 #include <cstdint>
-#include <thread>
 #include <signal.h>
 #include <chrono>
 #include <math.h>

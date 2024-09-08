@@ -19,7 +19,7 @@ sources = Console.cpp dllexport.cpp FileSystem.cpp System.cpp globals.c
 #> header files
 headers = Console.hpp FileSystem.hpp dllimport.hpp System.hpp
 #> include files
-includes = dynamic_library.h unicode_conversion.hpp getfd.h
+includes = dynamic_library.h unicode_conversion.hpp getfd.h quick_exit.h quick_exit/defines.h
 #> name the dynamic library
 name = factoryrushplus
 # *******************************
@@ -539,7 +539,7 @@ endif
 
 #all
 	@$(cpp-compiler) -c $(bpdb) $(fbsrc) -I binaryplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(fbobj)),&& $(movefl) -f $(obj) binaryplus/obj$(space))
-	@cd binaryplus && $(cpp-compiler) -o bin/$(binname).$(binary) $(fbobj) -I include -L$(flibdir) -l$(filename) -l$(name) $(ldarg)
+	@cd binaryplus && $(cpp-compiler) -o bin/$(binname).$(binary) $(fbobj) -L$(flibdir) $(flib) -l$(name) $(ldarg)
 #
 
 ifeq ($(shell uname -s),Darwin)
