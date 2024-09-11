@@ -26,7 +26,7 @@ using namespace std::chrono;
         if (i1 == 13) { val |= FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY; }
         if (i1 == 14) { val |= FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY; }
         if (i1 == 15) { val |= FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY; }
-        if (i1 >= 16) { val |= 0x0000; }
+        if (i1 >= 16) { val |= FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; }
         if (i2 == 0) { val |= 0x0000; }
         if (i2 == 1) { val |= BACKGROUND_RED; }
         if (i2 == 2) { val |= BACKGROUND_GREEN; }
@@ -43,7 +43,7 @@ using namespace std::chrono;
         if (i2 == 13) { val |= BACKGROUND_RED | BACKGROUND_BLUE | BACKGROUND_INTENSITY; }
         if (i2 == 14) { val |= BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_INTENSITY; }
         if (i2 == 15) { val |= BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY; }
-        if (i2 >= 16) { val |= BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE; }
+        if (i2 >= 16) { val |= 0x0000; }
         return val;
     }
 
@@ -58,7 +58,6 @@ using namespace std::chrono;
         SetConsoleTitle(pszNewWindowTitle);
         SysSleep(40e3);
         hwndFound=FindWindow(NULL, pszNewWindowTitle);
-
         return(hwndFound);
     }
 
@@ -151,6 +150,17 @@ using namespace std::chrono;
     }
 
     void Console::HandleMouseAndFocus(void) {
+        Console::focused = (Console::win_console == GetForegroundWindow());
+
+        POINT p;
+        GetCursorPos(&p);
+        ScreenToClient(Console::win_console, &p);
+        Console::mouse_status.x = (p.x < 0) ? Console::mouse_status.x : p.x;
+        Console::mouse_status.y = (p.y < 0) ? Console::mouse_status.y : p.y;
+        cerr << '\n' << Console::mouse_status.x << " " <<Console::mouse_status.y << '\n';
+
+
+
         return;
     }
 

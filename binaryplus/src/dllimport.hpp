@@ -2,7 +2,6 @@
 
 #include <dynamic_library.h>
 #include <unicode_conversion.hpp>
-#include "ConsoleMouseStatus.hpp"
 
 namespace cppimp {
     libimport void Console_Init(void);
@@ -23,7 +22,7 @@ namespace cppimp {
 
     libimport void Console_HandleMouseAndFocus(void);
 
-    libimport cpp::ConsoleMouseStatus Console_GetMouseStatus(void);
+    libimport void* Console_GetMouseStatus(void);
 
     libimport uint8_t* Console_MouseButtonClicked$ret2(void);
 

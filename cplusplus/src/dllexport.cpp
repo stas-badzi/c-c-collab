@@ -1,5 +1,6 @@
 #include <dynamic_library.h>
 #include <unicode_conversion.hpp>
+#include <vector>
 
 #include "Console.hpp"
 
@@ -43,8 +44,9 @@ using namespace uniconv;
         return cpp::Console::HandleMouseAndFocus();
     }
 
-    libexport cpp::Console::MouseStatus Console_GetMouseStatus(void) {
-        return cpp::Console::GetMouseStatus();
+    libexport void* Console_GetMouseStatus(void) {
+        void* out = new cpp::Console::MouseStatus(cpp::Console::GetMouseStatus());
+        return out;
     }
 
     libexport uint8_t* Console_MouseButtonClicked$ret2(void) {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <utility>
 #include <vector>
 #include <array>
 #include <bitset>
@@ -96,7 +97,7 @@ namespace cpp {
 
             Symbol(const Symbol& sym);
 
-            Symbol(uniconv::utfchar character, uint8_t foreground = 7, uint8_t background = 0);
+            Symbol(uniconv::utfchar character, uint8_t foreground = 16, uint8_t background = 16);
 
             Symbol(uint8_t attribute);
 
