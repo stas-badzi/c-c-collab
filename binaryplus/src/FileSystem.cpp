@@ -7,6 +7,8 @@ using namespace uniconv;
 using namespace std;
 using namespace cs;
 using namespace cpp;
+void* TextureToPtr(vector<vector<Console::Symbol>> texture);
+vector<vector<Console::Symbol>> PtrToTexture(void* ptr);
 
 
 vector<utfstr> FileSystem::ImportText(utfstr filename) {
@@ -30,7 +32,7 @@ vector<utfstr> FileSystem::ImportText(utfstr filename) {
     
 }
 
-void FileSystem::ExportText(utfstr file, vector<utfstr> lines) {
+static void FileSystem::ExportText(utfstr file, vector<utfstr> lines) {
     unichar** unilines = new unichar*[lines.size()];
 
     for (size_t i = 0; i < lines.size(); i++) {
@@ -54,7 +56,7 @@ vector<vector<Console::Symbol>> FileSystem::TextureFromFile(utfstr filepath) {
     return PtrToTexture(ret);
 }
 
-void FileSystem::FileFromTexture(utfstr filepath, vector<vector<Console::Symbol>> texture, bool recycle = false) {
+static void FileSystem::FileFromTexture(utfstr filepath, vector<vector<Console::Symbol>> texture, bool recycle = false) {
     unichar* filepathPtr = Utf8StringToUnicode(filepath);
     void* texturePtr = TextureToPtr(texture);
 
@@ -62,25 +64,24 @@ void FileSystem::FileFromTexture(utfstr filepath, vector<vector<Console::Symbol>
     free(texturePtr);
 }
 
-void FileSystem::DrawTextureToScreen(int x, int y, vector<vector<Console::Symbol>> texture, vector<vector<Console::Symbol>> screen)
+static void FileSystem::DrawTextureToScreen(int x, int y, vector<vector<Console::Symbol>> texture, vector<vector<Console::Symbol>> screen)
 {
-    var texturePtr = TextureToPtr(texture);
-    var screenPTr = TextureToPtr(screen);
+    auto texturePtr = TextureToPtr(texture);
+    auto screenPtr = TextureToPtr(screen);
 
     csimp::FileSystem_DrawTextureToScreen(x, y, texturePtr, screenPtr);
     free(texturePtr);
     free(screenPtr);
 }
 
-void FileSystem::PlayWAV(utfstr filepath, bool wait = false)
+static void FileSystem::PlayWAV(utfstr filepath, bool wait = false)
 {
-    var filepathPtr = Utf8StringToUnicode(filepath);
+    auto filepathPtr = Utf8StringToUnicode(filepath);
 
     csimp::FileSystem_PlayWAV(filepathPtr, wait);
 }
 
-vector<vector<Console::Symbol>> PtrToTexture(void* ptr)
-{
+vector<vector<Console::Symbol>> PtrToTexture(void* ptr) {
     vector<vector<Console::Symbol>> ret;
 
     const int int32_size = sizeof(int32_t);
