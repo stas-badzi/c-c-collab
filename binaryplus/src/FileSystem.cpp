@@ -32,7 +32,7 @@ vector<utfstr> FileSystem::ImportText(utfstr filename) {
     
 }
 
-static void FileSystem::ExportText(utfstr file, vector<utfstr> lines) {
+void FileSystem::ExportText(utfstr file, vector<utfstr> lines) {
     unichar** unilines = new unichar*[lines.size()];
 
     for (size_t i = 0; i < lines.size(); i++) {
@@ -56,7 +56,7 @@ vector<vector<Console::Symbol>> FileSystem::TextureFromFile(utfstr filepath) {
     return PtrToTexture(ret);
 }
 
-static void FileSystem::FileFromTexture(utfstr filepath, vector<vector<Console::Symbol>> texture, bool recycle = false) {
+void FileSystem::FileFromTexture(utfstr filepath, vector<vector<Console::Symbol>> texture, bool recycle) {
     unichar* filepathPtr = Utf8StringToUnicode(filepath);
     void* texturePtr = TextureToPtr(texture);
 
@@ -64,7 +64,7 @@ static void FileSystem::FileFromTexture(utfstr filepath, vector<vector<Console::
     free(texturePtr);
 }
 
-static void FileSystem::DrawTextureToScreen(int x, int y, vector<vector<Console::Symbol>> texture, vector<vector<Console::Symbol>> screen)
+void FileSystem::DrawTextureToScreen(int x, int y, vector<vector<Console::Symbol>> texture, vector<vector<Console::Symbol>> screen)
 {
     auto texturePtr = TextureToPtr(texture);
     auto screenPtr = TextureToPtr(screen);
@@ -74,7 +74,7 @@ static void FileSystem::DrawTextureToScreen(int x, int y, vector<vector<Console:
     free(screenPtr);
 }
 
-static void FileSystem::PlayWAV(utfstr filepath, bool wait = false)
+void FileSystem::PlayWAV(utfstr filepath, bool wait)
 {
     auto filepathPtr = Utf8StringToUnicode(filepath);
 
