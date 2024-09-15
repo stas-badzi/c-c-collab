@@ -8,7 +8,7 @@ using namespace std::chrono;
 #ifdef _WIN32
 #include <iostream>
 
-    inline uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2) {
+    inline uint8_t Console::GenerateAtrVal(uint8_t i1, uint8_t i2) {
         uint8_t val = 0x0000;
         if (i1 == 0) { val |= 0x0000; }
         if (i1 == 1) { val |= FOREGROUND_RED; }
@@ -26,7 +26,7 @@ using namespace std::chrono;
         if (i1 == 13) { val |= FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY; }
         if (i1 == 14) { val |= FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY; }
         if (i1 == 15) { val |= FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY; }
-        if (i1 >= 16) { val |= 0x0000; }
+        if (i1 >= 16) { val |= Console::default_fcol * 0b00000001; }
         if (i2 == 0) { val |= 0x0000; }
         if (i2 == 1) { val |= BACKGROUND_RED; }
         if (i2 == 2) { val |= BACKGROUND_GREEN; }
@@ -43,37 +43,117 @@ using namespace std::chrono;
         if (i2 == 13) { val |= BACKGROUND_RED | BACKGROUND_BLUE | BACKGROUND_INTENSITY; }
         if (i2 == 14) { val |= BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_INTENSITY; }
         if (i2 == 15) { val |= BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY; }
-        if (i2 >= 16) { val |= BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE; }
+        if (i2 >= 16) { val |= Console::default_bcol * 0b00010000; }
         return val;
     }
 
-    HANDLE Console::h_console = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
-    HWND Console::win_console = Console::GetHwnd();
+    // first foreground second background
+    inline pair<uint8_t,uint8_t> AtrValToColors(uint8_t val) {
+        pair<uint8_t,uint8_t> out;
 
-    HWND Console::GetHwnd(void) {
-        #define MY_BUFSIZE 1024
+        out.first = 0x0000;
+        if ( (val & 0b00001111) == (FOREGROUND_RED) ) { out.first = 1; }
+        if ( (val & 0b00001111) == (FOREGROUND_GREEN) ) { out.first = 2; }
+        if ( (val & 0b00001111) == (FOREGROUND_RED | FOREGROUND_GREEN) ) { out.first = 3; }
+        if ( (val & 0b00001111) == (FOREGROUND_BLUE) ) { out.first = 4; }
+        if ( (val & 0b00001111) == (FOREGROUND_RED | FOREGROUND_BLUE) ) { out.first = 5; }
+        if ( (val & 0b00001111) == (FOREGROUND_BLUE | FOREGROUND_GREEN) ) { out.first = 6; }
+        if ( (val & 0b00001111) == (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ) { out.first = 7; }
+        if ( (val & 0b00001111) == (FOREGROUND_INTENSITY) ) { out.first = 8; }
+        if ( (val & 0b00001111) == (FOREGROUND_RED | FOREGROUND_INTENSITY) ) { out.first = 9; }
+        if ( (val & 0b00001111) == (FOREGROUND_GREEN | FOREGROUND_INTENSITY) ) { out.first = 10; }
+        if ( (val & 0b00001111) == (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY) ) { out.first = 11; }
+        if ( (val & 0b00001111) == (FOREGROUND_BLUE | FOREGROUND_INTENSITY) ) { out.first = 12; }
+        if ( (val & 0b00001111) == (FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ) { out.first = 13; }
+        if ( (val & 0b00001111) == (FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY) ) { out.first = 14; }
+        if ( (val & 0b00001111) == (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ) { out.first = 15; }
+
+        out.second = 0x0000;
+        if ( (val & 0b11110000) == (FOREGROUND_RED) ) { out.second = 1; }
+        if ( (val & 0b11110000) == (FOREGROUND_GREEN) ) { out.second = 2; }
+        if ( (val & 0b11110000) == (FOREGROUND_RED | FOREGROUND_GREEN) ) { out.second = 3; }
+        if ( (val & 0b11110000) == (FOREGROUND_BLUE) ) { out.second = 4; }
+        if ( (val & 0b11110000) == (FOREGROUND_RED | FOREGROUND_BLUE) ) { out.second = 5; }
+        if ( (val & 0b11110000) == (FOREGROUND_BLUE | FOREGROUND_GREEN) ) { out.second = 6; }
+        if ( (val & 0b11110000) == (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ) { out.second = 7; }
+        if ( (val & 0b11110000) == (FOREGROUND_INTENSITY) ) { out.second = 8; }
+        if ( (val & 0b11110000) == (FOREGROUND_RED | FOREGROUND_INTENSITY) ) { out.second = 9; }
+        if ( (val & 0b11110000) == (FOREGROUND_GREEN | FOREGROUND_INTENSITY) ) { out.second = 10; }
+        if ( (val & 0b11110000) == (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY) ) { out.second = 11; }
+        if ( (val & 0b11110000) == (FOREGROUND_BLUE | FOREGROUND_INTENSITY) ) { out.second = 12; }
+        if ( (val & 0b11110000) == (FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ) { out.second = 13; }
+        if ( (val & 0b11110000) == (FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY) ) { out.second = 14; }
+        if ( (val & 0b11110000) == (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ) { out.second = 15; }
+
+        return out;
+    }
+
+    HANDLE Console::screen = HANDLE();
+    HWND Console::window = HWND();
+    HDC Console::device = HDC();
+    uint8_t Console::default_fcol = uint8_t();
+    uint8_t Console::default_bcol = uint8_t();
+    pair<uint16_t,uint16_t> Console::xyoffset = pair<uint16_t,uint16_t>();
+
+    inline HWND GetHwnd(void) {
         HWND hwndFound;
-        wchar_t pszNewWindowTitle[MY_BUFSIZE];
-        wchar_t pszOldWindowTitle[MY_BUFSIZE];
-
-        GetConsoleTitle(pszOldWindowTitle, MY_BUFSIZE);
-
+        wchar_t pszNewWindowTitle[1024];
         wsprintf(pszNewWindowTitle,L"%d/%d",GetTickCount(),GetCurrentProcessId());
         SetConsoleTitle(pszNewWindowTitle);
-        Sleep(40);
-
+        SysSleep(40e3);
         hwndFound=FindWindow(NULL, pszNewWindowTitle);
-        
-        SetConsoleTitle(pszOldWindowTitle);
-
         return(hwndFound);
+    }
+
+    inline pair<uint16_t,uint16_t> Console::GetXYCharOffset() {
+        return pair<uint16_t,uint16_t>(0,0);
+    #define GetXYCharOffset_MaxXSearch 25
+    #define GetXYCharOffset_MaxYSearch 50
+        auto scr = vector<vector<Symbol>>();
+        scr.push_back(vector<Symbol>());
+        scr.back().push_back(Console::Symbol(L' ', 1, 1));
+        FillScreen(scr);
+        CONSOLE_SCREEN_BUFFER_INFOEX csbix;
+        GetConsoleScreenBufferInfoEx(Console::screen, &csbix);
+        COLORREF red = csbix.ColorTable[4];
+        cerr << csbix.ColorTable[0] << ' ' << csbix.ColorTable[1] << ' ' << csbix.ColorTable[2] << ' ' << csbix.ColorTable[3] << ' ' << csbix.ColorTable[4] << '\n';
+        
+        auto out = pair<uint16_t,uint16_t>(-1,-1);
+        for (uint16_t i = 0; i < GetXYCharOffset_MaxXSearch; i++) {
+            for (uint16_t j = 0; j < GetXYCharOffset_MaxYSearch; j++) {
+                POINT p = {i, j};
+                ClientToScreen(Console::window,&p);
+                COLORREF col = GetPixel(Console::device, p.x, p.y);
+                if (red == col) {
+                    out.first = i;
+                    out.second = j;
+                    goto GetXYCharOffsetOutOfLoop;
+                }
+            }
+        }
+GetXYCharOffsetOutOfLoop:
+        cerr << '\n' << '\n' << out.first << ' ' << out.second << '\n';
+        return out;
     }
 
     void Console::Init(void) {
         if (!initialised) {
+
+            Console::screen = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
+            SetConsoleActiveScreenBuffer(Console::screen);
+
+            Console::window = GetHwnd();
+            Console::device = GetDC(Console::window);
+            Console::xyoffset = Console::GetXYCharOffset();
+
+            CONSOLE_SCREEN_BUFFER_INFO csbi;
+            GetConsoleScreenBufferInfo(Console::screen, &csbi);
+            auto val = AtrValToColors(csbi.wAttributes);
+            Console::default_fcol = val.first;
+            Console::default_bcol = val.second;
             
-            atexit(Fin);
-            at_quick_exit(Fin);
+            atexit(Console::Fin);
+            at_quick_exit(Console::Fin);
 
             signal(SIGINT, quick_exit);
             signal(SIGILL, quick_exit);
@@ -81,8 +161,8 @@ using namespace std::chrono;
             signal(SIGFPE, quick_exit);
             signal(SIGSEGV, quick_exit);
             signal(SIGTERM, quick_exit);
-            signal(SIGBREAK, quick_exit);SetConsoleActiveScreenBuffer(Console::h_console);
-
+            signal(SIGBREAK, quick_exit);
+            
             initialised = true;
         }
     }
@@ -97,13 +177,13 @@ using namespace std::chrono;
 
     int16_t cpp::Console::GetWindowWidth(void) {
         CONSOLE_SCREEN_BUFFER_INFO csbi;
-        GetConsoleScreenBufferInfo(h_console, &csbi);
+        GetConsoleScreenBufferInfo(screen, &csbi);
         return csbi.srWindow.Right - csbi.srWindow.Left + 1;
     }
 
     int16_t cpp::Console::GetWindowHeight(void) {
         CONSOLE_SCREEN_BUFFER_INFO csbi;
-        GetConsoleScreenBufferInfo(h_console, &csbi);
+        GetConsoleScreenBufferInfo(screen, &csbi);
         return csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
     }
 
@@ -127,9 +207,9 @@ using namespace std::chrono;
 		}
 
         array<DWORD,2> written;
-		BOOL out = WriteConsoleOutputCharacter(h_console, screen, width*height, { 0,0 }, &(written[0]) );
+		BOOL out = WriteConsoleOutputCharacter(Console::screen, screen, width*height, { 0,0 }, &(written[0]) );
         if (out == 0) { exit(GetLastError()); }
-		out = WriteConsoleOutputAttribute(h_console, attributes, width*height, { 0,0 }, &(written[1]) );
+		out = WriteConsoleOutputAttribute(Console::screen, attributes, width*height, { 0,0 }, &(written[1]) );
         if (out == 0) { exit(GetLastError()); }
         
 		delete[] screen;
@@ -152,7 +232,20 @@ using namespace std::chrono;
     }
 
     void Console::HandleMouseAndFocus(void) {
-        
+        Console::focused = (Console::window == GetForegroundWindow());
+
+        POINT p;
+        GetCursorPos(&p);
+        ScreenToClient(Console::window, &p);
+        Console::mouse_status.x = (p.x < 0) ? Console::mouse_status.x : p.x;
+        Console::mouse_status.y = (p.y < 0) ? Console::mouse_status.y : p.y;
+
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        GetConsoleScreenBufferInfo(Console::screen, &csbi);
+
+        cerr << ' ' << csbi.dwSize.X << ' ' << csbi.dwSize.Y << '\n';
+
+        return;
     }
 
     void SysSleep(int microseconds){
@@ -164,8 +257,8 @@ using namespace std::chrono;
     }
 
     void Console::Symbol::SetAttribute(uint8_t attribute) {
-        this->foreground = 7;
-        this->background = 0;
+        this->foreground = AtrValToColors(attribute).first;
+        this->background = AtrValToColors(attribute).second;
     }
 
     Console::Symbol::Symbol(uint8_t attribute) {
@@ -427,6 +520,9 @@ using namespace std::chrono;
         return;
     }
 
+    struct termios Console::old_fdterm = termios();
+    int Console::old_kbdmode = int();
+
 #elif __APPLE__
 // macOS
     void Console::Init(void) {
@@ -606,8 +702,6 @@ using namespace std::chrono;
     }
 
     struct termios Console::old_termios = termios();
-    struct termios Console::old_fdterm = termios();
-    int Console::old_kbdmode = int();
     int Console::fd = int();
 #endif
 

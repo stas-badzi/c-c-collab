@@ -15,9 +15,9 @@
 namespace uniconv {
     
 
+typedef uint32_t unichar;
 #ifdef _WIN32
     typedef wchar_t utfchar;
-    typedef uint32_t unichar;
     typedef std::wstring utfstr;
     inline utfstr to_string(utfchar val) {
         utfstr out; 
@@ -26,7 +26,6 @@ namespace uniconv {
     }
 #else
     typedef std::string utfchar;
-    typedef uint32_t unichar;
     typedef std::string utfstr;
     inline utfstr to_string(utfchar val) { return val; }
 #endif
@@ -135,38 +134,42 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
 #endif
 }
 
-inline unichar* Utf8StringToUnicode (utfstr utf8s) {
-    unichar* out = new unichar[utf8s.size()];
-    for (size_t i = 0; i < utf8s.size(); i++) {
-        out[i] = utf8s.at(i);
-    }
-    return out;
-}
-
-inline utfstr UnicodeToUtf8String (unichar* unicodes) {
-    utfstr out;
-    for (size_t i = 0; unicodes[i] != 0; i++) {
-        out.append(to_string(UnicodeToUtf8(unicodes[i])));
-    }
-    return out;
-}
-
 #ifdef _WIN32
     inline utfstr WStringToNative(std::wstring wstr) { return wstr; }
     inline utfchar WCharToNative(wchar_t wchar) { return wchar; }
+    inline std::wstring NativeToWString(utfstr utfstr) { return utfstr; }
+    inline wchar_t NativeToWChar(utfchar utfchar) { return utfchar; }
     inline utfchar ReadUtfChar(utfstr str, size_t offset = 0, size_t* bytes_read = nullptr) {
         if (bytes_read != nullptr) { *bytes_read = 1; }
         return str[offset];
     }
 #else
+
     inline utfstr WStringToNative(std::wstring wstr) {
-        std::wstring_convert<std::codecvt_utf8<wchar_t> > utf8_conv;
-        return utf8_conv.to_bytes(wstr);
+        utfstr out = "";
+        for (int i = 0; i < utfstr.size(); ++i) {
+            out.append(UnicodeToUtf8((unichar)(wstr[i])));
+        }
+        return out;
     }
+
     inline utfchar WCharToNative(wchar_t wchar) {
-        std::wstring_convert<std::codecvt_utf8<wchar_t> > utf8_conv;
-        return utf8_conv.to_bytes(wchar);
+        return UnicodeToUtf8((uint32_t)(wchar));
     }
+
+    inline std::wstring NativeToWString(utfstr utfstr) {
+        std::wstring out = L"";
+        size_t locread;
+        for (size_t read = 0; read < utfstr.size(); read += locread) {
+            out.push_back((wchar_t)(Utf8ToUnicode(ReadUtfChar(utfstr, read, &locread))));
+        }
+        return out;
+    }
+
+    inline wchar_t NativeToWChar(utfchar utfchar) {
+        return (wchar_t)(Utf8ToUnicode(utfchar));
+    }
+
     inline utfchar ReadUtfChar(utfstr str, size_t offset = 0, size_t* bytes_read = nullptr) {
         utfchar out;
         std::bitset<8> char_bits;
@@ -217,4 +220,23 @@ inline utfstr UnicodeToUtf8String (unichar* unicodes) {
         return out;
     }
 #endif
+
+    inline unichar* Utf8StringToUnicode (utfstr utf8s) {
+        unichar* out = new unichar[utf8s.size()];
+        size_t offset;
+        for (size_t i = 0; i < utf8s.size(); i += offset) {
+            out[i] = Utf8ToUnicode(ReadUtfChar(utf8s, i, &offset));
+        }
+        return out;
+    }
+
+    inline utfstr UnicodeToUtf8String (unichar* unicodes) {
+        utfstr out;
+        for (int i = 0; unicodes[i] != 0; ++i) {
+            out.append(to_string(UnicodeToUtf8(unicodes[i])));
+        }
+        return out;
+    }
+
+
 } // namespace uniconv

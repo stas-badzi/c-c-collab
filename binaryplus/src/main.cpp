@@ -1,31 +1,23 @@
+#include <iostream>
+#include <windows.h>
+#include <string>
+
 #include "Console.hpp"
 #include "FileSystem.hpp"
 
-#include <unicode_conversion.hpp>
-
-using namespace uniconv;
+using namespace std;
 using namespace cpp;
 using namespace cs;
-using namespace std;
 
 int main() {
-    int mode1,mode2,fd,err;
-
     Console::Init();
-    vector<vector<Console::Symbol>> screen;
-    while (1) {
-        screen = FileSystem::TextureFromFile(WStringToNative(L"a.tux"));
+    while (!Console::IsKeyDown(VK_CONTROL) || Console::KeyPressed() != 'Q') {
         Console::HandleMouseAndFocus();
-        struct ConsoleMouseStatus mouse = Console::GetMouseStatus();
-        wstring x = to_wstring(mouse.x);
-        wstring y = to_wstring(mouse.y);
-        if (mouse.x < UINT32_MAX) {
-            for (int i = 0; i < x.size(); i++) {
-                screen[0][i].character(WCharToNative(x[i]));
-            }
-        }
-        Console::FillScreen(screen);
-        Console::Sleep(0.05);
+        wstring val;
+        val.append(L"Hello, World!" + to_wstring(Console::GetMouseStatus().y) + L" y: " + to_wstring(Console::GetMouseStatus().x) + L" abcdefg  h     ezzzzzzzzzzzzzzzzz");
+        auto p = Console::Symbol::CreateTexture(val);
+        Console::FillScreen(p);
+        Console::HandleKeyboard();
     }
     return 0;
 }

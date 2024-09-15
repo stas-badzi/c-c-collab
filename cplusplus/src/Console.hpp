@@ -1,11 +1,11 @@
 #pragma once
 
+#include <utility>
 #include <vector>
 #include <array>
 #include <bitset>
-#include <stdlib.h>
+#include <cstdlib>
 #include <cstdint>
-#include <thread>
 #include <signal.h>
 #include <chrono>
 #include <math.h>
@@ -73,9 +73,14 @@ namespace cpp {
         static uint8_t last_mouse_combo;
         static std::chrono::time_point<std::chrono::high_resolution_clock> last_click_time;
         #ifdef _WIN32
-            static HANDLE h_console;
-            static HWND win_console;
-            static HWND GetHwnd(void);
+            static uint8_t default_fcol;
+            static uint8_t default_bcol;
+            static HANDLE screen;
+            static HWND window;
+            static HDC device;
+            static inline uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2);
+            static std::pair<uint16_t,uint16_t> xyoffset;
+            static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
         #else
             static struct termios old_termios;
         #ifdef __linux__
@@ -97,7 +102,7 @@ namespace cpp {
 
             Symbol(const Symbol& sym);
 
-            Symbol(uniconv::utfchar character, uint8_t foreground = 7, uint8_t background = 0);
+            Symbol(uniconv::utfchar character, uint8_t foreground = 16, uint8_t background = 16);
 
             Symbol(uint8_t attribute);
 
@@ -133,3 +138,5 @@ namespace cpp {
         static unsigned short GetDoubleClickMaxWait(void);
     };
 } // namespace cpp
+
+void SysSleep(int microseconds);
