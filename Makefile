@@ -110,8 +110,10 @@ endif
 
 ifeq ($(shell echo "check quotes"),"check quotes")
 movefl = move
+dir = $(shell cd)
 else
 movefl = mv
+dir = $(shell pwd)
 endif
 
 ifeq ($(linker),$(empty))
@@ -410,7 +412,11 @@ endif
 	@echo "Version file. Remove to enable recompile" > $@
 
 cpprun:
+ifeq ($(binary),exe)
+	wt -f "$(dir)\binaryplus\bin\$(binname).$(binary)"
+else
 	@cd binaryplus/bin && $(prefix)$(binname).$(binary)
+endif
 
 csrun:
 	@cd binarysharp/bin/exe && $(prefix)$(binfile).$(binary)
@@ -425,37 +431,37 @@ endif
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 #windows
 	@$(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
-	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
+	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
 #
 else
 ifeq ($(shell uname -s),WINDOWS_NT)
 #windows
 	@$(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
-	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
+	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
 	@$(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
-	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
+	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #mingw [ I think same as windows (?) ]
 	@$(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
-	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
+	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
 #
 else
 ifeq ($(findstring Windows_NT, $(shell uname -s)),Windows_NT)
 #msys [ i think older ]
 	@$(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
-	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
+	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
 #
 else
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys [ I think same as windows (?) ]
 	@$(cpp-compiler) -c -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
-	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
+	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
 #
 else
 # not windows
