@@ -74,5 +74,11 @@ namespace csimp {
 
     libimport void* FileSystem_TextureFromFile(uniconv::unichar* arg1);
 
+    libimport void FileSystem_FileFromTexture(uniconv::unichar* filepathPtr, void* texturePtr, bool recycle = false);
+
+    libimport void FileSystem_DrawTextureToScreen(int x, int y, void* texturePtr, void* screenPtr);
+
+    libimport void FileSystem_PlayWAV(uniconv::unichar* filepathPtr, bool wait = false);
+
 } // namespace csimp
 
