@@ -2,28 +2,29 @@
 
 using namespace cpp;
 using namespace std;
+using namespace uniconv;
 
-string System::root = System::GetRoot();
+utfstr System::root = System::GetRoot();
 
 #ifdef _WIN32
-    string System::GetRoot(void) {
-        char buf[255];
-        DWORD size = GetModuleFileNameA(NULL, buf, 255);
-        char* edit = buf;
+    utfstr System::GetRoot(void) {
+        wchar_t buf[255];
+        DWORD size = GetModuleFileName(NULL, buf, 255);
+        wchar_t* edit = buf;
         while (edit[--size] != '\\') buf[size] = '\0';
         edit[size + 1] = '.';
         edit[size + 2] = '.';
         edit[size + 3] = '\0';
-        string out = (string)(edit);
+        utfstr out = (utfstr)(edit);
         return out;
     }
 
-    string cpp::System::ToNativePath(string path) {
-        for (int i = 0; path[i] != '\0'; i++) if (path[i] == '/') path[i] = '\\';
+    utfstr cpp::System::ToNativePath(utfstr path) {
+        for (int i = 0; path[i] != L'\0'; i++) if (path[i] == L'/') path[i] = L'\\';
         return path;
     }
 #else
-    string System::GetRoot(void) {
+    utfstr System::GetRoot(void) {
         char buf[255] = { '\0' };
         ssize_t size = readlink("/proc/self/exe",buf,255);
         char* edit = buf;
@@ -31,51 +32,49 @@ string System::root = System::GetRoot();
         edit[size + 1] = '.';
         edit[size + 2] = '.';
         edit[size + 3] = '\0';
-        string out = (string)(edit);
+        utfstr out = (utfstr)(edit);
         return out;
     }
 
-    string cpp::System::ToNativePath(string path) {
+    utfstr System::ToNativePath(utfstr path) {
         return path;
     }
 #endif
 
-string System::GetRootPath()
-{
+utfstr System::GetRootPath(void) {
     return System::root;
 }
 
 
 
-void *System::AllocateMemory(unsigned int bytes)
-{
+nint System::AllocateMemory(unsigned int bytes) {
     return malloc(bytes);
 }
 
-void System::FreeMemory(void* pointer) {
+void System::FreeMemory(nint pointer) {
     free(pointer);
 }
 
-void* System::MovePointer(void* pointer, signed int bytes) {
+nint System::MovePointer(nint pointer, signed int bytes) {
     return (int8_t*)(pointer) + bytes;
 }
 
 template <typename T>
-T System::ReadPointer(void *pointer) {
+T System::ReadPointer(nint pointer) {
     return *(T*)(pointer);
 }
 
 template <typename T>
-T System::ReadPointer(void *pointer, int offset) {
+T System::ReadPointer(nint pointer, int offset) {
     return *(T*)(System::MovePointer(pointer,offset));
 }
 
 template <typename T>
-void System::WritePointer(void *&pointer, T value) {
+void System::WritePointer(nint &pointer, T value) {
     *(T*)(pointer) = value;
 }
 
 template <typename T>
-void System::WritePointer(void *&pointer, int offset, T value) {
+void System::WritePointer(nint &pointer, int offset, T value) {
     *(T*)(System::MovePointer(pointer, offset)) = value;
 }

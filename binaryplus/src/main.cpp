@@ -10,8 +10,8 @@ using namespace cpp;
 using namespace cs;
 
 int main() {
-    Console::Init();
-    auto texture = FileSystem::TextureFromFile(L"C:\\Users\\micha\\Documents\\GitHub\\c-c-collab\\assets\\a.tux");
-    FileSystem::FileFromTexture(L"C:\\Users\\micha\\Documents\\GitHub\\c-c-collab\\assets\\b.tux", texture);
+    //Console::Init();
+    auto texture = FileSystem::TextureFromFile(L"..\\assets\\a.tux");
+    FileSystem::FileFromTexture(L"..\\assets\\b.tux", texture);
     return 0;
 }

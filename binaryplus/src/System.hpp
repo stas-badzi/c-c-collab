@@ -1,26 +1,15 @@
 #pragma once
 
-#include <stdlib.h>
-#include <string>
 #include <stdint.h>
 #include <unicode_conversion.hpp>
 
-#ifdef _WIN32
-    #include <windows.h>
-#else
-    #include <unistd.h>
-#endif
-
-#define nint void*
+#include "defines.h"
 
 namespace cpp {
     class System {
-    private:
-        static uniconv::utfstr GetRoot(void);
-        static uniconv::utfstr root;
     public:
-        static uniconv::utfstr GetRootPath(void);
-        static uniconv::utfstr ToNativePath(uniconv::utfstr path);
+        static std::wstring GetRootPath(void);
+        static std::wstring ToNativePath(std::wstring path);
 
         static nint AllocateMemory(unsigned int bytes);
         static void FreeMemory(nint pointer);

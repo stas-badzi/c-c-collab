@@ -1,5 +1,5 @@
 #include "FileSystem.hpp"
-
+#include "System.hpp"
 #include "dllimport.hpp"
 
 using namespace csimp;
@@ -11,15 +11,15 @@ void* TextureToPtr(vector<vector<Console::Symbol>> texture);
 vector<vector<Console::Symbol>> PtrToTexture(void* ptr);
 
 
-vector<utfstr> FileSystem::ImportText(utfstr filename) {
-    unichar** textptr (FileSystem_ImportText(Utf8StringToUnicode(filename)));
+vector<wstring> FileSystem::ImportText(wstring filename) {
+    unichar** textptr = FileSystem_ImportText(Utf8StringToUnicode(WStringToNative(filename)));
 
 
-    vector<utfstr> utftext;
+    vector<wstring> utftext;
     for (size_t i = 0; true; i++) {
-        utfstr utfline;
+        wstring utfline;
         for (size_t j = 0; textptr[i][j] > 0; j++) {
-            utfline.append(to_string(UnicodeToUtf8(textptr[i][j])));
+            utfline.push_back(NativeToWChar(UnicodeToUtf8(textptr[i][j])));
         }
         delete[] textptr[i];
         if (utfline.size() == 0) { break; }
@@ -32,7 +32,7 @@ vector<utfstr> FileSystem::ImportText(utfstr filename) {
     
 }
 
-void FileSystem::ExportText(utfstr file, vector<utfstr> lines) {
+void FileSystem::ExportText(wstring file, vector<wstring> lines) {
     unichar** unilines = new unichar*[lines.size()];
 
     for (size_t i = 0; i < lines.size(); i++) {
@@ -40,28 +40,27 @@ void FileSystem::ExportText(utfstr file, vector<utfstr> lines) {
         size_t ofst = 0;
         for (size_t j = 0; j < lines[i].size(); j++) {
             size_t ch_size;
-            unilines[i][j] = Utf8ToUnicode(ReadUtfChar(lines[i],ofst, &ch_size));
+            unilines[i][j] = Utf8ToUnicode(ReadUtfChar(WStringToNative(lines[i]),ofst, &ch_size));
             ofst += ch_size;
         }
     }
     unilines[lines.size()] = new unichar[1]{0};
     
-    FileSystem_ExportText(Utf8StringToUnicode(file),unilines);
+    FileSystem_ExportText(Utf8StringToUnicode(WStringToNative(file)),unilines);
 }
 
-vector<vector<Console::Symbol>> FileSystem::TextureFromFile(utfstr filepath) {
-    unichar* arg1 = Utf8StringToUnicode(filepath);
+vector<vector<Console::Symbol>> FileSystem::TextureFromFile(wstring filepath) {
+    unichar* arg1 = Utf8StringToUnicode(WStringToNative(filepath));
     void* ret = csimp::FileSystem_TextureFromFile(arg1);
 
     return PtrToTexture(ret);
 }
 
-void FileSystem::FileFromTexture(utfstr filepath, vector<vector<Console::Symbol>> texture, bool recycle) {
-    unichar* filepathPtr = Utf8StringToUnicode(filepath);
+void FileSystem::FileFromTexture(wstring filepath, vector<vector<Console::Symbol>> texture, bool recycle) {
+    unichar* filepathPtr = Utf8StringToUnicode(WStringToNative(filepath));
     void* texturePtr = TextureToPtr(texture);
 
     csimp::FileSystem_FileFromTexture(filepathPtr, texturePtr, recycle);
-    free(texturePtr);
 }
 
 void FileSystem::DrawTextureToScreen(int x, int y, vector<vector<Console::Symbol>> texture, vector<vector<Console::Symbol>> screen)
@@ -70,15 +69,13 @@ void FileSystem::DrawTextureToScreen(int x, int y, vector<vector<Console::Symbol
     auto screenPtr = TextureToPtr(screen);
 
     csimp::FileSystem_DrawTextureToScreen(x, y, texturePtr, screenPtr);
-    free(texturePtr);
-    free(screenPtr);
 }
 
-void FileSystem::PlayWAV(utfstr filepath, bool wait)
+void FileSystem::PlaySound(wstring filepath, bool wait)
 {
-    auto filepathPtr = Utf8StringToUnicode(filepath);
+    auto filepathPtr = Utf8StringToUnicode(WStringToNative(filepath));
 
-    csimp::FileSystem_PlayWAV(filepathPtr, wait);
+    csimp::FileSystem_PlaySound(filepathPtr, wait);
 }
 
 vector<vector<Console::Symbol>> PtrToTexture(void* ptr) {
@@ -90,22 +87,22 @@ vector<vector<Console::Symbol>> PtrToTexture(void* ptr) {
     void* now_ptr = ptr;
 
     int32_t height = *(int32_t*)(now_ptr);
-    now_ptr += int32_size;
+    System::MovePointer(now_ptr, int32_size);
 
     for (size_t i = 0; i < height; i++) {
-        int32_t width = *(int32_t*)(now_ptr);
-        now_ptr += int32_size;
+        int32_t width = System::ReadPointer<int32_t>(now_ptr);
+        System::MovePointer(now_ptr, int32_size);
         ret.push_back(vector<Console::Symbol>());
 
         for (size_t j = 0; j < width; j++) {
-            void* ptr = *(void**)(now_ptr);
+            nint ptr = System::ReadPointer<nint>(now_ptr);
             Console::Symbol sym = Console::Symbol(ptr,true);
             ret.back().push_back(sym);
-            now_ptr += intptr_size;
+            System::MovePointer(now_ptr, intptr_size);
         }
     }
 
-    free(ptr);
+    System::FreeMemory(ptr);
     
     return ret;
 }
@@ -113,7 +110,7 @@ vector<vector<Console::Symbol>> PtrToTexture(void* ptr) {
 void* TextureToPtr(vector<vector<Console::Symbol>> texture) {
     const int int32_size = sizeof(int32_t);
     const int intptr_size = sizeof(void*);
-    size_t size, count;
+    int32_t size, count;
 
     size = texture.size();
     count = 0;
@@ -121,19 +118,20 @@ void* TextureToPtr(vector<vector<Console::Symbol>> texture) {
         count += texture[i].size();
     }
 
-    void* ret = malloc((size + 1) * int32_size + count * intptr_size);
+    void* ret = System::AllocateMemory((size + 1) * int32_size + count * intptr_size);
 
     count = 0;
     void* where = ret;
-    *(int*) where = size;
-    where += int32_size;
+    System::WritePointer(where, size);
+    System::MovePointer(where, int32_size);
     for (size_t i = 0; i < size; i++) {
-        *(int*) where = texture[i].size();
-        where += int32_size;
+        System::WritePointer(where,texture[i].size());
+        System::MovePointer(where, int32_size);
         for (size_t j = 0; j < texture[i].size(); j++) {
-            *(void**) where = texture[i][j].Get();
-            where += intptr_size;
+            System::WritePointer(where, texture[i][j].Get());
+            System::MovePointer(where, intptr_size);
         }
     }
+
     return ret;
 }

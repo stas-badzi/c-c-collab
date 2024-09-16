@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "Console.hpp"
+#include "System.hpp"
 
 using namespace uniconv;
 
@@ -145,3 +146,195 @@ using namespace uniconv;
     // ~Symbol
 
 // ~Console
+
+// System
+    libexport uniconv::unichar* System_GetRootPath(void) {
+        return uniconv::Utf8StringToUnicode(cpp::System::GetRootPath());
+    }
+    
+    libexport uniconv::unichar* System_ToNativePath(uniconv::unichar* arg1) {
+        return uniconv::Utf8StringToUnicode(cpp::System::ToNativePath(uniconv::UnicodeToUtf8String(arg1)));
+    }
+    
+    libexport nint System_AllocateMemory(uint32_t arg1) {
+        return cpp::System::AllocateMemory(arg1);
+    }
+
+    libexport void System_FreeMemory(nint arg1) {
+        return cpp::System::FreeMemory(arg1);
+    }
+
+    libexport nint System_MovePointer(nint arg1, int32_t arg2) {
+        return cpp::System::MovePointer(arg1,arg2);
+    }
+    // ReadPointer<T>
+        libexport int8_t System_ReadPointer$int8(nint arg1) {
+            return cpp::System::ReadPointer<int8_t>(arg1);
+        }
+
+        libexport int16_t System_ReadPointer$int16(nint arg1) {
+            return cpp::System::ReadPointer<int16_t>(arg1);
+        }
+
+        libexport int32_t System_ReadPointer$int32(nint arg1) {
+            return cpp::System::ReadPointer<int32_t>(arg1);
+        }
+
+        libexport int64_t System_ReadPointer$int64(nint arg1) {
+            return cpp::System::ReadPointer<int64_t>(arg1);
+        }
+
+        libexport uint8_t System_ReadPointer$uint8(nint arg1) {
+            return cpp::System::ReadPointer<uint8_t>(arg1);
+        }
+
+        libexport uint16_t System_ReadPointer$uint16(nint arg1) {
+            return cpp::System::ReadPointer<uint16_t>(arg1);
+        }
+
+        libexport uint32_t System_ReadPointer$uint32(nint arg1) {
+            return cpp::System::ReadPointer<uint32_t>(arg1);
+        }
+
+        libexport uint64_t System_ReadPointer$uint64(nint arg1) {
+            return cpp::System::ReadPointer<uint64_t>(arg1);
+        }
+
+        libexport bool System_ReadPointer$bool(nint arg1) {
+            return cpp::System::ReadPointer<bool>(arg1);
+        }
+
+        libexport nint System_ReadPointer$nint(nint arg1) {
+            return cpp::System::ReadPointer<nint>(arg1);
+        }
+
+        // offset = true
+
+        libexport int8_t System_ReadPointer$int8$ofs(nint arg1, int32_t arg2) {
+            return cpp::System::ReadPointer<int8_t>(arg1,arg2);
+        }
+
+        libexport int16_t System_ReadPointer$int16$ofs(nint arg1, int32_t arg2) {
+            return cpp::System::ReadPointer<int16_t>(arg1,arg2);
+        }
+
+        libexport int32_t System_ReadPointer$int32$ofs(nint arg1, int32_t arg2) {
+            return cpp::System::ReadPointer<int32_t>(arg1,arg2);
+        }
+
+        libexport int64_t System_ReadPointer$int64$ofs(nint arg1, int32_t arg2) {
+            return cpp::System::ReadPointer<int64_t>(arg1,arg2);
+        }
+
+        libexport uint8_t System_ReadPointer$uint8$ofs(nint arg1, int32_t arg2) {
+            return cpp::System::ReadPointer<uint8_t>(arg1,arg2);
+        }
+
+        libexport uint16_t System_ReadPointer$uint16$ofs(nint arg1, int32_t arg2) {
+            return cpp::System::ReadPointer<uint16_t>(arg1,arg2);
+        }
+
+        libexport uint32_t System_ReadPointer$uint32$ofs(nint arg1, int32_t arg2) {
+            return cpp::System::ReadPointer<uint32_t>(arg1,arg2);
+        }
+
+        libexport uint64_t System_ReadPointer$uint64$ofs(nint arg1, int32_t arg2) {
+            return cpp::System::ReadPointer<uint64_t>(arg1,arg2);
+        }
+
+        libexport bool System_ReadPointer$bool$ofs(nint arg1, int32_t arg2) {
+            return cpp::System::ReadPointer<bool>(arg1,arg2);
+        }
+
+        libexport nint System_ReadPointer$nint$ofs(nint arg1, int32_t arg2) {
+            return cpp::System::ReadPointer<nint>(arg1,arg2);
+        }
+    // ~ReadPointer<T>
+
+    
+    // WritePointer<T>
+        libexport void System_WritePointer$int8(nint arg1, int8_t arg2) {
+            return cpp::System::WritePointer<int8_t>(arg1,arg2);
+        }
+
+        libexport void System_WritePointer$int16(nint arg1, int16_t arg2) {
+            return cpp::System::WritePointer<int16_t>(arg1,arg2);
+        }
+
+        libexport void System_WritePointer$int32$ofs(nint arg1, int32_t arg2) {
+            return cpp::System::WritePointer<int32_t>(arg1,arg2);
+        }
+
+        libexport void System_WritePointer$int64(nint arg1, int64_t arg2) {
+            return cpp::System::WritePointer<int64_t>(arg1,arg2);
+        }
+
+        libexport void System_WritePointer$uint8(nint arg1, uint8_t arg2) {
+            return cpp::System::WritePointer<uint8_t>(arg1,arg2);
+        }
+
+        libexport void System_WritePointer$uint16(nint arg1, uint16_t arg2) {
+            return cpp::System::WritePointer<uint16_t>(arg1,arg2);
+        }
+
+        libexport void System_WritePointer$uint32(nint arg1, uint32_t arg2) {
+            return cpp::System::WritePointer<uint32_t>(arg1,arg2);
+        }
+
+        libexport void System_WritePointer$uint64(nint arg1, uint64_t arg2) {
+            return cpp::System::WritePointer<uint64_t>(arg1,arg2);
+        }
+
+        libexport void System_WritePointer$bool(nint arg1, bool arg2) {
+            return cpp::System::WritePointer<bool>(arg1,arg2);
+        }
+
+        libexport void System_WritePointer$nint(nint arg1, nint arg2) {
+            return cpp::System::WritePointer<nint>(arg1,arg2);
+        }
+
+        // offset = true
+
+        libexport void System_WritePointer$int8$ofs(nint arg1, int32_t arg3, int8_t arg2) {
+            return cpp::System::WritePointer<int8_t>(arg1,arg3,arg2);
+        }
+
+        libexport void System_WritePointer$int16$ofs(nint arg1, int32_t arg3, int16_t arg2) {
+            return cpp::System::WritePointer<int16_t>(arg1,arg3,arg2);
+        }
+
+        libexport void System_WritePointer$int32$ofs(nint arg1, int32_t arg3, int32_t arg2) {
+            return cpp::System::WritePointer<int32_t>(arg1,arg3,arg2);
+        }
+
+        libexport void System_WritePointer$int64$ofs(nint arg1, int32_t arg3, int64_t arg2) {
+            return cpp::System::WritePointer<int64_t>(arg1,arg3,arg2);
+        }
+
+        libexport void System_WritePointer$uint8$ofs(nint arg1, int32_t arg3, uint8_t arg2) {
+            return cpp::System::WritePointer<uint8_t>(arg1,arg3,arg2);
+        }
+
+        libexport void System_WritePointer$uint16$ofs(nint arg1, int32_t arg3, uint16_t arg2) {
+            return cpp::System::WritePointer<uint16_t>(arg1,arg3,arg2);
+        }
+
+        libexport void System_WritePointer$uint32$ofs(nint arg1, int32_t arg3, uint32_t arg2) {
+            return cpp::System::WritePointer<uint32_t>(arg1,arg3,arg2);
+        }
+
+        libexport void System_WritePointer$uint64$ofs(nint arg1, int32_t arg3, uint64_t arg2) {
+            return cpp::System::WritePointer<uint64_t>(arg1,arg3,arg2);
+        }
+
+        libexport void System_WritePointer$bool$ofs(nint arg1, int32_t arg3, bool arg2) {
+            return cpp::System::WritePointer<bool>(arg1,arg3,arg2);
+        }
+
+        libexport void System_WritePointer$nint$ofs(nint arg1, int32_t arg3, nint arg2) {
+            return cpp::System::WritePointer<nint>(arg1,arg3,arg2);
+        }
+
+    // ~WritePointer<T>
+
+// ~System
