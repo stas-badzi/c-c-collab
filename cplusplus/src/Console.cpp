@@ -106,7 +106,6 @@ using namespace std::chrono;
     }
 
     inline pair<uint16_t,uint16_t> Console::GetXYCharOffset() {
-        return pair<uint16_t,uint16_t>(0,0);
     #define GetXYCharOffset_MaxXSearch 25
     #define GetXYCharOffset_MaxYSearch 50
         auto scr = vector<vector<Symbol>>();
@@ -117,7 +116,10 @@ using namespace std::chrono;
         GetConsoleScreenBufferInfoEx(Console::screen, &csbix);
         COLORREF red = csbix.ColorTable[4];
         cerr << csbix.ColorTable[0] << ' ' << csbix.ColorTable[1] << ' ' << csbix.ColorTable[2] << ' ' << csbix.ColorTable[3] << ' ' << csbix.ColorTable[4] << '\n';
-        
+        CONSOLE_FONT_INFO cfi;
+        GetCurrentConsoleFont(screen, false, &cfi);
+        //COORD font = GetConsoleFontSize(screen,cfi.nFont);
+        cerr << '\n' << cfi.dwFontSize.X << ' ' << cfi.dwFontSize.Y << '\n' << '\n';
         auto out = pair<uint16_t,uint16_t>(-1,-1);
         for (uint16_t i = 0; i < GetXYCharOffset_MaxXSearch; i++) {
             for (uint16_t j = 0; j < GetXYCharOffset_MaxYSearch; j++) {
