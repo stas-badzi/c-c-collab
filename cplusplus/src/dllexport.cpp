@@ -261,7 +261,7 @@ using namespace uniconv;
             return cpp::System::WritePointer<int16_t>(arg1,arg2);
         }
 
-        libexport void System_WritePointer$int32$ofs(nint arg1, int32_t arg2) {
+        libexport void System_WritePointer$int32(nint arg1, int32_t arg2) {
             return cpp::System::WritePointer<int32_t>(arg1,arg2);
         }
 
