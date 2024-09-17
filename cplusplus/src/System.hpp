@@ -4,6 +4,7 @@
 #include <string>
 #include <stdint.h>
 #include <unicode_conversion.hpp>
+#include <typeinfo>
 
 #ifdef _WIN32
     #include <windows.h>
@@ -32,4 +33,6 @@ namespace cpp {
         template<typename T> static void WritePointer(nint& pointer, T value);
         template<typename T> static void WritePointer(nint& pointer, int offset, T value);
     };
+
+#include "System.ipp"
 }

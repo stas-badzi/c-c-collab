@@ -111,7 +111,7 @@ void Console::Sleep(double seconds){
 }
 
 Console::Symbol::Symbol(void) {
-    symbol = Console_Symbol_Construct$cfb(0x0020);
+    symbol = Console_Symbol_Construct$cfb(0x0020, 0x10, 0x10);
 }
 
 Console::Symbol::Symbol(const Symbol &cp) {

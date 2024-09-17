@@ -1,6 +1,4 @@
 #include "System.hpp"
-#include "dllimport.hpp"
-#include <exception>
 
 using namespace cpp;
 using namespace std;
@@ -26,188 +24,46 @@ nint System::MovePointer(nint pointer, signed int bytes) {
     return cppimp::System_MovePointer(pointer, bytes);
 }
 
-template <typename T>
-T System::ReadPointer(nint pointer) {
-    switch (typeid(T))
-    {
-    case typeid(bool):
-        return cppimp::System_ReadPointer$bool(pointer);
-    case typeid(nint):
-        return cppimp::System_ReadPointer$nint(pointer);
-    case typeid(int8_t):
-        return cppimp::System_ReadPointer$int8_t(pointer);
-    case typeid(int16_t):
-        return cppimp::System_ReadPointer$int16_t(pointer);
-    case typeid(int32_t):
-        return cppimp::System_ReadPointer$int32_t(pointer);
-    case typeid(int64_t):
-        return cppimp::System_ReadPointer$int64_t(pointer);
-    case typeid(uint8_t):
-        return cppimp::System_ReadPointer$uint8_t(pointer);
-    case typeid(uint16_t):
-        return cppimp::System_ReadPointer$uint16_t(pointer);
-    case typeid(uint32_t):
-        return cppimp::System_ReadPointer$uint32_t(pointer);
-    case typeid(uint64_t):
-        return cppimp::System_ReadPointer$uint64_t(pointer);
-    default:
-        break;
-    }
+template <> bool System::ReadPointer<bool>(nint pointer) { return cppimp::System_ReadPointer$bool(pointer);}
+template <> nint System::ReadPointer<nint>(nint pointer) { return cppimp::System_ReadPointer$nint(pointer);}
+template <> int8_t System::ReadPointer<int8_t>(nint pointer) { return cppimp::System_ReadPointer$int8(pointer);}
+template <> int16_t System::ReadPointer<int16_t>(nint pointer) { return cppimp::System_ReadPointer$int16(pointer);}
+template <> int32_t System::ReadPointer<int32_t>(nint pointer) { return cppimp::System_ReadPointer$int32(pointer);}
+template <> int64_t System::ReadPointer<int64_t>(nint pointer) { return cppimp::System_ReadPointer$int64(pointer);}
+template <> uint8_t System::ReadPointer<uint8_t>(nint pointer) { return cppimp::System_ReadPointer$uint8(pointer);}
+template <> uint16_t System::ReadPointer<uint16_t>(nint pointer) { return cppimp::System_ReadPointer$uint16(pointer);}
+template <> uint32_t System::ReadPointer<uint32_t>(nint pointer) { return cppimp::System_ReadPointer$uint32(pointer);}
+template <> uint64_t System::ReadPointer<uint64_t>(nint pointer) { return cppimp::System_ReadPointer$uint64(pointer);}
 
-    T* ret;
-    switch (sizeof(T))
-    {
-    case sizeof(int8_t):
-        ret = (T*)(&cppimp::System_ReadPointer$int8_t(pointer));
-        break;
-    case sizeof(int16_t):
-        ret = (T*)(&cppimp::System_ReadPointer$int16_t(pointer));
-        break;
-    case sizeof(int32_t):
-        ret = (T*)(&cppimp::System_ReadPointer$int32_t(pointer));
-        break;
-    case sizeof(int64_t):
-        ret = (T*)(&cppimp::System_ReadPointer$int64_t(pointer));
-        break;
-    default:
-        throw(runtime_error("Neither type size or type are defined"));
-        break;
-    }
-    return *ret;
-}
+template <> bool System::ReadPointer<bool>(nint pointer, int offset) { return cppimp::System_ReadPointer$bool$ofs(pointer,offset);}
+template <> nint System::ReadPointer<nint>(nint pointer, int offset) { return cppimp::System_ReadPointer$nint$ofs(pointer,offset);}
+template <> int8_t System::ReadPointer<int8_t>(nint pointer, int offset) { return cppimp::System_ReadPointer$int8$ofs(pointer,offset);}
+template <> int16_t System::ReadPointer<int16_t>(nint pointer, int offset) { return cppimp::System_ReadPointer$int16$ofs(pointer,offset);}
+template <> int32_t System::ReadPointer<int32_t>(nint pointer, int offset) { return cppimp::System_ReadPointer$int32$ofs(pointer,offset);}
+template <> int64_t System::ReadPointer<int64_t>(nint pointer, int offset) { return cppimp::System_ReadPointer$int64$ofs(pointer,offset);}
+template <> uint8_t System::ReadPointer<uint8_t>(nint pointer, int offset) { return cppimp::System_ReadPointer$uint8$ofs(pointer,offset);}
+template <> uint16_t System::ReadPointer<uint16_t>(nint pointer, int offset) { return cppimp::System_ReadPointer$uint16$ofs(pointer,offset);}
+template <> uint32_t System::ReadPointer<uint32_t>(nint pointer, int offset) { return cppimp::System_ReadPointer$uint32$ofs(pointer,offset);}
+template <> uint64_t System::ReadPointer<uint64_t>(nint pointer, int offset) { return cppimp::System_ReadPointer$uint64$ofs(pointer,offset);}
 
-template <typename T>
-T System::ReadPointer(nint pointer, int offset) {
-    switch (typeid(T))
-    {
-    case typeid(bool):
-        return cppimp::System_ReadPointer$bool(pointer,offset);
-    case typeid(nint):
-        return cppimp::System_ReadPointer$nint(pointer,offset);
-    case typeid(int8_t):
-        return cppimp::System_ReadPointer$int8_t(pointer,offset);
-    case typeid(int16_t):
-        return cppimp::System_ReadPointer$int16_t(pointer,offset);
-    case typeid(int32_t):
-        return cppimp::System_ReadPointer$int32_t(pointer,offset);
-    case typeid(int64_t):
-        return cppimp::System_ReadPointer$int64_t(pointer,offset);
-    case typeid(uint8_t):
-        return cppimp::System_ReadPointer$uint8_t(pointer,offset);
-    case typeid(uint16_t):
-        return cppimp::System_ReadPointer$uint16_t(pointer,offset);
-    case typeid(uint32_t):
-        return cppimp::System_ReadPointer$uint32_t(pointer,offset);
-    case typeid(uint64_t):
-        return cppimp::System_ReadPointer$uint64_t(pointer,offset);
-    default:
-        break;
-    }
+template <> void System::WritePointer<bool>(nint& pointer, bool value) { return cppimp::System_WritePointer$bool(pointer,value);}
+template <> void System::WritePointer<nint>(nint& pointer, nint value) { return cppimp::System_WritePointer$nint(pointer,value);}
+template <> void System::WritePointer<int8_t>(nint& pointer, int8_t value) { return cppimp::System_WritePointer$int8(pointer,value);}
+template <> void System::WritePointer<int16_t>(nint& pointer, int16_t value) { return cppimp::System_WritePointer$int16(pointer,value);}
+template <> void System::WritePointer<int32_t>(nint& pointer, int32_t value) { return cppimp::System_WritePointer$int32(pointer,value);}
+template <> void System::WritePointer<int64_t>(nint& pointer, int64_t value) { return cppimp::System_WritePointer$int64(pointer,value);}
+template <> void System::WritePointer<uint8_t>(nint& pointer, uint8_t value) { return cppimp::System_WritePointer$uint8(pointer,value);}
+template <> void System::WritePointer<uint16_t>(nint& pointer, uint16_t value) { return cppimp::System_WritePointer$uint16(pointer,value);}
+template <> void System::WritePointer<uint32_t>(nint& pointer, uint32_t value) { return cppimp::System_WritePointer$uint32(pointer,value);}
+template <> void System::WritePointer<uint64_t>(nint& pointer, uint64_t value) { return cppimp::System_WritePointer$uint64(pointer,value);}
 
-    T* ret;
-    switch (sizeof(T))
-    {
-    case sizeof(int8_t):
-        ret = (T*)(&cppimp::System_ReadPointer$int8_t(pointer,offset));
-        break;
-    case sizeof(int16_t):
-        ret = (T*)(&cppimp::System_ReadPointer$int16_t(pointer,offset));
-        break;
-    case sizeof(int32_t):
-        ret = (T*)(&cppimp::System_ReadPointer$int32_t(pointer,offset));
-        break;
-    case sizeof(int64_t):
-        ret = (T*)(&cppimp::System_ReadPointer$int64_t(pointer,offset));
-        break;
-    default:
-        throw(runtime_error("Neither type size or type are defined"));
-        break;
-    }
-    return *ret;
-}
-
-template <typename T>
-void System::WritePointer(nint &pointer, T value) {
-    switch (typeid(T))
-    {
-    case typeid(bool):
-        return cppimp::System_ReadPointer$bool(pointer,value);
-    case typeid(nint):
-        return cppimp::System_ReadPointer$nint(pointer,value);
-    case typeid(int8_t):
-        return cppimp::System_ReadPointer$int8_t(pointer,value);
-    case typeid(int16_t):
-        return cppimp::System_ReadPointer$int16_t(pointer,value);
-    case typeid(int32_t):
-        return cppimp::System_ReadPointer$int32_t(pointer,value);
-    case typeid(int64_t):
-        return cppimp::System_ReadPointer$int64_t(pointer,value);
-    case typeid(uint8_t):
-        return cppimp::System_ReadPointer$uint8_t(pointer,value);
-    case typeid(uint16_t):
-        return cppimp::System_ReadPointer$uint16_t(pointer,value);
-    case typeid(uint32_t):
-        return cppimp::System_ReadPointer$uint32_t(pointer,value);
-    case typeid(uint64_t):
-        return cppimp::System_ReadPointer$uint64_t(pointer,value);
-    default:
-        break;
-    }
-
-    switch (sizeof(T))
-    {
-    case sizeof(int8_t):
-        return cppimp::System_ReadPointer$int8_t(pointer,*(int8_t*)(&value));
-    case sizeof(int16_t):
-        return cppimp::System_ReadPointer$int16_t(pointer,*(int16_t*)(&value));
-    case sizeof(int32_t):
-        return cppimp::System_ReadPointer$int32_t(pointer,*(int32_t*)(&value));
-    case sizeof(int64_t):
-        return cppimp::System_ReadPointer$int64_t(pointer,*(int64_t*)(&value));
-    default:
-        throw(runtime_error("Neither type size or type are defined"));
-    }
-}
-
-template <typename T>
-void System::WritePointer(nint &pointer, int offset, T value) {
-    switch (typeid(T))
-    {
-    case typeid(bool):
-        return cppimp::System_ReadPointer$bool(pointer,offset,value);
-    case typeid(nint):
-        return cppimp::System_ReadPointer$nint(pointer,offset,value);
-    case typeid(int8_t):
-        return cppimp::System_ReadPointer$int8_t(pointer,offset,value);
-    case typeid(int16_t):
-        return cppimp::System_ReadPointer$int16_t(pointer,offset,value);
-    case typeid(int32_t):
-        return cppimp::System_ReadPointer$int32_t(pointer,offset,value);
-    case typeid(int64_t):
-        return cppimp::System_ReadPointer$int64_t(pointer,offset,value);
-    case typeid(uint8_t):
-        return cppimp::System_ReadPointer$uint8_t(pointer,offset,value);
-    case typeid(uint16_t):
-        return cppimp::System_ReadPointer$uint16_t(pointer,offset,value);
-    case typeid(uint32_t):
-        return cppimp::System_ReadPointer$uint32_t(pointer,offset,value);
-    case typeid(uint64_t):
-        return cppimp::System_ReadPointer$uint64_t(pointer,offset,value);
-    default:
-        break;
-    }
-
-    switch (sizeof(T))
-    {
-    case sizeof(int8_t):
-        return cppimp::System_ReadPointer$int8_t(pointer,offset,*(int8_t*)(&value));
-    case sizeof(int16_t):
-        return cppimp::System_ReadPointer$int16_t(pointer,offset,*(int16_t*)(&value));
-    case sizeof(int32_t):
-        return cppimp::System_ReadPointer$int32_t(pointer,offset,*(int32_t*)(&value));
-    case sizeof(int64_t):
-        return cppimp::System_ReadPointer$int64_t(pointer,offset,*(int64_t*)(&value));
-    default:
-        throw(runtime_error("Neither type size or type are defined"));
-    }
-}
+template <> void System::WritePointer<bool>(nint& pointer, int offset, bool value) { return cppimp::System_WritePointer$bool$ofs(pointer,offset,value);}
+template <> void System::WritePointer<nint>(nint& pointer, int offset, nint value) { return cppimp::System_WritePointer$nint$ofs(pointer,offset,value);}
+template <> void System::WritePointer<int8_t>(nint& pointer, int offset, int8_t value) { return cppimp::System_WritePointer$int8$ofs(pointer,offset,value);}
+template <> void System::WritePointer<int16_t>(nint& pointer, int offset, int16_t value) { return cppimp::System_WritePointer$int16$ofs(pointer,offset,value);}
+template <> void System::WritePointer<int32_t>(nint& pointer, int offset, int32_t value) { return cppimp::System_WritePointer$int32$ofs(pointer,offset,value);}
+template <> void System::WritePointer<int64_t>(nint& pointer, int offset, int64_t value) { return cppimp::System_WritePointer$int64$ofs(pointer,offset,value);}
+template <> void System::WritePointer<uint8_t>(nint& pointer, int offset, uint8_t value) { return cppimp::System_WritePointer$uint8$ofs(pointer,offset,value);}
+template <> void System::WritePointer<uint16_t>(nint& pointer, int offset, uint16_t value) { return cppimp::System_WritePointer$uint16$ofs(pointer,offset,value);}
+template <> void System::WritePointer<uint32_t>(nint& pointer, int offset, uint32_t value) { return cppimp::System_WritePointer$uint32$ofs(pointer,offset,value);}
+template <> void System::WritePointer<uint64_t>(nint& pointer, int offset, uint64_t value) { return cppimp::System_WritePointer$uint64$ofs(pointer,offset,value);}

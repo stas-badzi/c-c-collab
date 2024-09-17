@@ -40,7 +40,7 @@ namespace cppimp {
 
     libimport void* Console_Symbol_Construct$smb(void* smb);
 
-    libimport void* Console_Symbol_Construct$cfb(uniconv::unichar character, uint8_t foreground = 7, uint8_t background = 0);
+    libimport void* Console_Symbol_Construct$cfb(uniconv::unichar character, uint8_t foreground, uint8_t background);
 
     #ifdef _WIN32
         libimport void* Console_Symbol_Construct$atr(uint8_t attribute);
@@ -125,7 +125,7 @@ namespace cppimp {
 
         libimport void System_WritePointer$int16(nint arg1, int16_t arg2);
 
-        libimport void System_WritePointer$int32$ofs(nint arg1, int32_t arg2);
+        libimport void System_WritePointer$int32(nint arg1, int32_t arg2);
 
         libimport void System_WritePointer$int64(nint arg1, int64_t arg2);
 
@@ -174,11 +174,11 @@ namespace csimp {
 
     libimport void* FileSystem_TextureFromFile(uniconv::unichar* arg1);
 
-    libimport void FileSystem_FileFromTexture(uniconv::unichar* filepathPtr, void* texturePtr, bool recycle = false);
+    libimport void FileSystem_FileFromTexture(uniconv::unichar* filepathPtr, void* texturePtr, bool recycle);
 
     libimport void FileSystem_DrawTextureToScreen(int x, int y, void* texturePtr, void* screenPtr);
 
-    libimport void FileSystem_PlaySound(uniconv::unichar* filepathPtr, bool wait = false);
+    libimport void FileSystem_PlaySound(uniconv::unichar* filepathPtr, bool wait);
 
 } // namespace csimp
 

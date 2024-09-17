@@ -11,7 +11,7 @@ release = FactoryRush
 #********************************
 
 #******** c++ config ************
-#> set default compiler
+#> set default compilers
 defcompcxx = c++
 defcompc = cc
 #> source files
@@ -26,9 +26,9 @@ name = factoryrushplus
 
 #******** c++ binary config *****
 #> source files
-binsources = main.cpp Console.cpp FileSystem.cpp
+binsources = main.cpp Console.cpp FileSystem.cpp System.cpp
 #> header files
-binheaders = dllimport.hpp Console.hpp FileSystem.hpp
+binheaders = dllimport.hpp Console.hpp FileSystem.hpp System.hpp defines.h
 #> include files
 binincludes = dynamic_library.h unicode_conversion.hpp
 #> name the binary file

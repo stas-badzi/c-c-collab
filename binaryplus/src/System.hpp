@@ -2,8 +2,11 @@
 
 #include <stdint.h>
 #include <unicode_conversion.hpp>
-
+#include <typeinfo>
+#include <stdexcept>
 #include "defines.h"
+
+#include "dllimport.hpp"
 
 namespace cpp {
     class System {
