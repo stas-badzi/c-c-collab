@@ -45,7 +45,7 @@ namespace Cs
         {
             string? line;
             List<String> result = new List<String>();
-
+            System.Console.WriteLine(str_file);
             try
             {
                 StreamReader sr = new StreamReader(str_file);
@@ -58,7 +58,7 @@ namespace Cs
             }
             catch (Exception e)
             {
-                Environment.FailFast($"Unhandled exception at Cs.FileSystem.ImportText (FileSystem.cs:12): " + e.Message);
+                Environment.FailFast($"Unhandled exception at Cs.FileSystem.ImportText: " + e.Message);
             }
             
             return result;
@@ -81,26 +81,20 @@ namespace Cs
             }
             catch (Exception e)
             {
-                Environment.FailFast($"Unhandled exception at Cs.FileSystem.ExportText (FileSystem.cs:40): " + e.Message);
+                Environment.FailFast($"Unhandled exception at Cs.FileSystem.ExportText: " + e.Message);
             }
         }
         
-        public static List<List<Terminal.Symbol>>? TextureFromFile(string filepath)
+        public static List<List<Terminal.Symbol>> TextureFromFile(string filepath)
         {
-            int width, height;
 
             var fileImported = ImportText(filepath); // Imported List<string>
             var file = new List<List<char>>(); // Every character of file
             var symbols = new List<List<Terminal.Symbol>>(); // Final symbol list
 
-            if (!int.TryParse(fileImported[0], out width))
-            {
-                return null;
-            }
-            if (!int.TryParse(fileImported[1], out height))
-            {
-                return null;
-            }
+            if (!int.TryParse(fileImported[0], out int width)) throw new Exception("Parsing width failed");
+            
+            if (!int.TryParse(fileImported[1], out int height)) throw new Exception("Parsing width failed");
 
             for (int i = 2; i < fileImported.Count; i++) // Assign var file
             {

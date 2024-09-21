@@ -28,16 +28,16 @@ namespace CsExp {
             int byte_size = sizeof(byte);
 
             List<bool> input = new List<bool>();
-            Int32 size = Marshal.ReadInt32(yeses);
+            Int32 size = Exec.ReadPointer<Int32>(yeses);
 
             for (int i = 0; i < size; i++) {
-                byte by = Marshal.ReadByte(yeses, int32_size + (i*byte_size));
+                byte by = Exec.ReadPointer<Byte>(yeses, int32_size + (i*byte_size));
                 bool b = false;
                 if (by > 0) {b = true;}
                 input.Add(b);
             }
 
-            Marshal.FreeHGlobal(yeses);
+            Exec.FreeMemory(yeses);
 
             return TypeConvert.StringToPtr(Cs.FileSystem.DoSomeThings(input, TypeConvert.PtrToString(str)));
         }
@@ -50,22 +50,22 @@ namespace CsExp {
 
             List<string> input = new List<string>();
 
-            Int32 size = Marshal.ReadInt32(list_str);
+            Int32 size = Exec.ReadPointer<Int32>(list_str);
             for (int i = 0; i < size; i++) {
-                nint ptr = Marshal.ReadIntPtr(list_str, int32_size + (i*nint_size));
+                nint ptr = Exec.ReadPointer<IntPtr>(list_str, int32_size + (i*nint_size));
                 input.Add(TypeConvert.PtrToString(ptr));
             }
 
-            Marshal.FreeHGlobal(list_str);
+            Exec.FreeMemory(list_str);
 
             List<ulong> ret = Cs.FileSystem.DoMoreThings(input);
 
-            nint output = Marshal.AllocHGlobal(int32_size + (ret.Count * uint64_size));
+            nint output = Exec.AllocateMemory((nuint)(int32_size + (ret.Count * uint64_size)));
 
-            Marshal.WriteInt32(output, ret.Count);
+            Exec.WritePointer<Int32>(output, ret.Count);
 
             for (int i = 0; i < ret.Count; i++) {
-                Marshal.WriteInt64(output, int32_size + (i * uint64_size), Convert.ToInt64(ret[i]));
+                Exec.WritePointer<Int64>(output, int32_size + (i * uint64_size), Convert.ToInt64(ret[i]));
             }
 
             return output;
@@ -81,13 +81,13 @@ namespace CsExp {
         {
             int intptr_size = IntPtr.Size;
             List<String> ret = Cs.FileSystem.ImportText(TypeConvert.PtrToString(file));
-            IntPtr output = Marshal.AllocHGlobal( (ret.Count + 1) * intptr_size);
+            IntPtr output = Exec.AllocateMemory((nuint)( (ret.Count + 1) * intptr_size ));
             for (int i = 0; i < ret.Count; i++) {
                 IntPtr elem = TypeConvert.StringToPtr(ret[i]);
-                Marshal.WriteIntPtr(output, intptr_size * i, elem);
+                Exec.WritePointer<IntPtr>(output, intptr_size * i, elem);
             }
             IntPtr end = TypeConvert.StringToPtr("\u0000");
-            Marshal.WriteIntPtr(output, intptr_size * ret.Count(), end);
+            Exec.WritePointer<IntPtr>(output, intptr_size * ret.Count(), end);
 
             return output;
         }
@@ -107,11 +107,11 @@ namespace CsExp {
             int intptr_size = IntPtr.Size;
             List<String> text = new List<String>();
 
-            IntPtr elem = Marshal.ReadIntPtr(content,0);
+            IntPtr elem = Exec.ReadPointer<IntPtr>(content,0);
             String line = TypeConvert.PtrToString(elem);
             for (int i = 1; line.Length > 0; i++) {
                 text.Add(line);
-                elem = Marshal.ReadIntPtr(content, i * intptr_size);
+                elem = Exec.ReadPointer<IntPtr>(content, i * intptr_size);
                 line = TypeConvert.PtrToString(elem);
             }
 
@@ -122,9 +122,6 @@ namespace CsExp {
         {
             if (filepathPtr == IntPtr.Zero)
                 throw new Exception("Intptr $filepathPtr Empty");
-            
-            const int int32_size = sizeof(int);
-            int intptr_size = nint.Size;
 
             string filepath = TypeConvert.PtrToString(filepathPtr); // Convert filepath
             List<List<Terminal.Symbol>> func = Cs.FileSystem.TextureFromFile(filepath); // Original function
@@ -138,10 +135,6 @@ namespace CsExp {
                 throw new Exception("Intptr $filepathPtr Empty");
             if (texturePtr == IntPtr.Zero)
                 throw new Exception("Intptr $texturePtr Empty");
-
-            const int int32_size = sizeof(int);
-            int intptr_size = nint.Size;
-            int size, count;
 
             string filepath = TypeConvert.PtrToString(filepathPtr);
 

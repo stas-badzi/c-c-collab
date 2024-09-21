@@ -14,13 +14,13 @@ namespace CppImp {
         public static extern IntPtr ToNativePath(IntPtr arg1);
         
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "System_AllocateMemory", CharSet = CharSet.Unicode)]
-        public static extern IntPtr AllocateMemory(Int32 arg1);
+        public static extern IntPtr AllocateMemory(nuint arg1);
         
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "System_FreeMemory", CharSet = CharSet.Unicode)]
         public static extern void FreeMemory(IntPtr arg1);
         
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "System_MovePointer", CharSet = CharSet.Unicode)]
-        public static extern void MovePointer(IntPtr arg1, Int32 arg2);
+        public static extern nint MovePointer(IntPtr arg1, Int32 arg2);
 
         // ReadPointer<T>
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "System_ReadPointer$bool", CharSet = CharSet.Unicode)]
@@ -154,7 +154,7 @@ namespace CppImp {
 
     }
 
-    public class Terminal
+    public class Console
     {
         private const string DllSource = @"" + DllHandle.Prefix + "factoryrushplus" + DllHandle.Suffix;
 

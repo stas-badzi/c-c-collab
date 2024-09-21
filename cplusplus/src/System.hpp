@@ -23,7 +23,7 @@ namespace cpp {
         static uniconv::utfstr GetRootPath(void);
         static uniconv::utfstr ToNativePath(uniconv::utfstr path);
 
-        static nint AllocateMemory(unsigned int bytes);
+        static nint AllocateMemory(size_t bytes);
         static void FreeMemory(nint pointer);
 
         static nint MovePointer(nint pointer, signed int bytes);

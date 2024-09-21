@@ -15,7 +15,9 @@
 
 #ifdef _WIN32
     #include <windows.h>
+#ifndef _MSVC
     #include <quick_exit.h>
+#endif
 #else
     #include <signal.h>
     #include <stdio.h>

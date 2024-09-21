@@ -2,6 +2,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Cpp;
 
+#pragma warning disable CS8500
+
 namespace Utility
 {
     public class DllHandle
@@ -37,239 +39,224 @@ namespace Utility
         public const string OS = "Unknown";
     #endif
 
+
     }
-
-
-
     public class MarshalMore {
         public static unsafe void Write<T>(IntPtr ptr, Int32 ofs, T val) {
-            if (typeof(T) == typeof(nint) || typeof(T) == typeof(nuint)) {
-                Marshal.WriteIntPtr(ptr, ofs, TypeConvert.BitConvert<T,IntPtr>(val));
+            T a = TypeConvert.BitConvert<byte,T>(0);
+            if (a is nint || a is nuint) {
+                Exec.WritePointer<IntPtr>(ptr, ofs, TypeConvert.BitConvert<T,IntPtr>(val));
                 return; 
             }
             switch (sizeof(T)) {
                 case sizeof(Byte):
-                    Marshal.WriteByte(ptr, ofs, TypeConvert.BitConvert<T,Byte>(val));
+                    Exec.WritePointer<Byte>(ptr, ofs, TypeConvert.BitConvert<T,Byte>(val));
                     break;
                 case sizeof(Int16):
-                    Marshal.WriteInt16(ptr, ofs, TypeConvert.BitConvert<T,Int16>(val));
+                    Exec.WritePointer<Int16>(ptr, ofs, TypeConvert.BitConvert<T,Int16>(val));
                     break;
                 case sizeof(Int32):
-                    Marshal.WriteInt32(ptr, ofs, TypeConvert.BitConvert<T,Int32>(val));
+                    Exec.WritePointer<Int32>(ptr, ofs, TypeConvert.BitConvert<T,Int32>(val));
                     break;
                 case sizeof(Int64):
-                    Marshal.WriteInt64(ptr, ofs, TypeConvert.BitConvert<T,Int64>(val));
+                    Exec.WritePointer<Int64>(ptr, ofs, TypeConvert.BitConvert<T,Int64>(val));
                     break;
                 default:
-                    IntPtr str = new nint();
-                    Marshal.StructureToPtr<T>(val,str,true);
-                    Marshal.WriteIntPtr(ptr, ofs, str);
-                    break;
-                    //throw new ArgumentException("The size of " + typeof(T) + "(" + sizeof(T) + "), doesn't match any Marshal.Write Function");
+                    throw new ArgumentException("The size of " + typeof(T) + "(" + sizeof(T) + "), doesn't match any Exec.WritePointer<T> Function");
             }
         }
 
         public static unsafe void Write<T>(IntPtr ptr, T val) {
             if (typeof(T) == typeof(nint) || typeof(T) == typeof(nuint)) {
-                Marshal.WriteIntPtr(ptr, TypeConvert.BitConvert<T,IntPtr>(val));
+                Exec.WritePointer<IntPtr>(ptr, TypeConvert.BitConvert<T,IntPtr>(val));
                 return; 
             }
             switch (sizeof(T)) {
                 case sizeof(Byte):
-                    Marshal.WriteByte(ptr, TypeConvert.BitConvert<T,Byte>(val));
+                    Exec.WritePointer<Byte>(ptr, TypeConvert.BitConvert<T,Byte>(val));
                     break;
                 case sizeof(Int16):
-                    Marshal.WriteInt16(ptr, TypeConvert.BitConvert<T,Int16>(val));
+                    Exec.WritePointer<Int16>(ptr, TypeConvert.BitConvert<T,Int16>(val));
                     break;
                 case sizeof(Int32):
-                    Marshal.WriteInt32(ptr, TypeConvert.BitConvert<T,Int32>(val));
+                    Exec.WritePointer<Int32>(ptr, TypeConvert.BitConvert<T,Int32>(val));
                     break;
                 case sizeof(Int64):
-                    Marshal.WriteInt64(ptr, TypeConvert.BitConvert<T,Int64>(val));
+                    Exec.WritePointer<Int64>(ptr, TypeConvert.BitConvert<T,Int64>(val));
                     break;
                 default:
-                    IntPtr str = new IntPtr();
-                    Marshal.StructureToPtr<T>(val,str,true);
-                    Marshal.WriteIntPtr(ptr, str);
-                    break;
-                    //throw new ArgumentException("The size of " + typeof(T) + "(" + sizeof(T) + "), doesn't match any Marshal.Write Function");
+                    throw new ArgumentException("The size of " + typeof(T) + "(" + sizeof(T) + "), doesn't match any Exec.WritePointer<T> Function");
             }
         }
 
         public static unsafe T Read<T>(IntPtr ptr, Int32 ofs) {
             if (typeof(T) == typeof(nint) || typeof(T) == typeof(nuint)) {
-                return TypeConvert.BitConvert<IntPtr,T>(Marshal.ReadIntPtr(ptr, ofs));
+                return TypeConvert.BitConvert<IntPtr,T>(Exec.ReadPointer<IntPtr>(ptr, ofs));
             }
-            switch (sizeof(T)) {
-                case sizeof(Byte):
-                    return TypeConvert.BitConvert<Byte,T>(Marshal.ReadByte(ptr, ofs));
-                case sizeof(Int16):
-                    return TypeConvert.BitConvert<Int16,T>(Marshal.ReadInt16(ptr, ofs));
-                case sizeof(Int32):
-                    return TypeConvert.BitConvert<Int32,T>(Marshal.ReadInt32(ptr, ofs));
-                case sizeof(Int64):
-                    return TypeConvert.BitConvert<Int64,T>(Marshal.ReadInt64(ptr, ofs));
-                default:
-                    return Marshal.PtrToStructure<T>(Marshal.ReadIntPtr(ptr, ofs));
-                    //throw new ArgumentException("The size of " + typeof(T) + "(" + sizeof(T) + "), doesn't match any Marshal.Read Function");
-            }
+            return sizeof(T) switch
+            {
+                sizeof(Byte) => TypeConvert.BitConvert<Byte, T>(Exec.ReadPointer<Byte>(ptr, ofs)),
+                sizeof(Int16) => TypeConvert.BitConvert<Int16, T>(Exec.ReadPointer<Int16>(ptr, ofs)),
+                sizeof(Int32) => TypeConvert.BitConvert<Int32, T>(Exec.ReadPointer<Int32>(ptr, ofs)),
+                sizeof(Int64) => TypeConvert.BitConvert<Int64, T>(Exec.ReadPointer<Int64>(ptr, ofs)),
+                _ => throw new ArgumentException("The size of " + typeof(T) + "(" + sizeof(T) + "), doesn't match any Exec.ReadPointer<T> Function"),
+            };
         }
 
         public static unsafe T Read<T>(IntPtr ptr) {
             if (typeof(T) == typeof(nint) || typeof(T) == typeof(nuint)) {
-                return TypeConvert.BitConvert<IntPtr,T>(Marshal.ReadIntPtr(ptr));
+                return TypeConvert.BitConvert<IntPtr,T>(Exec.ReadPointer<IntPtr>(ptr));
             }
             switch (sizeof(T)) {
                 case sizeof(Byte):
-                    return TypeConvert.BitConvert<Byte,T>(Marshal.ReadByte(ptr));
+                    return TypeConvert.BitConvert<Byte,T>(Exec.ReadPointer<Byte>(ptr));
                 case sizeof(Int16):
-                    return TypeConvert.BitConvert<Int16,T>(Marshal.ReadInt16(ptr));
+                    return TypeConvert.BitConvert<Int16,T>(Exec.ReadPointer<Int16>(ptr));
                 case sizeof(Int32):
-                    return TypeConvert.BitConvert<Int32,T>(Marshal.ReadInt32(ptr));
+                    return TypeConvert.BitConvert<Int32,T>(Exec.ReadPointer<Int32>(ptr));
                 case sizeof(Int64):
-                    return TypeConvert.BitConvert<Int64,T>(Marshal.ReadInt64(ptr));
+                    return TypeConvert.BitConvert<Int64,T>(Exec.ReadPointer<Int64>(ptr));
                 default:
-                    return Marshal.PtrToStructure<T>(Marshal.ReadIntPtr(ptr));
-                    //throw new ArgumentException("The size of " + typeof(T) + "(" + sizeof(T) + "), doesn't match any Marshal.Read Function");
+                    throw new ArgumentException("The size of " + typeof(T) + "(" + sizeof(T) + "), doesn't match any Exec.ReadPointer<T> Function");
             }
         }
 
         public static void WriteBoolean(IntPtr ptr, Int32 ofs, Boolean val) {
-            Marshal.WriteByte(ptr, ofs, TypeConvert.BitConvert<Boolean,Byte>(val));
+            Exec.WritePointer<Byte>(ptr, ofs, TypeConvert.BitConvert<Boolean,Byte>(val));
         }
 
         public static void WriteBoolean(IntPtr ptr, Boolean val) {
-            Marshal.WriteByte(ptr, TypeConvert.BitConvert<Boolean,Byte>(val));
+            Exec.WritePointer<Byte>(ptr, TypeConvert.BitConvert<Boolean,Byte>(val));
         }
 
         public static Boolean ReadBoolean(IntPtr ptr, Int32 ofs) {
-            return TypeConvert.BitConvert<Byte,Boolean>(Marshal.ReadByte(ptr, ofs));
+            return TypeConvert.BitConvert<Byte,Boolean>(Exec.ReadPointer<Byte>(ptr, ofs));
         }
 
         public static Boolean ReadBoolean(IntPtr ptr) {
-            return TypeConvert.BitConvert<Byte,Boolean>(Marshal.ReadByte(ptr));
+            return TypeConvert.BitConvert<Byte,Boolean>(Exec.ReadPointer<Byte>(ptr));
         }
 
 
         public static void WriteSByte(IntPtr ptr, Int32 ofs, SByte val) {
-            Marshal.WriteByte(ptr, ofs, TypeConvert.BitConvert<SByte,Byte>(val));
+            Exec.WritePointer<Byte>(ptr, ofs, TypeConvert.BitConvert<SByte,Byte>(val));
         }
 
         public static void WriteSByte(IntPtr ptr, SByte val) {
-            Marshal.WriteByte(ptr, TypeConvert.BitConvert<SByte,Byte>(val));
+            Exec.WritePointer<Byte>(ptr, TypeConvert.BitConvert<SByte,Byte>(val));
         }
 
         public static SByte ReadSByte(IntPtr ptr, Int32 ofs) {
-            return TypeConvert.BitConvert<Byte,SByte>(Marshal.ReadByte(ptr, ofs));
+            return TypeConvert.BitConvert<Byte,SByte>(Exec.ReadPointer<Byte>(ptr, ofs));
         }
 
         public static SByte ReadSByte(IntPtr ptr) {
-            return TypeConvert.BitConvert<Byte,SByte>(Marshal.ReadByte(ptr));
+            return TypeConvert.BitConvert<Byte,SByte>(Exec.ReadPointer<Byte>(ptr));
         }
 
 
         public static void WriteUInt16(IntPtr ptr, Int32 ofs, UInt16 val) {
-            Marshal.WriteInt16(ptr, ofs, TypeConvert.BitConvert<UInt16,Int16>(val));
+            Exec.WritePointer<Int16>(ptr, ofs, TypeConvert.BitConvert<UInt16,Int16>(val));
         }
 
         public static void WriteUInt16(IntPtr ptr, UInt16 val) {
-            Marshal.WriteInt16(ptr, TypeConvert.BitConvert<UInt16,Int16>(val));
+            Exec.WritePointer<Int16>(ptr, TypeConvert.BitConvert<UInt16,Int16>(val));
         }
 
         public static UInt16 ReadUInt16(IntPtr ptr, Int32 ofs) {
-            return TypeConvert.BitConvert<Int16,UInt16>(Marshal.ReadInt16(ptr, ofs));
+            return TypeConvert.BitConvert<Int16,UInt16>(Exec.ReadPointer<Int16>(ptr, ofs));
         }
 
         public static UInt16 ReadUInt16(IntPtr ptr) {
-            return TypeConvert.BitConvert<Int16,UInt16>(Marshal.ReadInt16(ptr));
+            return TypeConvert.BitConvert<Int16,UInt16>(Exec.ReadPointer<Int16>(ptr));
         }
 
 
 
         public static void WriteUInt32(IntPtr ptr, Int32 ofs, UInt32 val) {
-            Marshal.WriteInt32(ptr, ofs, TypeConvert.BitConvert<UInt32,Int32>(val));
+            Exec.WritePointer<Int32>(ptr, ofs, TypeConvert.BitConvert<UInt32,Int32>(val));
         }
 
         public static void WriteUInt32(IntPtr ptr, UInt32 val) {
-            Marshal.WriteInt32(ptr, TypeConvert.BitConvert<UInt32,Int32>(val));
+            Exec.WritePointer<Int32>(ptr, TypeConvert.BitConvert<UInt32,Int32>(val));
         }
 
         public static UInt32 ReadUInt32(IntPtr ptr, Int32 ofs) {
-            return TypeConvert.BitConvert<Int32,UInt32>(Marshal.ReadInt32(ptr, ofs));
+            return TypeConvert.BitConvert<Int32,UInt32>(Exec.ReadPointer<Int32>(ptr, ofs));
         }
 
         public static UInt32 ReadUInt32(IntPtr ptr) {
-            return TypeConvert.BitConvert<Int32,UInt32>(Marshal.ReadInt32(ptr));
+            return TypeConvert.BitConvert<Int32,UInt32>(Exec.ReadPointer<Int32>(ptr));
         }
 
 
 
         public static void WriteUInt64(IntPtr ptr, Int32 ofs, UInt64 val) {
-            Marshal.WriteInt64(ptr, ofs, TypeConvert.BitConvert<UInt64,Int64>(val));
+            Exec.WritePointer<Int64>(ptr, ofs, TypeConvert.BitConvert<UInt64,Int64>(val));
         }
 
         public static void WriteUInt64(IntPtr ptr, UInt64 val) {
-            Marshal.WriteInt64(ptr, TypeConvert.BitConvert<UInt64,Int64>(val));
+            Exec.WritePointer<Int64>(ptr, TypeConvert.BitConvert<UInt64,Int64>(val));
         }
 
         public static UInt64 ReadUInt64(IntPtr ptr, Int32 ofs) {
-            return TypeConvert.BitConvert<Int64,UInt64>(Marshal.ReadInt64(ptr, ofs));
+            return TypeConvert.BitConvert<Int64,UInt64>(Exec.ReadPointer<Int64>(ptr, ofs));
         }
 
         public static UInt64 ReadUInt64(IntPtr ptr) {
-            return TypeConvert.BitConvert<Int64,UInt64>(Marshal.ReadInt64(ptr));
+            return TypeConvert.BitConvert<Int64,UInt64>(Exec.ReadPointer<Int64>(ptr));
         }
 
 
 
         public static void WriteUIntPtr(IntPtr ptr, Int32 ofs, UIntPtr val) {
-            Marshal.WriteIntPtr(ptr, ofs, TypeConvert.BitConvert<UIntPtr,IntPtr>(val));
+            Exec.WritePointer<IntPtr>(ptr, ofs, TypeConvert.BitConvert<UIntPtr,IntPtr>(val));
         }
 
         public static void WriteUIntPtr(IntPtr ptr, UIntPtr val) {
-            Marshal.WriteIntPtr(ptr, TypeConvert.BitConvert<UIntPtr,IntPtr>(val));
+            Exec.WritePointer<IntPtr>(ptr, TypeConvert.BitConvert<UIntPtr,IntPtr>(val));
         }
 
         public static UIntPtr ReadUIntPtr(IntPtr ptr, Int32 ofs) {
-            return TypeConvert.BitConvert<IntPtr,UIntPtr>(Marshal.ReadIntPtr(ptr, ofs));
+            return TypeConvert.BitConvert<IntPtr,UIntPtr>(Exec.ReadPointer<IntPtr>(ptr, ofs));
         }
 
         public static UIntPtr ReadUIntPtr(IntPtr ptr) {
-            return TypeConvert.BitConvert<IntPtr,UIntPtr>(Marshal.ReadIntPtr(ptr));
+            return TypeConvert.BitConvert<IntPtr,UIntPtr>(Exec.ReadPointer<IntPtr>(ptr));
         }
 
 
         public static void WriteFloat(IntPtr ptr, Int32 ofs, float val) {
-            Marshal.WriteInt32(ptr, ofs, TypeConvert.BitConvert<float,Int32>(val));
+            Exec.WritePointer<Int32>(ptr, ofs, TypeConvert.BitConvert<float,Int32>(val));
         }
 
         public static void WriteFloat(IntPtr ptr, float val) {
-            Marshal.WriteInt32(ptr, TypeConvert.BitConvert<float,Int32>(val));
+            Exec.WritePointer<Int32>(ptr, TypeConvert.BitConvert<float,Int32>(val));
         }
 
         public static float ReadFloat(IntPtr ptr, Int32 ofs) {
-            return TypeConvert.BitConvert<Int32,float>(Marshal.ReadInt32(ptr, ofs));
+            return TypeConvert.BitConvert<Int32,float>(Exec.ReadPointer<Int32>(ptr, ofs));
         }
 
         public static float ReadFloat(IntPtr ptr) {
-            return TypeConvert.BitConvert<Int32,float>(Marshal.ReadInt32(ptr));
+            return TypeConvert.BitConvert<Int32,float>(Exec.ReadPointer<Int32>(ptr));
         }
 
 
         public static void WriteDouble(IntPtr ptr, Int32 ofs, Double val) {
-            Marshal.WriteInt64(ptr, ofs, TypeConvert.BitConvert<Double,Int64>(val));
+            Exec.WritePointer<Int64>(ptr, ofs, TypeConvert.BitConvert<Double,Int64>(val));
         }
 
         public static void WriteDouble(IntPtr ptr, Double val) {
-            Marshal.WriteInt64(ptr, TypeConvert.BitConvert<Double,Int64>(val));
+            Exec.WritePointer<Int64>(ptr, TypeConvert.BitConvert<Double,Int64>(val));
         }
 
         public static Double ReadDouble(IntPtr ptr, Int32 ofs) {
-            return TypeConvert.BitConvert<Int64,Double>(Marshal.ReadInt64(ptr, ofs));
+            return TypeConvert.BitConvert<Int64,Double>(Exec.ReadPointer<Int64>(ptr, ofs));
         }
 
         public static Double ReadDouble(IntPtr ptr) {
-            return TypeConvert.BitConvert<Int64,Double>(Marshal.ReadInt32(ptr));
+            return TypeConvert.BitConvert<Int64,Double>(Exec.ReadPointer<Int32>(ptr));
         }
     }
 
@@ -297,22 +284,23 @@ namespace Utility
         public static String PtrToString(IntPtr ptr)
         {
         #if _WIN32
-            string output = Marshal.PtrToStringUni(ptr);
-            Marshal.FreeHGlobal(ptr);
+            string? output = Marshal.PtrToStringUni(ptr);
+            Exec.FreeMemory(ptr);
+            if (output == null) { throw new Exception("Parsed data is null"); }
             return output;
         #else
             int int32_size = sizeof(Int32);
 
             String str = "";
-            Int32 intg = Marshal.ReadInt32(ptr,0);
+            Int32 intg = Exec.ReadPointer<Int32>(ptr);
             for (int i = 0; true; i++) {
-                intg = Marshal.ReadInt32(ptr,i*int32_size);
+                intg = Exec.ReadPointer<Int32>(ptr,i*int32_size);
                 if (intg == 0) {
                     break;
                 }
                 str += Convert.ToChar(intg);
             }
-            Marshal.FreeHGlobal(ptr);
+            Exec.FreeMemory(ptr);
             return str;
         #endif
         }
@@ -324,12 +312,12 @@ namespace Utility
             #else
             int int32_size = sizeof(Int32);
 
-            IntPtr ptr = Marshal.AllocHGlobal( (str.Length + 1) * int32_size);
+            IntPtr ptr = Exec.AllocateMemory( (str.Length + 1) * int32_size);
             for (int i = 0; i < str.Length; i++) {
                 Int32 textint = Convert.ToInt32(str[i]);
-                Marshal.WriteInt32(ptr, i*int32_size, textint);
+                Exec.WritePointer<Int32>(ptr, i*int32_size, textint);
             }
-            Marshal.WriteInt32(ptr, str.Length * int32_size, 0);
+            Exec.WritePointer<Int32>(ptr, str.Length * int32_size, 0);
 
             return ptr;
             #endif
@@ -341,9 +329,9 @@ namespace Utility
             const int int_size = sizeof(int);
 
             int size = list.Count;
-            nint ptr = Marshal.AllocHGlobal(int_size + T_size * size);
+            nint ptr = Exec.AllocateMemory((nuint)(int_size + T_size * size));
 
-            Marshal.WriteInt32(ptr, size);
+            Exec.WritePointer<Int32>(ptr, size);
 
             for (int i = 0; i < size; i++) {
                 MarshalMore.Write<T>(ptr, int_size + T_size * i, list[i]);
@@ -356,7 +344,7 @@ namespace Utility
             int T_size = (typeof(T) == typeof(nint) || typeof(T) == typeof(nuint)) ? IntPtr.Size : sizeof(T);
             const int int_size = sizeof(int);
 
-            int size = Marshal.ReadInt32(ptr);
+            int size = Exec.ReadPointer<Int32>(ptr);
             List<T> list = new List<T>();
 
             for (int i = 0; i < size; i++) {
@@ -364,7 +352,7 @@ namespace Utility
                 list.Add(elem);
             }
 
-            Marshal.FreeHGlobal(ptr);
+            Exec.FreeMemory(ptr);
 
             return list;
         }
@@ -376,25 +364,25 @@ namespace Utility
 
             var texture = new List<List<Terminal.Symbol>>();
 
-            height = Marshal.ReadInt32(ptr);
-
+            height = Exec.ReadPointer<Int32>(ptr);
+            
             count = 0;
             for (int i = 0; i < height; i++)
             {
                 texture.Add(new List<Terminal.Symbol>());
                 //***************** here ****************************************
-                int width = Marshal.ReadInt32(ptr, (i + 1) * int32_size + count * intptr_size);
+                int width = Exec.ReadPointer<Int32>(ptr, (i + 1) * int32_size + count * intptr_size);
                 //***************** end *****************************************
                 for (int j = 0; j < width; j++)
                 {
-                    nint ni = Marshal.ReadIntPtr(ptr, (i + 2) * int32_size + count * intptr_size);
+                    nint ni = Exec.ReadPointer<IntPtr>(ptr, (i + 2) * int32_size + count * intptr_size);
                     texture[i].Add(new Terminal.Symbol(ptr));
                     count++;
                 }
             }
 
             // This is where you do the freeHGlobal
-            Marshal.FreeHGlobal(ptr);
+            Exec.FreeMemory(ptr);
             //(other than that congrats in doing all that in one intptr, I always did it by first List<Symbol> -> List<IntPtr> and than List<IntPtr> -> IntPtr , whitch was a small problem later with all the Marshal.FreeHglobal)
             // well... now you have a function PtrToLIst<T>() and ListToPtr<T>() so that's not that needed anyway
             // {you could've encoded the and decoded the texture[i].Count only once as texture[0].Count since it's a rectangle so all rows have the same length}
@@ -414,16 +402,16 @@ namespace Utility
             {
                 count += texture[i].Count;
             }
-            nint texturePtr = Marshal.AllocHGlobal((size + 1) * int32_size + count * intptr_size);
+            nint texturePtr = Exec.AllocateMemory((nuint)( (size + 1) * int32_size + count * intptr_size ));
 
             count = 0;
-            Marshal.WriteInt32(texturePtr, size);
+            Exec.WritePointer<Int32>(texturePtr, size);
             for (int i = 0; i < size; i++)
             {
-                Marshal.WriteInt32(texturePtr, (i + 1) * int32_size + count * intptr_size, texture[i].Count);
+                Exec.WritePointer<Int32>(texturePtr, (i + 1) * int32_size + count * intptr_size, texture[i].Count);
                 for (int j = 0; j < texture[i].Count; j++)
                 {
-                    Marshal.WriteIntPtr(texturePtr, (i + 2) * int32_size + count * intptr_size, texture[i][j].Get());
+                    Exec.WritePointer<IntPtr>(texturePtr, (i + 2) * int32_size + count * intptr_size, texture[i][j].Get());
                     count++;
                 }
             }

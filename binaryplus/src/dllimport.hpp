@@ -70,7 +70,7 @@ namespace cppimp {
     
     libimport uniconv::unichar* System_ToNativePath(uniconv::unichar* arg1);
     
-    libimport nint System_AllocateMemory(uint32_t arg1);
+    libimport nint System_AllocateMemory(size_t arg1);
 
     libimport void System_FreeMemory(nint arg1);
 

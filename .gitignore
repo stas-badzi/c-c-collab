@@ -54,6 +54,7 @@ binaryplus/bin/*.tux
 *.pdb
 *.dbg
 *.json
+*.ilk
 binarysharp/obj/*
 csharp/obj/*
 binarysharp/bin/Release/*

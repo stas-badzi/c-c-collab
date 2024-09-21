@@ -13,11 +13,7 @@
 
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="8.0.6" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="CSCore" Version="1.2.1" />
+    <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="9.0.0-*" />
   </ItemGroup>
 
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">

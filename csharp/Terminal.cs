@@ -8,31 +8,31 @@ namespace Cpp
     public class Terminal
     {
         public static void Init() {
-            CppImp.Terminal.Init();
+            CppImp.Console.Init();
         }
 
         public static void Fin() {
-            CppImp.Terminal.Fin();
+            CppImp.Console.Fin();
         }
 
         public static int HandleKeyboard() {
-            return CppImp.Terminal.HandleKeyboard();
+            return CppImp.Console.HandleKeyboard();
         }
 
         public static bool IsKeyDown(int key) {
-            return CppImp.Terminal.IsKeyDown(key);
+            return CppImp.Console.IsKeyDown(key);
         }
 
         public static bool IsKeyToggled(int key) {
-            return CppImp.Terminal.IsKeyToggled(key);
+            return CppImp.Console.IsKeyToggled(key);
         }
 
         public static int KeyPressed() {
-            return CppImp.Terminal.KeyPressed();
+            return CppImp.Console.KeyPressed();
         }
 
         public static int KeyReleased() {
-            return CppImp.Terminal.KeyReleased();
+            return CppImp.Console.KeyReleased();
         }
 
         public static ulong[] FillScreen(List<List<Symbol>> symbols) {
@@ -45,36 +45,36 @@ namespace Cpp
             List<IntPtr> list_ptr = new List<IntPtr>(); // Convert 2xlist_Symbol to 2xlist_IntPtr
             for (int i = 0; i < height; i++)
             {
-                list_ptr.Add(Marshal.AllocHGlobal(width * ptrsize));
+                list_ptr.Add(Exec.AllocateMemory((nuint)(width * ptrsize)));
                 for (int j = 0; j < width; j++)
                 {
-                    Marshal.WriteIntPtr(list_ptr[i], j * ptrsize, symbols[i][j].Get());
+                    Exec.WritePointer<IntPtr>(list_ptr[i], j * ptrsize, symbols[i][j].Get());
                 }
             }
 
-            IntPtr ptr_smb = Marshal.AllocHGlobal(height * ptrsize);
+            IntPtr ptr_smb = Exec.AllocateMemory((nuint)(height * ptrsize));
             
             for (int i = 0; i < height; i++)
             {
-                Marshal.WriteIntPtr(ptr_smb, i * ptrsize, list_ptr[i]);
+                Exec.WritePointer<IntPtr>(ptr_smb, i * ptrsize, list_ptr[i]);
             }
 
             // ptr_ptr_smb = (IntPtr) list_ptr_smb.to_array;
 
-            IntPtr ulongints = CppImp.Terminal.FillScreen(ptr_smb, height, width); // Does the work itself
+            IntPtr ulongints = CppImp.Console.FillScreen(ptr_smb, height, width); // Does the work itself
 
-            Marshal.FreeHGlobal(ptr_smb);
+            Exec.FreeMemory(ptr_smb);
 
             for (int i = 0; i < height; i++)
             {
-                Marshal.FreeHGlobal(list_ptr[i]);
+                Exec.FreeMemory(list_ptr[i]);
             }
             
             // ulongints -> ulongs
             ulong[] ulongs = new ulong[2];
 
-            ulongs[0] = Convert.ToUInt64(Marshal.ReadInt32(ulongints, 0));
-            ulongs[1] = Convert.ToUInt64(Marshal.ReadInt32(ulongints, ulngsize));
+            ulongs[0] = Convert.ToUInt64(Exec.ReadPointer<Int32>(ulongints, 0));
+            ulongs[1] = Convert.ToUInt64(Exec.ReadPointer<Int32>(ulongints, ulngsize));
 
             // ???
 
@@ -82,78 +82,78 @@ namespace Cpp
         }
 
         public static short GetWindowWidth() {
-            return CppImp.Terminal.GetWindowWidth();
+            return CppImp.Console.GetWindowWidth();
         }
 
         public static short GetWindowHeight() {
-            return CppImp.Terminal.GetWindowHeight();
+            return CppImp.Console.GetWindowHeight();
         }
 
         public class Symbol
         {
             ~Symbol() {
-                CppImp.Terminal.Symbol.Destruct(symbol);
+                CppImp.Console.Symbol.Destruct(symbol);
             }
 
             // be carefull not to use the struct after it hes been destructed, and that it doesn't get destructed automaticly either
             public void Destruct() {
-                CppImp.Terminal.Symbol.Destruct(symbol);
+                CppImp.Console.Symbol.Destruct(symbol);
             }
 
             public Symbol() {
-                symbol = CppImp.Terminal.Symbol.Construct(' ');
+                symbol = CppImp.Console.Symbol.Construct(' ');
             }
 
             public Symbol(Symbol cp) {
-                symbol = CppImp.Terminal.Symbol.Construct(cp.symbol);
+                symbol = CppImp.Console.Symbol.Construct(cp.symbol);
             }
 
             // Direct = do not copy vaues, copy ptr
             public Symbol(nint sym, bool direct = false) {
                 if (direct) symbol = sym;
-                else symbol = CppImp.Terminal.Symbol.Construct(sym);
+                else symbol = CppImp.Console.Symbol.Construct(sym);
             }
         #if _WIN32
             public Symbol(byte atr = 0x0000) {
-                symbol = CppImp.Terminal.Symbol.Construct(atr);
+                symbol = CppImp.Console.Symbol.Construct(atr);
             }
             public void GetAttribute(byte atr) {
-                CppImp.Terminal.Symbol.SetAttribute(symbol, atr);
+                CppImp.Console.Symbol.SetAttribute(symbol, atr);
             }
             public byte GetAttribute() {
-                return CppImp.Terminal.Symbol.GetAttribute(symbol);
+                return CppImp.Console.Symbol.GetAttribute(symbol);
             }
         #endif
 
             public Symbol(char character, byte foreground = 7, byte background = 0) {
-                symbol = CppImp.Terminal.Symbol.Construct(TypeConvert.Utf8ToUnicode(character),foreground,background);
+                symbol = CppImp.Console.Symbol.Construct(TypeConvert.Utf8ToUnicode(character),foreground,background);
             }
 
             // to edit a Symbol (Console::Symbol too, from;)
                 // too.Destruct(); too = new Symbol(from);
            
             public char character() {
-                return TypeConvert.UnicodeToUtf8(CppImp.Terminal.Symbol.character(symbol));
+                return TypeConvert.UnicodeToUtf8(CppImp.Console.Symbol.character(symbol));
             }
 
             public void character(char val) {
-                CppImp.Terminal.Symbol.character(symbol, TypeConvert.Utf8ToUnicode(val));
+                CppImp.Console.Symbol.character(symbol, TypeConvert.Utf8ToUnicode(val));
             }
 
             public byte foreground() {
-                return CppImp.Terminal.Symbol.foreground(symbol);
+                return CppImp.Console.Symbol.foreground(symbol);
             }
 
             public void foreground(byte val) {
-                CppImp.Terminal.Symbol.foreground(symbol, val);
+                CppImp.Console.Symbol.foreground(symbol, val);
             }
 
             public byte background() {
-                return CppImp.Terminal.Symbol.background(symbol);
+                return CppImp.Console.Symbol.background(symbol);
             }
 
             public void background(byte val) {
-                CppImp.Terminal.Symbol.background(symbol, val);
+                CppImp.Console.Symbol.background(symbol, val);
             }
 
             public void ReverseColors() {

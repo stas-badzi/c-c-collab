@@ -12,7 +12,7 @@ utfstr System::GetRootPath(void) {
     return NativeToWString(UnicodeToUtf8String(cppimp::System_GetRootPath()));
 }
 
-nint System::AllocateMemory(unsigned int bytes) {
+nint System::AllocateMemory(size_t bytes) {
     return cppimp::System_AllocateMemory(bytes);
 }
 

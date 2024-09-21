@@ -156,7 +156,7 @@ using namespace uniconv;
         return uniconv::Utf8StringToUnicode(cpp::System::ToNativePath(uniconv::UnicodeToUtf8String(arg1)));
     }
     
-    libexport nint System_AllocateMemory(uint32_t arg1) {
+    libexport nint System_AllocateMemory(size_t arg1) {
         return cpp::System::AllocateMemory(arg1);
     }
 

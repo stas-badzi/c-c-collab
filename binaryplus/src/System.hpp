@@ -14,7 +14,7 @@ namespace cpp {
         static std::wstring GetRootPath(void);
         static std::wstring ToNativePath(std::wstring path);
 
-        static nint AllocateMemory(unsigned int bytes);
+        static nint AllocateMemory(size_t bytes);
         static void FreeMemory(nint pointer);
 
         static nint MovePointer(nint pointer, signed int bytes);

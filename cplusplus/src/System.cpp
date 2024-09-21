@@ -47,7 +47,7 @@ utfstr System::GetRootPath(void) {
 
 
 
-nint System::AllocateMemory(unsigned int bytes) {
+nint System::AllocateMemory(size_t bytes) {
     return malloc(bytes);
 }
 
