@@ -84,22 +84,24 @@ vector<vector<Console::Symbol>> PtrToTexture(void* ptr) {
     const int int32_size = sizeof(int32_t);
     const int intptr_size = sizeof(void*);
 
-    void* now_ptr = ptr;
+    void* now_ptr;
 
-    int32_t height = *(int32_t*)(now_ptr);
-    System::MovePointer(now_ptr, int32_size);
+    int32_t height = System::ReadPointer<int32_t>(ptr);
+    now_ptr = System::MovePointer(ptr, int32_size);
 
     for (size_t i = 0; i < height; i++) {
         int32_t width = System::ReadPointer<int32_t>(now_ptr);
-        System::MovePointer(now_ptr, int32_size);
-        ret.push_back(vector<Console::Symbol>());
+        now_ptr = System::MovePointer(now_ptr, int32_size);
+        vector<Console::Symbol> now;
 
         for (size_t j = 0; j < width; j++) {
             nint ptr = System::ReadPointer<nint>(now_ptr);
             Console::Symbol sym = Console::Symbol(ptr,true);
-            ret.back().push_back(sym);
-            System::MovePointer(now_ptr, intptr_size);
+            now.push_back(sym);
+            now_ptr = System::MovePointer(now_ptr, intptr_size);
         }
+
+        ret.push_back(now);
     }
 
     System::FreeMemory(ptr);
@@ -121,15 +123,15 @@ void* TextureToPtr(vector<vector<Console::Symbol>> texture) {
     void* ret = System::AllocateMemory((size + 1) * int32_size + count * intptr_size);
 
     count = 0;
-    void* where = ret;
-    System::WritePointer(where, size);
-    System::MovePointer(where, int32_size);
+    void* where;
+    System::WritePointer(ret, size);
+    where = System::MovePointer(ret, int32_size);
     for (size_t i = 0; i < size; i++) {
         System::WritePointer(where,texture[i].size());
-        System::MovePointer(where, int32_size);
+        where = System::MovePointer(where, int32_size);
         for (size_t j = 0; j < texture[i].size(); j++) {
             System::WritePointer(where, texture[i][j].Get());
-            System::MovePointer(where, intptr_size);
+            where = System::MovePointer(where, intptr_size);
         }
     }
 

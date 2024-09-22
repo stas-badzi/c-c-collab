@@ -152,7 +152,8 @@ binconfig = Debug
 ifeq ($(msvc),1)
 cdb = /MDd /Z7
 ldb = /DEBUG /PDB:bin/$(name).pdb
-bpdb = /MTd
+bldb = /DEBUG /PDB:bin/$(binname).pdb
+bpdb = /MTd /Z7
 else
 cdb = -g
 bpdb = -g
@@ -162,7 +163,8 @@ configuration = Release
 binconfig = Release
 ifeq ($(msvc),1)
 cdb = /MD /O2
-ldb = 
+ldb = /CGTHREADS
+bldb = /CGTHREADS
 bpdb = /MT /O2
 else
 cdb = -O3
@@ -171,19 +173,20 @@ endif
 endif
 
 flibdir = bin
+wfsrc = $(foreach src,$(sources),src/$(src))
+fbsrc = $(foreach bsrc,$(binsources),binaryplus/src/$(bsrc))
+os = $(subst $(space),-,$(shell echo $$(uname -s) $$(uname -r).$$(uname -m)))
 ifeq ($(msvc),1)
 flib = ../csharp/bin/lib/$(filename).lib
 fsrc = $(foreach src,$(sources),cplusplus\\src\\$(src))
 objects = $(foreach file,$(sources),obj/$(subst .c,.obj,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
+fbobj = $(foreach file,$(binsources),obj/$(subst .c,.obj,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
 else
 flib = -l$(filename)
 fsrc = $(foreach src,$(sources),cplusplus/src/$(src))
 objects = $(foreach file,$(sources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
-endif
-wfsrc = $(foreach src,$(sources),src/$(src))
-fbsrc = $(foreach bsrc,$(binsources),binaryplus/src/$(bsrc))
 fbobj = $(foreach file,$(binsources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
-os = $(subst $(space),-,$(shell echo $$(uname -s) $$(uname -r).$$(uname -m)))
+endif
 
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 os = $(subst $(space),-,$(shell echo $$(uname -s)_$$(uname -r)))
@@ -454,12 +457,26 @@ ifneq ($(wildcard cs),cs)
 endif
 
 ifeq ($(msvc),1)
-	@"echo $(cpp-compiler) /EHsc /c /DUNICODE /D_MSVC $(cdb) $(fsrc) /Icplusplus\include /std:c++20" > run.bat
+	@echo "$(cpp-compiler) /EHsc /c /DUNICODE /D_MSVC $(cdb) $(fsrc) /Icplusplus\include /std:c++20" > run.bat
 	@run.bat
 	@echo $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
-	@echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(flib) $(objects) KERNEL32.lib USER32.lib Gdi32.lib" > run.bat
+	@echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(flib) $(objects) USER32.lib Gdi32.lib" > run.bat
 	@run.bat
-	@rm run.bat
+	@rm run.bat cplusplus/bin/$(name).ilk
+ifeq ($(debug),1)
+	@cp cplusplus/bin/$(filename).pdb binarysharp/bin/exe
+	@cp cplusplus/bin/$(filename).pdb binaryplus/bin
+	@cp cplusplus/bin/$(filename).pdb csharp/bin/lib
+endif
+
+ifeq ($(copylibs),1)
+	@$(admin) cp cplusplus/bin/$(dllname) $(libdir)
+else
+	@cp cplusplus/bin/$(dllname) binaryplus/bin
+	@cp cplusplus/bin/$(dllname) binarysharp/bin/exe
+	@cp cplusplus/bin/$(dllname) csharp/bin/lib
+endif
+
 else
 #
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
@@ -515,7 +532,6 @@ endif
 endif
 endif
 endif
-endif
 #
 
 ifeq ($(shell echo "check quotes"),"check quotes")
@@ -537,6 +553,7 @@ else
 	@cp cplusplus/bin/$(dllname) csharp/bin/lib
 endif
 endif
+endif
 	@echo "Version file. Remove to enable recompile" > $@
 
 
@@ -545,12 +562,16 @@ cs: $(foreach fl,$(files),csharp/$(fl))
 ifneq ($(wildcard resources),resources)
 	@$(MAKE) resources sudo=$(sudp) forcewin=$(forcewin) debug=$(debug)
 endif
-
 	@cd csharp && dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r $(os_name) -c $(configuration)
 
 ifeq ($(msvc),1)
 	@cd csharp/bin/x64/$(configuration)/net8.0/$(os_name)/native/ && for i in *.exp; do if [ ! "$$i" = '$(filename).exp' ]; then mv $$i $(filename).exp; fi; done && for i in *.lib; do if [ ! "$$i" = '$(filename).lib' ]; then mv $$i $(filename).lib; fi; done && for i in *.pdb; do if [ ! "$$i" = '$(filename).pdb' ]; then mv $$i $(filename).pdb; fi; done && for i in *.dll; do if [ ! "$$i" = '$(filename).dll' ]; then mv $$i $(filename).dll; fi; done 
 	@mv csharp/bin/$(arch)/$(configuration)/net8.0/$(os_name)/native/* csharp/bin/lib
+ifeq ($(debug),1)
+	@cp csharp/bin/lib/$(filename).pdb binarysharp/bin/exe
+	@cp csharp/bin/lib/$(filename).pdb binaryplus/bin
+	@cp csharp/bin/lib/$(filename).pdb cplusplus/bin
+endif
 ifeq ($(copylibs),1)
 	@$(admin) cp csharp/bin/lib/$(libname) $(libdir)
 else
@@ -589,6 +610,14 @@ ifneq ($(wildcard cpp),cpp)
 	@$(MAKE) cpp sudo=$(sudp) forcewin=$(forcewin) debug=$(debug)
 endif
 
+ifeq ($(msvc),1)
+	@echo "$(cpp-compiler) /EHsc /c $(bpdb) $(fbsrc) /Ibinaryplus\include /std:c++20" > run.bat
+	@run.bat
+	@echo $(foreach obj,$(subst obj/,$(empty),$(fbobj)),&& $(movefl) -f $(obj) binaryplus/obj$(space))
+	@echo "cd binaryplus && link /OUT:bin/$(binname).$(binary) $(bldb) $(flib) ../cplusplus/bin/$(name).lib ../csharp/bin/lib/$(filename).lib $(fbobj) USER32.lib" > run.bat
+	@run.bat
+	@rm run.bat binaryplus/bin/$(binname).ilk
+else
 #all
 	@$(cpp-compiler) -c -Wall $(bpdb) $(fbsrc) -I binaryplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(fbobj)),&& $(movefl) -f $(obj) binaryplus/obj$(space))
 	@cd binaryplus && $(cpp-compiler) -o bin/$(binname).$(binary) $(fbobj) -L$(flibdir) -l$(name) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
@@ -599,6 +628,7 @@ ifeq ($(shell uname -s),Darwin)
 	@cd binaryplus/bin && install_name_tool -change $$(otool -l $(binname).$(binary) | grep $(dllname) | sed 's/ (offset 24)//' | sed 's/         name //') @loader_path/$(dllname) $(binname).$(binary)
 	@cd binaryplus/bin && install_name_tool -change $$(otool -l $(binname).$(binary) | grep $(filename).dylib | sed 's/ (offset 24)//' | sed 's/         name //') @loader_path/$(libname) $(binname).$(binary)
 #
+endif
 endif
 
 ifeq ($(shell echo "check quotes"),"check quotes")
