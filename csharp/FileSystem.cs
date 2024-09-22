@@ -122,11 +122,7 @@ namespace Cs
         {
             var file = new FileInfo(filepath);
             int width, height;
-
-            if (file.Exists) // Move to recycle bin if exists (safety issues)
-            Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(file.FullName, UIOption.OnlyErrorDialogs, recycle?RecycleOption.SendToRecycleBin:RecycleOption.DeletePermanently);
-            file.Create();
-
+            
             try
             {
                 using (StreamWriter sw = file.CreateText())
