@@ -49,12 +49,16 @@ utfstr System::GetRootPath(void) {
 
 nint System::AllocateMemory(size_t bytes) {
     nint out = malloc(bytes);
+#ifdef _DEBUG
     __save$ALLOCATIONS(out,bytes);
+#endif
     return out;
 }
 
 void System::FreeMemory(nint pointer) {
+#ifdef _DEBUG
     __free$ALLOCATIONS(pointer);
+#endif
     free(pointer);
 }
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef _DEBUG
+
 #include <stdlib.h>
 #include "dynamic_library.h"
 
@@ -34,3 +36,5 @@ inline void __free$SYMBOLS(void* sym) {
 inline void __check$SYMBOLS(void* sym) {
     ControlHeap__check$SYMBOLS(sym);
 }
+
+#endif

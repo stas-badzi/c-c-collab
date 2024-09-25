@@ -11,7 +11,9 @@
 #endif // _MSVC
 #endif // _WIN32
 
-void** ALLOCATIONS;
-unsigned long __size$ALLOCATIONS = 0;
-void** SYMBOLS;
-unsigned long __size$SYMBOLS = 0;
+#ifdef _DEBUG
+    void** ALLOCATIONS;
+    unsigned long __size$ALLOCATIONS = 0;
+    void** SYMBOLS;
+    unsigned long __size$SYMBOLS = 0;
+#endif

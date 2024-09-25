@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef _DEBUG
+
 #include <stdlib.h>
 #include "utils/cextern.h"
 
@@ -99,3 +101,5 @@ inline void __check$SYMBOLS(void* sym) {
     }
     throw("symbol not found");
 }
+
+#endif

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../dynamic_library.h"
 
 namespace dll {

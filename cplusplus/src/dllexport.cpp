@@ -92,75 +92,103 @@ using namespace uniconv;
     // Symbol
         libexport void* Console_Symbol_Construct$smb(cpp::Console::Symbol* src) {
             void* out = (void*) new cpp::Console::Symbol(*src);
+        #ifdef _DEBUG
             __save$SYMBOLS(out);
+        #endif
             return out;
         }
 
 
         libexport void* Console_Symbol_Construct$cfb(unichar character, uint8_t foreground = 7, uint8_t background = 0) {
             void* out = new cpp::Console::Symbol(UnicodeToUtf8(character), foreground, background);
+        #ifdef _DEBUG
             __save$SYMBOLS(out);
+        #endif
             return out;
         }
 
         #ifdef _WIN32
             libexport void* Console_Symbol_Construct$atr(uint8_t attribute) {
                 void* out = (void*) new cpp::Console::Symbol(attribute);
+            #ifdef _DEBUG
                 __save$SYMBOLS(out);
+            #endif
                 return out;
             }
             
             libexport void Console_Symbol_SetAttribute(cpp::Console::Symbol* smb, uint8_t attribute) {
+            #ifdef _DEBUG
                 __check$SYMBOLS(smb);
+            #endif
                 smb->SetAttribute(attribute);
             }
 
             libexport uint8_t Console_Symbol_GetAttribute(cpp::Console::Symbol* smb) {
+            #ifdef _DEBUG
                 __check$SYMBOLS(smb);
+            #endif
                 return smb->GetAttribute();
             }
         #endif
 
         libexport void Console_Symbol_character$set(cpp::Console::Symbol* smb, unichar character) {
+        #ifdef _DEBUG
             __check$SYMBOLS(smb);
+        #endif
             smb->character = UnicodeToUtf8(character);
         }
 
         libexport unichar Console_Symbol_character$get(cpp::Console::Symbol* smb) {
+        #ifdef _DEBUG
             __check$SYMBOLS(smb);
+        #endif
             return Utf8ToUnicode(smb->character);
         }
 
         libexport void Console_Symbol_foreground$set(cpp::Console::Symbol* smb, uint8_t foreground) {
+        #ifdef _DEBUG
             __check$SYMBOLS(smb);
+        #endif
             smb->foreground = foreground;
         }
 
         libexport uint8_t Console_Symbol_foreground$get(cpp::Console::Symbol* smb) {
+        #ifdef _DEBUG
             __check$SYMBOLS(smb);
+        #endif
             return smb->foreground;
         }
 
         libexport void Console_Symbol_background$set(cpp::Console::Symbol* smb, uint8_t background) {
+        #ifdef _DEBUG
             __check$SYMBOLS(smb);
+        #endif
             smb->background = background;
         }
 
         libexport uint8_t Console_Symbol_background$get(cpp::Console::Symbol* smb) {
+        #ifdef _DEBUG
             __check$SYMBOLS(smb);
+        #endif
             return smb->background;
         }
 
         libexport void Console_Symbol_Destruct(cpp::Console::Symbol* smb) {
+        #ifdef _DEBUG
             __free$SYMBOLS(smb);
+        #endif
             delete smb;
         }
 
         libexport void* Console_Symbol_operator$eq(cpp::Console::Symbol* cp, cpp::Console::Symbol* src) {
+        #ifdef _DEBUG
             __check$SYMBOLS(src);
             __check$SYMBOLS(cp);
+        #endif
             void* out = (void*) new cpp::Console::Symbol( (*cp) = (*src) );
+        #ifdef _DEBUG
             __save$SYMBOLS(out);
+        #endif
             return out;
         }
     // ~Symbol
@@ -359,8 +387,8 @@ using namespace uniconv;
 
 // ~System
 
+#ifdef _DEBUG
 // control_heap
-
     libexport void ControlHeap__save$ALLOCATIONS(void* arg1, unsigned long arg2) {
         return __save$ALLOCATIONS(arg1,arg2);
     }
@@ -384,3 +412,4 @@ using namespace uniconv;
     libexport void ControlHeap__check$SYMBOLS(void* arg1) {
         return __check$SYMBOLS(arg1);
     }
+#endif

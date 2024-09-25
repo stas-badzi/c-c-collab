@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stdint.h>
 
 #include <dynamic_library.h>
@@ -10,4 +12,3 @@ namespace csimp {
     libimport void FileSystem_ExportText(uniconv::unichar* file, uniconv::unichar** content);
 
 } // namespace csimp
-
