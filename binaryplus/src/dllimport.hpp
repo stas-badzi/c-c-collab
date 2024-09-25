@@ -163,7 +163,6 @@ namespace cppimp {
 
         libimport void System_WritePointer$nint$ofs(nint arg1, int32_t arg3, nint arg2);
 
-
 } // namespace CppImp
 
 namespace csimp {
@@ -181,4 +180,3 @@ namespace csimp {
     libimport void FileSystem_PlaySound(uniconv::unichar* filepathPtr, bool wait);
 
 } // namespace csimp
-

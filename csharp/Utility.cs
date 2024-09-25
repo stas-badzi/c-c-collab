@@ -376,7 +376,8 @@ namespace Utility
                 for (int j = 0; j < width; j++)
                 {
                     nint ni = Exec.ReadPointer<IntPtr>(ptr, (i + 2) * int32_size + count * intptr_size);
-                    texture[i].Add(new Terminal.Symbol(ptr));
+                    // bro what the fuvk -----------under here----------- (I knew it from the begginig but I couldn't find it)
+                    texture[i].Add(new Terminal.Symbol(ni));
                     count++;
                 }
             }

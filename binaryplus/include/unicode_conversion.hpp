@@ -3,6 +3,8 @@
 #include <string>
 #include <cstdint>
 
+#include "utils/dllalloc.h"
+
 #ifdef _WIN32
 
 #else
@@ -222,7 +224,7 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
 #endif
 
     inline unichar* Utf8StringToUnicode (utfstr utf8s) {
-        unichar* out = (unichar*)malloc(sizeof(unichar) * (utf8s.size() + 1));
+        unichar* out = (unichar*)__dllalloc(sizeof(unichar) * (utf8s.size() + 1));
         size_t offset;
         for (size_t i = 0; i < utf8s.size(); i += offset) {
             out[i] = Utf8ToUnicode(ReadUtfChar(utf8s, i, &offset));
@@ -236,7 +238,7 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
         for (int i = 0; unicodes[i] != 0; ++i) {
             out.append(to_string(UnicodeToUtf8(unicodes[i])));
         }
-        free((void*)(unicodes));
+        __dllfree(unicodes);
         return out;
     }
 

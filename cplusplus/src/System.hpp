@@ -6,6 +6,8 @@
 #include <unicode_conversion.hpp>
 #include <typeinfo>
 
+#include <control_heap.h>
+
 #ifdef _WIN32
     #include <windows.h>
 #else

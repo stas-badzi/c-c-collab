@@ -18,9 +18,9 @@ defcompc = cc
 #> source files
 sources = Console.cpp dllexport.cpp FileSystem.cpp System.cpp globals.c
 #> header files
-headers = Console.hpp FileSystem.hpp dllimport.hpp System.hpp
+headers = Console.hpp FileSystem.hpp dllimport.hpp System.hpp System.ipp
 #> include files
-includes = dynamic_library.h unicode_conversion.hpp getfd.h quick_exit.h quick_exit/defines.h
+includes = dynamic_library.h unicode_conversion.hpp getfd.h quick_exit.h control_heap.h operating_system.h quick_exit/defines.h utils/cextern.h utils/dllalloc.h
 #> name the dynamic library
 name = factoryrushplus
 # *******************************
@@ -31,7 +31,7 @@ binsources = main.cpp Console.cpp FileSystem.cpp System.cpp
 #> header files
 binheaders = dllimport.hpp Console.hpp FileSystem.hpp System.hpp defines.h
 #> include files
-binincludes = dynamic_library.h unicode_conversion.hpp
+binincludes = dynamic_library.h unicode_conversion.hpp control_heap.h utils/cextern.h control_heap.h utils/dllalloc.h
 #> name the binary file
 binname = cpp-factoryrush
 #********************************
@@ -40,14 +40,14 @@ binname = cpp-factoryrush
 #> name the dynamic library
 filename = factoryrushsharp
 #>source code files
-files = DllExport.cs DllImport.cs FileSystem.cs Terminal.cs Console.cs Utility.cs
+files = DllExport.cs DllImport.cs FileSystem.cs Terminal.cs Console.cs Utility.cs Exec.cs
 # *******************************
 
 #********* c# binary config *****
 #> name the binary file
 binfile = cs-factoryrush
 #>source code files
-binfiles = Program.cs DllImport.cs FileSystem.cs Terminal.cs Utility.cs
+binfiles = Program.cs DllImport.cs FileSystem.cs Terminal.cs Utility.cs Exec.cs
 # *******************************
 
 #***** application config ****
@@ -155,16 +155,16 @@ ldb = /DEBUG /PDB:bin/$(name).pdb
 bldb = /DEBUG /PDB:bin/$(binname).pdb
 bpdb = /MTd /Z7
 else
-cdb = -g
-bpdb = -g
+cdb = -g -D_DEBUG
+bpdb = -g -D_DEBUG
 endif
 else
 configuration = Release
 binconfig = Release
 ifeq ($(msvc),1)
 cdb = /MD /O2
-ldb = /CGTHREADS
-bldb = /CGTHREADS
+ldb = /CGTHREADS:8
+bldb = /CGTHREADS:8
 bpdb = /MT /O2
 else
 cdb = -O3
@@ -462,7 +462,7 @@ ifeq ($(msvc),1)
 	@echo $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
 	@echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(flib) $(objects) USER32.lib Gdi32.lib" > run.bat
 	@run.bat
-	@rm run.bat cplusplus/bin/$(name).ilk
+	@rm run.bat
 ifeq ($(debug),1)
 	@cp cplusplus/bin/$(filename).pdb binarysharp/bin/exe
 	@cp cplusplus/bin/$(filename).pdb binaryplus/bin
@@ -493,31 +493,31 @@ ifeq ($(shell uname -s),WINDOWS_NT)
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
-	@$(cpp-compiler) -c -Wall -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
+	@$(cpp-compiler) -c -Wall -fPIC -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
 	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #mingw [ I think same as windows (?) ]
-	@$(cpp-compiler) -c -Wall -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
+	@$(cpp-compiler) -c -Wall -fPIC -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
 	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
 #
 else
 ifeq ($(findstring Windows_NT, $(shell uname -s)),Windows_NT)
 #msys [ i think older ]
-	@$(cpp-compiler) -c -Wall -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
+	@$(cpp-compiler) -c -Wall -fPIC -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
 	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
 #
 else
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys [ I think same as windows (?) ]
-	@$(cpp-compiler) -c -Wall -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
+	@$(cpp-compiler) -c -Wall -fPIC -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
 	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
 #
 else
 # not windows
-#	@cd cplusplus/obj && $(cpp-compiler) -c -Wall -fpic -DUNICODE $(cdb) -fvisibility=hidden $(fsrc) -I ../include -std=c++20
-	@$(cpp-compiler) -c -Wall -fpic -DUNICODE $(cdb) -fvisibility=hidden $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
+#	@cd cplusplus/obj && $(cpp-compiler) -c -Wall -fPIC -DUNICODE $(cdb) -fvisibility=hidden $(fsrc) -I ../include -std=c++20
+	@$(cpp-compiler) -c -Wall -fPIC -DUNICODE $(cdb) -fvisibility=hidden $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
 ifeq ($(shell uname -s),Darwin)
 #macos
 	@cd cplusplus && $(cpp-compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
@@ -616,7 +616,7 @@ ifeq ($(msvc),1)
 	@echo $(foreach obj,$(subst obj/,$(empty),$(fbobj)),&& $(movefl) -f $(obj) binaryplus/obj$(space))
 	@echo "cd binaryplus && link /OUT:bin/$(binname).$(binary) $(bldb) $(flib) ../cplusplus/bin/$(name).lib ../csharp/bin/lib/$(filename).lib $(fbobj) USER32.lib" > run.bat
 	@run.bat
-	@rm run.bat binaryplus/bin/$(binname).ilk
+	@rm run.bat
 else
 #all
 	@$(cpp-compiler) -c -Wall $(bpdb) $(fbsrc) -I binaryplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(fbobj)),&& $(movefl) -f $(obj) binaryplus/obj$(space))

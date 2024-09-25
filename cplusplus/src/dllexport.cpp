@@ -4,6 +4,7 @@
 
 #include "Console.hpp"
 #include "System.hpp"
+#include <control_heap.h>
 
 using namespace uniconv;
 
@@ -90,58 +91,77 @@ using namespace uniconv;
 
     // Symbol
         libexport void* Console_Symbol_Construct$smb(cpp::Console::Symbol* src) {
-            return (void*) new cpp::Console::Symbol(*src);
+            void* out = (void*) new cpp::Console::Symbol(*src);
+            __save$SYMBOLS(out);
+            return out;
         }
 
 
         libexport void* Console_Symbol_Construct$cfb(unichar character, uint8_t foreground = 7, uint8_t background = 0) {
-            return (void*) new cpp::Console::Symbol(UnicodeToUtf8(character), foreground, background);
+            void* out = new cpp::Console::Symbol(UnicodeToUtf8(character), foreground, background);
+            __save$SYMBOLS(out);
+            return out;
         }
 
         #ifdef _WIN32
             libexport void* Console_Symbol_Construct$atr(uint8_t attribute) {
-                return (void*) new cpp::Console::Symbol(attribute);
+                void* out = (void*) new cpp::Console::Symbol(attribute);
+                __save$SYMBOLS(out);
+                return out;
             }
             
             libexport void Console_Symbol_SetAttribute(cpp::Console::Symbol* smb, uint8_t attribute) {
+                __check$SYMBOLS(smb);
                 smb->SetAttribute(attribute);
             }
 
             libexport uint8_t Console_Symbol_GetAttribute(cpp::Console::Symbol* smb) {
+                __check$SYMBOLS(smb);
                 return smb->GetAttribute();
             }
         #endif
 
         libexport void Console_Symbol_character$set(cpp::Console::Symbol* smb, unichar character) {
+            __check$SYMBOLS(smb);
             smb->character = UnicodeToUtf8(character);
         }
 
         libexport unichar Console_Symbol_character$get(cpp::Console::Symbol* smb) {
+            __check$SYMBOLS(smb);
             return Utf8ToUnicode(smb->character);
         }
 
         libexport void Console_Symbol_foreground$set(cpp::Console::Symbol* smb, uint8_t foreground) {
+            __check$SYMBOLS(smb);
             smb->foreground = foreground;
         }
 
         libexport uint8_t Console_Symbol_foreground$get(cpp::Console::Symbol* smb) {
+            __check$SYMBOLS(smb);
             return smb->foreground;
         }
 
         libexport void Console_Symbol_background$set(cpp::Console::Symbol* smb, uint8_t background) {
+            __check$SYMBOLS(smb);
             smb->background = background;
         }
 
         libexport uint8_t Console_Symbol_background$get(cpp::Console::Symbol* smb) {
+            __check$SYMBOLS(smb);
             return smb->background;
         }
 
         libexport void Console_Symbol_Destruct(cpp::Console::Symbol* smb) {
+            __free$SYMBOLS(smb);
             delete smb;
         }
 
         libexport void* Console_Symbol_operator$eq(cpp::Console::Symbol* cp, cpp::Console::Symbol* src) {
-            return (void*) new cpp::Console::Symbol( (*cp) = (*src) );
+            __check$SYMBOLS(src);
+            __check$SYMBOLS(cp);
+            void* out = (void*) new cpp::Console::Symbol( (*cp) = (*src) );
+            __save$SYMBOLS(out);
+            return out;
         }
     // ~Symbol
 
@@ -338,3 +358,29 @@ using namespace uniconv;
     // ~WritePointer<T>
 
 // ~System
+
+// control_heap
+
+    libexport void ControlHeap__save$ALLOCATIONS(void* arg1, unsigned long arg2) {
+        return __save$ALLOCATIONS(arg1,arg2);
+    }
+
+    libexport void ControlHeap__free$ALLOCATIONS(void* arg1) {
+        return __free$ALLOCATIONS(arg1);
+    }
+
+    libexport void ControlHeap__check$ALLOCATIONS(void* arg1, unsigned long arg2) {
+        return __check$ALLOCATIONS(arg1,arg2);
+    }
+
+    libexport void ControlHeap__save$SYMBOLS(void* arg1) {
+        return __save$SYMBOLS(arg1);
+    }
+
+    libexport void ControlHeap__free$SYMBOLS(void* arg1) {
+        return __free$SYMBOLS(arg1);
+    }
+
+    libexport void ControlHeap__check$SYMBOLS(void* arg1) {
+        return __check$SYMBOLS(arg1);
+    }

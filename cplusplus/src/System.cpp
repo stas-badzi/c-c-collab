@@ -48,10 +48,13 @@ utfstr System::GetRootPath(void) {
 
 
 nint System::AllocateMemory(size_t bytes) {
-    return malloc(bytes);
+    nint out = malloc(bytes);
+    __save$ALLOCATIONS(out,bytes);
+    return out;
 }
 
 void System::FreeMemory(nint pointer) {
+    __free$ALLOCATIONS(pointer);
     free(pointer);
 }
 

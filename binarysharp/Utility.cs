@@ -283,7 +283,7 @@ namespace Utility
         }
         public static String PtrToString(IntPtr ptr)
         {
-        #if _WIN32
+        #if WIN32
             string? output = Marshal.PtrToStringUni(ptr);
             Exec.FreeMemory(ptr);
             if (output == null) { throw new Exception("Parsed data is null"); }
@@ -292,9 +292,9 @@ namespace Utility
             int int32_size = sizeof(Int32);
 
             String str = "";
-            Int32 intg = Exec.ReadPointer<Int32>(ptr);
+            UInt32 intg = Exec.ReadPointer<UInt32>(ptr);
             for (int i = 0; true; i++) {
-                intg = Exec.ReadPointer<Int32>(ptr,i*int32_size);
+                intg = Exec.ReadPointer<UInt32>(ptr,i*int32_size);
                 if (intg == 0) {
                     break;
                 }
@@ -307,17 +307,17 @@ namespace Utility
 
         public static IntPtr StringToPtr(String str)
         {
-            #if _WIN32
+            #if WIN32
             return Marshal.StringToHGlobalUni(str);
             #else
             int int32_size = sizeof(Int32);
 
-            IntPtr ptr = Exec.AllocateMemory( (str.Length + 1) * int32_size);
+            IntPtr ptr = Exec.AllocateMemory((nuint)((str.Length + 1) * int32_size));
             for (int i = 0; i < str.Length; i++) {
-                Int32 textint = Convert.ToInt32(str[i]);
-                Exec.WritePointer<Int32>(ptr, i*int32_size, textint);
+                UInt32 textint = Convert.ToUInt32(str[i]);
+                Exec.WritePointer<UInt32>(ptr, i*int32_size, textint);
             }
-            Exec.WritePointer<Int32>(ptr, str.Length * int32_size, 0);
+            Exec.WritePointer<UInt32>(ptr, str.Length * int32_size, 0);
 
             return ptr;
             #endif
@@ -376,7 +376,8 @@ namespace Utility
                 for (int j = 0; j < width; j++)
                 {
                     nint ni = Exec.ReadPointer<IntPtr>(ptr, (i + 2) * int32_size + count * intptr_size);
-                    texture[i].Add(new Terminal.Symbol(ptr));
+                    // bro what the fuvk -----------under here----------- (I knew it from the begginig but I couldn't find it)
+                    texture[i].Add(new Terminal.Symbol(ni));
                     count++;
                 }
             }

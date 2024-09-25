@@ -125,7 +125,7 @@ Console::Symbol::Symbol(void* ptr, bool direct) {
 }
 
 Console::Symbol::Symbol(wchar_t character, uint8_t foreground, uint8_t background) {
-    symbol = Console_Symbol_Construct$cfb(Utf8ToUnicode(WCharToNative((wchar_t)(character))),foreground,background);
+    symbol = Console_Symbol_Construct$cfb(Utf8ToUnicode(WCharToNative(character)),foreground,background);
 }
 
 Console::Symbol::~Symbol() {
@@ -201,7 +201,7 @@ vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(wstring characte
         uint8_t *bkg = backgrounds + count;
         uint8_t *frg = foregrounds + count;
         for (size_t j = 0; j < str.size(); j++) {
-            out.back().push_back(Console::Symbol(str[j],bkg[j],frg[j]));
+            out.back().push_back(Console::Symbol(str[j],frg[j],bkg[j]));
             ++count;
         }
     }

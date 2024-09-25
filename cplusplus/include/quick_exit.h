@@ -1,8 +1,12 @@
+#pragma once
+
 #include <stdlib.h>
+
+#include "utils/cextern.h"
 #include "quick_exit/defines.h"
 
-extern void (*atquickexit__funcs[_AT_QUICK_EXIT_MAX]) (void);
-extern int atquickexit__iterator;
+cextern void (*atquickexit__funcs[_AT_QUICK_EXIT_MAX]) (void);
+cextern int atquickexit__iterator;
 
 inline int at_quick_exit (void (*__func) (void)) {
     if (atquickexit__iterator >= _AT_QUICK_EXIT_MAX) return 1;
