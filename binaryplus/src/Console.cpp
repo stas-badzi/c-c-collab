@@ -1,13 +1,14 @@
 #include "Console.hpp"
 
 #include "dllimport.hpp"
-
+#include "FileSystem.hpp"
 #include <vector>
 
 using namespace cppimp;
 using namespace uniconv;
 using namespace std;
 using namespace cpp;
+using namespace cs;
 
 Console::MouseStatus::MouseStatus(void) {
     this->primary = false;
@@ -46,30 +47,11 @@ int Console::KeyReleased(void) {
     return cppimp::Console_KeyReleased();
 }
 
-array<unsigned long,2> Console::FillScreen(vector<vector<Console::Symbol> > symbols) {
+void Console::FillScreen(vector<vector<Console::Symbol> > symbols) {
 
-    void*** voidsyms = new void**[symbols.size()];
+    void* voidsyms = TextureToPtr(symbols);
 
-    for (size_t i = 0; i < symbols.size(); i++) {
-        void** temp = new void*[symbols[0].size()];
-        for (size_t j = 0; j < symbols[0].size(); j++) {
-            temp[j] = symbols[i][j].Get();
-        }
-        voidsyms[i] = temp;
-    }
-
-    long unsigned int* ret = Console_FillScreen$ret2(voidsyms,symbols.size(),symbols[0].size());
-    
-    for (size_t i = 0; i < symbols.size(); i++) {
-        delete[] voidsyms[i];
-    }
-    delete[] voidsyms;
-
-    array<unsigned long,2> out;
-    out[0] = ret[0];
-    out[1] = ret[1];
-    delete[] ret;
-    return out;
+    Console_FillScreen(voidsyms);
 }
 
 void Console::HandleMouseAndFocus(void) {

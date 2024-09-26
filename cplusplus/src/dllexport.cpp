@@ -4,6 +4,7 @@
 
 #include "Console.hpp"
 #include "System.hpp"
+#include "FileSystem.hpp"
 #include <control_heap.h>
 
 using namespace uniconv;
@@ -65,20 +66,9 @@ using namespace uniconv;
         return cpp::Console::IsFocused();
     }
 
-    libexport unsigned long int* Console_FillScreen$ret2(cpp::Console::Symbol*** symbols, int height, int width) {
-        std::vector<std::vector<cpp::Console::Symbol> > vecsyms;
-        for (int i = 0; i < height; i++) {
-            std::vector<cpp::Console::Symbol> vecdsym;
-            for (int j = 0; j < width; j++) {
-                vecdsym.push_back( *(symbols[i][j]) );
-            }
-            vecsyms.push_back(vecdsym);
-        }
-        unsigned long int* out = new unsigned long int[2];
-        std::array<unsigned long int,2> ret = cpp::Console::FillScreen(vecsyms);
-        out[0] = ret[0];
-        out[1] = ret[1];
-        return out;
+    libexport void Console_FillScreen(void* ptr) {
+        std::vector<std::vector<cpp::Console::Symbol> > texture = cs::PtrToTexture(ptr);
+        return cpp::Console::FillScreen(texture);
     }
 
     libexport int16_t Console_GetWindowWidth(void) {
@@ -97,7 +87,6 @@ using namespace uniconv;
         #endif
             return out;
         }
-
 
         libexport void* Console_Symbol_Construct$cfb(unichar character, uint8_t foreground = 7, uint8_t background = 0) {
             void* out = new cpp::Console::Symbol(UnicodeToUtf8(character), foreground, background);

@@ -35,6 +35,6 @@ namespace cpp {
         template<typename T> static void WritePointer(nint& pointer, T value);
         template<typename T> static void WritePointer(nint& pointer, int offset, T value);
     };
+}
 
 #include "System.ipp"
-}

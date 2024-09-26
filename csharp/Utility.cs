@@ -356,7 +356,7 @@ namespace Utility
 
             return list;
         }
-        public static List<List<Terminal.Symbol>> PtrToTexture(nint ptr)
+        public static List<List<Terminal.Symbol>> PtrToTexture(nint ptr, bool direct = false)
         {
             const int int32_size = sizeof(int);
             int intptr_size = nint.Size;
@@ -377,7 +377,7 @@ namespace Utility
                 {
                     nint ni = Exec.ReadPointer<IntPtr>(ptr, (i + 2) * int32_size + count * intptr_size);
                     // bro what the fuvk -----------under here----------- (I knew it from the begginig but I couldn't find it)
-                    texture[i].Add(new Terminal.Symbol(ni));
+                    texture[i].Add(new Terminal.Symbol(ni,direct));
                     count++;
                 }
             }
@@ -391,7 +391,7 @@ namespace Utility
             return texture;
         }
 
-        public static nint TextureToPtr(List<List<Terminal.Symbol>> texture)
+        public static nint TextureToPtr(List<List<Terminal.Symbol>> texture, bool direct = false)
         {
             const int int32_size = sizeof(int);
             int intptr_size = nint.Size;
@@ -412,6 +412,7 @@ namespace Utility
                 Exec.WritePointer<Int32>(texturePtr, (i + 1) * int32_size + count * intptr_size, texture[i].Count);
                 for (int j = 0; j < texture[i].Count; j++)
                 {
+                    if (direct) texture[i][j].UnarmPointer();
                     Exec.WritePointer<IntPtr>(texturePtr, (i + 2) * int32_size + count * intptr_size, texture[i][j].Get());
                     count++;
                 }

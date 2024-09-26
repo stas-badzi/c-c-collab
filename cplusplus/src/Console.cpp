@@ -109,7 +109,7 @@ using namespace std::chrono;
         return pair<uint16_t,uint16_t>(0,0);
     #define GetXYCharOffset_MaxXSearch 25
     #define GetXYCharOffset_MaxYSearch 50
-        auto scr = vector<vector<Symbol>>();
+        auto scr = vector<vector<Symbol> >();
         scr.push_back(vector<Symbol>());
         scr.back().push_back(Console::Symbol(L' ', 1, 1));
         FillScreen(scr);
@@ -175,19 +175,19 @@ GetXYCharOffsetOutOfLoop:
         }
     }
 
-    int16_t cpp::Console::GetWindowWidth(void) {
+    int16_t Console::GetWindowWidth(void) {
         CONSOLE_SCREEN_BUFFER_INFO csbi;
         GetConsoleScreenBufferInfo(screen, &csbi);
         return csbi.srWindow.Right - csbi.srWindow.Left + 1;
     }
 
-    int16_t cpp::Console::GetWindowHeight(void) {
+    int16_t Console::GetWindowHeight(void) {
         CONSOLE_SCREEN_BUFFER_INFO csbi;
         GetConsoleScreenBufferInfo(screen, &csbi);
         return csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
     }
 
-    array<unsigned long, 2> Console::FillScreen(vector<vector<Symbol> > symbols) {
+    void Console::FillScreen(vector<vector<Symbol> > symbols) {
         Symbol empty_sym = Symbol(L' ', 16, 16);
         const size_t win_width = GetWindowWidth(), win_height = GetWindowHeight(), height = symbols.size(), width = height > 0 ? symbols[0].size() : 0;
 
@@ -197,25 +197,23 @@ GetXYCharOffsetOutOfLoop:
 		for (size_t i = 0; i < win_height; i++) {
 			for (size_t j = 0; j < win_width; j++) {
                 if (i >= height || j >= width) {
-                    screen[ i*width + j ] =  empty_sym.character;
-                    attributes[ i*width + j ] = empty_sym.GetAttribute();
+                    screen[ i*win_width + j ] =  empty_sym.character;
+                    attributes[ i*win_width + j ] = empty_sym.GetAttribute();
                     continue;
                 }
-                screen[ i*width + j ] = symbols[i][j].character;
-                attributes[ i*width + j ] = symbols[i][j].GetAttribute();
+                screen[ i*win_width + j ] = symbols[i][j].character;
+                attributes[ i*win_width + j ] = symbols[i][j].GetAttribute();
 			}
 		}
 
         array<DWORD,2> written;
-		BOOL out = WriteConsoleOutputCharacter(Console::screen, screen, width*height, { 0,0 }, &(written[0]) );
+		BOOL out = WriteConsoleOutputCharacter(Console::screen, screen, win_width*win_height, { 0,0 }, &(written[0]) );
         if (out == 0) { exit(GetLastError()); }
-		out = WriteConsoleOutputAttribute(Console::screen, attributes, width*height, { 0,0 }, &(written[1]) );
+		out = WriteConsoleOutputAttribute(Console::screen, attributes, win_width*win_height, { 0,0 }, &(written[1]) );
         if (out == 0) { exit(GetLastError()); }
         
 		delete[] screen;
 		delete[] attributes;
-
-        return written;
     }
 
     void Console::HandleKeyboard() {
@@ -655,19 +653,17 @@ GetXYCharOffsetOutOfLoop:
     }
 
 
-    int16_t cpp::Console::GetWindowWidth(void) {
-        struct winsize size;
-        ioctl(STDERR_FILENO, TIOCGWINSZ, &size);
-        return size.ws_col;
+    int16_t Console::GetWindowWidth(void) {
+        ioctl(STDERR_FILENO, TIOCGWINSZ, &Console::window_size);
+        return Console::window_size.ws_col;
     }
 
-    int16_t cpp::Console::GetWindowHeight(void) {
-        struct winsize size;
-        ioctl(STDERR_FILENO, TIOCGWINSZ, &size);
-        return size.ws_row;
+    int16_t Console::GetWindowHeight(void) {
+        ioctl(STDERR_FILENO, TIOCGWINSZ, &Console::window_size);
+        return Console::window_size.ws_row;
     }
 
-    array<unsigned long,2> Console::FillScreen(vector<vector<Console::Symbol> > symbols) {
+    void Console::FillScreen(vector<vector<Console::Symbol> > symbols) {
         string screen = "\e[H";
         size_t width = GetWindowWidth(), height = GetWindowHeight();
         for (size_t i = 0; i < height; i++) {
@@ -685,13 +681,6 @@ GetXYCharOffsetOutOfLoop:
         //FILE * screen_file = fopen( "screen.dat", "w" );
         fwrite(screen.c_str(), sizeof(char), screen.size(), stderr);
         //system("cat screen.dat");
-
-        array<unsigned long,2> written;
-				
-		written[0] = width*height;
-        written[1] = width*height + 1;
-
-        return written;
     }
 
     void SysSleep(int microseconds){
@@ -749,7 +738,7 @@ pair<uint8_t, uint8_t> Console::MouseButtonClicked(void) {
     return Console::this_mouse_down ? pair<uint8_t, uint8_t>(-1,0) : pair<uint8_t, uint8_t>(Console::this_mouse_button, Console::this_mouse_combo);
 }
 
-uint8_t cpp::Console::MouseButtonReleased(void) {
+uint8_t Console::MouseButtonReleased(void) {
     return Console::this_mouse_down ? Console::this_mouse_button : -1;
 }
 
@@ -780,11 +769,11 @@ void Console::Sleep(double seconds) {
     while ((high_resolution_clock::now() - start).count() / 1e9 < seconds);
 }
 
-void cpp::Console::SetDoubleClickMaxWait(unsigned short milliseconds) {
+void Console::SetDoubleClickMaxWait(unsigned short milliseconds) {
     Console::double_click_max = milliseconds;
 }
 
-unsigned short cpp::Console::GetDoubleClickMaxWait(void) {
+unsigned short Console::GetDoubleClickMaxWait(void) {
     return Console::double_click_max;
 }
 

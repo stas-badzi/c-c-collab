@@ -34,7 +34,7 @@ namespace cppimp {
 
     libimport bool Console_IsFocused(void);
 
-    libimport unsigned long int* Console_FillScreen$ret2(void*** symbols, int height, int width);
+    libimport void Console_FillScreen(void* symbols);
 
     libimport int16_t Console_GetWindowWidth(void);
 
@@ -180,5 +180,8 @@ namespace csimp {
     libimport void FileSystem_DrawTextureToScreen(int x, int y, void* texturePtr, void* screenPtr);
 
     libimport void FileSystem_PlaySound(uniconv::unichar* filepathPtr, bool wait);
+
+// Control
+    libimport void Control_CleanMemory(void);
 
 } // namespace csimp

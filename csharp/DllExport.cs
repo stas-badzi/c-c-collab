@@ -151,7 +151,7 @@ namespace CsExp {
                 throw new Exception("Intptr $screenPtr Empty");
             
             var texture = TypeConvert.PtrToTexture(texturePtr);
-            var screen = TypeConvert.PtrToTexture(screenPtr);
+            var screen = TypeConvert.PtrToTexture(screenPtr,true);
 
             Cs.FileSystem.DrawTextureToScreen(x, y, texture, screen);
         }
@@ -162,6 +162,13 @@ namespace CsExp {
                 throw new Exception("Intptr $filepathPtr Empty");
 
             Cs.FileSystem.PlaySound(TypeConvert.PtrToString(filepathPtr),wait);
+        }
+    }
+
+    public class Control {
+        [UnmanagedCallersOnly(EntryPoint = "Control_CleanMemory")]
+        public static void CleanMemory() {
+            Cs.Control.CleanMemory();
         }
     }
 }

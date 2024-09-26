@@ -8,9 +8,6 @@ using namespace std;
 using namespace cs;
 using namespace cpp;
 
-void* TextureToPtr(vector<vector<Console::Symbol>>& texture);
-vector<vector<Console::Symbol>> PtrToTexture(void* ptr);
-
 vector<wstring> FileSystem::ImportText(wstring filename) {
     unichar** textptr = FileSystem_ImportText(Utf8StringToUnicode(WStringToNative(filename)));
 
@@ -49,22 +46,21 @@ void FileSystem::ExportText(wstring file, vector<wstring> lines) {
     FileSystem_ExportText(Utf8StringToUnicode(WStringToNative(file)),unilines);
 }
 
-vector<vector<Console::Symbol>> FileSystem::TextureFromFile(wstring filepath) {
+vector<vector<Console::Symbol> > FileSystem::TextureFromFile(wstring filepath) {
     unichar* arg1 = Utf8StringToUnicode(WStringToNative(filepath));
     void* ret = csimp::FileSystem_TextureFromFile(arg1);
 
     return PtrToTexture(ret);
 }
 
-void FileSystem::FileFromTexture(wstring filepath, vector<vector<Console::Symbol>> texture, bool recycle) {
+void FileSystem::FileFromTexture(wstring filepath, vector<vector<Console::Symbol> > texture, bool recycle) {
     unichar* filepathPtr = Utf8StringToUnicode(WStringToNative(filepath));
     void* texturePtr = TextureToPtr(texture);
 
     csimp::FileSystem_FileFromTexture(filepathPtr, texturePtr, recycle);
 }
 
-void FileSystem::DrawTextureToScreen(int x, int y, vector<vector<Console::Symbol>> texture, vector<vector<Console::Symbol>> screen)
-{
+void FileSystem::DrawTextureToScreen(int x, int y, vector<vector<Console::Symbol> > texture, vector<vector<Console::Symbol> >& screen) {
     auto texturePtr = TextureToPtr(texture);
     auto screenPtr = TextureToPtr(screen);
 
@@ -78,8 +74,8 @@ void FileSystem::PlaySound(wstring filepath, bool wait)
     csimp::FileSystem_PlaySound(filepathPtr, wait);
 }
 
-vector<vector<Console::Symbol>> PtrToTexture(nint ptr) {
-    vector<vector<Console::Symbol>> ret;
+vector<vector<Console::Symbol> > cs::PtrToTexture(nint ptr, bool direct) {
+    vector<vector<Console::Symbol> > ret;
 
     const int int32_size = sizeof(int32_t);
     const int intptr_size = sizeof(void*);
@@ -96,7 +92,7 @@ vector<vector<Console::Symbol>> PtrToTexture(nint ptr) {
 
         for (int32_t j = 0; j < width; j++) {
             nint sym = System::ReadPointer<nint>(now_ptr);
-            now.push_back(Console::Symbol(sym));
+            now.push_back(Console::Symbol(sym,direct));
             now_ptr = System::MovePointer(now_ptr, intptr_size);
         }
 
@@ -108,7 +104,7 @@ vector<vector<Console::Symbol>> PtrToTexture(nint ptr) {
     return ret;
 }
 
-void* TextureToPtr(vector<vector<Console::Symbol>>& texture) {
+void* cs::TextureToPtr(vector<vector<Console::Symbol> >& texture) {
     const int int32_size = sizeof(int32_t);
     const int intptr_size = sizeof(void*);
     int32_t size, count;

@@ -45,7 +45,6 @@ namespace Cs
         {
             string? line;
             List<String> result = new List<String>();
-            System.Console.WriteLine(str_file);
             try
             {
                 StreamReader sr = new StreamReader(str_file);
@@ -167,13 +166,13 @@ namespace Cs
                     if (y+i >= 0 && y+i < scrHeight && x+j >= 0 && x+j < scrWidth)
                     {
                         if (texture[i][j].character() != '\t') {
-                            screen[i][j].character(texture[i][j].character());
+                            screen[y+i][x+j].character(texture[i][j].character());
                         }
                         if (texture[i][j].foreground() < 16) {
-                            screen[i][j].foreground(texture[i][j].foreground());
+                            screen[y+i][x+j].foreground(texture[i][j].foreground());
                         }
                         if (texture[i][j].background() < 16) {
-                            screen[i][j].background(texture[i][j].background());
+                            screen[y+i][x+j].background(texture[i][j].background());
                         }
                     }
                 }

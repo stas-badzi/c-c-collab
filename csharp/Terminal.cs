@@ -35,50 +35,9 @@ namespace Cpp
             return CppImp.Console.KeyReleased();
         }
 
-        public static ulong[] FillScreen(List<List<Symbol>> symbols) {
-            
-            int ptrsize = IntPtr.Size;
-            int ulngsize = sizeof(ulong);
-            int height = symbols.Count();
-            int width = symbols[0].Count();
-
-            List<IntPtr> list_ptr = new List<IntPtr>(); // Convert 2xlist_Symbol to 2xlist_IntPtr
-            for (int i = 0; i < height; i++)
-            {
-                list_ptr.Add(Exec.AllocateMemory((nuint)(width * ptrsize)));
-                for (int j = 0; j < width; j++)
-                {
-                    Exec.WritePointer<IntPtr>(list_ptr[i], j * ptrsize, symbols[i][j].Get());
-                }
-            }
-
-            IntPtr ptr_smb = Exec.AllocateMemory((nuint)(height * ptrsize));
-            
-            for (int i = 0; i < height; i++)
-            {
-                Exec.WritePointer<IntPtr>(ptr_smb, i * ptrsize, list_ptr[i]);
-            }
-
-            // ptr_ptr_smb = (IntPtr) list_ptr_smb.to_array;
-
-            IntPtr ulongints = CppImp.Console.FillScreen(ptr_smb, height, width); // Does the work itself
-
-            Exec.FreeMemory(ptr_smb);
-
-            for (int i = 0; i < height; i++)
-            {
-                Exec.FreeMemory(list_ptr[i]);
-            }
-            
-            // ulongints -> ulongs
-            ulong[] ulongs = new ulong[2];
-
-            ulongs[0] = Convert.ToUInt64(Exec.ReadPointer<Int32>(ulongints, 0));
-            ulongs[1] = Convert.ToUInt64(Exec.ReadPointer<Int32>(ulongints, ulngsize));
-
-            // ???
-
-            return ulongs;
+        public static void FillScreen(List<List<Symbol>> symbols) {
+            nint sym = TypeConvert.TextureToPtr(symbols);
+            CppImp.Console.FillScreen(sym);
         }
 
         public static short GetWindowWidth() {
@@ -91,31 +50,79 @@ namespace Cpp
 
         public class Symbol
         {
-            ~Symbol() {
-                CppImp.Console.Symbol.Destruct(symbol);
+            private static List<IntPtr> deleteQueue = new List<IntPtr>();
+
+            public static void DestructQueued() {
+                for (var i = 0; i < deleteQueue.Count; i++) {
+                    CppImp.Console.Symbol.Destruct(deleteQueue[i]);
+                }
+                deleteQueue.Clear();
             }
 
-            // be carefull not to use the struct after it hes been destructed, and that it doesn't get destructed automaticly either
-            public void Destruct() {
-                CppImp.Console.Symbol.Destruct(symbol);
+            ~Symbol() {
+                if (this.Armed)
+                    Symbol.deleteQueue.Add(this.symbol);
             }
+
+            // be carefull not to use the struct after it hes been destructed
+            public void Destruct() {
+                if (this.Armed)
+                    CppImp.Console.Symbol.Destruct(symbol);
+                this.Armed = false;
+            }
+
+            public void ArmPointer() {
+                this.Armed = true;
+            }
+
+            public void UnarmPointer() {
+                this.Armed = false;
+            }
+
+            public unsafe void Set(Symbol cp) {
+                this.Destruct();
+                this.symbol = CppImp.Console.Symbol.Construct(symbol);
+                this.ArmPointer();
+            }
+
+            public void Set(nint sym, bool direct = false) {
+                this.Destruct();
+                this.symbol = direct ? sym : CppImp.Console.Symbol.Construct(sym);
+                this.Armed = !direct;
+            }
+
+            public void Set(char character, byte foreground = 7, byte background = 0) {
+                this.Destruct();
+                this.symbol = CppImp.Console.Symbol.Construct(TypeConvert.Utf8ToUnicode(character),foreground,background);
+                this.ArmPointer();
+            }
+        #if _WIN32
+            public void Set(byte atr = 0x0000) {
+                this.Destruct();
+                this.symbol = CppImp.Console.Symbol.Construct(atr);
+                this.ArmPointer();
+            }
+        #endif
 
             public Symbol() {
                 symbol = CppImp.Console.Symbol.Construct(' ');
+                this.ArmPointer();
             }
 
             public Symbol(Symbol cp) {
                 symbol = CppImp.Console.Symbol.Construct(cp.symbol);
+                this.ArmPointer();
             }
 
             // Direct = do not copy vaues, copy ptr
             public Symbol(nint sym, bool direct = false) {
-                if (direct) symbol = sym;
-                else symbol = CppImp.Console.Symbol.Construct(sym);
+                symbol = direct ? sym : CppImp.Console.Symbol.Construct(sym);
+                Armed = !direct;
             }
         #if _WIN32
             public Symbol(byte atr = 0x0000) {
                 symbol = CppImp.Console.Symbol.Construct(atr);
+                this.ArmPointer();
             }
             public void GetAttribute(byte atr) {
                 CppImp.Console.Symbol.SetAttribute(symbol, atr);
@@ -127,6 +134,7 @@ namespace Cpp
 
             public Symbol(char character, byte foreground = 7, byte background = 0) {
                 symbol = CppImp.Console.Symbol.Construct(TypeConvert.Utf8ToUnicode(character),foreground,background);
+                this.ArmPointer();
             }
 
             // to edit a Symbol (Console::Symbol too, from;)
@@ -164,7 +172,8 @@ namespace Cpp
                 return symbol;
             }
             
-            private readonly IntPtr symbol;
+            private IntPtr symbol;
+            private Boolean Armed;
         }
     }    
 }

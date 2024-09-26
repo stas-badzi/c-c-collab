@@ -1,3 +1,5 @@
+using namespace cpp;
+
 template <typename T>
 T System::ReadPointer(nint pointer) {
 #ifdef _DEBUG

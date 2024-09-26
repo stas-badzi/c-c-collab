@@ -179,8 +179,8 @@ namespace CppImp {
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_KeyReleased", CharSet = CharSet.Unicode)]
         public static extern int KeyReleased();
 
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_FillScreen$ret2", CharSet = CharSet.Unicode)]
-        public static extern IntPtr FillScreen(IntPtr symbols, int height, int width);
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_FillScreen", CharSet = CharSet.Unicode)]
+        public static extern void FillScreen(IntPtr arg1);
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_GetWindowWidth", CharSet = CharSet.Unicode)]
         public static extern short GetWindowWidth();

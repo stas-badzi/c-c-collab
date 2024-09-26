@@ -85,6 +85,7 @@ namespace cpp {
             static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
         #else
             static struct termios old_termios;
+            struct winsize window_size;
         #ifdef __linux__
             static struct termios old_fdterm;
             static int old_kbdmode;
@@ -120,7 +121,7 @@ namespace cpp {
         };
         static int16_t GetWindowWidth(void);
         static int16_t GetWindowHeight(void);
-        static std::array<unsigned long,2> FillScreen(std::vector<std::vector<Symbol> > symbols);
+        static void FillScreen(std::vector<std::vector<Symbol> > symbols);
         
         static void HandleKeyboard(void);
         static bool IsKeyDown(int key);

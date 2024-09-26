@@ -27,9 +27,9 @@ name = factoryrushplus
 
 #******** c++ binary config *****
 #> source files
-binsources = main.cpp Console.cpp FileSystem.cpp System.cpp
+binsources = main.cpp Console.cpp FileSystem.cpp System.cpp Control.cpp
 #> header files
-binheaders = dllimport.hpp Console.hpp FileSystem.hpp System.hpp defines.h
+binheaders = dllimport.hpp Console.hpp FileSystem.hpp System.hpp defines.h Control.hpp
 #> include files
 binincludes = dynamic_library.h unicode_conversion.hpp control_heap.h utils/cextern.h control_heap.h utils/dllalloc.h
 #> name the binary file
@@ -40,7 +40,7 @@ binname = cpp-factoryrush
 #> name the dynamic library
 filename = factoryrushsharp
 #>source code files
-files = DllExport.cs DllImport.cs FileSystem.cs Terminal.cs Console.cs Utility.cs Exec.cs
+files = DllExport.cs DllImport.cs FileSystem.cs Terminal.cs Console.cs Utility.cs Exec.cs Control.cs
 # *******************************
 
 #********* c# binary config *****
