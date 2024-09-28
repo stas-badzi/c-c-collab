@@ -75,6 +75,8 @@ resources
 *.dat
 *null*
 
+#th is enc_temp_folder ...
+*enc_temp_folder*
+
 #keep
 !*/.gitkeep
-
