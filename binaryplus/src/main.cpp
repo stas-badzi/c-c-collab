@@ -23,11 +23,6 @@ int main() {
         for (auto&& v : screen) for (auto&& a : v) cppimp::Console_Symbol_Inspect(a.Get());
         for (auto&& v : texture) for (auto&& a : v) cppimp::Console_Symbol_Inspect(a.Get());
         Console::FillScreen(screen);
-
-        //auto tex = Console::Symbol::CreateTexture(L"abc\ndef\nghi");
-        //Console::FillScreen(tex);
-        Control::CleanMemory();
     }
-    
     return 0;
 }
