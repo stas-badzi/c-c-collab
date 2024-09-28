@@ -50,7 +50,7 @@ vector<vector<Console::Symbol> > FileSystem::TextureFromFile(wstring filepath) {
     unichar* arg1 = Utf8StringToUnicode(WStringToNative(filepath));
     void* ret = csimp::FileSystem_TextureFromFile(arg1);
 
-    return PtrToTexture(ret);
+    return TextureSymConvert(PtrToTexture(ret));
 }
 
 void FileSystem::FileFromTexture(wstring filepath, vector<vector<Console::Symbol> > texture, bool recycle) {
@@ -75,8 +75,9 @@ void FileSystem::PlaySound(wstring filepath, bool wait)
     csimp::FileSystem_PlaySound(filepathPtr, wait);
 }
 
-vector<vector<Console::Symbol> > cs::PtrToTexture(nint ptr, bool direct) {
-    vector<vector<Console::Symbol> > ret;
+variant< vector<vector<Console::Symbol> > , vector<vector<Console::Symbol*> > > cs::PtrToTexture(nint ptr, bool direct) {
+    auto sym = vector<vector<Console::Symbol> >();
+    auto psym = vector<vector<Console::Symbol*> >();
 
     const int int32_size = sizeof(int32_t);
     const int intptr_size = sizeof(void*);
@@ -90,15 +91,22 @@ vector<vector<Console::Symbol> > cs::PtrToTexture(nint ptr, bool direct) {
         int32_t width = System::ReadPointer<int32_t>(now_ptr);
         now_ptr = System::MovePointer(now_ptr, int32_size);
         vector<Console::Symbol> now;
+        vector<Console::Symbol*> pnow;
 
         for (int32_t j = 0; j < width; j++) {
-            Console::Symbol* sym = direct ? (Console::Symbol*)System::ReadPointer<nint>(now_ptr) : (Console::Symbol*)cppimp::Console_Symbol_Construct$smb((Console::Symbol*)System::ReadPointer<nint>(now_ptr));
-            now.push_back(Console::Symbol(*sym));
+            Console::Symbol* sym = (Console::Symbol*)System::ReadPointer<nint>(now_ptr);
+            if (direct) pnow.push_back(sym);
+            else now.push_back(Console::Symbol(*sym));
             now_ptr = System::MovePointer(now_ptr, intptr_size);
         }
 
-        ret.push_back(now);
+        if (direct) psym.push_back(pnow);
+        else sym.push_back(now);
     }
+
+    variant< vector<vector<Console::Symbol> > , vector<vector<Console::Symbol*> > > ret;
+    if (direct) ret = vector<vector<Console::Symbol*> >(psym);
+    else ret = vector<vector<Console::Symbol> >(sym);
 
     System::FreeMemory(ptr);
     
@@ -126,10 +134,37 @@ void* cs::TextureToPtr(vector<vector<Console::Symbol> > &texture) {
         System::WritePointer<int32_t>(where,texture[i].size());
         where = System::MovePointer(where, int32_size);
         for (size_t j = 0; j < texture[i].size(); j++) {
-            System::WritePointer<nint>(where, cppimp::Console_Symbol_Construct$smb(&texture[i][j]));
+            System::WritePointer<nint>(where, &texture[i][j]);
             where = System::MovePointer(where, intptr_size);
         }
     }
 
     return ret;
 }
+
+vector<vector<Console::Symbol*> > cs::TexturePtrConvert(variant<vector<vector<Console::Symbol> >,  vector<vector<Console::Symbol*> > > txts) {
+    return visit([](auto &&arg) -> vector<vector<cpp::Console::Symbol*> > {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, vector<vector<cpp::Console::Symbol*> > >) {
+            void* ptr = &arg;
+            auto sym = (vector<vector<cpp::Console::Symbol*> >*)ptr;
+            return *sym;
+        }
+        return vector<vector<cpp::Console::Symbol*> >();
+    }, txts);
+}
+vector<vector<Console::Symbol> > cs::TextureSymConvert(variant<vector<vector<Console::Symbol> >,  vector<vector<Console::Symbol*> > > txts) {
+    return visit([](auto &&arg) -> vector<vector<cpp::Console::Symbol> > {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, vector<vector<cpp::Console::Symbol> > >) {
+            void* ptr = &arg;
+            auto sym = (vector<vector<cpp::Console::Symbol> >*)ptr;
+            return *sym;
+        }
+        return vector<vector<cpp::Console::Symbol> >();
+    }, txts);
+}
+
+
+//overloaded cs::TexturePtrConvert = { [](vector<vector<cpp::Console::Symbol*> > out) -> vector<vector<cpp::Console::Symbol*> > {return out;} };
+//overloaded cs::TextureSymConvert = { [](vector<vector<cpp::Console::Symbol> > out) -> vector<vector<cpp::Console::Symbol> > {return out;} };

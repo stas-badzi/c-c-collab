@@ -457,7 +457,7 @@ ifneq ($(wildcard cs),cs)
 endif
 
 ifeq ($(msvc),1)
-	@echo "$(cpp-compiler) /EHsc /c /DUNICODE /D_MSVC $(cdb) $(fsrc) /Icplusplus\include /std:c++20" > run.bat
+	@echo "$(cpp-compiler) /EHsc /c /DUNICODE /D_MSVC $(cdb) $(fsrc) /Icplusplus\include /std:c++latest" > run.bat
 	@run.bat
 	@echo $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
 	@echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(flib) $(objects) USER32.lib Gdi32.lib" > run.bat
@@ -481,43 +481,43 @@ else
 #
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 #windows
-	@$(cpp-compiler) -c -Wall -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
+	@$(cpp-compiler) -c -Wall -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++23 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
 	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
 #
 else
 ifeq ($(shell uname -s),WINDOWS_NT)
 #windows
-	@$(cpp-compiler) -c -Wall -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
+	@$(cpp-compiler) -c -Wall -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++23 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
 	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
-	@$(cpp-compiler) -c -Wall -fPIC -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
+	@$(cpp-compiler) -c -Wall -fPIC -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++23 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
 	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #mingw [ I think same as windows (?) ]
-	@$(cpp-compiler) -c -Wall -fPIC -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
+	@$(cpp-compiler) -c -Wall -fPIC -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++23 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
 	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
 #
 else
 ifeq ($(findstring Windows_NT, $(shell uname -s)),Windows_NT)
 #msys [ i think older ]
-	@$(cpp-compiler) -c -Wall -fPIC -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
+	@$(cpp-compiler) -c -Wall -fPIC -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++23 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
 	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
 #
 else
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys [ I think same as windows (?) ]
-	@$(cpp-compiler) -c -Wall -fPIC -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
+	@$(cpp-compiler) -c -Wall -fPIC -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++23 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
 	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
 #
 else
 # not windows
-#	@cd cplusplus/obj && $(cpp-compiler) -c -Wall -fPIC -DUNICODE $(cdb) -fvisibility=hidden $(fsrc) -I ../include -std=c++20
-	@$(cpp-compiler) -c -Wall -fPIC -DUNICODE $(cdb) -fvisibility=hidden $(fsrc) -I cplusplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
+#	@cd cplusplus/obj && $(cpp-compiler) -c -Wall -fPIC -DUNICODE $(cdb) -fvisibility=hidden $(fsrc) -I ../include -std=c++23
+	@$(cpp-compiler) -c -Wall -fPIC -DUNICODE $(cdb) -fvisibility=hidden $(fsrc) -I cplusplus/include -std=c++23 $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
 ifeq ($(shell uname -s),Darwin)
 #macos
 	@cd cplusplus && $(cpp-compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
@@ -565,7 +565,7 @@ endif
 	@cd csharp && dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r $(os_name) -c $(configuration)
 
 ifeq ($(msvc),1)
-	@cd csharp/bin/x64/$(configuration)/net8.0/$(os_name)/native/ && for i in *.exp; do if [ ! "$$i" = '$(filename).exp' ]; then mv $$i $(filename).exp; fi; done && for i in *.lib; do if [ ! "$$i" = '$(filename).lib' ]; then mv $$i $(filename).lib; fi; done && for i in *.pdb; do if [ ! "$$i" = '$(filename).pdb' ]; then mv $$i $(filename).pdb; fi; done && for i in *.dll; do if [ ! "$$i" = '$(filename).dll' ]; then mv $$i $(filename).dll; fi; done 
+	@cd csharp/bin/$(arch)/$(configuration)/net8.0/$(os_name)/native/ && for i in *.exp; do if [ ! "$$i" = '$(filename).exp' ]; then mv $$i $(filename).exp; fi; done && for i in *.lib; do if [ ! "$$i" = '$(filename).lib' ]; then mv $$i $(filename).lib; fi; done && for i in *.pdb; do if [ ! "$$i" = '$(filename).pdb' ]; then mv $$i $(filename).pdb; fi; done && for i in *.dll; do if [ ! "$$i" = '$(filename).dll' ]; then mv $$i $(filename).dll; fi; done 
 	@mv csharp/bin/$(arch)/$(configuration)/net8.0/$(os_name)/native/* csharp/bin/lib
 ifeq ($(debug),1)
 	@cp csharp/bin/lib/$(filename).pdb binarysharp/bin/exe
@@ -611,7 +611,7 @@ ifneq ($(wildcard cpp),cpp)
 endif
 
 ifeq ($(msvc),1)
-	@echo "$(cpp-compiler) /EHsc /c $(bpdb) $(fbsrc) /Ibinaryplus\include /std:c++20" > run.bat
+	@echo "$(cpp-compiler) /EHsc /c $(bpdb) $(fbsrc) /Ibinaryplus\include /std:c++latest" > run.bat
 	@run.bat
 	@echo $(foreach obj,$(subst obj/,$(empty),$(fbobj)),&& $(movefl) -f $(obj) binaryplus/obj$(space))
 	@echo "cd binaryplus && link /OUT:bin/$(binname).$(binary) $(bldb) $(flib) ../cplusplus/bin/$(name).lib ../csharp/bin/lib/$(filename).lib $(fbobj) USER32.lib" > run.bat
@@ -619,7 +619,7 @@ ifeq ($(msvc),1)
 	@rm run.bat
 else
 #all
-	@$(cpp-compiler) -c -Wall $(bpdb) $(fbsrc) -I binaryplus/include -std=c++20 $(foreach obj,$(subst obj/,$(empty),$(fbobj)),&& $(movefl) -f $(obj) binaryplus/obj$(space))
+	@$(cpp-compiler) -c -Wall $(bpdb) $(fbsrc) -I binaryplus/include -std=c++23 $(foreach obj,$(subst obj/,$(empty),$(fbobj)),&& $(movefl) -f $(obj) binaryplus/obj$(space))
 	@cd binaryplus && $(cpp-compiler) -o bin/$(binname).$(binary) $(fbobj) -L$(flibdir) -l$(name) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
 #
 
@@ -650,6 +650,15 @@ endif
 
 csbin: $(foreach bfl,$(binfiles),binarysharp/$(bfl))
 	@cd binarysharp && dotnet publish -p:SelfContained=true -r $(os_name) -c $(binconfig)
+ifeq ($(msvc),1)
+	@cd binarysharp/bin/$(arch)/$(configuration)/net8.0/$(os_name)/native/ && for i in *.$(binary); do if [ ! "$$i" = '$(binname).$(binary)' ]; then mv $$i $(binname).$(binary); fi; done 
+	@mv binarysharp/bin/$(arch)/$(configuration)/net8.0/$(os_name)/native/* binarysharp/bin/exe
+ifeq ($(copylibs),1)
+	@$(admin) cp binarysharp/bin/exe/$(binfile).$(binary) $(bindir)
+else
+endif
+else
+
 ifeq ($(shell echo "check quotes"),"check quotes")
 	@cd binarysharp/bin/$(binconfig)/net8.0/$(os_name)/native/ && echo . > null.exp && echo . > null.lib && echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(binfile).$(binary)
 	@copy binarysharp\bin\$(binconfig)\net8.0\$(os_name)\native\$(binfile).$(binary) binarysharp\bin\exe
@@ -673,6 +682,7 @@ ifeq ($(copylibs),1)
 	@$(admin) cp binarysharp/bin/exe/$(binfile).$(binary) $(bindir)
 else
 	@cd binarysharp/bin/exe && ls
+endif
 endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@

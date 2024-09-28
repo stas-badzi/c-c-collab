@@ -67,7 +67,7 @@ using namespace uniconv;
     }
 
     libexport void Console_FillScreen(void* ptr) {
-        std::vector<std::vector<cpp::Console::Symbol> > texture = cs::PtrToTexture(ptr);
+        std::vector<std::vector<cpp::Console::Symbol> > texture = cs::TextureSymConvert(cs::PtrToTexture(ptr));
         return cpp::Console::FillScreen(texture);
     }
 
@@ -179,6 +179,11 @@ using namespace uniconv;
             __save$SYMBOLS(out);
         #endif
             return out;
+        }
+
+        libexport void Console_Symbol_Inspect(cpp::Console::Symbol* cp) {
+            auto sym = *cp;
+            return;
         }
     // ~Symbol
 

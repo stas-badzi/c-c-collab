@@ -1,13 +1,17 @@
 #pragma once
 
 #include <vector>
+#include <variant>
 #include <unicode_conversion.hpp>
 #include "Console.hpp"
 
 namespace cs {
 
+    std::vector<std::vector<cpp::Console::Symbol*> > TexturePtrConvert(std::variant<std::vector<std::vector<cpp::Console::Symbol> >,  std::vector<std::vector<cpp::Console::Symbol*> > > txts);
+    std::vector<std::vector<cpp::Console::Symbol> > TextureSymConvert(std::variant<std::vector<std::vector<cpp::Console::Symbol> >,  std::vector<std::vector<cpp::Console::Symbol*> > > txts);
+
     void* TextureToPtr(std::vector<std::vector<cpp::Console::Symbol> >& texture);
-    std::vector<std::vector<cpp::Console::Symbol> > PtrToTexture(void* ptr, bool direct = false);
+    std::variant<std::vector<std::vector<cpp::Console::Symbol> >,  std::vector<std::vector<cpp::Console::Symbol*> > > PtrToTexture(void* ptr, bool direct = false);
 
     class FileSystem {
     public:

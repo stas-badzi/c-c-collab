@@ -229,6 +229,8 @@ namespace CppImp {
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_operator$eq", CharSet = CharSet.Unicode)]
             public static extern IntPtr operator_eq(IntPtr cp, IntPtr src);
 
+            [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_Inspect", CharSet = CharSet.Unicode)]
+            public static extern void inspect(IntPtr sym);
         }
     }
 }

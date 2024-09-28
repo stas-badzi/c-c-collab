@@ -68,6 +68,10 @@ namespace cppimp {
 
     libimport void* Console_Symbol_operator$eq(void* cp, void* src);
 
+    libimport void Console_Symbol_Inspect(void* smb);
+
+// System
+
     libimport uniconv::unichar* System_GetRootPath(void);
     
     libimport uniconv::unichar* System_ToNativePath(uniconv::unichar* arg1);
