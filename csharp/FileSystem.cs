@@ -159,9 +159,6 @@ namespace Cs
             int? height = texture.Count;
             int? scrHeight = screen.Count;
 
-            foreach (var l in texture) foreach (var s in l) CppImp.Console.Symbol.inspect(s.Get());
-            foreach (var l in screen) foreach (var s in l) CppImp.Console.Symbol.inspect(s.Get());
-
             for (int i = 0; i < height; i++)
             {
                 for (int j = 0; j < width; j++)
@@ -169,8 +166,6 @@ namespace Cs
                     if (y+i >= 0 && y+i < scrHeight && x+j >= 0 && x+j < scrWidth)
                     {
                         var elem = texture[i][j];
-                        CppImp.Console.Symbol.inspect(elem.Get());
-                        CppImp.Console.Symbol.inspect(screen[y+i][x+j].Get());
                         if (elem.character() != '\t') {
                             screen[y+i][x+j].character(elem.character());
                         }
@@ -180,13 +175,9 @@ namespace Cs
                         if (elem.background() < 16) {
                             screen[y+i][x+j].background(elem.background());
                         }
-                        CppImp.Console.Symbol.inspect(screen[y+i][x+j].Get());
                     }
                 }
             }
-
-            foreach (var l in texture) foreach (var s in l) CppImp.Console.Symbol.inspect(s.Get());
-            foreach (var l in screen) foreach (var s in l) CppImp.Console.Symbol.inspect(s.Get());
         }
         public static void PlaySound(string filepath, bool wait = false) {
             string fullpath = Path.GetFullPath(filepath);

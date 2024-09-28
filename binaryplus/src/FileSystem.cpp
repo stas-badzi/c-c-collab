@@ -63,11 +63,8 @@ void FileSystem::FileFromTexture(wstring filepath, vector<vector<Console::Symbol
 void FileSystem::DrawTextureToScreen(int x, int y, vector<vector<Console::Symbol> > texture, vector<vector<Console::Symbol> >& screen) {
     auto texturePtr = TextureToPtr(texture);
     auto screenPtr = TextureToPtr(screen);
-    for (auto&& v : texture) for (auto&& a : v) cppimp::Console_Symbol_Inspect(a.Get());
 
     csimp::FileSystem_DrawTextureToScreen(x, y, texturePtr, screenPtr);
-    
-    for (auto&& v : screen) for (auto&& a : v) cppimp::Console_Symbol_Inspect(a.Get());
 }
 
 void FileSystem::PlaySound(wstring filepath, bool wait)
