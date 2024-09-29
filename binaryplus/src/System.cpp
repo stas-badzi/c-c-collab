@@ -25,7 +25,7 @@ nint System::MovePointer(nint pointer, signed int bytes) {
     return cppimp::System_MovePointer(pointer, bytes);
 }
 
-template vector<T> System::MakeList(size_t count, T elem)
+template <typename T> vector<T> System::MakeList<T>(size_t count, T elem)
 {
     vector<T> ret;
     for (size_t i = 0; i < count; i++)
