@@ -19,6 +19,7 @@ namespace cpp {
 
         static nint MovePointer(nint pointer, signed int bytes);
 
+        static std::vector<T> MakeList(size_t count, T elem);
         template<typename T> static T ReadPointer(nint pointer);
         template<typename T> static T ReadPointer(nint pointer, int offset);
         template<typename T> static void WritePointer(nint& pointer, T value);
