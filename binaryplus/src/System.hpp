@@ -4,6 +4,7 @@
 #include <unicode_conversion.hpp>
 #include <typeinfo>
 #include <stdexcept>
+#include <vector>
 #include "defines.h"
 
 #include "dllimport.hpp"
@@ -19,7 +20,7 @@ namespace cpp {
 
         static nint MovePointer(nint pointer, signed int bytes);
 
-        static std::vector<typename T> MakeList(size_t count, T elem);
+        template<typename T> static std::vector<T> MakeList(size_t count, T elem);
         template<typename T> static T ReadPointer(nint pointer);
         template<typename T> static T ReadPointer(nint pointer, int offset);
         template<typename T> static void WritePointer(nint& pointer, T value);

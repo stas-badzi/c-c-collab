@@ -1,4 +1,5 @@
 #include "System.hpp"
+#include <vector>
 
 using namespace cpp;
 using namespace std;
@@ -24,7 +25,7 @@ nint System::MovePointer(nint pointer, signed int bytes) {
     return cppimp::System_MovePointer(pointer, bytes);
 }
 
-vector<typename T> System::MakeList(size_t count, T elem)
+template vector<T> System::MakeList(size_t count, T elem)
 {
     vector<T> ret;
     for (size_t i = 0; i < count; i++)
