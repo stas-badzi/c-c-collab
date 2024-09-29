@@ -17,7 +17,14 @@ int main() {
     while (true) {
         auto width = Console::GetWindowWidth();
         auto height = Console::GetWindowHeight();
-        auto screen = Console::Symbol::CreateTexture(System::MakeList(width, (wstring) "#"), height, System::MakeList(width, 7), System::MakeList(width, 7));
+
+        wstring characters[] = new wstring[width]();
+        uint8_t colors[] = new uint8_t[width]();
+        for (int16_t i = 0; i < width; i++) {
+            characters[i] = "#";
+            colors[i] = 7;
+        }
+        auto screen = Console::Symbol::CreateTexture(characters, height, colors, colors);
         auto texture = FileSystem::TextureFromFile(System::ToNativePath(System::GetRootPath() + L"/assets/a.tux"));
         FileSystem::DrawTextureToScreen(3,2,texture,screen);
         Console::FillScreen(screen);
