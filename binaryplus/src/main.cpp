@@ -26,10 +26,10 @@ int main() {
         //po new jest delete;
         //ale jakby co masz vectory i vector.data() / vector.dat() nie pamietam
         for (int16_t l = 0; l < height; l++) {
-            scr.push_back(vector<Console::Symbol>());
+            screen.push_back(vector<Console::Symbol>());
             for (int16_t i = 0; i < width; i++) {
                 auto sym = Console::Symbol(L'#',(uint8_t)7,(uint8_t)2);
-                scr.back().push_back(sym);
+                screen.back().push_back(sym);
             }
         }
         //delete[] characters; delete[] back; delete[] fore;
