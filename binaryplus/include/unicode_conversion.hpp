@@ -147,31 +147,6 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
     }
 #else
 
-    inline utfstr WStringToNative(std::wstring wstr) {
-        utfstr out = "";
-        for (int i = 0; i < utfstr.size(); ++i) {
-            out.append(UnicodeToUtf8((unichar)(wstr[i])));
-        }
-        return out;
-    }
-
-    inline utfchar WCharToNative(wchar_t wchar) {
-        return UnicodeToUtf8((uint32_t)(wchar));
-    }
-
-    inline std::wstring NativeToWString(utfstr utfstr) {
-        std::wstring out = L"";
-        size_t locread;
-        for (size_t read = 0; read < utfstr.size(); read += locread) {
-            out.push_back((wchar_t)(Utf8ToUnicode(ReadUtfChar(utfstr, read, &locread))));
-        }
-        return out;
-    }
-
-    inline wchar_t NativeToWChar(utfchar utfchar) {
-        return (wchar_t)(Utf8ToUnicode(utfchar));
-    }
-
     inline utfchar ReadUtfChar(utfstr str, size_t offset = 0, size_t* bytes_read = nullptr) {
         utfchar out;
         std::bitset<8> char_bits;
@@ -220,6 +195,31 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
         if (bytes_read != nullptr) { *bytes_read = ++bytes; }
 
         return out;
+    }
+
+    inline utfstr WStringToNative(std::wstring wstr) {
+        utfstr out = "";
+        for (int i = 0; i < wstr.size(); ++i) {
+            out.append(UnicodeToUtf8((unichar)(wstr[i])));
+        }
+        return out;
+    }
+
+    inline utfchar WCharToNative(wchar_t wchar) {
+        return UnicodeToUtf8((uint32_t)(wchar));
+    }
+
+    inline std::wstring NativeToWString(utfstr utfstr) {
+        std::wstring out = L"";
+        size_t locread;
+        for (size_t read = 0; read < utfstr.size(); read += locread) {
+            out.push_back((wchar_t)(Utf8ToUnicode(ReadUtfChar(utfstr, read, &locread))));
+        }
+        return out;
+    }
+
+    inline wchar_t NativeToWChar(utfchar utfchar) {
+        return (wchar_t)(Utf8ToUnicode(utfchar));
     }
 #endif
 

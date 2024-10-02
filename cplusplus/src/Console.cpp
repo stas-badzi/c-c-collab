@@ -420,7 +420,7 @@ GetXYCharOffsetOutOfLoop:
             return;
         }
 
-        if (getc(stdin) != '\e') return;
+        if (getc(stdin) != '\033') return;
         if (getc(stdin) != '[') return;
         if (bytes == 3) {
             switch (getc(stdin)) {
@@ -472,9 +472,9 @@ GetXYCharOffsetOutOfLoop:
 
             uint8_t fullbutton = 0b000000;
             fullbutton |= 0b000001 * button; // BBB
-            fullbutton |= 0b001000 * event[2]; // S
-            fullbutton |= 0b010000 * event[3]; // M
-            fullbutton |= 0b100000 * event[4]; // C
+            fullbutton |= 0b001000 * event[2]; // Shift
+            fullbutton |= 0b010000 * event[3]; // Meta
+            fullbutton |= 0b100000 * event[4]; // Ctrl
             // fullbutton == 0bCMSBBB
 
             if (mousedown) {
@@ -735,11 +735,11 @@ struct Console::MouseStatus Console::GetMouseStatus(void) {
 }
 
 pair<uint8_t, uint8_t> Console::MouseButtonClicked(void) {
-    return Console::this_mouse_down ? pair<uint8_t, uint8_t>(-1,0) : pair<uint8_t, uint8_t>(Console::this_mouse_button, Console::this_mouse_combo);
+    return !Console::this_mouse_down ? pair<uint8_t, uint8_t>(-1,0) : pair<uint8_t, uint8_t>(Console::this_mouse_button, Console::this_mouse_combo);
 }
 
 uint8_t Console::MouseButtonReleased(void) {
-    return Console::this_mouse_down ? Console::this_mouse_button : -1;
+    return !Console::this_mouse_down ? Console::this_mouse_button : -1;
 }
 
 void Console::Sleep(double seconds) {

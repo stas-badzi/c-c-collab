@@ -85,7 +85,7 @@ namespace cpp {
             static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
         #else
             static struct termios old_termios;
-            struct winsize window_size;
+            static struct winsize window_size;
         #ifdef __linux__
             static struct termios old_fdterm;
             static int old_kbdmode;
