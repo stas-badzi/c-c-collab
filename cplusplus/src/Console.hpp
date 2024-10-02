@@ -4,6 +4,11 @@
 #include <vector>
 #include <array>
 #include <bitset>
+#ifdef __APPLE__
+#ifndef _GLIBCXX_HAVE_AT_QUICK_EXIT
+    #define _GLIBCXX_HAVE_QUICK_EXIT
+#endif
+#endif
 #include <cstdlib>
 #include <cstdint>
 #include <signal.h>
