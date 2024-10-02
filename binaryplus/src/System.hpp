@@ -4,6 +4,7 @@
 #include <unicode_conversion.hpp>
 #include <typeinfo>
 #include <stdexcept>
+#include <vector>
 #include "defines.h"
 
 #include "dllimport.hpp"
