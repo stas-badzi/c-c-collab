@@ -691,6 +691,7 @@ GetXYCharOffsetOutOfLoop:
     }
 
     struct termios Console::old_termios = termios();
+    winsize Console::window_size = winsize();
     int Console::fd = int();
 #endif
 
