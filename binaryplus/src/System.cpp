@@ -9,7 +9,7 @@ wstring System::ToNativePath(wstring path) {
     return NativeToWString(UnicodeToUtf8String(cppimp::System_ToNativePath(Utf8StringToUnicode(WStringToNative(path)))));
 }
 
-utfstr System::GetRootPath(void) {
+wstring System::GetRootPath(void) {
     return NativeToWString(UnicodeToUtf8String(cppimp::System_GetRootPath()));
 }
 
