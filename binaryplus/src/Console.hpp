@@ -47,7 +47,7 @@ namespace cpp {
             Symbol(void);
             Symbol(const Symbol &cp);
             Symbol(void* ptr, bool direct = false);
-            Symbol(uniconv::utfchar character, uint8_t foreground = 16, uint8_t background = 16);
+            Symbol(wchar_t character, uint8_t foreground = 16, uint8_t background = 16);
             ~Symbol();
 
             Symbol operator=(const Symbol &src);
