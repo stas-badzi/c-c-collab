@@ -40,6 +40,10 @@ jobs:
         run: |
           touch cs
           touch csbin
+          rm cplusplus/obj
+          mkdir cplusplus/obj
+          rm binaryplus/obj
+          mkdir binaryplus/obj
           echo Y > yes.in
           pacman -S make < yes.in
           pacman -S zip < yes.in
@@ -84,6 +88,11 @@ jobs:
         run: |
           echo $null >> cs
           echo $null >> csbin
+          del cplusplus/obj
+          mkdir cplusplus/obj
+          del binaryplus/obj
+          mkdir binaryplus/obj
+
           Invoke-WebRequest -Uri "https://github.com/maweil/MakeForWindows/releases/download/v4.4.1/make-bin-win64.zip" -OutFile "make-bin.zip" -Verbose
           Expand-Archive -Force make-bin.zip .
           del make-bin.zip
