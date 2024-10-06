@@ -12,7 +12,7 @@ using namespace std;
 using namespace cpp;
 using namespace cs;
 
-int main() {
+int main(int argc, char* argv[]) {
     Console::Init();
     while (true) {
         auto width = Console::GetWindowWidth();
@@ -34,7 +34,11 @@ int main() {
         }
         //delete[] characters; delete[] back; delete[] fore;
 
-        auto texture = FileSystem::TextureFromFile(System::ToNativePath(System::GetRootPath() + L"/assets/a.tux"));
+        auto texture = FileSystem::TextureFromFile(System::ToNativePath(System::GetRootPath() + L"/assets/" + new string(argv[1])));
+        if (texture == null) {
+            cout << argv[1] << ": no texture found";
+            return 1;
+        }
         FileSystem::DrawTextureToScreen(3,10,texture,screen); // już zaziała //to nie zadziala bo screen jest za maly;
         Console::FillScreen(screen);
         Control::CleanMemory();
