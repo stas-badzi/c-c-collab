@@ -12,7 +12,7 @@ using namespace std;
 using namespace cpp;
 using namespace cs;
 
-int main(int argc, char* argv[]) {
+int main(int argc, wchar_t* argv[]) {
     Console::Init();
     while (true) {
         auto width = Console::GetWindowWidth();
@@ -34,8 +34,8 @@ int main(int argc, char* argv[]) {
         }
         //delete[] characters; delete[] back; delete[] fore;
 
-        auto texture = FileSystem::TextureFromFile(System::ToNativePath(System::GetRootPath() + L"/assets/" + new string(argv[1])));
-        if (texture == null) {
+        auto texture = FileSystem::TextureFromFile(System::ToNativePath(System::GetRootPath() + (L"/assets/" + to_wstring(argv[1]))));
+        if (texture == NULL) {
             cout << argv[1] << ": no texture found";
             return 1;
         }
