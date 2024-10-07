@@ -80,6 +80,15 @@ namespace cpp {
         static uint8_t last_mouse_combo;
         static std::chrono::time_point<std::chrono::high_resolution_clock> last_click_time;
         #ifdef _WIN32
+            static std::vector<std::vector<COLORREF>> SaveScreen(void);
+            static std::pair<std::pair<uint16_t,uint16_t>,std::pair<uint16_t,uint16_t>> GetOffsetSymSize(int color1 = 3, int color2 = 9, int color3 = 1);
+            
+            static pair<uint16_t,uint16_t> scr_offs;
+            static pair<uint16_t,uint16_t> sym_size;
+            static bool auto_size_updates;
+            static int16_t old_width;
+            static int16_t old_height;
+            static RECT old_rect;
             static uint8_t default_fcol;
             static uint8_t default_bcol;
             static HANDLE screen;

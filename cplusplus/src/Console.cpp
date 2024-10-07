@@ -88,6 +88,347 @@ using namespace std::chrono;
         return out;
     }
 
+    inline COLORREF GetPixel(int x, int y, int width, int height, RGBQUAD* pixels) {
+        return RGB(pixels[(height-y-1)*width + x].rgbRed, pixels[(height-y-1)*width + x].rgbGreen, pixels[(height-y-1)*width + x].rgbBlue);
+    }
+
+    vector<vector<COLORREF>> Console::SaveScreen(void) {
+
+        auto oldwinlong = GetWindowLong(Console::window, GWL_STYLE);
+        SetWindowLong(Console::window, GWL_STYLE, oldwinlong & ~WS_MAXIMIZEBOX & ~WS_SIZEBOX);
+
+        POINT begin,end;
+        RECT r;
+        GetClientRect(Console::window,&r);
+        begin = {r.left,r.top}; ClientToScreen(Console::window,&begin);
+        end = {r.right,r.bottom}; ClientToScreen(Console::window,&end);
+
+        int const width = end.x - begin.x;
+        int const height = end.y - begin.y;
+
+        HDC memory = CreateCompatibleDC(Console::device);
+        HBITMAP const bitmap = CreateCompatibleBitmap(Console::device, width, height);
+        auto const old_bitmap = SelectObject(memory, bitmap);
+
+        BITMAPINFO bmi{};
+        bmi.bmiHeader.biBitCount = 32;
+        bmi.bmiHeader.biCompression = BI_RGB;
+        bmi.bmiHeader.biPlanes = 1;
+        bmi.bmiHeader.biHeight = height;
+        bmi.bmiHeader.biWidth = width;
+        bmi.bmiHeader.biSize = sizeof(BITMAPINFO);
+
+        RGBQUAD* pixels = new RGBQUAD[height * width];
+        BitBlt(memory, 0, 0, width, height, Console::device, begin.x, begin.y, SRCCOPY);
+        GetDIBits(memory, bitmap, 0, height, pixels, &bmi, DIB_RGB_COLORS);
+
+        vector<vector<COLORREF>> colors;
+        for (int i = 0; i < height; ++i) { colors.push_back(vector<COLORREF>()); for (int j = 0; j < width; ++j) colors.back().push_back(GetPixel(j,i,width,height,pixels)); }
+        delete[] pixels;
+
+        SetWindowLong(Console::window, GWL_STYLE, oldwinlong);
+        SelectObject(memory, old_bitmap);
+        DeleteObject(bitmap);
+        DeleteDC(memory);
+        ReleaseDC(0, device);
+
+        return colors;
+    }
+
+    pair<pair<uint16_t,uint16_t>,pair<uint16_t,uint16_t>> Console::GetOffsetSymSize(int color1, int color2, int color3) {
+        
+    //~setup   
+
+        WORD color_atr1, color_atr2, color_atr3;
+        switch (color1) {
+        case 0:
+            color_atr1 = 0;
+            break;
+        case 1:
+            color_atr1 = BACKGROUND_BLUE;
+            break;
+        case 2:
+            color_atr1 = BACKGROUND_GREEN;
+            break;
+        case 3:
+            color_atr1 = BACKGROUND_BLUE | BACKGROUND_GREEN;
+            break;
+        case 4:
+            color_atr1 = BACKGROUND_RED;
+            break;
+        case 5:
+            color_atr1 = BACKGROUND_BLUE | BACKGROUND_RED;
+            break;
+        case 6:
+            color_atr1 = BACKGROUND_GREEN | BACKGROUND_RED;
+            break;
+        case 7:
+            color_atr1 = BACKGROUND_RED | BACKGROUND_BLUE | BACKGROUND_GREEN;
+            break;
+        case 8:
+            color_atr1 = BACKGROUND_INTENSITY;
+            break;
+        case 9:
+            color_atr1 = BACKGROUND_BLUE | BACKGROUND_INTENSITY;
+            break;
+        case 10:
+            color_atr1 = BACKGROUND_GREEN | BACKGROUND_INTENSITY;
+            break;
+        case 11:
+            color_atr1 = BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_INTENSITY;
+            break;
+        case 12:
+            color_atr1 = BACKGROUND_RED | BACKGROUND_INTENSITY;
+            break;
+        case 13:
+            color_atr1 = BACKGROUND_BLUE | BACKGROUND_RED | BACKGROUND_INTENSITY;
+            break;
+        case 14:
+            color_atr1 = BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_INTENSITY;
+            break;
+        case 15:
+            color_atr1 = BACKGROUND_RED | BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_INTENSITY;
+            break;
+        default:
+            exit(7);
+        }
+        switch (color2) {
+        case 0:
+            color_atr2 = 0;
+            break;
+        case 1:
+            color_atr2 = BACKGROUND_BLUE;
+            break;
+        case 2:
+            color_atr2 = BACKGROUND_GREEN;
+            break;
+        case 3:
+            color_atr2 = BACKGROUND_BLUE | BACKGROUND_GREEN;
+            break;
+        case 4:
+            color_atr2 = BACKGROUND_RED;
+            break;
+        case 5:
+            color_atr2 = BACKGROUND_BLUE | BACKGROUND_RED;
+            break;
+        case 6:
+            color_atr2 = BACKGROUND_GREEN | BACKGROUND_RED;
+            break;
+        case 7:
+            color_atr2 = BACKGROUND_RED | BACKGROUND_BLUE | BACKGROUND_GREEN;
+            break;
+        case 8:
+            color_atr2 = BACKGROUND_INTENSITY;
+            break;
+        case 9:
+            color_atr2 = BACKGROUND_BLUE | BACKGROUND_INTENSITY;
+            break;
+        case 10:
+            color_atr2 = BACKGROUND_GREEN | BACKGROUND_INTENSITY;
+            break;
+        case 11:
+            color_atr2 = BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_INTENSITY;
+            break;
+        case 12:
+            color_atr2 = BACKGROUND_RED | BACKGROUND_INTENSITY;
+            break;
+        case 13:
+            color_atr2 = BACKGROUND_BLUE | BACKGROUND_RED | BACKGROUND_INTENSITY;
+            break;
+        case 14:
+            color_atr2 = BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_INTENSITY;
+            break;
+        case 15:
+            color_atr2 = BACKGROUND_RED | BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_INTENSITY;
+            break;
+        default:
+            exit(7);
+        }
+        switch (color3) {
+        case 0:
+            color_atr3 = 0;
+            break;
+        case 1:
+            color_atr3 = BACKGROUND_BLUE;
+            break;
+        case 2:
+            color_atr3 = BACKGROUND_GREEN;
+            break;
+        case 3:
+            color_atr3 = BACKGROUND_BLUE | BACKGROUND_GREEN;
+            break;
+        case 4:
+            color_atr3 = BACKGROUND_RED;
+            break;
+        case 5:
+            color_atr3 = BACKGROUND_BLUE | BACKGROUND_RED;
+            break;
+        case 6:
+            color_atr3 = BACKGROUND_GREEN | BACKGROUND_RED;
+            break;
+        case 7:
+            color_atr3 = BACKGROUND_RED | BACKGROUND_BLUE | BACKGROUND_GREEN;
+            break;
+        case 8:
+            color_atr3 = BACKGROUND_INTENSITY;
+            break;
+        case 9:
+            color_atr3 = BACKGROUND_BLUE | BACKGROUND_INTENSITY;
+            break;
+        case 10:
+            color_atr3 = BACKGROUND_GREEN | BACKGROUND_INTENSITY;
+            break;
+        case 11:
+            color_atr3 = BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_INTENSITY;
+            break;
+        case 12:
+            color_atr3 = BACKGROUND_RED | BACKGROUND_INTENSITY;
+            break;
+        case 13:
+            color_atr3 = BACKGROUND_BLUE | BACKGROUND_RED | BACKGROUND_INTENSITY;
+            break;
+        case 14:
+            color_atr3 = BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_INTENSITY;
+            break;
+        case 15:
+            color_atr3 = BACKGROUND_RED | BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_INTENSITY;
+            break;
+        default:
+            exit(7);
+        }
+    
+        CONSOLE_CURSOR_INFO cci, n_cci;
+        GetConsoleCursorInfo(Console::screen,&cci);
+        n_cci = cci;
+        n_cci.bVisible = false;
+        SetConsoleCursorInfo(Console::screen,&n_cci);
+
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        GetConsoleScreenBufferInfo(Console::screen, &csbi);
+        int char_width = Console::GetWindowWidth();
+        int char_height = Console::GetWindowHeight();
+
+        CONSOLE_SCREEN_BUFFER_INFOEX csbix{0};
+        csbix.cbSize = sizeof(csbix);
+        GetConsoleScreenBufferInfoEx(Console::screen, &csbix);
+        COLORREF color_ref1 = csbix.ColorTable[color1];
+        COLORREF color_ref2 = csbix.ColorTable[color2];
+        COLORREF color_ref3 = csbix.ColorTable[color3];
+
+        bool IsWindowsTerminal = getenv("WT_SESSION") != NULL;
+        bool IsMintty = getenv("TERM_PROGRAM") == "mintty";
+
+    //~setup
+
+        DWORD written;
+        wchar_t* screen_chars = new wchar_t[char_width*char_height];
+        WORD* screen_atrs = new WORD[char_width*char_height];
+        wchar_t* new_screen_chars = new wchar_t[char_width*char_height];
+        WORD* new_screen_atrs = new WORD[char_width*char_height];
+
+        ReadConsoleOutputCharacter(Console::screen, screen_chars, char_width*char_height, {0,0}, &written);
+        ReadConsoleOutputAttribute(Console::screen, screen_atrs, char_width*char_height, {0,0}, &written);
+        for (int i = 0; i < char_height; ++i) for (int j = 0; j < char_width; ++j) new_screen_chars[i*char_width + j] = (i*j == 0) ? L' ' : screen_chars[i*char_width+j];
+        for (int i = 0; i < char_height; ++i) for (int j = 0; j < char_width; ++j) new_screen_atrs[i*char_width + j] = (i == 0) ? (j == 0) ? color_atr3 : color_atr1 : (j == 0) ? color_atr2 : screen_atrs[i*char_width+j];
+        
+        WriteConsoleOutputCharacter(Console::screen, new_screen_chars, char_width*char_height, {0, 0}, &written);
+        WriteConsoleOutputAttribute(Console::screen, new_screen_atrs, char_width*char_height, {0, 0}, &written);
+        auto img = Console::SaveScreen();
+        WriteConsoleOutputCharacter(Console::screen, screen_chars, char_width*char_height, {0, 0}, &written);
+        WriteConsoleOutputAttribute(Console::screen, screen_atrs, char_width*char_height, {0, 0}, &written);
+
+        delete[] screen_chars;
+        delete[] screen_atrs;
+        delete[] new_screen_chars;
+        delete[] new_screen_atrs;
+
+        int const width = img[0].size();
+        int const height = img.size();
+        int const minxy = min(width,height);
+
+        pair<uint16_t,uint16_t> xyoffset = pair<uint16_t,uint16_t>(-1,-1);
+        bool IsColumn;
+        for (uint16_t l = 0; l < minxy*2; l++) {
+            for (uint16_t j = 0; j < minxy - l; j++) {
+                int x = j,y = j;
+                if ( (l+1) % 2) x += l/2;
+                else y += l/2;
+                COLORREF col = img[y][x];
+                if (color_ref1 == col || color_ref2 == col || color_ref3 == col) {
+                    xyoffset.first = x;
+                    xyoffset.second = y;
+                    IsColumn = !(color_ref1 == col);
+                    goto GetOffsetBreakLoop;
+                }
+            }
+        }
+        return Console::GetOffsetSymSize(color1,color2,color3);
+    GetOffsetBreakLoop:
+        if (IsColumn) goto GetOffsetFindColumn;
+    GetOffsetFindRow:
+    // 0 stays 0
+        for (uint16_t i = xyoffset.first; i > 0; i--) {
+            COLORREF col = img[xyoffset.second][i];
+            if (col != color_ref1 && col != color_ref3) {
+                xyoffset.first = i;
+                break;
+            }
+        }
+
+        if (IsColumn) goto GetOffsetFindFinish;
+    GetOffsetFindColumn:
+    // 0 stays 0
+
+        for (uint16_t i = xyoffset.second; i > 0; i--) {
+            COLORREF col = img[i][xyoffset.first + 1];
+            if (col != color_ref2 && col != color_ref3) {
+                xyoffset.second = i;
+                break;
+            }
+        }
+
+        if (IsColumn) goto GetOffsetFindRow;
+    GetOffsetFindFinish:
+
+    // GetSymSize
+        pair<uint16_t,uint16_t> symsize = pair<uint16_t,uint16_t>(-1,-1);
+
+        for (uint16_t i = xyoffset.first + 1; i < img.size(); i++) {
+            COLORREF col = img[xyoffset.second + 1][i];
+            if (col != color_ref3) {
+                if (IsWindowsTerminal) { //for now fix later!!!!!!!!!!!!!!!!! (hard-coded values are bad!!!!!!!!!!)
+                    QUERY_USER_NOTIFICATION_STATE pquns; //for now fix later!!!!!!!!!!!!!!!!! (hard-coded values are bad!!!!!!!!!!)
+                    SHQueryUserNotificationState(&pquns); //for now fix later!!!!!!!!!!!!!!!!! (hard-coded values are bad!!!!!!!!!!)
+                    if (pquns != QUNS_BUSY && xyoffset.first > 5) --i; //for now fix later!!!!!!!!!!!!!!!!! (hard-coded values are bad!!!!!!!!!!)
+                } //for now fix later!!!!!!!!!!!!!!!!! (hard-coded values are bad!!!!!!!!!!)
+                else if (xyoffset.first > 5) --i; //for now fix later!!!!!!!!!!!!!!!!! (hard-coded values are bad!!!!!!!!!!)
+                symsize.first = i - xyoffset.first;
+                break;
+            }
+        }
+
+        for (uint16_t i = xyoffset.second + 1; i < img.size(); i++) {
+            COLORREF col = img[i][xyoffset.first + 1];
+            if (col != color_ref3) {
+                if (IsWindowsTerminal) { //for now fix later!!!!!!!!!!!!!!!!! (hard-coded values are bad!!!!!!!!!!)
+                    QUERY_USER_NOTIFICATION_STATE pquns; //for now fix later!!!!!!!!!!!!!!!!! (hard-coded values are bad!!!!!!!!!!)
+                    SHQueryUserNotificationState(&pquns); //for now fix later!!!!!!!!!!!!!!!!! (hard-coded values are bad!!!!!!!!!!)
+                    if (pquns == QUNS_BUSY || xyoffset.second > 5) --i; //for now fix later!!!!!!!!!!!!!!!!! (hard-coded values are bad!!!!!!!!!!)
+                } //for now fix later!!!!!!!!!!!!!!!!!
+                else if (xyoffset.second > 5) --i; //for now fix later!!!!!!!!!!!!!!!!! (hard-coded values are bad!!!!!!!!!!)
+                symsize.second = i - xyoffset.second;
+                break;
+            }
+        }
+
+        if (symsize.first == symsize.second) ++symsize.second; // only for now i should find a fix for this (hard-coded ifs are bad!!!!!!!!!!)
+
+        SetConsoleCursorInfo(screen,&cci);
+        
+        if(!symsize.first || !symsize.second) return GetOffsetSymSize(color1,color2,color3);
+        return pair<pair<uint16_t,uint16_t>,pair<uint16_t,uint16_t>>(xyoffset,symsize);
+    }
+
     HANDLE Console::screen = HANDLE();
     HWND Console::window = HWND();
     HDC Console::device = HDC();
@@ -103,37 +444,6 @@ using namespace std::chrono;
         SysSleep(40e3);
         hwndFound=FindWindow(NULL, pszNewWindowTitle);
         return(hwndFound);
-    }
-
-    inline pair<uint16_t,uint16_t> Console::GetXYCharOffset() {
-        return pair<uint16_t,uint16_t>(0,0);
-    #define GetXYCharOffset_MaxXSearch 25
-    #define GetXYCharOffset_MaxYSearch 50
-        auto scr = vector<vector<Symbol> >();
-        scr.push_back(vector<Symbol>());
-        scr.back().push_back(Console::Symbol(L' ', 1, 1));
-        FillScreen(scr);
-        CONSOLE_SCREEN_BUFFER_INFOEX csbix;
-        GetConsoleScreenBufferInfoEx(Console::screen, &csbix);
-        COLORREF red = csbix.ColorTable[4];
-        cerr << csbix.ColorTable[0] << ' ' << csbix.ColorTable[1] << ' ' << csbix.ColorTable[2] << ' ' << csbix.ColorTable[3] << ' ' << csbix.ColorTable[4] << '\n';
-        
-        auto out = pair<uint16_t,uint16_t>(-1,-1);
-        for (uint16_t i = 0; i < GetXYCharOffset_MaxXSearch; i++) {
-            for (uint16_t j = 0; j < GetXYCharOffset_MaxYSearch; j++) {
-                POINT p = {i, j};
-                ClientToScreen(Console::window,&p);
-                COLORREF col = GetPixel(Console::device, p.x, p.y);
-                if (red == col) {
-                    out.first = i;
-                    out.second = j;
-                    goto GetXYCharOffsetOutOfLoop;
-                }
-            }
-        }
-GetXYCharOffsetOutOfLoop:
-        cerr << '\n' << '\n' << out.first << ' ' << out.second << '\n';
-        return out;
     }
 
     void Console::Init(void) {
@@ -232,16 +542,36 @@ GetXYCharOffsetOutOfLoop:
     void Console::HandleMouseAndFocus(void) {
         Console::focused = (Console::window == GetForegroundWindow());
 
-        POINT p;
-        GetCursorPos(&p);
-        ScreenToClient(Console::window, &p);
-        Console::mouse_status.x = (p.x < 0) ? Console::mouse_status.x : p.x;
-        Console::mouse_status.y = (p.y < 0) ? Console::mouse_status.y : p.y;
+        RECT rect;
+        GetClientRect(Console::window,&rect);
+        if (Console::auto_size_updates) {
+            auto n_width = Console::GetWindowWidth();
+            auto n_height = Console::GetWindowHeight();
 
-        CONSOLE_SCREEN_BUFFER_INFO csbi;
-        GetConsoleScreenBufferInfo(Console::screen, &csbi);
-
-        cerr << ' ' << csbi.dwSize.X << ' ' << csbi.dwSize.Y << '\n';
+            if (Console::old_width != n_width || Console::old_height != n_height || Console::old_rect.bottom - Console::old_rect.top != rect.bottom - rect.top || Console::old_rect.right - Console::old_rect.left != rect.right - rect.left) {
+                auto offsiz = GetOffsetSymSize(7,14,15);
+                Console::scr_offs = offsiz.first;
+                Console::sym_size = offsiz.second;
+                Console::old_width = n_width;
+                Console::old_height = n_height;
+                Console::old_rect = rect;
+            }
+        }
+        
+        POINT corner = {rect.left,rect.top}; ClientToScreen(Console::window,&corner);
+        POINT mouse;
+        GetCursorPos(&mouse);
+        ScreenToClient(window,&mouse);
+        mouse.x -= Console::scr_offs.first;
+        mouse.y -= Console::scr_offs.second;
+        mouse.x /= Console::sym_size.first;
+        mouse.y /= Console::sym_size.second;
+        Console::mouse_status.x = mouse.x;
+        Console::mouse_status.y = mouse.y;
+        Console::mouse_status.y = mouse.y;
+        Console::mouse_status.primary = GetKeyState(VK_LBUTTON) & 0x8000;
+        Console::mouse_status.secondary = GetKeyState(VK_RBUTTON) & 0x8000;
+        Console::mouse_status.middle = GetKeyState(VK_MBUTTON) & 0x8000;
 
         return;
     }
