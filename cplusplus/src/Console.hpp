@@ -55,12 +55,12 @@ namespace cpp {
     class Console {
     public:
         struct MouseStatus {
-            bool primary;
-            bool secondary;
-            bool middle;
-            std::pair<bool,bool> scroll;
-            unsigned int x;
-            unsigned int y;
+            bool primary; // is down
+            bool secondary; // is down
+            bool middle; // is down
+            std::pair<bool,bool> scroll; 
+            unsigned int x; // in console chracters
+            unsigned int y; // in console chracters
             MouseStatus(void);
         };
         
@@ -80,23 +80,26 @@ namespace cpp {
         static uint8_t last_mouse_combo;
         static std::chrono::time_point<std::chrono::high_resolution_clock> last_click_time;
         #ifdef _WIN32
-            static std::vector<std::vector<COLORREF>> SaveScreen(void);
-            static std::pair<std::pair<uint16_t,uint16_t>,std::pair<uint16_t,uint16_t>> GetOffsetSymSize(int color1 = 3, int color2 = 9, int color3 = 1);
+            //static std::vector<std::vector<COLORREF>> SaveScreen(void);
+            //static std::pair<std::pair<uint16_t,uint16_t>,std::pair<uint16_t,uint16_t>> GetOffsetSymSize(int color1 = 3, int color2 = 9, int color3 = 1);
             
-            static pair<uint16_t,uint16_t> scr_offs;
-            static pair<uint16_t,uint16_t> sym_size;
-            static bool auto_size_updates;
-            static int16_t old_width;
-            static int16_t old_height;
-            static RECT old_rect;
+            //static std::pair<uint16_t,uint16_t> scr_offs;
+            //static std::pair<uint16_t,uint16_t> sym_size;
+            //static bool auto_size_updates;
+            //static int16_t old_width;
+            //static int16_t old_height;
+            //static RECT old_rect;
             static uint8_t default_fcol;
             static uint8_t default_bcol;
             static HANDLE screen;
+            static HANDLE fd;
             static HWND window;
             static HDC device;
+            static DWORD old_console;
+            static HANDLE old_buffer;
             static inline uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2);
-            static std::pair<uint16_t,uint16_t> xyoffset;
-            static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
+            //static std::pair<uint16_t,uint16_t> xyoffset;
+            //static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
         #else
             static struct termios old_termios;
             static struct winsize window_size;

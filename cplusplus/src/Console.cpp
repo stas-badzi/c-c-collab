@@ -91,7 +91,7 @@ using namespace std::chrono;
     inline COLORREF GetPixel(int x, int y, int width, int height, RGBQUAD* pixels) {
         return RGB(pixels[(height-y-1)*width + x].rgbRed, pixels[(height-y-1)*width + x].rgbGreen, pixels[(height-y-1)*width + x].rgbBlue);
     }
-
+/*
     vector<vector<COLORREF>> Console::SaveScreen(void) {
 
         auto oldwinlong = GetWindowLong(Console::window, GWL_STYLE);
@@ -134,7 +134,8 @@ using namespace std::chrono;
 
         return colors;
     }
-
+*/
+/*
     pair<pair<uint16_t,uint16_t>,pair<uint16_t,uint16_t>> Console::GetOffsetSymSize(int color1, int color2, int color3) {
         
     //~setup   
@@ -316,7 +317,7 @@ using namespace std::chrono;
         COLORREF color_ref3 = csbix.ColorTable[color3];
 
         bool IsWindowsTerminal = getenv("WT_SESSION") != NULL;
-        bool IsMintty = getenv("TERM_PROGRAM") == "mintty";
+        bool IsMintty = string(getenv("TERM_PROGRAM")) == "mintty";
 
     //~setup
 
@@ -428,13 +429,15 @@ using namespace std::chrono;
         if(!symsize.first || !symsize.second) return GetOffsetSymSize(color1,color2,color3);
         return pair<pair<uint16_t,uint16_t>,pair<uint16_t,uint16_t>>(xyoffset,symsize);
     }
-
+*/
     HANDLE Console::screen = HANDLE();
+    HANDLE Console::fd = HANDLE();
     HWND Console::window = HWND();
     HDC Console::device = HDC();
+    DWORD Console::old_console = DWORD();
     uint8_t Console::default_fcol = uint8_t();
     uint8_t Console::default_bcol = uint8_t();
-    pair<uint16_t,uint16_t> Console::xyoffset = pair<uint16_t,uint16_t>();
+    //pair<uint16_t,uint16_t> Console::xyoffset = pair<uint16_t,uint16_t>();
 
     inline HWND GetHwnd(void) {
         HWND hwndFound;
@@ -448,19 +451,25 @@ using namespace std::chrono;
 
     void Console::Init(void) {
         if (!initialised) {
-
             Console::screen = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
             SetConsoleActiveScreenBuffer(Console::screen);
+            
+            Console::fd = GetStdHandle(STD_INPUT_HANDLE);
+            GetConsoleMode(Console::fd, &Console::old_console);
+            SetConsoleMode(Console::fd, ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT | ENABLE_WINDOW_INPUT);
 
             Console::window = GetHwnd();
             Console::device = GetDC(Console::window);
-            Console::xyoffset = Console::GetXYCharOffset();
+            //Console::xyoffset = Console::GetXYCharOffset();
 
             CONSOLE_SCREEN_BUFFER_INFO csbi;
             GetConsoleScreenBufferInfo(Console::screen, &csbi);
             auto val = AtrValToColors(csbi.wAttributes);
             Console::default_fcol = val.first;
             Console::default_bcol = val.second;
+            
+            Console::mouse_status.x = 0;
+            Console::mouse_status.y = 0;
             
             atexit(Console::Fin);
             at_quick_exit(Console::Fin);
@@ -479,6 +488,7 @@ using namespace std::chrono;
 
     void Console::Fin(void) {
         if (initialised) {
+            SetConsoleMode(Console::fd, old_console);
             SetConsoleActiveScreenBuffer((HANDLE)nullptr);
 
             initialised = false;
@@ -542,6 +552,67 @@ using namespace std::chrono;
     void Console::HandleMouseAndFocus(void) {
         Console::focused = (Console::window == GetForegroundWindow());
 
+        INPUT_RECORD record;
+        DWORD evnts,numRead;
+        
+        if(!GetNumberOfConsoleInputEvents(Console::fd, &evnts)) {
+            cerr << "GetNumberOfConsoleInputEvents";
+            exit(GetLastError());
+        }
+        if (!evnts) return;
+        for (unsigned i = 0; i < evnts; ++i) {
+        
+            if(!ReadConsoleInput(Console::fd, &record, 1, &numRead)) {
+                cerr << "ReadConsoleInput";
+                exit(GetLastError());
+            }
+            bitset<5> event(record.EventType);
+            if (event[0]) {
+                // KEY_EVENT
+            }
+
+            Console::this_mouse_button = -1;
+            Console::this_mouse_down = false;
+            Console::this_mouse_combo = 0;
+            Console::mouse_buttons_down[3] = false;
+            Console::mouse_buttons_down[4] = false;
+            Console::mouse_status.scroll = {false,false};
+            if (event[1]) {
+                // MOUSE_EVENT
+
+                auto mouse = record.Event.MouseEvent;
+                bitset<4> flags(mouse.dwEventFlags);
+
+                if (flags[0]) {
+                    Console::mouse_status.x = mouse.dwMousePosition.X;
+                    Console::mouse_status.y = mouse.dwMousePosition.Y;
+                }
+                Console::mouse_status.primary = GetKeyState(VK_LBUTTON) & 0x8000;
+                Console::mouse_status.secondary = GetKeyState(VK_RBUTTON) & 0x8000;
+                Console::mouse_status.middle = GetKeyState(VK_MBUTTON) & 0x8000;
+                Console::mouse_status.scroll = { flags[3], flags[3] && HIWORD(mouse.dwButtonState) > 0 };
+                Console::mouse_buttons_down[3] = flags[3] && HIWORD(mouse.dwButtonState) > 0;
+                Console::mouse_buttons_down[4] = flags[3] && HIWORD(mouse.dwButtonState) > 0;
+                Console::this_mouse_combo = flags[2] ? 2 : 1;
+            }
+
+            if (event[2]) {
+                // WINDOW_BUFFER_SIZE_EVENT
+            }
+
+            if (event[3]) {
+                // MENU_EVENT
+            }
+
+            if (event[4]) {
+                // FOCUS_EVENT
+                // reserved for some reason
+            }
+        }
+
+/*
+        Console::focused = (Console::window == GetForegroundWindow());
+
         RECT rect;
         GetClientRect(Console::window,&rect);
         if (Console::auto_size_updates) {
@@ -569,10 +640,7 @@ using namespace std::chrono;
         Console::mouse_status.x = mouse.x;
         Console::mouse_status.y = mouse.y;
         Console::mouse_status.y = mouse.y;
-        Console::mouse_status.primary = GetKeyState(VK_LBUTTON) & 0x8000;
-        Console::mouse_status.secondary = GetKeyState(VK_RBUTTON) & 0x8000;
-        Console::mouse_status.middle = GetKeyState(VK_MBUTTON) & 0x8000;
-
+*/
         return;
     }
 
@@ -821,6 +889,24 @@ using namespace std::chrono;
             Console::this_mouse_down = mousedown;
             Console::mouse_buttons_down[fullbutton] = this_mouse_down;
             Console::this_mouse_button = fullbutton;
+            
+            switch (button) {
+            case 0:
+                Console::mouse_status.primary = mousedown;
+                break;
+            case 1:
+                Console::mouse_status.middle = mousedown;
+                break;
+            case 2:
+                Console::mouse_status.secondary = mousedown;
+                break;
+            case 4:
+                Console::mouse_status.scroll = {mousedown,true};
+                break;
+            case 5:
+                Console::mouse_status.scroll = {mousedown,false};
+                break;
+            }
         }
         return;
     }

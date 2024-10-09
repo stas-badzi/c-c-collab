@@ -2,6 +2,7 @@
 
 #include "dllimport.hpp"
 #include "FileSystem.hpp"
+#include "System.hpp"
 #include <vector>
 
 using namespace cppimp;
@@ -65,7 +66,7 @@ bool Console::IsFocused(void) {
 struct Console::MouseStatus Console::GetMouseStatus(void) {
     Console::MouseStatus* ptr = (Console::MouseStatus*)cppimp::Console_GetMouseStatus();
     Console::MouseStatus val = *ptr;
-    delete ptr;
+    System::FreeMemory(ptr);
     return val;
 }
 

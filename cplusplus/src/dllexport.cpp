@@ -48,7 +48,8 @@ using namespace uniconv;
     }
 
     libexport void* Console_GetMouseStatus(void) {
-        void* out = new cpp::Console::MouseStatus(cpp::Console::GetMouseStatus());
+        void* out = System::AllocateMemory(sizeof(cpp::Console::MouseStatus));
+        System::WritePointer<cpp::Console::MouseStatus>(out,cpp::Console::GetMouseStatus());
         return out;
     }
 

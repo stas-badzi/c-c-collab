@@ -500,7 +500,7 @@ else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #mingw [ I think same as windows (?) ]
 	@$(cpp-compiler) -c -Wall -fPIC -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++2b $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
-	@cd cplusplus && find . -type f && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
+	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
 #
 else
 ifeq ($(findstring Windows_NT, $(shell uname -s)),Windows_NT)
@@ -512,7 +512,7 @@ else
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys [ I think same as windows (?) ]
 	@$(cpp-compiler) -c -Wall -fPIC -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++2b $(foreach obj,$(subst obj/,$(empty),$(objects)),&& $(movefl) -f $(obj) cplusplus/obj$(space))
-	@cd cplusplus && find . -type f && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
+	@cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
 #
 else
 # not windows
@@ -620,7 +620,7 @@ ifeq ($(msvc),1)
 else
 #all
 	@$(cpp-compiler) -c -Wall $(bpdb) $(fbsrc) -I binaryplus/include -std=c++2b $(foreach obj,$(subst obj/,$(empty),$(fbobj)),&& $(movefl) -f $(obj) binaryplus/obj$(space))
-	@cd binaryplus && $(cpp-compiler) -o bin/$(binname).$(binary) $(fbobj) -L$(flibdir) -l$(name) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
+	@cd binaryplus && $(cpp-compiler) -o bin/$(binname).$(binary) $(fbobj) -municode -L$(flibdir) -l$(name) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
 #
 
 ifeq ($(shell uname -s),Darwin)
