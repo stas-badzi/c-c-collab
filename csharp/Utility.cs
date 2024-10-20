@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Cpp;
+using CppImp;
 
 #pragma warning disable CS8500
 
@@ -377,6 +378,7 @@ namespace Utility
                 {
                     nint ni = Exec.ReadPointer<IntPtr>(ptr, (i + 2) * int32_size + count * intptr_size);
                     // bro what the fuvk -----------under here----------- (I knew it from the begginig but I couldn't find it)
+                    CppImp.Console.Symbol.Inspect(ni);
                     texture[i].Add(new Terminal.Symbol(ni,direct));
                     count++;
                 }

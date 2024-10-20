@@ -69,7 +69,7 @@ using namespace uniconv;
     }
 
     libexport void Console_FillScreen(void* ptr) {
-        std::vector<std::vector<cpp::Console::Symbol> > texture = cs::TextureSymConvert(cs::PtrToTexture(ptr));
+        std::vector<std::vector<cpp::Console::Symbol> > texture = cs::Convert2dVector<cpp::Console::Symbol>(cs::PtrToTexture(ptr));
         return cpp::Console::FillScreen(texture);
     }
 

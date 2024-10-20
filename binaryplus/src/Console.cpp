@@ -99,7 +99,9 @@ wchar_t** Console::GetArgV(void) {
     int32_t length = Console_GetArgC();
     wchar_t** out = (wchar_t**)malloc(sizeof(wchar_t*)*length); // 4 is max utf bytes in one char
     for (int i = 0; i < length; i++) {
-        out[i] = (wchar_t*)NativeToWString(UnicodeToUtf8String(ret[i])).c_str();
+        wstring arg = NativeToWString(UnicodeToUtf8String(ret[i]));
+        out[i] = (wchar_t*)System::AllocateMemory(sizeof(wchar_t)*arg.size());
+        for (size_t j = 0; j < arg.size(); j++) out[i][j] = arg[j];
     }
     __dllfree(ret);
     return out;

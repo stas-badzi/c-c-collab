@@ -4,14 +4,18 @@
 #include <variant>
 #include <unicode_conversion.hpp>
 #include "Console.hpp"
+#include "smart_ref.hpp"
 
 namespace cs {
 
-    std::vector<std::vector<cpp::Console::Symbol*> > TexturePtrConvert(std::variant<std::vector<std::vector<cpp::Console::Symbol> >,  std::vector<std::vector<cpp::Console::Symbol*> > > txts);
-    std::vector<std::vector<cpp::Console::Symbol> > TextureSymConvert(std::variant<std::vector<std::vector<cpp::Console::Symbol> >,  std::vector<std::vector<cpp::Console::Symbol*> > > txts);
+    template<typename Tout, typename Tin>
+    std::vector<Tout> ConvertVector(const std::vector<Tin>& vec);
+    
+    template<typename Tout, typename Tin>
+    std::vector<std::vector<Tout>> Convert2dVector(const std::vector<std::vector<Tin>>& vec2d);
 
     void* TextureToPtr(std::vector<std::vector<cpp::Console::Symbol> >& texture);
-    std::variant<std::vector<std::vector<cpp::Console::Symbol> >,  std::vector<std::vector<cpp::Console::Symbol*> > > PtrToTexture(void* ptr, bool direct = false);
+    std::vector<std::vector<smart_ref<cpp::Console::Symbol> > > PtrToTexture(void* ptr, bool direct = false);
 
     class FileSystem {
     public:
@@ -23,3 +27,5 @@ namespace cs {
         static void PlaySound(std::wstring filepath, bool wait = false);
     };
 }
+
+#include "FileSystem.ipp"

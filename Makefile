@@ -16,9 +16,9 @@ release = FactoryRush
 defcompcxx = c++
 defcompc = cc
 #> source files
-sources = Console.cpp dllexport.cpp FileSystem.cpp System.cpp globals.c
+sources = globals.c Console.cpp FileSystem.cpp System.cpp dllexport.cpp
 #> header files
-headers = Console.hpp FileSystem.hpp dllimport.hpp System.hpp System.ipp
+headers = Console.hpp FileSystem.hpp FileSystem.ipp dllimport.hpp System.hpp System.ipp smart_ref.hpp smart_ref.ipp
 #> include files
 includes = dynamic_library.h unicode_conversion.hpp getfd.h quick_exit.h control_heap.h operating_system.h quick_exit/defines.h utils/cextern.h utils/dllalloc.h
 #> name the dynamic library

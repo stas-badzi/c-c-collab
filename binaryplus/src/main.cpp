@@ -50,8 +50,8 @@ int main(void) {
         //screen[mouse.y][mouse.x].character(L'▦');
 
         //Console::FillScreen(screen);
-        auto file = /*(argc < 2) ?*/ L"▟=C:\\Users\\sssba\\Documents\\c-c-collab\\assets\\a.tux" /*: argv[1]*/;
-        auto texture = FileSystem::TextureFromFile(System::ToNativePath(wstring(file)));
+        wstring file = (argc < 2) ? System::GetRootPath() + L"/assets/a.tux" : wstring(argv[1]);
+        auto texture = FileSystem::TextureFromFile(System::ToNativePath(file));
         //Console::FillScreen(texture);
         //Console::FillScreen(screen);
         FileSystem::DrawTextureToScreen(2,2,texture,screen); // już zaziała //to nie zadziala bo screen jest za maly;
@@ -59,7 +59,7 @@ int main(void) {
         wstringstream wstr;
         wstr << mouse.x << L' ' << mouse.y << L"                            ";
         auto pos = Console::Symbol::CreateTexture(wstr.str());
-        FileSystem::DrawTextureToScreen(20,2,pos,screen);
+        //FileSystem::DrawTextureToScreen(20,2,pos,screen);
 
         
         Console::FillScreen(screen);

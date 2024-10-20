@@ -34,7 +34,7 @@ namespace uniconv {
     }
 
     inline wchar_t GetDefaultWChar(unsigned int val) {
-        return (std::numeric_limits<char>::is_signed) ? (wchar_t)val+2LL*WCHAR_MIN : val;
+        return (std::numeric_limits<wchar_t>::is_signed) ? (wchar_t)val+2LL*WCHAR_MIN : val;
     }
 
 #ifdef _WIN32
@@ -171,11 +171,11 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
     inline utfchar ReadUtfChar(utfcstr str, size_t offset = 0, size_t* bytes_read = nullptr) {
         utfchar out;
         std::bitset<8> char_bits(GetUnsignedChar(str[offset])); {
-            int a1=char_bits[0],a2=char_bits[1],a3=char_bits[2],a4=char_bits[2],a5=char_bits[4],a6=char_bits[5],a7=char_bits[6],a8=char_bits[7];
+            int a1=char_bits[0],a2=char_bits[1],a3=char_bits[2],a4=char_bits[3],a5=char_bits[4],a6=char_bits[5],a7=char_bits[6],a8=char_bits[7];
             char_bits[0] = a8; char_bits[1] = a7; char_bits[2] = a6; char_bits[3] = a5; char_bits[4] = a4; char_bits[5] = a3; char_bits[6] = a2; char_bits[7] = a1; 
         }
     #ifdef _DEBUG
-        int Q1=char_bits[0],Q2=char_bits[1],Q3=char_bits[2],Q4=char_bits[2],Q5=char_bits[4],Q6=char_bits[5],Q7=char_bits[6],Q8=char_bits[7];
+        int Q1=char_bits[0],Q2=char_bits[1],Q3=char_bits[2],Q4=char_bits[3],Q5=char_bits[4],Q6=char_bits[5],Q7=char_bits[6],Q8=char_bits[7];
     #endif
         uint8_t bytes;
         if (char_bits[0] == 0) {
@@ -240,7 +240,7 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
 
     inline std::wstring NativeToWString(utfstr utfstr) {
         std::wstring out = L"";
-        size_t locread;
+        size_t locread = 0;
         for (size_t read = 0; read < utfstr.size(); read += locread) {
             out.push_back(GetDefaultWChar(Utf8ToUnicode(ReadUtfChar(utfstr.c_str(), read, &locread))));
         }
