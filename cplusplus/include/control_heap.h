@@ -3,6 +3,7 @@
 #ifdef _DEBUG
 
 #include <stdlib.h>
+#include <limits.h>
 #include "utils/cextern.h"
 
 cextern void** ALLOCATIONS;

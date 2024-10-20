@@ -9,7 +9,7 @@ using namespace cs;
 using namespace cpp;
 
 vector<wstring> FileSystem::ImportText(wstring filename) {
-    unichar** textptr = FileSystem_ImportText(Utf8StringToUnicode(WStringToNative(filename)));
+    unichar** textptr = FileSystem_ImportText(Utf8StringToUnicode(WStringToNative(filename).c_str()));
 
 
     vector<wstring> utftext;
@@ -37,24 +37,24 @@ void FileSystem::ExportText(wstring file, vector<wstring> lines) {
         size_t ofst = 0;
         for (size_t j = 0; j < lines[i].size(); j++) {
             size_t ch_size;
-            unilines[i][j] = Utf8ToUnicode(ReadUtfChar(WStringToNative(lines[i]),ofst, &ch_size));
+            unilines[i][j] = Utf8ToUnicode(ReadUtfChar(WStringToNative(lines[i]).c_str(),ofst, &ch_size));
             ofst += ch_size;
         }
     }
     unilines[lines.size()] = new unichar[1]{0};
     
-    FileSystem_ExportText(Utf8StringToUnicode(WStringToNative(file)),unilines);
+    FileSystem_ExportText(Utf8StringToUnicode(WStringToNative(file).c_str()),unilines);
 }
 
 vector<vector<Console::Symbol> > FileSystem::TextureFromFile(wstring filepath) {
-    unichar* arg1 = Utf8StringToUnicode(WStringToNative(filepath));
+    unichar* arg1 = Utf8StringToUnicode(WStringToNative(filepath).c_str());
     void* ret = csimp::FileSystem_TextureFromFile(arg1);
 
     return PtrToTexture(ret);
 }
 
 void FileSystem::FileFromTexture(wstring filepath, vector<vector<Console::Symbol> > texture, bool recycle) {
-    unichar* filepathPtr = Utf8StringToUnicode(WStringToNative(filepath));
+    unichar* filepathPtr = Utf8StringToUnicode(WStringToNative(filepath).c_str());
     void* texturePtr = TextureToPtr(texture);
 
     csimp::FileSystem_FileFromTexture(filepathPtr, texturePtr, recycle);
@@ -69,7 +69,7 @@ void FileSystem::DrawTextureToScreen(int x, int y, vector<vector<Console::Symbol
 
 void FileSystem::PlaySound(wstring filepath, bool wait)
 {
-    auto filepathPtr = Utf8StringToUnicode(WStringToNative(filepath));
+    auto filepathPtr = Utf8StringToUnicode(WStringToNative(filepath).c_str());
 
     csimp::FileSystem_PlaySound(filepathPtr, wait);
 }

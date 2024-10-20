@@ -72,6 +72,8 @@ namespace cpp {
         static int KeyReleased(void);
         static int16_t GetWindowWidth(void);
         static int16_t GetWindowHeight(void);
+        static int32_t GetArgC(void);
+        static wchar_t** GetArgV(void);
         static void Sleep(double seconds = 1.0);
         static void FillScreen(std::vector<std::vector<Symbol> > symbols);
         static void HandleMouseAndFocus(void);

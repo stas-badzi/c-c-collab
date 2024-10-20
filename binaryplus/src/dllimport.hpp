@@ -40,6 +40,10 @@ namespace cppimp {
 
     libimport int16_t Console_GetWindowHeight(void);
 
+    libimport int32_t Console_GetArgC(void);
+
+    libimport uniconv::unichar** Console_GetArgV(void);
+
     libimport void* Console_Symbol_Construct$smb(void* smb);
 
     libimport void* Console_Symbol_Construct$cfb(uniconv::unichar character, uint8_t foreground, uint8_t background);

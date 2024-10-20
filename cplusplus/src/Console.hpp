@@ -26,11 +26,13 @@
 #else
     #include <signal.h>
     #include <stdio.h>
+    #include <limits>
     #include <sys/ioctl.h>
     #include <unistd.h>
     #include <termios.h>
     #include <deque>
     #include <string>
+    #include <string.h>
 #ifdef __linux__
     #include <getfd.h>
     #include <linux/kd.h>
@@ -79,6 +81,8 @@ namespace cpp {
         static uint8_t last_mouse_button;
         static uint8_t last_mouse_combo;
         static std::chrono::time_point<std::chrono::high_resolution_clock> last_click_time;
+        static int argc;
+        static uniconv::utfcstr* argv;
         #ifdef _WIN32
             //static std::vector<std::vector<COLORREF>> SaveScreen(void);
             //static std::pair<std::pair<uint16_t,uint16_t>,std::pair<uint16_t,uint16_t>> GetOffsetSymSize(int color1 = 3, int color2 = 9, int color3 = 1);
@@ -138,6 +142,10 @@ namespace cpp {
         };
         static int16_t GetWindowWidth(void);
         static int16_t GetWindowHeight(void);
+
+        static int32_t GetArgC(void);
+        static uniconv::utfcstr* GetArgV(void);
+
         static void FillScreen(std::vector<std::vector<Symbol> > symbols);
         
         static void HandleKeyboard(void);

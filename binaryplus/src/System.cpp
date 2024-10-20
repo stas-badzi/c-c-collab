@@ -6,7 +6,7 @@ using namespace std;
 using namespace uniconv;
 
 wstring System::ToNativePath(wstring path) {
-    return NativeToWString(UnicodeToUtf8String(cppimp::System_ToNativePath(Utf8StringToUnicode(WStringToNative(path)))));
+    return NativeToWString(UnicodeToUtf8String(cppimp::System_ToNativePath(Utf8StringToUnicode(WStringToNative(path).c_str()))));
 }
 
 wstring System::GetRootPath(void) {

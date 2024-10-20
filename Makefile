@@ -215,6 +215,7 @@ endif
 
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 #windows
+binflags = 
 admin = sudo
 prefix = .\
 os_name = win-$(arch)
@@ -227,6 +228,7 @@ bindir = $(winbin)
 else
 ifeq ($(shell uname -s),WINDOWS_NT)
 #windows i think
+binflags = 
 admin = sudo
 prefix = .\
 os_name = win-$(arch)
@@ -241,12 +243,14 @@ ifeq ($(findstring NT, $(shell uname -s)),NT)
 #
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin only
+binflags = 
 libdir = $(cygwinlib)
 bindir = $(cygwinbin)
 admin = sudo
 #
 else
 # msys mingw and others
+binflags = -municode
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys
 exec = $(shell cygpath -w /msys2.exe)
@@ -285,6 +289,7 @@ binary = exe
 else
 ifeq ($(shell uname -s),Darwin)
 #macos
+binflags = 
 admin = sudo
 prefix = ./
 os_name = osx-$(arch)
@@ -296,6 +301,7 @@ bindir = $(macosbin)
 #
 else
 #linux and similar[other]
+binflags = 
 admin = sudo
 prefix = ./
 os_name = linux-$(arch)
@@ -620,7 +626,7 @@ ifeq ($(msvc),1)
 else
 #all
 	@$(cpp-compiler) -c -Wall $(bpdb) $(fbsrc) -I binaryplus/include -std=c++2b $(foreach obj,$(subst obj/,$(empty),$(fbobj)),&& $(movefl) -f $(obj) binaryplus/obj$(space))
-	@cd binaryplus && $(cpp-compiler) -o bin/$(binname).$(binary) $(fbobj) -municode -L$(flibdir) -l$(name) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
+	@cd binaryplus && $(cpp-compiler) -o bin/$(binname).$(binary) $(binflags) $(fbobj) -L$(flibdir) -l$(name) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
 #
 
 ifeq ($(shell uname -s),Darwin)

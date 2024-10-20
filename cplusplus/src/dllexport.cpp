@@ -1,6 +1,7 @@
 #include <dynamic_library.h>
 #include <unicode_conversion.hpp>
 #include <vector>
+#include <string.h>
 
 #include "Console.hpp"
 #include "System.hpp"
@@ -78,6 +79,31 @@ using namespace uniconv;
 
     libexport int16_t Console_GetWindowHeight(void) {
         return cpp::Console::GetWindowHeight();
+    }
+
+    libexport int32_t Console_GetArgC(void) {
+        return cpp::Console::GetArgC();
+    }
+
+    libexport unichar** Console_GetArgV(void) {
+        int __argc = cpp::Console::GetArgC();
+        utfcstr* __argv = cpp::Console::GetArgV();
+        unichar** out = (unichar**)__dllalloc(sizeof(unichar*)*__argc);
+        for (int i = 0; i < __argc; i++) {
+            /*
+            unichar* loc = (unichar*)__dllalloc(sizeof(unichar) * (strlen(__argv[i]) + 1));
+            size_t offset = 0;
+            int num = 0;
+            for (size_t j = 0; j < strlen(__argv[i]); j += offset) {
+                loc[num] = Utf8ToUnicode(ReadUtfChar(__argv[i], j, &offset));
+                ++num;
+            }
+            loc[num] = 0;
+            loc = (unichar*)realloc(loc,sizeof(unichar) * ++num);
+            */
+            out[i] = Utf8StringToUnicode(__argv[i]);;
+        }
+        return out;
     }
 
     // Symbol
@@ -192,11 +218,11 @@ using namespace uniconv;
 
 // System
     libexport uniconv::unichar* System_GetRootPath(void) {
-        return uniconv::Utf8StringToUnicode(cpp::System::GetRootPath());
+        return uniconv::Utf8StringToUnicode(cpp::System::GetRootPath().c_str());
     }
     
     libexport uniconv::unichar* System_ToNativePath(uniconv::unichar* arg1) {
-        return uniconv::Utf8StringToUnicode(cpp::System::ToNativePath(uniconv::UnicodeToUtf8String(arg1)));
+        return uniconv::Utf8StringToUnicode(cpp::System::ToNativePath(uniconv::UnicodeToUtf8String(arg1)).c_str());
     }
     
     libexport nint System_AllocateMemory(size_t arg1) {

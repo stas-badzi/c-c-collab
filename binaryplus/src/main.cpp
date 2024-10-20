@@ -9,12 +9,19 @@
 #include "System.hpp"
 #include "Control.hpp"
 
+#ifndef VK_CONTROL
+    #define VK_CONTROL 10
+#endif
+
 using namespace std;
 using namespace cpp;
 using namespace cs;
 
-int wmain(int argc, wchar_t* argv[]) {
+int main(void) {
     Console::Init();
+    int argc = Console::GetArgC();
+    wchar_t** argv = Console::GetArgV();
+    //return 0;
     while (true) {
         auto width = Console::GetWindowWidth();
         auto height = Console::GetWindowHeight();
@@ -43,7 +50,7 @@ int wmain(int argc, wchar_t* argv[]) {
         //screen[mouse.y][mouse.x].character(L'▦');
 
         //Console::FillScreen(screen);
-        auto file =(argc < 2) ? L"C:\\Users\\sssba\\Documents\\c-c-collab\\assets\\a.tux" : argv[1];
+        auto file = /*(argc < 2) ?*/ L"▟=C:\\Users\\sssba\\Documents\\c-c-collab\\assets\\a.tux" /*: argv[1]*/;
         auto texture = FileSystem::TextureFromFile(System::ToNativePath(wstring(file)));
         //Console::FillScreen(texture);
         //Console::FillScreen(screen);

@@ -437,6 +437,7 @@ using namespace std::chrono;
     DWORD Console::old_console = DWORD();
     uint8_t Console::default_fcol = uint8_t();
     uint8_t Console::default_bcol = uint8_t();
+    utfcstr* Console::argv = (utfcstr*)malloc(0);
     //pair<uint16_t,uint16_t> Console::xyoffset = pair<uint16_t,uint16_t>();
 
     inline HWND GetHwnd(void) {
@@ -689,29 +690,36 @@ using namespace std::chrono;
     void Console::Init(void) {
         if (!initialised) {
 
-            int err;
+            FILE *cmdline = fopen("/proc/self/cmdline", "rb");
+            char *arg = 0; size_t size = 0;
+            int out = getdelim(&arg, &size, 0, cmdline);
+            while(out != -1) {
+                Console::argv = (const char**)realloc(Console::argv,++Console::argc); Console::argv[Console::argc-1] = arg;
+                arg = 0; size = 0;
+                out = getdelim(&arg, &size, 0, cmdline);
+            }
+            //if (numeric_limits<char>::is_signed) for (int i=0; i < Console::argc; ++i) for(int j=0; j < strlen(Console::argv[i]); ++j) ((char**)(Console::argv))[i][j] = (Console::argv)[i][j] + INT8_MIN;
+            fclose(cmdline);
 
             fd = getfd();
 
             if (fd < 0) {
-                char buf[256];
-                int buf_size = readlink( "/proc/self/exe" , buf, 256);
-                string command = "sudo ";
-                command.append(buf);
+                string command = "sudo";
+                for (int i = 0; i < Console::argc; i++) { command.push_back(' '); command.append(argv[i]); }
                 exit(system(command.c_str()));
                 
-                string error = GenerateEscapeSequence(1,16) + "\nCouldn't get a file descriptor referring to the console.\nCheck if you have acces to /dev/tty and /dev/console.\n" + GenerateEscapeSequence(4,16) + "\n\ttry: " + GenerateEscapeSequence(6,16) + "sudo " + buf + "\033[0m\n";
+                string error = GenerateEscapeSequence(1,16) + "\nCouldn't get a file descriptor referring to the console.\nCheck if you have acces to /dev/tty and /dev/console.\n" + GenerateEscapeSequence(4,16) + "\n\ttry: " + GenerateEscapeSequence(6,16) + command.c_str() + "\033[0m\n";
                 throw(runtime_error(error.c_str()));
             }
 
             char path[256];
-            int path_size = readlink( "/proc/self/exe" , path, 256);
+            readlink( "/proc/self/exe" , path, 256);
             string command = path;
             while (command.back() != '/') command.pop_back();
             command.append("../share/factoryrush/bin/setkbdmode.bin ");
             command.push_back('0' + K_MEDIUMRAW);
 
-            if (err = ioctl(fd, KDGKBMODE, &old_kbdmode)) {
+            if (ioctl(fd, KDGKBMODE, &old_kbdmode)) {
                 throw("ioctl KDGKBMODE error");
             }
 
@@ -789,14 +797,20 @@ using namespace std::chrono;
             fwrite("\033[?1006l", sizeof(char), 8, stderr);
 
             char path[256];
-            int path_size = readlink( "/proc/self/exe" , path, 256);
+            readlink( "/proc/self/exe" , path, 256);
             string command = path;
             while (command.back() != '/') command.pop_back();
             command.append("../share/factoryrush/bin/setkbdmode.bin ");
             command.push_back('0' + old_kbdmode);
-            if (old_kbdmode = system(command.c_str()) < 0) {
+            old_kbdmode = system(command.c_str());
+            if (old_kbdmode < 0) {
                 throw("setkbdmode.bin error");
             }
+
+            for (int i = 0; i < argc; i++) free((void*)Console::argv[i]);
+            Console::argv = (const char**)realloc(Console::argv,0);
+            Console::argc = 0;
+            
 
             initialised = false;
         }
@@ -809,7 +823,7 @@ using namespace std::chrono;
         Console::mouse_buttons_down[3] = false;
         Console::mouse_buttons_down[4] = false;
 
-        bool mousedown;
+        bool mousedown = false;
         int bytes;
 
         ioctl(fileno(stdin), FIONREAD, &bytes);
@@ -936,6 +950,7 @@ using namespace std::chrono;
 
     struct termios Console::old_fdterm = termios();
     int Console::old_kbdmode = int();
+    utfcstr* Console::argv = (const char**)malloc(0);
 
 #elif __APPLE__
 // macOS
@@ -1111,6 +1126,8 @@ using namespace std::chrono;
     int Console::fd = int();
 #endif
 
+int Console::argc = 0;
+
 bool Console::initialised = false;
 bitset<KEYBOARD_MAX*2> Console::key_states = bitset<KEYBOARD_MAX*2>(0);
 bitset<5> Console::mouse_buttons_down = bitset<5>(0);
@@ -1192,6 +1209,14 @@ void Console::SetDoubleClickMaxWait(unsigned short milliseconds) {
 
 unsigned short Console::GetDoubleClickMaxWait(void) {
     return Console::double_click_max;
+}
+
+int32_t Console::GetArgC(void) {
+    return Console::argc;
+}
+
+utfcstr* Console::GetArgV(void) {
+    return Console::argv;
 }
 
 Console::MouseStatus::MouseStatus(void) {

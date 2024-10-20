@@ -4,6 +4,7 @@
 #include "FileSystem.hpp"
 #include "System.hpp"
 #include <vector>
+#include <string.h>
 
 using namespace cppimp;
 using namespace uniconv;
@@ -87,6 +88,21 @@ int16_t Console::GetWindowWidth(void) {
 
 int16_t Console::GetWindowHeight(void) {
     return Console_GetWindowHeight();
+}
+
+
+int32_t Console::GetArgC(void) {
+    return Console_GetArgC();
+}
+wchar_t** Console::GetArgV(void) {
+    unichar** ret = Console_GetArgV();
+    int32_t length = Console_GetArgC();
+    wchar_t** out = (wchar_t**)malloc(sizeof(wchar_t*)*length); // 4 is max utf bytes in one char
+    for (int i = 0; i < length; i++) {
+        out[i] = (wchar_t*)NativeToWString(UnicodeToUtf8String(ret[i])).c_str();
+    }
+    __dllfree(ret);
+    return out;
 }
 
 void Console::Sleep(double seconds){
