@@ -158,7 +158,7 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
 }
 
 #ifdef _WIN32
-    inline utfcstr WStringToNative(std::wstring wstr) { return wstr; }
+    inline utfstr WStringToNative(std::wstring wstr) { return wstr; }
     inline utfchar WCharToNative(wchar_t wchar) { return wchar; }
     inline std::wstring NativeToWString(utfstr utfstr) { return utfstr; }
     inline wchar_t NativeToWChar(utfchar utfchar) { return utfchar; }
