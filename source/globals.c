@@ -1,5 +1,3 @@
-#include <dynamic_library.h>
-
 #ifdef _WIN32
 #ifndef _MSVC
     #include <quick_exit/defines.h>

@@ -701,7 +701,7 @@ using namespace std::chrono;
             //if (numeric_limits<char>::is_signed) for (int i=0; i < Console::argc; ++i) for(int j=0; j < strlen(Console::argv[i]); ++j) ((char**)(Console::argv))[i][j] = (Console::argv)[i][j] + INT8_MIN;
             fclose(cmdline);
 
-            fd = getfd();
+            fd = getfd(0);
 
             if (fd < 0) {
                 string command = "sudo";

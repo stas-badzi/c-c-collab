@@ -85,7 +85,7 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
 
     utfchar s;
 
-    if (unicode >= 0 and unicode <= 0x7f)  /* 7F(16) = 127(10) */ {
+    if (unicode <= 0x7f)  /* 7F(16) = 127(10) */ {
         s = static_cast<char>(GetDefaultChar(unicode));
 
         return s;

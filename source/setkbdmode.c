@@ -5,15 +5,16 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <linux/kd.h>
- 
-// getfd()
+
 #include <getfd.h>
+
+ssize_t readlink(const char *restrict path, char *restrict buf, size_t bufsize);
  
 int main(int argc, char *argv[])
 {
   int fd, mode, orig_mode, err;
   
-  if ((fd = getfd()) < 0) {
+  if ((fd = getfd(0)) < 0) {
     char buf[256];
     int buf_size = readlink( "/proc/self/exe" , buf, 256);
     buf[buf_size] = ' ';
