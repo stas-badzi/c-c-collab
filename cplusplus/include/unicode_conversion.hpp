@@ -7,6 +7,7 @@
 #include <math.h>
 
 #include "utils/dllalloc.h"
+#include "unicode.hpp"
 
 #ifdef _WIN32
 
@@ -56,23 +57,14 @@ namespace uniconv {
 inline unichar Utf8ToUnicode(utfchar utf8_code) {
     
 #ifdef _WIN32
-    return (unichar)(GetUnsignedChar(utf8_code));
+    return utf8_code;
 #else
-
-    unsigned long utf8_size = utf8_code.length();
-    unichar unicode = 0;
-
-    for (unsigned p=0; p<utf8_size; ++p) {
-        int bit_count = (p? 6: 8 - utf8_size - (utf8_size == 1? 0: 1)),
-            shift = (p < utf8_size - 1? (6*(utf8_size - p - 1)): 0);
-
-        for (int k=0; k<bit_count; ++k) {
-            unicode += ((GetUnsignedChar(utf8_code[p]) & (1 << k)) << shift);
-        }
-    }
-
-    return unicode;
-
+    std::u8string u8code;
+    for (auto &&c : utf8_code) u8code.push_back(GetUnsignedChar(c));
+    char16_t* ret = unicode::UnicodeToUTF16(unicode::UTF8ToUnicode(u8code.c_str()));
+    unichar utf16 = ret[0];
+    free(ret);
+    return utf16;
 #endif
 }
 
@@ -80,80 +72,18 @@ inline unichar Utf8ToUnicode(utfchar utf8_code) {
 inline utfchar UnicodeToUtf8(unichar unicode) {
 
 #ifdef _WIN32
-    return (utfchar)(GetDefaultChar(unicode));
+    return unicode;
 #else
-
-    utfchar s;
-
-    if (unicode <= 0x7f)  /* 7F(16) = 127(10) */ {
-        s = static_cast<char>(GetDefaultChar(unicode));
-
-        return s;
-    } else if (unicode <= 0x7ff)  /* 7FF(16) = 2047(10) */ {
-        unsigned char c1 = 192, c2 = 128;
-
-        for (int k=0; k<11; ++k) {
-            if (k < 6) {
-                c2 |= (unicode % 64) & (1 << k);
-            } else {
-                c1 |= (unicode >> 6) & (1 << (k - 6));
-            }
-        }
-
-        s = GetDefaultChar(c1);
-        s += GetDefaultChar(c2);
-
-        return s;
-    } else if (unicode <= 0xffff)  /* FFFF(16) = 65535(10) */ {
-        unsigned char c1 = 224, c2 = 128, c3 = 128;
-
-        for (int k=0; k<16; ++k) {
-            if (k < 6) {
-                c3 |= (unicode % 64) & (1 << k);
-            } else if (k < 12) {
-                c2 |= (unicode >> 6) & (1 << (k - 6));
-            } else {
-                c1 |= (unicode >> 12) & (1 << (k - 12));
-            }
-        }
-
-        s = GetDefaultChar(c1);
-        s += GetDefaultChar(c2);
-        s += GetDefaultChar(c3);
-
-        return s;
-    } else if (unicode <= 0x1fffff)  /* 1FFFFF(16) = 2097151(10) */ {
-        unsigned char c1 = 240, c2 = 128, c3 = 128, c4 = 128;
-
-        for (int k=0; k<21; ++k)
-        {
-            if (k < 6)
-                c4 |= (unicode % 64) & (1 << k);
-            else if (k < 12)
-                c3 |= (unicode >> 6) & (1 << (k - 6));
-            else if (k < 18)
-                c2 |= (unicode >> 12) & (1 << (k - 12));
-            else
-                c1 |= (unicode >> 18) & (1 << (k - 18));
-        }
-
-        s = GetDefaultChar(c1);
-        s += GetDefaultChar(c2);
-        s += GetDefaultChar(c3);
-        s += GetDefaultChar(c4);
-
-        return s;
-    } else if (unicode <= 0x3ffffff)  /* 3FFFFFF(16) = 67108863(10) */ {
-        ;  // Actually, there are no 5-bytes unicodes
-    }
-    else if (unicode <= 0x7fffffff)  /* 7FFFFFFF(16) = 2147483647(10) */ {
-        ;  // Actually, there are no 6-bytes unicodes
-    } else {
-        ;  // Incorrect unicode (< 0 or > 2147483647)
-    }
-
-    return "";
-
+    char16_t param[2] = u"X";
+    param[0] = unicode;
+    unicode_t func = unicode::UTF16ToUnicode(param);
+    auto ret = unicode::UnicodeToUTF8(func);
+    std::u8string u8code = ret;
+    free(ret);
+    std::string utf8_code;
+    for (auto &&c : u8code) utf8_code.push_back(GetDefaultChar(c));
+    
+    return utf8_code;
 #endif
 }
 
@@ -162,12 +92,31 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
     inline utfchar WCharToNative(wchar_t wchar) { return wchar; }
     inline std::wstring NativeToWString(utfstr utfstr) { return utfstr; }
     inline wchar_t NativeToWChar(utfchar utfchar) { return utfchar; }
+    // don't use this function anymore
     inline utfchar ReadUtfChar(utfcstr str, size_t offset = 0, size_t* bytes_read = nullptr) {
         if (bytes_read != nullptr) { *bytes_read = 1; }
         return str[offset];
     }
-#else
+    
+    inline unichar* Utf8StringToUnicode (utfcstr utf8s) {
+        unichar* out = (unichar*)__dllalloc(sizeof(unichar) * (strlen(utf8s) + 1));
+        size_t offset;
+        for (size_t i = 0; i < strlen(utf8s); i++) out[i] = utfs[i];
+        out[strlen(utf8s)] = 0;
+        return out;
+    }
 
+    inline utfstr UnicodeToUtf8String (unichar* unicodes) {
+        utfstr out;
+        for (int i = 0; unicodes[i] != 0; ++i) {
+            out.append(unicodes[i]);
+        }
+        __dllfree(unicodes);
+        return out;
+    }
+
+#else
+    // don't use this function anymore
     inline utfchar ReadUtfChar(utfcstr str, size_t offset = 0, size_t* bytes_read = nullptr) {
         utfchar out;
         std::bitset<8> char_bits(GetUnsignedChar(str[offset])); {
@@ -250,26 +199,35 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
     inline wchar_t NativeToWChar(utfchar utfchar) {
         return GetDefaultWChar(Utf8ToUnicode(utfchar));
     }
-#endif
 
     inline unichar* Utf8StringToUnicode (utfcstr utf8s) {
-        unichar* out = (unichar*)__dllalloc(sizeof(unichar) * (strlen(utf8s) + 1));
-        size_t offset;
-        for (size_t i = 0; i < strlen(utf8s); i += offset) {
-            out[i] = Utf8ToUnicode(ReadUtfChar(utf8s, i, &offset));
+        std::u8string param;
+        for (size_t i = 0; i < strlen(utf8s); ++i) {
+            param.push_back(GetUnsignedChar(utf8s[i]));
         }
-        out[strlen(utf8s)] = 0;
+        auto func = unicode::UTF8StringToUnicode(param);
+        auto ret = unicode::UnicodeToUTF16String(func);
+        free(func);
+        
+        unichar* out = (unichar*)__dllalloc(sizeof(unichar) * (ret.size() + 1));
+        size_t offset;
+        for (size_t i = 0; i < strlen(utf8s); i++) out[i] = ret[i];
+        out[ret.size()] = 0;
         return out;
     }
 
     inline utfstr UnicodeToUtf8String (unichar* unicodes) {
-        utfstr out;
-        for (int i = 0; unicodes[i] != 0; ++i) {
-            out.append(to_string(UnicodeToUtf8(unicodes[i])));
-        }
+        std::u16string param;
+        for (int i = 0; unicodes[i] != 0; ++i) param.push_back(unicodes[i]);
         __dllfree(unicodes);
+        unicode_t* func = unicode::UTF16StringToUnicode(param);
+        std::u8string ret = unicode::UnicodeToUTF8String(func);
+        free(func);
+        utfstr out;
+        for (auto &&c : ret) out.push_back(GetDefaultChar(c));
         return out;
     }
 
+#endif
 
 } // namespace uniconv

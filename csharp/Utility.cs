@@ -7,6 +7,16 @@ using CppImp;
 
 namespace Utility
 {
+    [StructLayout(LayoutKind.Sequential)]  
+    public struct Pair<T1,T2> {
+        public T1 first;
+        public T2 second;
+        public Pair(T1 first, T2 second) {
+            this.first = first;
+            this.second = second;
+        }
+    }
+
     public class DllHandle
     {
 
@@ -275,16 +285,16 @@ namespace Utility
             return ret;
         }
 
-        public static char UnicodeToUtf8(Int32 uni) {
+        public static char UnicodeToUtf8(UInt32 uni) {
             return Convert.ToChar(uni);
         }
 
-        public static Int32 Utf8ToUnicode(char utf) {
-            return Convert.ToInt32(utf);
+        public static UInt32 Utf8ToUnicode(char utf) {
+            return Convert.ToUInt32(utf);
         }
         public static String PtrToString(IntPtr ptr)
         {
-        #if WIN32
+        #if WIN32 // it's suppose to not be used even on windows
             string? output = Marshal.PtrToStringUni(ptr);
             Exec.FreeMemory(ptr);
             if (output == null) { throw new Exception("Parsed data is null"); }
@@ -293,7 +303,7 @@ namespace Utility
             int int32_size = sizeof(Int32);
 
             String str = "";
-            UInt32 intg = Exec.ReadPointer<UInt32>(ptr);
+            UInt32 intg = new UInt32();
             for (int i = 0; true; i++) {
                 intg = Exec.ReadPointer<UInt32>(ptr,i*int32_size);
                 if (intg == 0) {

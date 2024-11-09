@@ -9,7 +9,7 @@ namespace {
     template <typename T> smart_ref<T> &smart_ref<T>::operator=(const smart_ref<T>& lother) {
         if (this == &lother) return *this;
         if (this->alloc) delete &(this->ref);
-        if (this->alloc = lother.alloc) this->ref = new T(lother.ref);
+        if ((this->alloc = lother.alloc)) this->ref = new T(lother.ref);
         else this->ref = lother.ref;
         return *this;
     }

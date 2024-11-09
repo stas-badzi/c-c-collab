@@ -6,7 +6,32 @@
 #include <unicode_conversion.hpp>
 #ifdef _WIN32
     #include <windows.h>
+    #include <windows/key.hpp>
+#elif __linux__
+    #include <linux/key.hpp>
+#else
 #endif
+
+#define MOUSE_BUTTON_1  1
+#define MOUSE_BUTTON_2  2
+#define MOUSE_BUTTON_3  3
+#define MOUSE_BUTTON_4  4
+#define MOUSE_BUTTON_5  5
+#define MOUSE_BUTTON_6  6
+#define MOUSE_BUTTON_7  7
+#define MOUSE_BUTTON_8  8
+#define MOUSE_BUTTON_9  9
+#define MOUSE_BUTTON_10 10
+#define MOUSE_BUTTON_11 11
+#define MOUSE_BUTTON_PRIMARY MOUSE_BUTTON_1 // 1
+#define MOUSE_BUTTON_MIDDLE MOUSE_BUTTON_2 // 2
+#define MOUSE_BUTTON_SECONDARY MOUSE_BUTTON_3 // 3
+#define MOUSE_SCROLL_UP MOUSE_BUTTON_4 // 4
+#define MOUSE_SCROLL_DOWN MOUSE_BUTTON_5 // 5
+#define MOUSE_MODIFIER_SHIFT 0b10000 // 2^4
+#define MOUSE_MODIFIER_META 0b100000 //2^5
+#define MOUSE_MODIFIER_CONTROL 0b1000000 // 2^6
+#define MOUSE_MODIFIER_ALT MOUSE_MODIFIER_META // 2^6
 
 namespace cpp {
     class Console {
@@ -65,11 +90,11 @@ namespace cpp {
         };
         static void Init(void);
         static void Fin(void);
-        static int HandleKeyboard(void);
-        static bool IsKeyDown(int key);
-        static bool IsKeyToggled(int key);
-        static int KeyPressed(void);
-        static int KeyReleased(void);
+        static void HandleKeyboard(void);
+        static bool IsKeyDown(enum Key::Enum key);
+        static struct ToggledKeys KeysToggled(void);
+        static enum Key::Enum KeyPressed(void);
+        static enum Key::Enum KeyReleased(void);
         static int16_t GetWindowWidth(void);
         static int16_t GetWindowHeight(void);
         static int32_t GetArgC(void);

@@ -22,31 +22,36 @@ Console::MouseStatus::MouseStatus(void) {
 }
 
 void Console::Init(void) {
-    cppimp::Console_Init();
+    Console_Init();
 }
 
 void Console::Fin(void) {
-    cppimp::Console_Fin();
+    Console_Fin();
 }
 
-int Console::HandleKeyboard(void) {
-    return cppimp::Console_HandleKeyboard();
+void Console::HandleKeyboard(void) {
+    return Console_HandleKeyboard();
 }
 
-bool Console::IsKeyDown(int key) {
-    return cppimp::Console_IsKeyDown(key);
+bool Console::IsKeyDown(enum Key::Enum key) {
+    return Console_IsKeyDown(key);
 }
 
-bool Console::IsKeyToggled(int key) {
-    return cppimp::Console_IsKeyToggled(key);
+struct ToggledKeys Console::KeysToggled(void) {
+    auto ikt = Console_KeysToggled();
+    ToggledKeys ret;
+    ret.CapsLock = ikt & 0b1;
+    ret.NumLock = ikt & 0b10;
+    ret.ScrollLock = ikt & 0b100;
+    return ret;
 }
 
-int Console::KeyPressed(void) {
-    return cppimp::Console_KeyPressed();
+enum Key::Enum Console::KeyPressed(void) {
+    return Console_KeyPressed();
 }
 
-int Console::KeyReleased(void) {
-    return cppimp::Console_KeyReleased();
+enum Key::Enum Console::KeyReleased(void) {
+    return Console_KeyReleased();
 }
 
 void Console::FillScreen(vector<vector<Console::Symbol> > symbols) {
@@ -57,29 +62,29 @@ void Console::FillScreen(vector<vector<Console::Symbol> > symbols) {
 }
 
 void Console::HandleMouseAndFocus(void) {
-    return cppimp::Console_HandleMouseAndFocus();
+    return Console_HandleMouseAndFocus();
 }
 
 bool Console::IsFocused(void) {
-    return cppimp::Console_IsFocused();
+    return Console_IsFocused();
 }
 
 struct Console::MouseStatus Console::GetMouseStatus(void) {
-    Console::MouseStatus* ptr = (Console::MouseStatus*)cppimp::Console_GetMouseStatus();
+    Console::MouseStatus* ptr = (Console::MouseStatus*)Console_GetMouseStatus();
     Console::MouseStatus val = *ptr;
     System::FreeMemory(ptr);
     return val;
 }
 
 pair<uint8_t, uint8_t> Console::MouseButtonClicked(void) {
-    uint8_t* func = cppimp::Console_MouseButtonClicked$ret2();
-    pair<uint8_t, uint8_t> out(func[0],func[1]);
-    delete[] func;
+    nint func = Console_MouseButtonClicked$ret2();
+    pair<uint8_t, uint8_t> out(System::ReadPointer<uint8_t>(func),System::ReadPointer<uint8_t>(func,sizeof(uint8_t)));
+    System::FreeMemory(func);
     return out;
 }
 
 uint8_t Console::MouseButtonReleased(void) {
-    return cppimp::Console_MouseButtonReleased();
+    return Console_MouseButtonReleased();
 }
 
 int16_t Console::GetWindowWidth(void) {
@@ -94,16 +99,17 @@ int16_t Console::GetWindowHeight(void) {
 int32_t Console::GetArgC(void) {
     return Console_GetArgC();
 }
+
 wchar_t** Console::GetArgV(void) {
     unichar** ret = Console_GetArgV();
     int32_t length = Console_GetArgC();
-    wchar_t** out = (wchar_t**)malloc(sizeof(wchar_t*)*length); // 4 is max utf bytes in one char
+    wchar_t** out = (wchar_t**)malloc(sizeof(wchar_t*)*length); // i think it doesn't mean anything anymore -> // 4 is max utf bytes in one char
     for (int i = 0; i < length; i++) {
         wstring arg = NativeToWString(UnicodeToUtf8String(ret[i]));
         out[i] = (wchar_t*)System::AllocateMemory(sizeof(wchar_t)*arg.size());
         for (size_t j = 0; j < arg.size(); j++) out[i][j] = arg[j];
     }
-    __dllfree(ret);
+    System::FreeMemory(ret);
     return out;
 }
 

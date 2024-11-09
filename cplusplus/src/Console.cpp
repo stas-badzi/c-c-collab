@@ -538,6 +538,13 @@ using namespace std::chrono;
     }
 
     void Console::HandleKeyboard() {
+
+        // toggles
+        Console::keys_toggled.ScrollLock = GetKeyState(VK_SCROLL) & 1;
+        Console::keys_toggled.NumLock = GetKeyState(VK_NUMLOCK) & 1;
+        Console::keys_toggled.CapsLock = GetKeyState(VK_CAPITAL) & 1;
+
+        // press - release
         key_hit = -1;
         key_released = -1;
         for (int i = 0; i < KEYBOARD_MAX; i++) {
@@ -546,7 +553,6 @@ using namespace std::chrono;
             if (key_states[i] && !(keyState & 0x8000)) key_released = i;
             
             key_states[i] = keyState & 0x8000;
-            key_states[KEYBOARD_MAX + i] = keyState & 1;
         }
     }
 
@@ -595,6 +601,8 @@ using namespace std::chrono;
                 Console::mouse_buttons_down[3] = flags[3] && HIWORD(mouse.dwButtonState) > 0;
                 Console::mouse_buttons_down[4] = flags[3] && HIWORD(mouse.dwButtonState) > 0;
                 Console::this_mouse_combo = flags[2] ? 2 : 1;
+
+                uint8_t button
             }
 
             if (event[2]) {
@@ -712,19 +720,31 @@ using namespace std::chrono;
                 throw(runtime_error(error.c_str()));
             }
 
+            if (ioctl(fd, KDGKBMODE, &old_kbdmode)) {
+                throw("ioctl KDGKBMODE error");
+            }
+
+            close(fd);
+
             char path[256];
-            readlink( "/proc/self/exe" , path, 256);
+            auto length = readlink( "/proc/self/exe" , path, 256);
             string command = path;
             while (command.back() != '/') command.pop_back();
             command.append("../share/factoryrush/bin/setkbdmode.bin ");
             command.push_back('0' + K_MEDIUMRAW);
 
-            if (ioctl(fd, KDGKBMODE, &old_kbdmode)) {
-                throw("ioctl KDGKBMODE error");
-            }
-
             if (system(command.c_str()) < 0) {
                 throw("setkbdmode.bin error");
+            }
+
+            getfd(0);
+            if (fd < 0) {
+                string command = "sudo";
+                for (int i = 0; i < Console::argc; i++) { command.push_back(' '); command.append(argv[i]); }
+                exit(system(command.c_str()));
+                
+                string error = GenerateEscapeSequence(1,16) + "\nCouldn't get a file descriptor referring to the console.\nCheck if you have acces to /dev/tty and /dev/console.\n" + GenerateEscapeSequence(4,16) + "\n\ttry: " + GenerateEscapeSequence(6,16) + command.c_str() + "\033[0m\n";
+                throw(runtime_error(error.c_str()));
             }
             
             fwrite("\033[?1049h", sizeof(char), 8, stderr);
@@ -747,7 +767,41 @@ using namespace std::chrono;
             term_ios.c_cc[VMIN] = 0xff;
             term_ios.c_cc[VTIME] = 1;
             tcsetattr(fd, TCSANOW, &term_ios);
+
+            //
             
+            for (auto t = 0; t < MAX_NR_KEYMAPS; t++) {
+                if (t > UCHAR_MAX) {
+                    exit(17);
+                }
+                for (auto i = 0; i < NR_KEYS; i++) {
+                    if (i > UCHAR_MAX) {
+                        exit(18);
+                    }
+
+	                struct kbentry ke;
+                    ke.kb_table = (unsigned char) t;
+                    ke.kb_index = (unsigned char) i;
+                    ke.kb_value = 0;
+
+                    if (ioctl(fd, KDGKBENT, (unsigned long)&ke)) {
+                        exit(19);
+                    }
+
+                    if (!i && ke.kb_value == K_NOSUCHMAP)
+                        break;
+
+                    struct lk_array *map;
+                    int code = ke.kb_value + 1;
+
+                    if (ke.kb_value == UINT16_MAX) {
+                        // ? idk mabe just push back UNDEFIEND
+                        exit(20);
+                    }
+                    key_chart[t][i] = Key::Class::ToEnum(ke.kb_value);
+                }
+            }
+
             initialised = true;
 
             atexit(Fin);
@@ -785,6 +839,7 @@ using namespace std::chrono;
             
             //ioctl(fd, KDSETMODE, old_kbdmode);
             tcsetattr(fd,TCSANOW,&old_fdterm);
+            close(fd);
 
             tcsetattr(STDIN_FILENO,TCSANOW,&old_termios);
             
@@ -797,7 +852,7 @@ using namespace std::chrono;
             fwrite("\033[?1006l", sizeof(char), 8, stderr);
 
             char path[256];
-            readlink( "/proc/self/exe" , path, 256);
+            auto length = readlink( "/proc/self/exe" , path, 256);
             string command = path;
             while (command.back() != '/') command.pop_back();
             command.append("../share/factoryrush/bin/setkbdmode.bin ");
@@ -876,18 +931,20 @@ using namespace std::chrono;
             }
             
             uint8_t button = 0b0;
-                
+            
             button += 0b1 * event[0];
             button += 0b10 * event[1];
+            button += 0b100 * event[6];
+            button += 0b1000 * event[7];
+            if (button < 3 /*Button 1-3*/) ++button; // are encoded as 0-2 and there is no button 3 encoded so we add one to make it BUTTON(X) = x
 
             chrono::time_point<chrono::high_resolution_clock> now = chrono::high_resolution_clock::now();
-
             uint8_t fullbutton = 0b000000;
-            fullbutton |= 0b000001 * button; // BBB
-            fullbutton |= 0b001000 * event[2]; // Shift
-            fullbutton |= 0b010000 * event[3]; // Meta
-            fullbutton |= 0b100000 * event[4]; // Ctrl
-            // fullbutton == 0bCMSBBB
+            fullbutton |= 0b0000001 * button; // BBBB
+            fullbutton |= 0b0010000 * event[2]; // Shift
+            fullbutton |= 0b0100000 * event[3]; // Meta
+            fullbutton |= 0b1000000 * event[4]; // Ctrl
+            // fullbutton == 0bCMSBBBB
 
             if (mousedown) {
                 if (Console::last_mouse_button == fullbutton && now - Console::last_click_time <= chrono::milliseconds(Console::double_click_max)) {
@@ -915,10 +972,10 @@ using namespace std::chrono;
                 Console::mouse_status.secondary = mousedown;
                 break;
             case 4:
-                Console::mouse_status.scroll = {mousedown,true};
+                Console::mouse_status.scroll = {1,true};
                 break;
             case 5:
-                Console::mouse_status.scroll = {mousedown,false};
+                Console::mouse_status.scroll = {1,false};
                 break;
             }
         }
@@ -926,6 +983,21 @@ using namespace std::chrono;
     }
 
     void Console::HandleKeyboard(void) {
+
+        // toggled keys get
+        
+        char flags;
+        if (ioctl(Console::fd, KDGKBLED, &flags) == -1)
+            exit(12);
+
+        short mode = (flags & 0x7);
+
+        Console::keys_toggled.ScrollLock = mode & LED_SCR;
+        Console::keys_toggled.NumLock = mode & LED_NUM;
+        Console::keys_toggled.CapsLock = mode & LED_CAP;
+
+        // key presses and releases
+
         int bytes;
         char buf[16];
         //ioctl(fileno(stdin), FIONREAD, &bytes);
@@ -942,7 +1014,6 @@ using namespace std::chrono;
         key_released = -1;
         if ( !key_states[parsed % KEYBOARD_MAX] && (parsed / KEYBOARD_MAX) ) key_hit = parsed % KEYBOARD_MAX;
         if ( key_states[parsed % KEYBOARD_MAX] && !(parsed / KEYBOARD_MAX) ) key_released = parsed % KEYBOARD_MAX;
-        if ( key_hit > 0 ) key_states[KEYBOARD_MAX + key_hit] = !key_states[KEYBOARD_MAX + key_hit];
         key_states[parsed % KEYBOARD_MAX] = !(parsed / KEYBOARD_MAX);
 
         return;
@@ -950,10 +1021,12 @@ using namespace std::chrono;
 
     struct termios Console::old_fdterm = termios();
     int Console::old_kbdmode = int();
-    utfcstr* Console::argv = (const char**)malloc(0);
+    utfcstr* Console::argv = (const char**)malloc(8);
+    Key::Enum Console::key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX] = { { Key::Enum::UNDEFINED } };
 
 #elif __APPLE__
 // macOS
+
     void Console::Init(void) {
         if (!initialised) {
 
@@ -1095,7 +1168,7 @@ using namespace std::chrono;
     }
 
     void Console::FillScreen(vector<vector<Console::Symbol> > symbols) {
-        string screen = "\e[H";
+        string screen = "\033[H";
         size_t width = GetWindowWidth(), height = GetWindowHeight();
         for (size_t i = 0; i < height; i++) {
             for (size_t j = 0; j < width; j++) {
@@ -1129,7 +1202,8 @@ using namespace std::chrono;
 int Console::argc = 0;
 
 bool Console::initialised = false;
-bitset<KEYBOARD_MAX*2> Console::key_states = bitset<KEYBOARD_MAX*2>(0);
+bitset<KEYBOARD_MAX> Console::key_states = bitset<KEYBOARD_MAX>(0);
+struct ToggledKeys Console::keys_toggled = ToggledKeys();
 bitset<5> Console::mouse_buttons_down = bitset<5>(0);
 struct Console::MouseStatus Console::mouse_status = Console::MouseStatus();
 std::chrono::time_point<std::chrono::high_resolution_clock> Console::last_click_time = std::chrono::high_resolution_clock::now();
@@ -1144,20 +1218,27 @@ uint8_t Console::last_mouse_combo = 0;
 bool Console::focused = true;
 unsigned short Console::double_click_max = 500;
 
-bool Console::IsKeyDown(int key) {
-    return Console::key_states[key];
+bool Console::IsKeyDown(Key::Enum key) {
+    for (auto i = 0; i < KEYBOARD_MAX; ++i)
+        if (Console::key_states[i] && Console::key_chart[0][i] == key)
+            return true;
+    return false;
 }
 
-bool Console::IsKeyToggled(int key) {
-    return Console::key_states[KEYBOARD_MAX + key];
+Key::Enum cpp::Console::KeyTyped(void) {
+    return Key::Enum::UNDEFINED;
 }
 
-int Console::KeyPressed(void) {
-    return Console::key_hit;
+struct ToggledKeys Console::KeysToggled(void) {
+    return Console::keys_toggled;
 }
 
-int Console::KeyReleased(void) {
-    return Console::key_released;
+Key::Enum Console::KeyPressed(void) {
+    return Console::key_chart[0][Console::key_hit];
+}
+
+Key::Enum Console::KeyReleased(void) {
+    return Console::key_chart[0][Console::key_released];
 }
 
 bool Console::IsFocused(void) {

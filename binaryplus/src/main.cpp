@@ -18,10 +18,12 @@ using namespace cpp;
 using namespace cs;
 
 int main(void) {
+    wcout << FileSystem::DoSomeThings(vector<bool>({true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false}),L"Hello world!");
+    return 0;
+    
     Console::Init();
     int argc = Console::GetArgC();
     wchar_t** argv = Console::GetArgV();
-    //return 0;
     while (true) {
         auto width = Console::GetWindowWidth();
         auto height = Console::GetWindowHeight();
@@ -66,7 +68,7 @@ int main(void) {
 
         Control::CleanMemory();
 
-        if (Console::KeyPressed() == 'Q' && Console::IsKeyDown(VK_CONTROL)) return 1;
+        if (Console::KeyPressed() == Key::Enum::Q && (Console::IsKeyDown(Key::Enum::CTRL) || Console::IsKeyDown(Key::Enum::CTRL_L) || Console::IsKeyDown(Key::Enum::CTRL_R))) return 1;
     }
     return 0;
 }

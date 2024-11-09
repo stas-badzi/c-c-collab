@@ -132,3 +132,17 @@ void* cs::TextureToPtr(vector<vector<Console::Symbol> >& texture) {
 
     return ret;
 }
+
+wstring cs::FileSystem::DoSomeThings(vector<bool> taki, wstring s) {
+    auto str = Utf8StringToUnicode(WStringToNative(s).c_str());
+    const int int32_size = sizeof(int32_t);
+    const int bool_size = sizeof(bool);
+    int32_t size = taki.size(), count;
+    void* vecptr = System::AllocateMemory(int32_size + size * bool_size); 
+
+    System::WritePointer<int32_t>(vecptr, size);
+    for (int32_t i = 0; i < size; i++) {
+        System::WritePointer(vecptr, int32_size + i * bool_size, (bool)taki[i]);
+    }
+    return NativeToWString(UnicodeToUtf8String(csimp::FileSystem_DoSomeThings(vecptr, str)));
+}

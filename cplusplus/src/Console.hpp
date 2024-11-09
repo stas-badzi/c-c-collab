@@ -20,13 +20,16 @@
 
 #ifdef _WIN32
     #include <windows.h>
+    #include <windows/key.hpp>
 #ifndef _MSVC
-    #include <quick_exit.h>
+    #include <windows/quick_exit.h>
 #endif
+    #define KEYBOARD_MAX 256
 #else
     #include <signal.h>
     #include <stdio.h>
     #include <limits>
+    #include <climits>
     #include <sys/ioctl.h>
     #include <unistd.h>
     #include <termios.h>
@@ -34,24 +37,35 @@
     #include <string>
     #include <string.h>
 #ifdef __linux__
-    #include <getfd.h>
+    #include <linux/getfd.h>
     #include <linux/kd.h>
+    #include <linux/key.hpp>
+    #define KEYBOARD_MAX NR_KEYS
 #else
+    #define KEYBOARD_MAX 256
 #endif
 #endif
 
-#define KEYBOARD_MAX 256
-
-#define MOUSE_BUTTON_1 0b000000
-#define MOUSE_BUTTON_2 0b000001
-#define MOUSE_BUTTON_3 0b000010
-#define MOUSE_BUTTON_4 0b000011
-#define MOUSE_BUTTON_5 0b000100
-#define MOUSE_BUTTON_PRIMARY MOUSE_BUTTON_1
-#define MOUSE_BUTTON_MIDDLE MOUSE_BUTTON_2
-#define MOUSE_BUTTON_SECONDARY MOUSE_BUTTON_3
-#define MOUSE_SCROLL_UP MOUSE_BUTTON_4
-#define MOUSE_SCROLL_DOWN MOUSE_BUTTON_5
+#define MOUSE_BUTTON_1  1
+#define MOUSE_BUTTON_2  2
+#define MOUSE_BUTTON_3  3
+#define MOUSE_BUTTON_4  4
+#define MOUSE_BUTTON_5  5
+#define MOUSE_BUTTON_6  6
+#define MOUSE_BUTTON_7  7
+#define MOUSE_BUTTON_8  8
+#define MOUSE_BUTTON_9  9
+#define MOUSE_BUTTON_10 10
+#define MOUSE_BUTTON_11 11
+#define MOUSE_BUTTON_PRIMARY MOUSE_BUTTON_1 // 1
+#define MOUSE_BUTTON_MIDDLE MOUSE_BUTTON_2 // 2
+#define MOUSE_BUTTON_SECONDARY MOUSE_BUTTON_3 // 3
+#define MOUSE_SCROLL_UP MOUSE_BUTTON_4 // 4
+#define MOUSE_SCROLL_DOWN MOUSE_BUTTON_5 // 5
+#define MOUSE_MODIFIER_SHIFT 0b10000 // 2^4
+#define MOUSE_MODIFIER_META 0b100000 //2^5
+#define MOUSE_MODIFIER_CONTROL 0b1000000 // 2^6
+#define MOUSE_MODIFIER_ALT MOUSE_MODIFIER_META // 2^6
 
 namespace cpp {
     class Console {
@@ -68,7 +82,7 @@ namespace cpp {
         
     private:
         static bool initialised;
-        static std::bitset<KEYBOARD_MAX*2> key_states;
+        static std::bitset<KEYBOARD_MAX> key_states;
         static int key_hit;
         static int key_released;
         static unsigned short double_click_max; // = 500;
@@ -83,6 +97,7 @@ namespace cpp {
         static std::chrono::time_point<std::chrono::high_resolution_clock> last_click_time;
         static int argc;
         static uniconv::utfcstr* argv;
+        static struct ToggledKeys keys_toggled;
         #ifdef _WIN32
             //static std::vector<std::vector<COLORREF>> SaveScreen(void);
             //static std::pair<std::pair<uint16_t,uint16_t>,std::pair<uint16_t,uint16_t>> GetOffsetSymSize(int color1 = 3, int color2 = 9, int color3 = 1);
@@ -111,6 +126,7 @@ namespace cpp {
             static struct termios old_fdterm;
             static int old_kbdmode;
             static int fd;
+            static Key::Enum key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX];
         #endif
         #endif
     public:
@@ -149,10 +165,11 @@ namespace cpp {
         static void FillScreen(std::vector<std::vector<Symbol> > symbols);
         
         static void HandleKeyboard(void);
-        static bool IsKeyDown(int key);
-        static bool IsKeyToggled(int key);
-        static int KeyPressed(void);
-        static int KeyReleased(void);
+        static bool IsKeyDown(enum Key::Enum key);
+        static struct ToggledKeys KeysToggled(void);
+        static enum Key::Enum KeyPressed(void);
+        static enum Key::Enum KeyReleased(void);
+        static enum Key::Enum KeyTyped(void);
 
         static void HandleMouseAndFocus(void);
         static bool IsFocused(void);

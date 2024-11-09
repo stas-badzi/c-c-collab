@@ -18,7 +18,7 @@ namespace CsExp {
         }
 
         [UnmanagedCallersOnly(EntryPoint = "FileSystem_DoSomething")]
-        public static int DoSomething(bool yes, char ch) {
+        public static uint DoSomething(bool yes, char ch) {
             return TypeConvert.Utf8ToUnicode(Cs.FileSystem.DoSomething(yes, TypeConvert.UnicodeToUtf8(ch)));
         }
 

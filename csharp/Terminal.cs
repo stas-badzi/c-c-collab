@@ -7,6 +7,24 @@ namespace Cpp
 {
     public class Terminal
     {
+        [StructLayout(LayoutKind.Sequential)]  
+        public struct MouseStatus {
+            public bool primary;
+            public bool secondary;
+            public bool middle;
+            public Pair<bool,bool> scroll;
+            public uint x;
+            public uint y; 
+            public MouseStatus() {
+                this.primary = false;
+                this.middle = false;
+                this.secondary = false;
+                this.scroll = new Pair<bool,bool>(false,false);
+                this.x = uint.MaxValue;
+                this.y = uint.MaxValue;
+            }
+        };
+
         public static void Init() {
             CppImp.Console.Init();
         }
@@ -15,24 +33,55 @@ namespace Cpp
             CppImp.Console.Fin();
         }
 
-        public static int HandleKeyboard() {
-            return CppImp.Console.HandleKeyboard();
+        public static void HandleKeyboard() {
+            CppImp.Console.HandleKeyboard();
         }
 
-        public static bool IsKeyDown(int key) {
-            return CppImp.Console.IsKeyDown(key);
+        public static bool IsKeyDown(Key.Enum key) {
+            return CppImp.Console.IsKeyDown((ushort)key);
         }
 
-        public static bool IsKeyToggled(int key) {
-            return CppImp.Console.IsKeyToggled(key);
+        public static ToggledKeys KeysToggled() {
+            var ikt = CppImp.Console.KeysToggled();
+            ToggledKeys ret;
+            ret.CapsLock = Convert.ToBoolean(ikt & 0b1);
+            ret.NumLock = Convert.ToBoolean(ikt & 0b10);
+            ret.ScrollLock = Convert.ToBoolean(ikt & 0b100);
+            return ret;
         }
 
-        public static int KeyPressed() {
-            return CppImp.Console.KeyPressed();
+        public static Key.Enum KeyPressed() {
+            return (Key.Enum)CppImp.Console.KeyPressed();
         }
 
-        public static int KeyReleased() {
-            return CppImp.Console.KeyReleased();
+        public static Key.Enum KeyReleased() {
+            return (Key.Enum)CppImp.Console.KeyReleased();
+        }
+        
+        public static void HandleMouseAndFocus() {
+            CppImp.Console.HandleMouseAndFocus();
+        }
+
+        public static bool IsFocused() {
+            return CppImp.Console.IsFocused();
+        }
+
+        public static unsafe Terminal.MouseStatus GetMouseStatus() {
+            var func = (Terminal.MouseStatus*)CppImp.Console.GetMouseStatus();
+            var ret = *func;
+            Exec.FreeMemory((nint)func);
+            return ret;
+        }
+
+        public static Pair<byte, byte> MouseButtonClicked() {
+            IntPtr func = CppImp.Console.MouseButtonClicked();
+            Pair<byte, byte> ret = new(Exec.ReadPointer<byte>(func),Exec.ReadPointer<byte>(func,sizeof(byte)));
+            Exec.FreeMemory(func);
+            return ret;
+        }
+
+        public static byte MouseButtonReleased() {
+            return CppImp.Console.MouseButtonReleased();
         }
 
         public static void FillScreen(List<List<Symbol>> symbols) {
@@ -47,6 +96,23 @@ namespace Cpp
         public static short GetWindowHeight() {
             return CppImp.Console.GetWindowHeight();
         }
+
+        public static int GetArgC() {
+            return CppImp.Console.GetArgC();
+        }
+
+        public static unsafe string[] GetArgV() {
+            nint* func = (nint*)CppImp.Console.GetArgV();
+            int length = Terminal.GetArgC();
+            string[] ret = new string[length]; // idk, was in c++ => // 4 is max utf bytes in one char
+            for (int i = 0; i < length; i++) {
+                string arg = TypeConvert.PtrToString(func[i]);
+                ret[i] = arg;
+            }
+            Exec.FreeMemory((nint)func);
+            return ret;
+        }
+
 
         public class Symbol
         {

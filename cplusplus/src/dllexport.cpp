@@ -8,6 +8,77 @@
 #include "FileSystem.hpp"
 #include <control_heap.h>
 
+// don't ask (compiler optimazations forced me to do this)
+namespace cs {
+    inline std::vector<std::vector<smart_ref<cpp::Console::Symbol> > > PtrToTexture(void* ptr, bool direct = false) {
+        using namespace std;
+        using namespace cpp;
+
+        auto sym = vector<vector<smart_ref<Console::Symbol> > >();
+
+        const int int32_size = sizeof(int32_t);
+        const int intptr_size = sizeof(void*);
+
+        void* now_ptr;
+
+        int32_t height = System::ReadPointer<int32_t>(ptr);
+        now_ptr = System::MovePointer(ptr, int32_size);
+
+        for (int32_t i = 0; i < height; i++) {
+            int32_t width = System::ReadPointer<int32_t>(now_ptr);
+            now_ptr = System::MovePointer(now_ptr, int32_size);
+            vector<smart_ref<Console::Symbol> > now;
+
+            for (int32_t j = 0; j < width; j++) {
+                Console::Symbol* sym = (Console::Symbol*)System::ReadPointer<nint>(now_ptr);
+                if (direct) now.push_back(smart_ref(sym));
+                else now.push_back(smart_ref(Console::Symbol(*sym)));
+                now_ptr = System::MovePointer(now_ptr, intptr_size);
+            }
+
+            if (direct) sym.push_back(now);
+            else sym.push_back(now);
+        }
+
+        System::FreeMemory(ptr);
+        
+        return sym;
+    }
+
+    inline void* TextureToPtr(std::vector<std::vector<cpp::Console::Symbol> > &texture) {
+        using namespace std;
+        using namespace cpp;
+
+        const int int32_size = sizeof(int32_t);
+        const int intptr_size = sizeof(void*);
+        int32_t size, count;
+
+        size = texture.size();
+        count = 0;
+        for (int32_t i = 0; i < size; i++) {
+            count += texture[i].size();
+        }
+
+        void* ret = System::AllocateMemory((size + 1) * int32_size + count * intptr_size);
+
+        count = 0;
+        void* where;
+        System::WritePointer<int32_t>(ret, size);
+        where = System::MovePointer(ret, int32_size);
+        for (int32_t i = 0; i < size; i++) {
+            System::WritePointer<int32_t>(where,texture[i].size());
+            where = System::MovePointer(where, int32_size);
+            for (size_t j = 0; j < texture[i].size(); j++) {
+                System::WritePointer<nint>(where, &texture[i][j]);
+                where = System::MovePointer(where, intptr_size);
+            }
+        }
+
+        return ret;
+    }
+}
+
+
 using namespace uniconv;
 
 // Console
@@ -28,19 +99,20 @@ using namespace uniconv;
         cpp::Console::HandleKeyboard();
     }
 
-    libexport bool Console_IsKeyDown(int arg1) {
+    libexport bool Console_IsKeyDown(enum Key::Enum arg1) {
         return cpp::Console::IsKeyDown(arg1);
     }
 
-    libexport bool Console_IsKeyToggled(int arg1) {
-        return cpp::Console::IsKeyToggled(arg1);
+    libexport uint8_t Console_KeysToggled(void) {
+        auto kt = cpp::Console::KeysToggled();
+        return 0b1*kt.CapsLock + 0b10*kt.NumLock + 0b100*kt.ScrollLock;
     }
 
-    libexport int Console_KeyPressed(void) {
+    libexport enum Key::Enum Console_KeyPressed(void) {
         return cpp::Console::KeyPressed();
     }
 
-    libexport int Console_KeyReleased(void) {
+    libexport enum Key::Enum Console_KeyReleased(void) {
         return cpp::Console::KeyReleased();
     }
 
@@ -56,8 +128,10 @@ using namespace uniconv;
 
     libexport uint8_t* Console_MouseButtonClicked$ret2(void) {
         std::pair<uint8_t, uint8_t> func = cpp::Console::MouseButtonClicked();
-        uint8_t* ret = new uint8_t[2]{func.first, func.second};
-        return ret;
+        nint ret = (uint8_t*)System::AllocateMemory(sizeof(uint8_t)*2);
+        System::WritePointer(ret,func.first);
+        System::WritePointer(ret,sizeof(uint16_t),func.first);
+        return (uint8_t*)ret;
     }
 
     libexport uint8_t Console_MouseButtonReleased(void) {

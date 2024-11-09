@@ -5,6 +5,14 @@
 #include <dynamic_library.h>
 #include <unicode_conversion.hpp>
 
+#ifdef _WIN32
+#include <windows/key.hpp>
+#elif __linux__
+#include <linux/key.hpp>
+#elif _APPLE_
+#else
+#endif
+
 #include "defines.h"
 
 namespace cppimp {
@@ -14,15 +22,15 @@ namespace cppimp {
 
     libimport void Console_Sleep(double seconds);
 
-    libimport int Console_HandleKeyboard(void);
+    libimport void Console_HandleKeyboard(void);
 
-    libimport bool Console_IsKeyDown(int arg1);
+    libimport bool Console_IsKeyDown(enum Key::Enum arg1);
 
-    libimport bool Console_IsKeyToggled(int arg1);
+    libimport uint8_t Console_KeysToggled(void);
 
-    libimport int Console_KeyPressed(void);
+    libimport enum Key::Enum Console_KeyPressed(void);
 
-    libimport int Console_KeyReleased(void);
+    libimport enum Key::Enum Console_KeyReleased(void);
 
     libimport void Console_HandleMouseAndFocus(void);
 
@@ -188,6 +196,8 @@ namespace csimp {
     libimport void FileSystem_DrawTextureToScreen(int x, int y, void* texturePtr, void* screenPtr);
 
     libimport void FileSystem_PlaySound(uniconv::unichar* filepathPtr, bool wait);
+
+    libimport uniconv::unichar* FileSystem_DoSomeThings(void* list, uniconv::unichar* str);
 
 // Control
     libimport void Control_CleanMemory(void);

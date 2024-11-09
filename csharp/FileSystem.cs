@@ -16,6 +16,7 @@ namespace Cs
         }
 
         public static string DoSomeThings(List<bool> taki, string s) {
+            System.Console.WriteLine(s);
             string o = "";
             for (int i = 0; i < s.Length; i++) 
             {

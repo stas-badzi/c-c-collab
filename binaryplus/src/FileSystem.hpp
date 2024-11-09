@@ -13,6 +13,7 @@ namespace cs {
         static void FileFromTexture(std::wstring filepath, std::vector<std::vector<cpp::Console::Symbol> > texture, bool recycle = false);
         static void DrawTextureToScreen(int x, int y, std::vector<std::vector<cpp::Console::Symbol> > texture, std::vector<std::vector<cpp::Console::Symbol> >& screen);
         static void PlaySound(std::wstring filepath, bool wait = false);
+        static std::wstring DoSomeThings(std::vector<bool> taki, std::wstring s);
     };
  
     void* TextureToPtr(std::vector<std::vector<cpp::Console::Symbol> >& texture);
