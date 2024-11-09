@@ -84,6 +84,9 @@ symsysbin = /c/Windows
  
 #*********************************
 
+static-libc = -static-libgcc
+static-libc++ = -static-libstdc++
+
 ifeq ($(sudo),1)
 copylibs = 1
 else
@@ -134,6 +137,11 @@ endif
 ifeq ($(msvc),1)
 cpp-compiler = cl
 c-compiler = cl
+endif
+
+ifeq ($(shell uname -s),Darwin)
+static-libc = 
+static-libc++ = 
 endif
 
 ifeq ($(force-win),0) 
@@ -457,7 +465,7 @@ ifeq ($(shell uname -s),Linux)
 	-@rm *.o 2> $(nulldir)
 	$(c-compiler) -c source/setkbdmode.c source/getfd.c -pedantic -Wextra $(cdb) -Isource -std=c2x && mv *.o objects/
 	ar rcs assets/getfd.$(static) objects/getfd.o
-	$(c-compiler) -o assets/setkbdmode.$(binary) objects/setkbdmode.o assets/getfd.a -static-libgcc
+	$(c-compiler) -o assets/setkbdmode.$(binary) objects/setkbdmode.o assets/getfd.a $(static-libc)
 ifeq ($(copylibs),1)
 	@echo "$(linuxroot)/share/factoryrush/bin"
 	$(admin) mkdir -p $(linuxroot)/share/factoryrush/bin
@@ -519,42 +527,42 @@ ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 #windows
 	$(cpp-compiler) -c -pedantic -Wextra -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++2b
 	@$(movefl) -f $(subst obj/,$(empty),$(objects)) cplusplus/obj
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) ../assets/globals.$(static) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) ../assets/globals.$(static) -L$(flibdir) $(flib) $(static-libc++) $(static-libc) -lGdi32 $(ldarg)
 #
 else
 ifeq ($(shell uname -s),WINDOWS_NT)
 #windows
 	$(cpp-compiler) -c -pedantic -Wextra -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++2b
 	@$(movefl) -f $(subst obj/,$(empty),$(objects)) cplusplus/obj
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) ../assets/globals.$(static) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) ../assets/globals.$(static) -L$(flibdir) $(flib) $(static-libc++) $(static-libc) -lGdi32 $(ldarg)
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
 	$(cpp-compiler) -c -pedantic -Wextra -fPIC -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++2b
 	@$(movefl) -f $(subst obj/,$(empty),$(objects)) cplusplus/obj
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) ../assets/globals.$(static) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) ../assets/globals.$(static) -L$(flibdir) $(flib) $(static-libc++) $(static-libc) -lGdi32 $(ldarg)
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #mingw [ I think same as windows (?) ]
 	$(cpp-compiler) -c -pedantic -Wextra -fPIC -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++2b
 	@$(movefl) -f $(subst obj/,$(empty),$(objects)) cplusplus/obj
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) ../assets/globals.$(static) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) ../assets/globals.$(static) -L$(flibdir) $(flib) $(static-libc++) $(static-libc) -lGdi32 $(ldarg)
 #
 else
 ifeq ($(findstring Windows_NT, $(shell uname -s)),Windows_NT)
 #msys [ i think older ]
 	$(cpp-compiler) -c -pedantic -Wextra -fPIC -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++2b
 	@$(movefl) -f $(subst obj/,$(empty),$(objects)) cplusplus/obj
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) ../assets/globals.$(static) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) ../assets/globals.$(static) -L$(flibdir) $(flib) $(static-libc++) $(static-libc) -lGdi32 $(ldarg)
 #
 else
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys [ I think same as windows (?) ]
 	$(cpp-compiler) -c -pedantic -Wextra -fPIC -DUNICODE $(cdb) $(fsrc) -I cplusplus/include -std=c++2b
 	@$(movefl) -f $(subst obj/,$(empty),$(objects)) cplusplus/obj
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) ../assets/globals.$(static) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc -lGdi32 $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) ../assets/globals.$(static) -L$(flibdir) $(flib) $(static-libc++) $(static-libc) -lGdi32 $(ldarg)
 #
 else
 # not windows
@@ -563,11 +571,11 @@ else
 	@$(movefl) -f $(subst obj/,$(empty),$(objects)) cplusplus/obj
 ifeq ($(shell uname -s),Darwin)
 #macos
-	cd cplusplus && $(cpp-compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) ../assets/globals.$(static) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
+	cd cplusplus && $(cpp-compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) ../assets/globals.$(static) -L$(flibdir) $(flib) $(static-libc++) $(static-libc) $(ldarg)
 #
 else
 #linux and similar
-	cd cplusplus && $(cpp-compiler) -shared -o bin/lib$(name).so $(objects) ../assets/globals.$(static) ../assets/getfd.$(static) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/lib$(name).so $(objects) ../assets/globals.$(static) ../assets/getfd.$(static) -L$(flibdir) $(flib) $(static-libc++) $(static-libc) $(ldarg)
 endif
 endif
 endif
@@ -664,7 +672,7 @@ else
 #all
 	$(cpp-compiler) -c -pedantic -Wextra $(bpdb) $(fbsrc) -I binaryplus/include -std=c++2b
 	@$(movefl) -f $(subst obj/,$(empty),$(fbobj)) binaryplus/obj
-	cd binaryplus && $(cpp-compiler) -o bin/$(binname).$(binary) $(binflags) $(fbobj) -L$(flibdir) -l$(name) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
+	cd binaryplus && $(cpp-compiler) -o bin/$(binname).$(binary) $(binflags) $(fbobj) -L$(flibdir) -l$(name) $(flib) $(static-libc++) $(static-libc) $(ldarg)
 #
 
 ifeq ($(shell uname -s),Darwin)

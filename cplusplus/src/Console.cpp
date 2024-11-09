@@ -1095,7 +1095,7 @@ using namespace std::chrono;
     }
 
     void Console::FillScreen(vector<vector<Console::Symbol> > symbols) {
-        string screen = "\e[H";
+        string screen = "\033[H";
         size_t width = GetWindowWidth(), height = GetWindowHeight();
         for (size_t i = 0; i < height; i++) {
             for (size_t j = 0; j < width; j++) {
@@ -1123,7 +1123,6 @@ using namespace std::chrono;
 
     struct termios Console::old_termios = termios();
     winsize Console::window_size = winsize();
-    int Console::fd = int();
 #endif
 
 int Console::argc = 0;
