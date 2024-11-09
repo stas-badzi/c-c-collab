@@ -88,6 +88,9 @@ symsysbin = /c/Windows
  
 #*********************************
 
+static-libc = -static-libgcc
+static-libc++ = -static-libstdc++
+
 ifeq ($(sudo),1)
 copylibs = 1
 else
@@ -138,6 +141,11 @@ endif
 ifeq ($(msvc),1)
 cpp-compiler = cl
 c-compiler = cl
+endif
+
+ifeq ($(shell uname -s),Darwin)
+static-libc = 
+static-libc++ = 
 endif
 
 ifeq ($(force-win),0) 
@@ -463,7 +471,7 @@ ifeq ($(shell uname -s),Linux)
 	-@rm *.o 2> $(nulldir)
 	$(c-compiler) -c source/setkbdmode.c source/getfd.c -pedantic -Wextra $(cflags) $(cdb) -Isource -std=c2x && mv *.o objects/
 	ar rcs assets/getfd.$(static) objects/getfd.o
-	$(c-compiler) -o assets/setkbdmode.$(binary) objects/setkbdmode.o assets/getfd.a -static-libgcc
+	$(c-compiler) -o assets/setkbdmode.$(binary) objects/setkbdmode.o assets/getfd.a $(static-libc)
 ifeq ($(copylibs),1)
 	@echo "$(linuxroot)/share/factoryrush/bin"
 	$(admin) mkdir -p $(linuxroot)/share/factoryrush/bin
@@ -520,12 +528,12 @@ else
 #
 ifeq ($(binary),exe)
 #windows
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) ../assets/globals.$(static) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) ../assets/globals.$(static) -L$(flibdir) $(flib) $(static-libc++) $(static-libc) $(ldarg)
 #
 else
 ifeq ($(shell uname -s),Darwin)
 #macos
-	cd cplusplus && $(cpp-compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) ../assets/globals.$(static) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
+	cd cplusplus && $(cpp-compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) ../assets/globals.$(static) -L$(flibdir) $(flib) $(static-libc++) $(static-libc) $(ldarg)
 #
 else
 #linux and similar
@@ -621,7 +629,7 @@ else
 #all
 	$(cpp-compiler) -c -pedantic -Wextra $(cxxflags) $(bpdb) $(fbsrc) -I binaryplus/include -std=c++2b
 	@$(movefl) -f $(subst obj/,$(empty),$(fbobj)) binaryplus/obj
-	cd binaryplus && $(cpp-compiler) -o bin/$(binname).$(binary) $(binflags) $(fbobj) -L$(flibdir) -l$(name) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
+	cd binaryplus && $(cpp-compiler) -o bin/$(binname).$(binary) $(binflags) $(fbobj) -L$(flibdir) -l$(name) $(flib) $(static-libc++) $(static-libc) $(ldarg)
 #
 
 ifeq ($(shell uname -s),Darwin)
