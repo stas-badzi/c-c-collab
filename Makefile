@@ -445,21 +445,30 @@ all: dll cppbin csbin
 dll: resources cs cpp
 	@echo "Version file. Remove to enable recompile" > $@
 
-refresh:
+clen: cppclean csclean
+
+csclean:
 ifeq ($(shell echo "check quotes"),"check quotes")
 	@del /f cs
 	@del /f csbin
+else
+	@rm -f cs
+	@rm -f csbin
+endif
+
+cppclean:
+ifeq ($(shell echo "check quotes"),"check quotes")
 	@del /f cppbin
 	@del /f cpp
 	@del /f resources
 	@del /f cplusplus\obj\*
+	@del /f binaryplus\obj\*
 else
-	@rm -f cs
-	@rm -f csbin
 	@rm -f cppbin
 	@rm -f cpp
 	@rm -f resources
 	@rm -f cplusplus/obj/*
+	@rm -f binaryplus/obj/*
 endif
 
 resources: source/getfd.h source/setkbdmode.c source/getfd.c source/globals.c assets/a.tux

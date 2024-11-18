@@ -746,6 +746,8 @@ using namespace std::chrono;
                 string error = GenerateEscapeSequence(1,16) + "\nCouldn't get a file descriptor referring to the console.\nCheck if you have acces to /dev/tty and /dev/console.\n" + GenerateEscapeSequence(4,16) + "\n\ttry: " + GenerateEscapeSequence(6,16) + command.c_str() + "\033[0m\n";
                 throw(runtime_error(error.c_str()));
             }
+
+            locale::global(locale(""));
             
             fwrite("\033[?1049h", sizeof(char), 8, stderr);
             
@@ -1021,6 +1023,7 @@ using namespace std::chrono;
 
     struct termios Console::old_fdterm = termios();
     int Console::old_kbdmode = int();
+    int Console::fd = int();
     utfcstr* Console::argv = (const char**)malloc(8);
     Key::Enum Console::key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX] = { { Key::Enum::UNDEFINED } };
 
