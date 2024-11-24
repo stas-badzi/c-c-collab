@@ -24,7 +24,7 @@ sources = Console.cpp FileSystem.cpp System.cpp dllexport.cpp
 #> header files
 headers = Console.hpp FileSystem.hpp FileSystem.ipp dllimport.hpp System.hpp System.ipp smart_ref.hpp smart_ref.ipp
 #> include files
-includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp unicode.hpp
+includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp unicode.hpp linux/ledctrl.h
 #> name the dynamic library
 name = factoryrushplus
 # *******************************
@@ -167,8 +167,8 @@ ldb = /DEBUG /PDB:bin/$(name).pdb
 bldb = /DEBUG /PDB:bin/$(binname).pdb
 bpdb = /MTd /Z7
 else
-cdb = -g -D_DEBUG
-bpdb = -g -D_DEBUG
+cdb = -g -Og
+bpdb = -g -Og
 endif
 else
 configuration = Release
@@ -442,10 +442,10 @@ endif
 all: dll cppbin csbin
 	@echo "Version file. Remove to enable recompile" > $@
 
-dll: resources cs cpp
+dll: cs cpp
 	@echo "Version file. Remove to enable recompile" > $@
 
-clen: cppclean csclean
+clean: cppclean csclean
 
 csclean:
 ifeq ($(shell echo "check quotes"),"check quotes")
@@ -471,15 +471,16 @@ else
 	@rm -f binaryplus/obj/*
 endif
 
-resources: source/getfd.h source/setkbdmode.c source/getfd.c source/globals.c assets/a.tux
+resources: source/setkbdmode.c source/getfd.c source/getfd.h source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h
 
 	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(staticgen)assets/globals.$(static) objects/globals.o
 
 ifeq ($(shell uname -s),Linux)
 	-@rm *.o 2> $(nulldir)
-	$(c-compiler) -c source/setkbdmode.c source/getfd.c -pedantic -Wextra $(cflags) $(cdb) -Isource -std=c2x && mv *.o objects/
+	$(c-compiler) -c source/setkbdmode.c source/getfd.c source/ledctrl.c -pedantic -Wextra $(cflags) $(cdb) -Isource -std=c2x && mv *.o objects/
 	ar rcs assets/getfd.$(static) objects/getfd.o
+	ar rcs assets/ledctrl.$(static) objects/ledctrl.o
 	$(c-compiler) -o assets/setkbdmode.$(binary) objects/setkbdmode.o assets/getfd.a $(static-libc)
 ifeq ($(copylibs),1)
 	@echo "$(linuxroot)/share/factoryrush/bin"
@@ -508,13 +509,12 @@ endif
 csrun:
 	-cd binarysharp/bin/exe && $(prefix)$(binfile).$(binary)
 
-cpp: $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
+cpp: resources $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
 
 
 ifneq ($(wildcard cs),cs)
 	$(MAKE) cs sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)
 endif
-
 ifeq ($(msvc),1)
 	echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(flib) $(objects) ../assets/globals.$(static) USER32.lib Gdi32.lib" > run.bat
 	@run.bat
@@ -546,7 +546,7 @@ ifeq ($(shell uname -s),Darwin)
 #
 else
 #linux and similar
-	cd cplusplus && $(cpp-compiler) -shared -o bin/lib$(name).so $(objects) ../assets/globals.$(static) ../assets/getfd.$(static) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/lib$(name).so $(objects) ../assets/globals.$(static) ../assets/getfd.$(static) ../assets/ledctrl.$(static) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
 endif
 endif
 #

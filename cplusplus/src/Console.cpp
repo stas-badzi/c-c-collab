@@ -748,6 +748,8 @@ using namespace std::chrono;
             }
 
             locale::global(locale(""));
+
+            Console::emulator = (getenv("DISPLAY") == nullptr);
             
             fwrite("\033[?1049h", sizeof(char), 8, stderr);
             
@@ -774,7 +776,7 @@ using namespace std::chrono;
             
             for (auto t = 0; t < MAX_NR_KEYMAPS; t++) {
                 if (t > UCHAR_MAX) {
-                    exit(17);
+                    exit(18);
                 }
                 for (auto i = 0; i < NR_KEYS; i++) {
                     if (i > UCHAR_MAX) {
@@ -803,6 +805,31 @@ using namespace std::chrono;
                     key_chart[t][i] = Key::Class::ToEnum(ke.kb_value);
                 }
             }
+
+            /*HandleToggles once so next time we can see if they changed*/ {
+                char flags, leds;
+                if (ioctl(Console::fd, KDGKBLED, &flags) == -1)
+                    exit(12);
+            
+                if (ioctl(Console::fd, KDGETLED, &leds) == -1)
+                    exit(11);
+                
+
+                short mode = (flags & 0x7);
+                short light = (leds & 0x7);
+                Console::keys_toggled.ScrollLock = mode & LED_SCR;
+
+                // toggled keys get
+                int capslock = getled("capslock") > 0 || mode & LED_CAP || light & LED_CAP;
+                int scrolllock = getled("scrolllock") > 0 || mode & LED_SCR || light & LED_SCR;
+                int numlock = getled("numlock") > 0 || mode & LED_NUM || light & LED_NUM;
+                int micmute = getled("micmute") > 0; // unused for now
+
+                Console::keys_toggled.ScrollLock = getled("scrolllock");
+                Console::keys_toggled.NumLock = getled("numlock");
+                Console::keys_toggled.CapsLock = getled("capslock");
+            }
+
 
             initialised = true;
 
@@ -986,37 +1013,65 @@ using namespace std::chrono;
 
     void Console::HandleKeyboard(void) {
 
-        // toggled keys get
-        
-        char flags;
+        char flags, leds;
         if (ioctl(Console::fd, KDGKBLED, &flags) == -1)
             exit(12);
+    
+        if (ioctl(Console::fd, KDGETLED, &leds) == -1)
+            exit(11);
+        
 
         short mode = (flags & 0x7);
-
+        short light = (leds & 0x7);
         Console::keys_toggled.ScrollLock = mode & LED_SCR;
-        Console::keys_toggled.NumLock = mode & LED_NUM;
-        Console::keys_toggled.CapsLock = mode & LED_CAP;
 
+        // toggled keys get
+        int capslock = getled("capslock") > 0 || mode & LED_CAP || light & LED_CAP;
+        int scrolllock = getled("scrolllock") > 0 || mode & LED_SCR || light & LED_SCR;
+        int numlock = getled("numlock") > 0 || mode & LED_NUM || light & LED_NUM;
+        int micmute = getled("micmute") > 0; // unused for now
+
+        Console::keys_toggled.ScrollLock = scrolllock;
+        Console::keys_toggled.NumLock = numlock;
+        Console::keys_toggled.CapsLock = capslock;
+
+        if (Console::keys_toggled.CapsLock) fprintf(stderr, "caps lock\n");
+        if (Console::keys_toggled.NumLock) fprintf(stderr, "num lock\n");
+        if (Console::keys_toggled.ScrollLock) fprintf(stderr, "scroll lock\n");
+        if (micmute) fprintf(stderr, "mic mute\n");
+
+        /*
+        
+        //*/
         // key presses and releases
 
         int bytes;
         char buf[16];
-        //ioctl(fileno(stdin), FIONREAD, &bytes);
 
-        bytes = read(fd, buf, sizeof(buf));
+        key_hit = -1;
+        key_released = -1;
+        ioctl(Console::fd, FIONREAD, &bytes);
+        if (!bytes) return;
+        bytes = read(Console::fd, buf, sizeof(buf));
+
+        write(Console::fd, buf, bytes);
 
         if (bytes <= 0) {
+            if (bytes < 0) { fprintf(stderr, "\nread error: %d\n", errno); exit(15); } 
             return;
         }
 
         int parsed = parse_input(true,buf,bytes);
-
-        key_hit = -1;
-        key_released = -1;
+        fprintf(stdout, "parsed: %d,rel:%d\n", parsed%KEYBOARD_MAX, parsed/KEYBOARD_MAX);
         if ( !key_states[parsed % KEYBOARD_MAX] && (parsed / KEYBOARD_MAX) ) key_hit = parsed % KEYBOARD_MAX;
         if ( key_states[parsed % KEYBOARD_MAX] && !(parsed / KEYBOARD_MAX) ) key_released = parsed % KEYBOARD_MAX;
         key_states[parsed % KEYBOARD_MAX] = !(parsed / KEYBOARD_MAX);
+
+        if (!Console::emulator) {
+            if (Console::KeyPressed() == Key::Enum::CAPS) { Console::keys_toggled.CapsLock = !Console::keys_toggled.CapsLock; setled("capslock", Console::keys_toggled.CapsLock); }
+            if (Console::KeyPressed() == Key::Enum::NUM || /*???*/ Console::KeyPressed() == Key::Enum::BARENUMLOCK ) { Console::keys_toggled.NumLock = !Console::keys_toggled.NumLock; setled("numlock", Console::keys_toggled.NumLock); }
+            if (Console::KeyPressed() == Key::Enum::HOLD) { Console::keys_toggled.ScrollLock = !Console::keys_toggled.ScrollLock; setled("scrolllock", Console::keys_toggled.ScrollLock); }
+        }
 
         return;
     }
@@ -1025,7 +1080,7 @@ using namespace std::chrono;
     int Console::old_kbdmode = int();
     int Console::fd = int();
     utfcstr* Console::argv = (const char**)malloc(8);
-    Key::Enum Console::key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX] = { { Key::Enum::UNDEFINED } };
+    Key::Enum Console::key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX] = { { Key::Enum::NONE } };
 
 #elif __APPLE__
 // macOS
@@ -1203,6 +1258,7 @@ using namespace std::chrono;
 
 int Console::argc = 0;
 
+bool Console::emulator = false;
 bool Console::initialised = false;
 bitset<KEYBOARD_MAX> Console::key_states = bitset<KEYBOARD_MAX>(0);
 struct ToggledKeys Console::keys_toggled = ToggledKeys();
@@ -1228,7 +1284,7 @@ bool Console::IsKeyDown(Key::Enum key) {
 }
 
 Key::Enum cpp::Console::KeyTyped(void) {
-    return Key::Enum::UNDEFINED;
+    return Key::Enum::NONE;
 }
 
 struct ToggledKeys Console::KeysToggled(void) {
@@ -1236,10 +1292,12 @@ struct ToggledKeys Console::KeysToggled(void) {
 }
 
 Key::Enum Console::KeyPressed(void) {
+    if (Console::key_hit < 0) return Key::Enum::NONE;
     return Console::key_chart[0][Console::key_hit];
 }
 
 Key::Enum Console::KeyReleased(void) {
+    if (Console::key_released < 0) return Key::Enum::NONE;
     return Console::key_chart[0][Console::key_released];
 }
 
@@ -1307,8 +1365,8 @@ Console::MouseStatus::MouseStatus(void) {
     this->middle = false;
     this->secondary = false;
     this->scroll = pair<bool,bool>(false,false);
-    this->x = -1;
-    this->y = -1;
+    this->x = 0;
+    this->y = 0;
 }
 
 Console::Symbol::Symbol(utfchar character, uint8_t foreground, uint8_t background) {

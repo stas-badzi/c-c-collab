@@ -17,8 +17,8 @@ Console::MouseStatus::MouseStatus(void) {
     this->middle = false;
     this->secondary = false;
     this->scroll = pair<bool,bool>(false,false);
-    this->x = -1;
-    this->y = -1;
+    this->x = 0;
+    this->y = 0;
 }
 
 void Console::Init(void) {

@@ -16,6 +16,7 @@
     #include <codecvt>
     #include <bitset>
     #include <exception>
+    #include <cuchar>
 #endif
 
 namespace uniconv {
@@ -59,11 +60,12 @@ inline unichar Utf8ToUnicode(utfchar utf8_code) {
 #ifdef _WIN32
     return utf8_code;
 #else
-    std::mbstate_t state = std::mbstate_t();
-    wchar_t utf16 = L'\0';
+    std::mbstate_t state{}; 
+    char32_t utf32;
     const char* utf8 = utf8_code.c_str();
-    std::mbsrtowcs(&utf16,&utf8,1,&state);
-    return utf16;
+    size_t length = utf8_code.size();
+    std::mbrtoc32(&utf32,utf8,length,&state);
+    return utf32;
 #endif
 }
 
@@ -73,12 +75,11 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
 #ifdef _WIN32
     return unicode;
 #else
-    std::mbstate_t state = std::mbstate_t();
-    const wchar_t utf16 = (wchar_t)unicode;
-    const wchar_t* utf16_ref = &utf16;
-    std::size_t len = 1 + std::wcsrtombs(nullptr, &utf16_ref, 0, &state);
-    std::string mbstr; while (mbstr.size() < len) mbstr.push_back('\0');
-    std::wcsrtombs(&mbstr[0], &utf16_ref, mbstr.size(), &state);
+    std::mbstate_t state{};
+    char32_t utf32 = unicode;
+    std::size_t len = std::c32rtomb(nullptr, utf32, &state);
+    std::string mbstr(len,' ');
+    std::c32rtomb(&mbstr[0], utf32, &state);
     return mbstr;
 #endif
 }
@@ -172,34 +173,42 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
     }
 
     inline unichar* Utf8StringToUnicode (utfcstr utf8s) {
-        std::mbstate_t state = std::mbstate_t();
-        std::size_t len = 1 + std::mbsrtowcs(nullptr, &utf8s, 0, &state);
-        std::vector<wchar_t> wstr(len);
-        std::mbsrtowcs(&wstr[0], &utf8s, wstr.size(), &state);
+        std::mbstate_t state{}; 
+        size_t length = strlen(utf8s);
+        std::u32string str;
+        while (length > 0) {
+            char32_t utf32;
+            auto siz = std::mbrtoc32(&utf32,utf8s,length,&state);
+            str.push_back(utf32);
+            utf8s += length;
+            length -= siz;
+        }
         
-        unichar* out = (unichar*)__dllalloc(sizeof(unichar) * wstr.size());
-        for (size_t i = 0; i < wstr.size(); i++) out[i] = wstr[i];
+        unichar* out = (unichar*)__dllalloc(sizeof(unichar) * str.size());
+        for (size_t i = 0; i < str.size(); i++) out[i] = str[i];
         return out;
     }
 
     inline utfstr UnicodeToUtf8String (unichar* unicodes) {
-        std::mbstate_t state = std::mbstate_t();
-        std::vector<wchar_t> param;
-        for (int i = 0; unicodes[i] != 0; ++i) param.push_back(unicodes[i]);
-        const wchar_t* utf16_ref = &param[0];
-
-        std::size_t len = 1 + std::wcsrtombs(nullptr, &utf16_ref, 0, &state);
-        std::string mbstr; while (mbstr.size() < len) mbstr.push_back('\0');
-        std::wcsrtombs(&mbstr[0], &utf16_ref, mbstr.size(), &state);
-
+        std::mbstate_t state{};
+        
+        std::string out;
+        for (int i = 0; unicodes[i] != 0; ++i) {
+            char32_t utf32 = unicodes[i];
+            std::size_t len = std::c32rtomb(nullptr, utf32, &state);
+            std::string mbstr(len,' ');
+            std::c32rtomb(&mbstr[0], utf32, &state);
+            out.append(mbstr);
+        }
         __dllfree(unicodes);
-        return mbstr;
+        return out;
     }
 
     inline utfstr WStringToNative(std::wstring wstr) {
         unichar* uninput = (unichar*)__dllalloc(sizeof(unichar) * (wstr.size() + 1) );
         for (size_t i = 0; i < wstr.size(); ++i)
             uninput[i] = wstr[i];
+        uninput[wstr.size()] = 0;
         return UnicodeToUtf8String(uninput);
     }
 

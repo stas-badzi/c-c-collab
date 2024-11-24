@@ -40,6 +40,7 @@
     #include <linux/getfd.h>
     #include <linux/kd.h>
     #include <linux/key.hpp>
+    #include <linux/ledctrl.h>
     #define KEYBOARD_MAX NR_KEYS
 #else
     #define KEYBOARD_MAX 256
@@ -98,6 +99,7 @@ namespace cpp {
         static int argc;
         static uniconv::utfcstr* argv;
         static struct ToggledKeys keys_toggled;
+        static bool emulator;
         #ifdef _WIN32
             //static std::vector<std::vector<COLORREF>> SaveScreen(void);
             //static std::pair<std::pair<uint16_t,uint16_t>,std::pair<uint16_t,uint16_t>> GetOffsetSymSize(int color1 = 3, int color2 = 9, int color3 = 1);
