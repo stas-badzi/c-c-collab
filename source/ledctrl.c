@@ -18,6 +18,7 @@ inline int getledpath(const char *find, int fsize, char* buffer, int size) {
                 }
                 buffer[i] = ent->d_name[i];
             }
+            buffer[i] = '\0';
             if (x == fsize) {
                 closedir(dir);
                 return i;

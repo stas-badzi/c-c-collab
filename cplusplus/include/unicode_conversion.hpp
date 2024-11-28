@@ -63,8 +63,7 @@ inline unichar Utf8ToUnicode(utfchar utf8_code) {
     std::mbstate_t state{}; 
     char32_t utf32;
     const char* utf8 = utf8_code.c_str();
-    size_t length = utf8_code.size();
-    std::mbrtoc32(&utf32,utf8,length,&state);
+    auto siz = std::mbrtoc32(&utf32,utf8,strlen(utf8),&state);
     return utf32;
 #endif
 }
@@ -77,7 +76,11 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
 #else
     std::mbstate_t state{};
     char32_t utf32 = unicode;
-    std::size_t len = std::c32rtomb(nullptr, utf32, &state);
+    char* temp = new char[4];
+    std::size_t len = std::c32rtomb(temp, utf32, &state);
+    delete[] temp;
+    if (len == 0) return std::string();
+    else if (len == (size_t)-1) exit(51);
     std::string mbstr(len,' ');
     std::c32rtomb(&mbstr[0], utf32, &state);
     return mbstr;
@@ -173,19 +176,22 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
     }
 
     inline unichar* Utf8StringToUnicode (utfcstr utf8s) {
-        std::mbstate_t state{}; 
+        std::mbstate_t state{};
         size_t length = strlen(utf8s);
+        int offset = 0;
         std::u32string str;
-        while (length > 0) {
+        const char* ptr = utf8s, *end = ptr + length + 1;
+        while (ptr < end) {
             char32_t utf32;
-            auto siz = std::mbrtoc32(&utf32,utf8s,length,&state);
+            auto siz = std::mbrtoc32(&utf32,ptr,end-ptr,&state);
+            if (siz <= 0) break;
             str.push_back(utf32);
-            utf8s += length;
-            length -= siz;
+            ptr += siz;
         }
         
-        unichar* out = (unichar*)__dllalloc(sizeof(unichar) * str.size());
+        unichar* out = (unichar*)__dllalloc(sizeof(unichar) * (str.size() + 1));
         for (size_t i = 0; i < str.size(); i++) out[i] = str[i];
+        out[str.size()] = 0;
         return out;
     }
 
@@ -195,7 +201,9 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
         std::string out;
         for (int i = 0; unicodes[i] != 0; ++i) {
             char32_t utf32 = unicodes[i];
-            std::size_t len = std::c32rtomb(nullptr, utf32, &state);
+            char* temp = new char[4];
+            std::size_t len = std::c32rtomb(temp, utf32, &state);
+            delete[] temp;
             std::string mbstr(len,' ');
             std::c32rtomb(&mbstr[0], utf32, &state);
             out.append(mbstr);

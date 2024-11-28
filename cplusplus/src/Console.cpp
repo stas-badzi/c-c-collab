@@ -8,7 +8,7 @@ using namespace std::chrono;
 #ifdef _WIN32
 #include <iostream>
 
-    inline uint8_t Console::GenerateAtrVal(uint8_t i1, uint8_t i2) {
+    inline constexpr uint8_t Console::GenerateAtrVal(uint8_t i1, uint8_t i2) {
         uint8_t val = 0x0000;
         if (i1 == 0) { val |= 0x0000; }
         if (i1 == 1) { val |= FOREGROUND_RED; }
@@ -48,7 +48,7 @@ using namespace std::chrono;
     }
 
     // first foreground second background
-    inline pair<uint8_t,uint8_t> AtrValToColors(uint8_t val) {
+    inline constexpr pair<uint8_t,uint8_t> AtrValToColors(uint8_t val) {
         pair<uint8_t,uint8_t> out;
 
         out.first = 0x0000;
@@ -88,7 +88,7 @@ using namespace std::chrono;
         return out;
     }
 
-    inline COLORREF GetPixel(int x, int y, int width, int height, RGBQUAD* pixels) {
+    inline constexpr COLORREF GetPixel(int x, int y, int width, int height, RGBQUAD* pixels) {
         return RGB(pixels[(height-y-1)*width + x].rgbRed, pixels[(height-y-1)*width + x].rgbGreen, pixels[(height-y-1)*width + x].rgbBlue);
     }
 /*
@@ -537,7 +537,7 @@ using namespace std::chrono;
 		delete[] attributes;
     }
 
-    void Console::HandleKeyboard() {
+    void Console::HandleKeyboard(void) {
 
         // toggles
         Console::keys_toggled.ScrollLock = GetKeyState(VK_SCROLL) & 1;
@@ -676,9 +676,9 @@ using namespace std::chrono;
 
 #ifdef __linux__
 // linux
-    string GenerateEscapeSequence(uint8_t,uint8_t);
+    inline constexpr string GenerateEscapeSequence(uint8_t,uint8_t);
 
-    inline int parse_input(int show_keycodes, char * buf, int n) {
+    inline constexpr int parse_input(int show_keycodes, char * buf, int n) {
         int out = 0;
         //char buf[16];
         //int n = read(fd, buf, sizeof(buf));
@@ -695,8 +695,20 @@ using namespace std::chrono;
         return out;
     };
 
+    char Console::GetChar(void) {
+        if (Console::buf_it >= 0 && Console::buf[Console::buf_it]) { ++buf_it; return Console::buf[buf_it-1]; }
+        Console::buf[buf_it] = getc(stdin); Console::buf[++buf_it] = '\0';
+        return Console::buf[buf_it-1];
+    };
+
     void Console::Init(void) {
         if (!initialised) {
+
+            Console::emulator = !(getenv("DISPLAY") == nullptr);
+            
+            if (Console::emulator) {
+                fwrite("\033[?1049h", sizeof(char), 8, stderr);
+            }
 
             FILE *cmdline = fopen("/proc/self/cmdline", "rb");
             char *arg = 0; size_t size = 0;
@@ -747,17 +759,7 @@ using namespace std::chrono;
                 throw(runtime_error(error.c_str()));
             }
 
-            locale::global(locale(""));
-
-            Console::emulator = (getenv("DISPLAY") == nullptr);
-            
-            fwrite("\033[?1049h", sizeof(char), 8, stderr);
-            
-            fwrite("\033[?1004h", sizeof(char), 8, stderr);
-
-            fwrite("\033[?1003h", sizeof(char), 8, stderr);
-            fwrite("\033[?1015h", sizeof(char), 8, stderr);
-            fwrite("\033[?1006h", sizeof(char), 8, stderr);
+            //locale::global(locale(""));
 
             tcgetattr(STDIN_FILENO,&old_termios);
             termios term_ios = old_termios;
@@ -772,8 +774,14 @@ using namespace std::chrono;
             term_ios.c_cc[VTIME] = 1;
             tcsetattr(fd, TCSANOW, &term_ios);
 
-            //
-            
+            if (emulator) {
+                fwrite("\033[?1004h", sizeof(char), 8, stderr);
+
+                fwrite("\033[?1003h", sizeof(char), 8, stderr);
+                fwrite("\033[?1015h", sizeof(char), 8, stderr);
+                fwrite("\033[?1006h", sizeof(char), 8, stderr);
+            }
+
             for (auto t = 0; t < MAX_NR_KEYMAPS; t++) {
                 if (t > UCHAR_MAX) {
                     exit(18);
@@ -794,9 +802,9 @@ using namespace std::chrono;
 
                     if (!i && ke.kb_value == K_NOSUCHMAP)
                         break;
-
-                    struct lk_array *map;
-                    int code = ke.kb_value + 1;
+                    
+                    if (KTYP(ke.kb_value) == KT_LETTER)
+                        ke.kb_value = K(KT_LATIN, KVAL(ke.kb_value));
 
                     if (ke.kb_value == UINT16_MAX) {
                         // ? idk mabe just push back UNDEFIEND
@@ -806,7 +814,10 @@ using namespace std::chrono;
                 }
             }
 
-            /*HandleToggles once so next time we can see if they changed*/ {
+            //
+            
+            /*HandleToggles once so next time we can see if they changed
+            {
                 char flags, leds;
                 if (ioctl(Console::fd, KDGKBLED, &flags) == -1)
                     exit(12);
@@ -828,8 +839,9 @@ using namespace std::chrono;
                 Console::keys_toggled.ScrollLock = getled("scrolllock");
                 Console::keys_toggled.NumLock = getled("numlock");
                 Console::keys_toggled.CapsLock = getled("capslock");
-            }
+            }//*/
 
+            locale::global(locale(""));
 
             initialised = true;
 
@@ -865,20 +877,24 @@ using namespace std::chrono;
 
     void Console::Fin(void) {
         if (initialised) {
+
+            if (Console::emulator) {
+                fwrite("\033[?1004l", sizeof(char), 8, stderr);
+
+                fwrite("\033[?1003l", sizeof(char), 8, stderr);
+                fwrite("\033[?1015l", sizeof(char), 8, stderr);
+                fwrite("\033[?1006l", sizeof(char), 8, stderr);
+            }
             
             //ioctl(fd, KDSETMODE, old_kbdmode);
             tcsetattr(fd,TCSANOW,&old_fdterm);
             close(fd);
-
+            
             tcsetattr(STDIN_FILENO,TCSANOW,&old_termios);
-            
-            fwrite("\033[?1049l", sizeof(char), 8, stderr);
-            
-            fwrite("\033[?1004l", sizeof(char), 8, stderr);
 
-            fwrite("\033[?1003l", sizeof(char), 8, stderr);
-            fwrite("\033[?1015l", sizeof(char), 8, stderr);
-            fwrite("\033[?1006l", sizeof(char), 8, stderr);
+            if (Console::emulator) {
+                fwrite("\033[?1049l", sizeof(char), 8, stderr);
+            }
 
             char path[256];
             auto length = readlink( "/proc/self/exe" , path, 256);
@@ -894,7 +910,6 @@ using namespace std::chrono;
             for (int i = 0; i < argc; i++) free((void*)Console::argv[i]);
             Console::argv = (const char**)realloc(Console::argv,0);
             Console::argc = 0;
-            
 
             initialised = false;
         }
@@ -906,124 +921,178 @@ using namespace std::chrono;
         Console::this_mouse_combo = 0;
         Console::mouse_buttons_down[3] = false;
         Console::mouse_buttons_down[4] = false;
+        Console::mouse_status.scroll = {false,false};
 
         bool mousedown = false;
         int bytes;
 
-        ioctl(fileno(stdin), FIONREAD, &bytes);
+        ioctl(STDIN_FILENO, FIONREAD, &bytes);
+        
+        bytes += strlen(Console::buf);
 
-        if (bytes < 3) {
-            return;
-        }
-
-        if (getc(stdin) != '\033') return;
-        if (getc(stdin) != '[') return;
-        if (bytes == 3) {
-            switch (getc(stdin)) {
+        while (bytes > 0) {
+            buf_it = 0;
+            if (GetChar() != '\033') { --bytes; buf[0] = '\0'; continue; }
+            --bytes;
+            if (!bytes) return;
+            if (GetChar() != '[') { --bytes; buf[0] = '\0'; continue; }
+            --bytes;
+            if (!bytes) return;
+            switch (GetChar()) {
             case 'I':
+                //fprintf(stderr, "gained focus\n");
                 Console::focused = true;
-                return;
+                break;
             case 'O':
+                //fprintf(stderr, "lost focus\n");
                 Console::focused = false;
-                return;
-            default:
-                return;
-            }
-        }
-        if (getc(stdin) != '<') return;
-        bytes -= 3;
-        while (bytes > 6) {
-            int pos = 0;
-            int val[3] = {0};
-            while (bytes > 0) {
-                char byte = getc(stdin); --bytes;
+                break;
+            case '<':
+                //fprintf(stdout, "\\e[<");
+                --bytes;
+                int pos = 0;
+                int val[3] = {0};
+                int it = 2;
+                while (++it) {
+                    if (bytes == 0) return;
+                    char byte = GetChar(); --bytes;
+                    //fprintf(stdout, "%c", byte);
 
-                if (byte == ';') { ++pos; continue; }
+                    if (byte == ';') { ++pos; continue; }
+                    
+                    if (byte == 'M') { mousedown = true; break; }
+                    if (byte == 'm') { mousedown = false; break; }
+
+                    int num = byte - '0';
+                    if (num < 0 || num > 9) exit(31);
+
+                    val[pos] *= 10;
+                    val[pos] += num;
+                };
+                //fprintf(stdout, "%c", '\n');
+
+                Console::mouse_status.x = --val[1];
+                Console::mouse_status.y = --val[2];
+                //fprintf(stderr, "mouse: %d %d\n", Console::mouse_status.x, Console::mouse_status.y);
+                bitset<8> event(val[0]);
+
+                if (event[5]) { ++bytes; break; } // move event
                 
-                if (byte == 'M') { mousedown = true; break; }
-                if (byte == 'm') { mousedown = false; break; }
+                uint8_t button = 0b0;
+                
+                button += 0b1 * event[0];
+                button += 0b10 * event[1];
+                button += 0b100 * event[6];
+                button += 0b1000 * event[7];
+                if (button < 3 /*Button 1-3*/) ++button; // are encoded as 0-2 and there is no button 3 encoded so we add one to make it BUTTON(X) = x
 
-                int num = byte - '0';
-                if (num < 0 || num > 9) return;
+                chrono::time_point<chrono::high_resolution_clock> now = chrono::high_resolution_clock::now();
+                uint8_t fullbutton = 0b000000;
+                fullbutton |= 0b0000001 * button; // BBBB
+                fullbutton |= 0b0010000 * event[2]; // Shift
+                fullbutton |= 0b0100000 * event[3]; // Meta
+                fullbutton |= 0b1000000 * event[4]; // Ctrl
+                // fullbutton == 0bCMSBBBB
 
-                val[pos] *= 10;
-                val[pos] += num;
-            };
-
-            Console::mouse_status.x = val[1];
-            Console::mouse_status.y = val[2];
-
-            bitset<8> event(val[0]);
-
-            if (event[5]) {
-                return; // move event
-            }
-            
-            uint8_t button = 0b0;
-            
-            button += 0b1 * event[0];
-            button += 0b10 * event[1];
-            button += 0b100 * event[6];
-            button += 0b1000 * event[7];
-            if (button < 3 /*Button 1-3*/) ++button; // are encoded as 0-2 and there is no button 3 encoded so we add one to make it BUTTON(X) = x
-
-            chrono::time_point<chrono::high_resolution_clock> now = chrono::high_resolution_clock::now();
-            uint8_t fullbutton = 0b000000;
-            fullbutton |= 0b0000001 * button; // BBBB
-            fullbutton |= 0b0010000 * event[2]; // Shift
-            fullbutton |= 0b0100000 * event[3]; // Meta
-            fullbutton |= 0b1000000 * event[4]; // Ctrl
-            // fullbutton == 0bCMSBBBB
-
-            if (mousedown) {
-                if (Console::last_mouse_button == fullbutton && now - Console::last_click_time <= chrono::milliseconds(Console::double_click_max)) {
-                    if (Console::last_mouse_combo < UINT8_MAX) ++Console::last_mouse_combo;
-                } else {
-                    Console::last_mouse_button = (button < 3) ? fullbutton : -1;
-                    Console::last_mouse_combo = 1;
+                if (mousedown) {
+                    if (Console::last_mouse_button == fullbutton && now - Console::last_click_time <= chrono::milliseconds(Console::double_click_max)) {
+                        if (Console::last_mouse_combo < UINT8_MAX) ++Console::last_mouse_combo;
+                    } else {
+                        Console::last_mouse_button = (button < 3) ? fullbutton : -1;
+                        Console::last_mouse_combo = 1;
+                    }
+                    Console::last_click_time = now;
                 }
-                Console::last_click_time = now;
-            }
 
-            Console::this_mouse_combo = ( Console::last_click_time == now ) ? Console::last_mouse_combo : 1;
-            Console::this_mouse_down = mousedown;
-            Console::mouse_buttons_down[fullbutton] = this_mouse_down;
-            Console::this_mouse_button = fullbutton;
-            
-            switch (button) {
-            case 0:
-                Console::mouse_status.primary = mousedown;
-                break;
-            case 1:
-                Console::mouse_status.middle = mousedown;
-                break;
-            case 2:
-                Console::mouse_status.secondary = mousedown;
-                break;
-            case 4:
-                Console::mouse_status.scroll = {1,true};
-                break;
-            case 5:
-                Console::mouse_status.scroll = {1,false};
+                Console::this_mouse_combo = ( Console::last_click_time == now ) ? Console::last_mouse_combo : 1;
+                Console::this_mouse_down = mousedown;
+                Console::mouse_buttons_down[fullbutton] = this_mouse_down;
+                Console::this_mouse_button = fullbutton;
+                
+                switch (button) {
+                case 1:
+                    Console::mouse_status.primary = mousedown;
+                    break;
+                case 2:
+                    Console::mouse_status.middle = mousedown;
+                    break;
+                case 3:
+                    Console::mouse_status.secondary = mousedown;
+                    break;
+                case 4:
+                    Console::mouse_status.scroll = {1,true};
+                    break;
+                case 5:
+                    Console::mouse_status.scroll = {1,false};
+                    break;
+                }
+                ++bytes;
                 break;
             }
+            --bytes; buf[0] = '\0';
         }
-        return;
+        
+
+        
     }
 
     void Console::HandleKeyboard(void) {
 
         char flags, leds;
         if (ioctl(Console::fd, KDGKBLED, &flags) == -1)
-            exit(12);
-    
-        if (ioctl(Console::fd, KDGETLED, &leds) == -1)
             exit(11);
         
+        if (ioctl(Console::fd, KDGETLED, &leds) == -1)
+            exit(12);
+
+        // key presses and releases
+
+        int bytes, parsed, len;
+        char buf[1];
+
+        key_hit = -1;
+        key_released = -1;
+
+        ioctl(Console::fd, FIONREAD, &bytes);
+        if (!bytes) goto HandleToggles;
+    
+    ReadKeyboardAction:
+        len = read(Console::fd, buf, sizeof(buf)); bytes -= len;
+        // TODO -> parse multi-byte sequences
+
+        if (len <= 0) {
+            if (len < 0) { fprintf(stderr, "\nread error: %d\n", errno); exit(15); } 
+            goto HandleToggles;
+        }
+
+        //fprintf(stderr, "bytes: %d\n", bytes);
+
+        parsed = parse_input(true,buf,len);
+
+        //fprintf(stdout, "\n\n x:%x\nparsed: %d,rel:%d\n\told: %d\n\n", buf[0], parsed%KEYBOARD_MAX, parsed/KEYBOARD_MAX, (int)(key_states[parsed % KEYBOARD_MAX]));
+        if ( !(key_states[parsed % KEYBOARD_MAX] || (parsed / KEYBOARD_MAX)) ) key_hit = parsed % KEYBOARD_MAX;
+        if ( key_states[parsed % KEYBOARD_MAX] && (parsed / KEYBOARD_MAX) ) key_released = parsed % KEYBOARD_MAX;
+        key_states[parsed % KEYBOARD_MAX] = !(parsed / KEYBOARD_MAX);
+        //fprintf(stderr, "keycode: %d\n", Console::key_hit);
+        //fprintf(stderr, "rels: %d\n", Console::key_released);
+
+        if (!Console::emulator) {
+            //fprintf(stderr, "keynum: %hu\n", Console::key_chart[0][Console::key_hit]);
+            if (Console::key_chart[0][Console::key_hit] == Key::Enum::CAPS) { flags ^= LED_CAP; leds ^= LED_CAP; fprintf(stderr, "caps\n"); }
+            if (Console::key_chart[0][Console::key_hit] == Key::Enum::NUM || /*???*/ Console::key_chart[0][Console::key_hit] == Key::Enum::BARENUMLOCK ) { flags ^= LED_NUM; leds ^= LED_NUM; fprintf(stderr, "num\n"); }
+            if (Console::key_chart[0][Console::key_hit] == Key::Enum::HOLD) { flags ^= LED_SCR; leds ^= LED_SCR; fprintf(stderr, "scroll\n"); }
+            if (Console::key_chart[0][Console::key_hit] == Key::Enum::CAPS || Console::key_chart[0][Console::key_hit] == Key::Enum::NUM || /*???*/ Console::key_chart[0][Console::key_hit] == Key::Enum::BARENUMLOCK || Console::key_chart[0][Console::key_hit] == Key::Enum::HOLD) {
+                if (ioctl(Console::fd, KDSKBLED, flags) == -1) exit(13);
+                if (ioctl(Console::fd, KDSETLED, leds) == -1) exit(13);
+            }
+        }
+
+        if (bytes > 0) goto ReadKeyboardAction;
+
+    HandleToggles:
 
         short mode = (flags & 0x7);
         short light = (leds & 0x7);
-        Console::keys_toggled.ScrollLock = mode & LED_SCR;
 
         // toggled keys get
         int capslock = getled("capslock") > 0 || mode & LED_CAP || light & LED_CAP;
@@ -1035,43 +1104,10 @@ using namespace std::chrono;
         Console::keys_toggled.NumLock = numlock;
         Console::keys_toggled.CapsLock = capslock;
 
-        if (Console::keys_toggled.CapsLock) fprintf(stderr, "caps lock\n");
-        if (Console::keys_toggled.NumLock) fprintf(stderr, "num lock\n");
-        if (Console::keys_toggled.ScrollLock) fprintf(stderr, "scroll lock\n");
-        if (micmute) fprintf(stderr, "mic mute\n");
-
-        /*
-        
-        //*/
-        // key presses and releases
-
-        int bytes;
-        char buf[16];
-
-        key_hit = -1;
-        key_released = -1;
-        ioctl(Console::fd, FIONREAD, &bytes);
-        if (!bytes) return;
-        bytes = read(Console::fd, buf, sizeof(buf));
-
-        write(Console::fd, buf, bytes);
-
-        if (bytes <= 0) {
-            if (bytes < 0) { fprintf(stderr, "\nread error: %d\n", errno); exit(15); } 
-            return;
-        }
-
-        int parsed = parse_input(true,buf,bytes);
-        fprintf(stdout, "parsed: %d,rel:%d\n", parsed%KEYBOARD_MAX, parsed/KEYBOARD_MAX);
-        if ( !key_states[parsed % KEYBOARD_MAX] && (parsed / KEYBOARD_MAX) ) key_hit = parsed % KEYBOARD_MAX;
-        if ( key_states[parsed % KEYBOARD_MAX] && !(parsed / KEYBOARD_MAX) ) key_released = parsed % KEYBOARD_MAX;
-        key_states[parsed % KEYBOARD_MAX] = !(parsed / KEYBOARD_MAX);
-
-        if (!Console::emulator) {
-            if (Console::KeyPressed() == Key::Enum::CAPS) { Console::keys_toggled.CapsLock = !Console::keys_toggled.CapsLock; setled("capslock", Console::keys_toggled.CapsLock); }
-            if (Console::KeyPressed() == Key::Enum::NUM || /*???*/ Console::KeyPressed() == Key::Enum::BARENUMLOCK ) { Console::keys_toggled.NumLock = !Console::keys_toggled.NumLock; setled("numlock", Console::keys_toggled.NumLock); }
-            if (Console::KeyPressed() == Key::Enum::HOLD) { Console::keys_toggled.ScrollLock = !Console::keys_toggled.ScrollLock; setled("scrolllock", Console::keys_toggled.ScrollLock); }
-        }
+        //if (Console::keys_toggled.CapsLock) fprintf(stderr, "caps lock\n");
+        //if (Console::keys_toggled.NumLock) fprintf(stderr, "num lock\n");
+        //if (Console::keys_toggled.ScrollLock) fprintf(stderr, "scroll lock\n");
+        //if (micmute) fprintf(stderr, "mic mute\n");
 
         return;
     }
@@ -1193,12 +1229,12 @@ using namespace std::chrono;
 #endif
 
 // all non windows
-    inline string GenerateEscapeSequence(uint8_t i1, uint8_t i2) {
+    inline constexpr string GenerateEscapeSequence(uint8_t i1, uint8_t i2) {
         string val = "\033[";
         if (i1 < 8) {
             val.append(to_string(30 + i1));
         } else if (i1 < 16) {
-            val.append(to_string(90 + i1));
+            val.append(to_string(82 + i1));
         } else {
             val.append("39");
         }
@@ -1206,7 +1242,7 @@ using namespace std::chrono;
         if (i2 < 8) {
             val.append(to_string(40 + i2));
         } else if (i2 < 16) {
-            val.append(to_string(100 + i2));
+            val.append(to_string(92 + i2));
         } else {
             val.append("49");
         }
@@ -1230,7 +1266,7 @@ using namespace std::chrono;
         size_t width = GetWindowWidth(), height = GetWindowHeight();
         for (size_t i = 0; i < height; i++) {
             for (size_t j = 0; j < width; j++) {
-                if (i >= symbols.size() || j >= symbols[0].size()) {
+                if (i >= symbols.size() || j >= symbols[i].size()) {
                     screen.append("\033[0m ");
                     continue;
                 }
@@ -1254,6 +1290,8 @@ using namespace std::chrono;
 
     struct termios Console::old_termios = termios();
     winsize Console::window_size = winsize();
+    char Console::buf[256] = "\0";
+    int8_t Console::buf_it = -1; 
 #endif
 
 int Console::argc = 0;

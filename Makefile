@@ -15,7 +15,7 @@ release = FactoryRush
 
 #******** c++ config ************
 #> set default compilers
-defcompcxx = c++
+defcompcxx = cpp
 defcompc = cc
 cflags = -Wno-dollar-in-identifier-extension -Wno-unused-command-line-argument
 cxxflags = -Wno-dollar-in-identifier-extension -Wno-unused-command-line-argument
@@ -231,11 +231,12 @@ nulldir = nul-Wdollar-in-identifier-extension
 binflags = 
 admin = sudo
 staticgen = lib /OUT:
-prefix = .\
+run = .\
 os_name = win-$(arch)
 binary = exe
 static = lib
 dynamic = dll
+prefix = $(empty)
 dllname = "$(name).$(dynamic)"
 libname = "$(filename).$(dynamic)"
 libdir = $(winlib)
@@ -248,10 +249,11 @@ nulldir = nul
 binflags = 
 admin = sudo
 staticgen = lib /OUT:
-prefix = .\
+run = .\
 os_name = win-$(arch)
 binary = exe
 static = lib
+prefix = $(empty)
 dynamic = dll
 dllname = "$(name).$(dynamic)"
 libname = "$(filename).$(dynamic)"
@@ -265,6 +267,7 @@ ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin only
 binary = exe
 static = a
+prefix = lib
 dynamic = dll
 binflags = 
 libdir = $(cygwinlib)
@@ -299,6 +302,7 @@ endif
 #non-cygwin 'NT'
 binary = exe
 static = lib
+prefix = $(empty)
 dynamic = dll
 libdir = $(msyslib)
 bindir = $(msysbin)
@@ -306,7 +310,7 @@ admin = sudo
 #
 endif
 #all unix emulators on windows
-prefix = ./
+run = ./
 nulldir = nul
 staticgen = ar
 os_name = win-$(arch)
@@ -320,10 +324,11 @@ nulldir =  /dev/null
 binflags = 
 admin = sudo
 staticgen = ar -rcs$(space)
-prefix = ./
+run = ./
 os_name = osx-$(arch)
 binary = app
 static = a
+prefix = lib
 dynamic = dylib
 libdir = $(macoslib)
 bindir = $(macosbin)
@@ -334,12 +339,13 @@ nulldir = /dev/null
 binflags = 
 admin = sudo
 staticgen = ar rcs$(space)
-prefix = ./
+run = ./
 os_name = linux-$(arch)
 libname = "lib$(filename).so"
 dllname = "lib$(name).so"
 binary = bin
 static = a
+prefix = lib
 dynamic = so
 libdir = $(linuxlib)
 bindir = $(linuxbin)
@@ -474,13 +480,12 @@ endif
 resources: source/setkbdmode.c source/getfd.c source/getfd.h source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h
 
 	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
-	$(staticgen)assets/globals.$(static) objects/globals.o
+	$(staticgen)assets/$(prefix)globals.$(static) objects/globals.o
 
 ifeq ($(shell uname -s),Linux)
 	-@rm *.o 2> $(nulldir)
 	$(c-compiler) -c source/setkbdmode.c source/getfd.c source/ledctrl.c -pedantic -Wextra $(cflags) $(cdb) -Isource -std=c2x && mv *.o objects/
-	ar rcs assets/getfd.$(static) objects/getfd.o
-	ar rcs assets/ledctrl.$(static) objects/ledctrl.o
+	ar rcs assets/$(prefix)linuxctrl.$(static) objects/getfd.o objects/ledctrl.o
 	$(c-compiler) -o assets/setkbdmode.$(binary) objects/setkbdmode.o assets/getfd.a $(static-libc)
 ifeq ($(copylibs),1)
 	@echo "$(linuxroot)/share/factoryrush/bin"
@@ -503,11 +508,15 @@ cpprun:
 ifeq ($(binary),exe)
 	-wt -f "$(dir)\binaryplus\bin\$(binname).$(binary)"
 else
-	-cd binaryplus/bin && $(prefix)$(binname).$(binary)
+ifeq ($(sudo),1)
+	$(bindir)/$(binname).$(binary)
+else
+	-cd binaryplus/bin && $(run)$(binname).$(binary)
+endif
 endif
 
 csrun:
-	-cd binarysharp/bin/exe && $(prefix)$(binfile).$(binary)
+	-cd binarysharp/bin/exe && $(run)$(binfile).$(binary)
 
 cpp: resources $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
 
@@ -516,7 +525,7 @@ ifneq ($(wildcard cs),cs)
 	$(MAKE) cs sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)
 endif
 ifeq ($(msvc),1)
-	echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(flib) $(objects) ../assets/globals.$(static) USER32.lib Gdi32.lib" > run.bat
+	echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(flib) $(objects) ../assets/globals USER32.lib Gdi32.lib" > run.bat
 	@run.bat
 	@rm run.bat
 ifeq ($(debug),1)
@@ -537,16 +546,16 @@ else
 #
 ifeq ($(binary),exe)
 #windows
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) ../assets/globals.$(static) -L$(flibdir) $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
 #
 else
 ifeq ($(shell uname -s),Darwin)
 #macos
-	cd cplusplus && $(cpp-compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) ../assets/globals.$(static) -L$(flibdir) $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) -L../assets -L$(flibdir) -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
 #
 else
 #linux and similar
-	cd cplusplus && $(cpp-compiler) -shared -o bin/lib$(name).so $(objects) ../assets/globals.$(static) ../assets/getfd.$(static) ../assets/ledctrl.$(static) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/lib$(name).so $(objects) -L../assets -L$(flibdir) -lglobals -llinuxctrl $(flib) -static-libstdc++ -static-libgcc $(ldarg)
 endif
 endif
 #

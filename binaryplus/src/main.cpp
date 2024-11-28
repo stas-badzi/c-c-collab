@@ -14,6 +14,8 @@
     #define VK_CONTROL 10
 #endif
 
+#define IsCtrlDown() (Console::IsKeyDown(Key::Enum::CTRL) || Console::IsKeyDown(Key::Enum::CTRLL) || Console::IsKeyDown(Key::Enum::CTRLR))
+
 using namespace std;
 using namespace cpp;
 using namespace cs;
@@ -23,30 +25,42 @@ int main(void) {
     
 
     chrono::time_point<chrono::high_resolution_clock> start = chrono::high_resolution_clock::now();
-    while (true){
+    //auto last_mouse = Console::GetMouseStatus();
+    //while (true){
     /*
-        auto width = Console::GetWindowWidth();
-        auto height = Console::GetWindowHeight();
+        uint16_t width = Console::GetWindowWidth();
+        uint16_t height = Console::GetWindowHeight();
 
         vector<vector<Console::Symbol>> screen;
         for (int16_t l = 0; l < height; l++) {
             screen.push_back(vector<Console::Symbol>());
             for (int16_t i = 0; i < width; i++) {
-                auto sym = Console::Symbol(L'#',(uint8_t)16,(uint8_t)16);
+                auto sym = Console::Symbol(L'▒',(uint8_t)16,(uint8_t)16);
                 screen.back().push_back(sym);
             }
         }
-
-    */
-        Console::HandleMouseAndFocus();
-        if (Console::IsFocused()) Console::HandleKeyboard();
-        if ((Console::IsKeyDown(Key::Enum::CTRL) || Console::IsKeyDown(Key::Enum::CTRL_L) || Console::IsKeyDown(Key::Enum::CTRL_R)) && (Console::KeysToggled().CapsLock || Console::IsKeyDown(Key::Enum::SHIFT) || Console::IsKeyDown(Key::Enum::SHIFTL) || Console::IsKeyDown(Key::Enum::SHIFTR))) break;
-        //if (Console::KeyPressed() != Key::Enum::NONE) cerr << (int)Console::KeyPressed() << endl;
-    /*    
+    //*/
+        //Console::HandleMouseAndFocus();
+        //if (Console::IsFocused()) Console::HandleKeyboard();
+        //if (Console::KeyPressed() != Key::Enum::NONE) cerr << (int)Console::KeyPressed() << '\n';
+        //if (Console::KeyPressed() == Key::Enum::q && IsCtrlDown()) return 0;
+        /*
         auto mouse = Console::GetMouseStatus();
+        if (0 <= mouse.x && mouse.x < width && 0 <= mouse.y && mouse.y < height) {
+            screen[mouse.y][mouse.x].character(L'🖱');
+            if (mouse.x > 0) screen[mouse.y][mouse.x-1].character(L'▋');
+            if (mouse.x < width-1) { screen[mouse.y][mouse.x+1].character(L'▐'); screen[mouse.y][mouse.x+1].foreground(9); screen[mouse.y][mouse.x+1].background(3); }
+        }
+        //if (mouse.x != last_mouse.x || mouse.y != last_mouse.y || mouse.primary != last_mouse.primary || mouse.secondary != last_mouse.secondary || mouse.middle != last_mouse.middle || mouse.scroll.first != last_mouse.scroll.first || mouse.scroll.second != last_mouse.scroll.second)
+        //    cerr << mouse.x << ' ' << mouse.y << '\n' << mouse.primary << ' ' << mouse.secondary << ' ' << mouse.middle << ' ' << mouse.scroll.first << ' ' << mouse.scroll.second << '\n';
+        //last_mouse = mouse;
+        //vector<vector<Console::Symbol>> sym = {1,{1,{L'▦',16,16}}}; 
+        Console::FillScreen(screen);
+        Console::Sleep(0.1);
 
         //FileSystem::DrawTextureToScreen(20,2,pos,screen);
-
+        */
+        /**//* 
         if (max(mouse.y-1,0u) >= 0 && max(mouse.x-1,0u) >= 0 && max(mouse.y-1,0u) < height && max(mouse.x-1,0u) < width)
             screen[max(mouse.y-1,0u)][max(mouse.x-1,0u)].background(5);
         else
@@ -65,11 +79,11 @@ int main(void) {
         Console::Sleep(1);
         start = chrono::high_resolution_clock::now();
 
-        */
-    }
-    return 0;
+        //*/
+    //}
+    //return 0;
     
-    /*}
+    //*}
 
     int argc = Console::GetArgC();
     wchar_t** argv = Console::GetArgV();
@@ -87,15 +101,11 @@ int main(void) {
         for (int16_t l = 0; l < height; l++) {
             screen.push_back(vector<Console::Symbol>());
             for (int16_t i = 0; i < width; i++) {
-                auto sym = Console::Symbol(L' ',(uint8_t)16,(uint8_t)16);
+                auto sym = Console::Symbol(L'▒',(uint8_t)16,(uint8_t)16);
                 screen.back().push_back(sym);
             }
         }
         //delete[] characters; delete[] back; delete[] fore;
-        Console::HandleMouseAndFocus();
-        
-        if (Console::IsFocused()) Console::HandleKeyboard();
-        auto mouse = Console::GetMouseStatus();
         //cerr << mouse.x << ' ' << mouse.y << '\n';
         //return 200;
         //screen[mouse.y][mouse.x].character(L'▦');
@@ -105,25 +115,27 @@ int main(void) {
         a.append(L"/assets/a.tux");
         wstring file = (argc < 2) ? System::GetRootPath() + L"/assets/a.tux" : wstring(argv[1]);
         auto texture = FileSystem::TextureFromFile(System::ToNativePath(file));
-        Console::FillScreen(texture);
-        Console::Sleep(10);
-        Console::FillScreen(screen);
-        Console::Sleep(10);
         FileSystem::DrawTextureToScreen(2,2,texture,screen); // już zaziała //to nie zadziala bo screen jest za maly;
 
-        wstringstream wstr;
-        wstr << mouse.x << L' ' << mouse.y << L"                            ";
-        auto pos = Console::Symbol::CreateTexture(wstr.str());
-        //FileSystem::DrawTextureToScreen(20,2,pos,screen);
 
-        Console::FillScreen(pos);
+        Console::HandleMouseAndFocus();
+        auto mouse = Console::GetMouseStatus();
+        wstringstream wstr;
+        wstr << mouse.x << L' ' << mouse.y;
+        auto pos = Console::Symbol::CreateTexture(wstr.c_str());
+        FileSystem::DrawTextureToScreen(10,1,pos,screen);
+
+        Console::FillScreen(screen);
 
         Control::CleanMemory();
 
-        Console::Sleep(2.5);
+        if (Console::IsFocused()) Console::HandleKeyboard();
+        if (Console::KeyPressed() == Key::Enum::q && IsCtrlDown()) return EXIT_SUCCESS;
+        //FileSystem::DrawTextureToScreen(20,2,pos,screen);
 
-        if (Console::KeyPressed() == Key::Enum::Q && (Console::IsKeyDown(Key::Enum::CTRL) || Console::IsKeyDown(Key::Enum::CTRL_L) || Console::IsKeyDown(Key::Enum::CTRL_R))) return 1;
+
+        Console::Sleep(0.1);
+
     }
-    
-    return 0;//*/
+    return EXIT_FAILURE;
 }

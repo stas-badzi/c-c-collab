@@ -550,26 +550,26 @@ public:
         BARENUMLOCK = K_BARENUMLOCK, /* Bare Num Lock */
 
         // KT_PAD
-        KP0 = K_P0, /* Enumpad 0 */
-        KP1 = K_P1, /* Enumpad 1 */
-        KP2 = K_P2, /* Enumpad 2 */
-        KP3 = K_P3, /* Enumpad 3 */
-        KP4 = K_P4, /* Enumpad 4 */
-        KP5 = K_P5, /* Enumpad 5 */
-        KP6 = K_P6, /* Enumpad 6 */
-        KP7 = K_P7, /* Enumpad 7 */
-        KP8 = K_P8, /* Enumpad 8 */
-        KP9 = K_P9, /* Enumpad 9 */
-        KPPLUS = K_PPLUS, /* Enumpad + */
-        KPMINUS = K_PMINUS, /* Enumpad - */
-        KPSTAR = K_PSTAR, /* Enumpad * */
-        KPSLASH = K_PSLASH, /* Enumpad / */
-        KPENTER = K_PENTER, /* Enumpad Enter */
-        KPCOMMA = K_PCOMMA, /* Enumpad , */
-        KPDOT = K_PDOT, /* Enumpad . */
-        KPPLUSMINUS = K_PPLUSMINUS, /* Enumpad ± */
-        KPPARENL = K_PPARENL, /* Enumpad ( */
-        KPPARENR = K_PPARENR, /* Enumpad ) */
+        KP0 = K_P0, /* numpad 0 */
+        KP1 = K_P1, /* numpad 1 */
+        KP2 = K_P2, /* numpad 2 */
+        KP3 = K_P3, /* numpad 3 */
+        KP4 = K_P4, /* numpad 4 */
+        KP5 = K_P5, /* numpad 5 */
+        KP6 = K_P6, /* numpad 6 */
+        KP7 = K_P7, /* numpad 7 */
+        KP8 = K_P8, /* numpad 8 */
+        KP9 = K_P9, /* numpad 9 */
+        KPPLUS = K_PPLUS, /* numpad + */
+        KPMINUS = K_PMINUS, /* numpad - */
+        KPSTAR = K_PSTAR, /* numpad * */
+        KPSLASH = K_PSLASH, /* numpad / */
+        KPENTER = K_PENTER, /* numpad Enter */
+        KPCOMMA = K_PCOMMA, /* numpad , */
+        KPDOT = K_PDOT, /* numpad . */
+        KPPLUSMINUS = K_PPLUSMINUS, /* numpad ± */
+        KPPARENL = K_PPARENL, /* numpad ( */
+        KPPARENR = K_PPARENR, /* numpad ) */
 
         // KT_DEAD
         DGRAVE = K_DGRAVE, /* [Dead] Grave */
@@ -653,15 +653,17 @@ public:
         CTRLLLOCK = K_CTRLLLOCK, /* CtrlL Lock */
         CTRLRLOCK = K_CTRLRLOCK, /* CtrlR Lock */
         CAPSSHIFTLOCK = K_CAPSSHIFTLOCK, /* CapsShift Lock */
+        
         SHIFT_SLOCK = K_SHIFT_SLOCK, /* Sticky Shift */
-        CTRL_SLOCK = K_CTRL_SLOCK, /* Sticky AltGr */
-        ALT_SLOCK = K_ALT_SLOCK, /* Sticky Control */
-        ALTGR_SLOCK = K_ALTGR_SLOCK, /* Sticky Alt */
+        CTRL_SLOCK = K_CTRL_SLOCK, /* Sticky Control */
+        ALT_SLOCK = K_ALT_SLOCK, /* Sticky Alt */
+        ALTGR_SLOCK = K_ALTGR_SLOCK, /* Sticky AltGr */
         SHIFTL_SLOCK = K_SHIFTL_SLOCK, /* Sticky ShiftLeft */
         SHIFTR_SLOCK = K_SHIFTR_SLOCK, /* Sticky ShiftRight */
         CTRLL_SLOCK = K_CTRLL_SLOCK, /* Sticky CtrlLeft */
         CTRLR_SLOCK = K_CTRLR_SLOCK, /* Sticky CtrlRight */
         CAPSSHIFT_SLOCK = K_CAPSSHIFT_SLOCK, /* Sticky CapsShift */
+
         BRL_BLANK = K_BRL_BLANK, /* Brl_blank */
         BRL_DOT1 = K_BRL_DOT1, /* Brl_dot1 */
         BRL_DOT2 = K_BRL_DOT2, /* Brl_dot2 */
@@ -673,6 +675,7 @@ public:
         BRL_DOT8 = K_BRL_DOT8, /* Brl_dot8 */
         BRL_DOT9 = K_BRL_DOT9, /* Brl_dot9 */
         BRL_DOT10 = K_BRL_DOT10, /* Brl_dot10 */
+
         CONSOLE1 = K(KT_CONS,0), /* Console_1 */
         CONSOLE2 = K(KT_CONS,1), /* Console_2 */
         CONSOLE3 = K(KT_CONS,2), /* Console_3 */

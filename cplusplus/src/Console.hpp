@@ -75,7 +75,7 @@ namespace cpp {
             bool primary; // is down
             bool secondary; // is down
             bool middle; // is down
-            std::pair<bool,bool> scroll; 
+            std::pair<bool,bool> scroll; // (is scrolling),(up or down)[windows/linux/freebsd - scroll up == move scroll whell (fingers on touchbad) down; down == move up | macos scroll like tablet/phone]
             unsigned int x; // in console chracters
             unsigned int y; // in console chracters
             MouseStatus(void);
@@ -124,7 +124,9 @@ namespace cpp {
         #else
             static struct termios old_termios;
             static struct winsize window_size;
+            static char buf[256]; static int8_t buf_it;
         #ifdef __linux__
+            static inline char GetChar(void);
             static struct termios old_fdterm;
             static int old_kbdmode;
             static int fd;
