@@ -122,7 +122,7 @@ int main(void) {
         auto mouse = Console::GetMouseStatus();
         wstringstream wstr;
         wstr << mouse.x << L' ' << mouse.y;
-        auto pos = Console::Symbol::CreateTexture(wstr.c_str());
+        auto pos = Console::Symbol::CreateTexture(wstr.str());
         FileSystem::DrawTextureToScreen(10,1,pos,screen);
 
         Console::FillScreen(screen);
