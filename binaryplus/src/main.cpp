@@ -140,9 +140,6 @@ int main(void) {
         if (Console::KeyPressed() == Key::Enum::q && IsCtrlDown()) return EXIT_SUCCESS;
         //FileSystem::DrawTextureToScreen(20,2,pos,screen);
 
-
-        Console::Sleep(0.1);
-
     }
     return EXIT_FAILURE;
 }

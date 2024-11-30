@@ -88,6 +88,9 @@ symsysbin = /c/Windows
  
 #*********************************
 
+# chmod 666 /usr/bin/../temp/initialized.dat
+# (linux only)
+
 static-libc = -static-libgcc
 static-libc++ = -static-libstdc++
 
@@ -486,7 +489,7 @@ ifeq ($(shell uname -s),Linux)
 	-@rm *.o 2> $(nulldir)
 	$(c-compiler) -c source/setkbdmode.c source/getfd.c source/ledctrl.c -pedantic -Wextra $(cflags) $(cdb) -Isource -std=c2x && mv *.o objects/
 	ar rcs assets/$(prefix)linuxctrl.$(static) objects/getfd.o objects/ledctrl.o
-	$(c-compiler) -o assets/setkbdmode.$(binary) objects/setkbdmode.o assets/getfd.a $(static-libc)
+	$(c-compiler) -o assets/setkbdmode.$(binary) objects/setkbdmode.o -Lassets -llinuxctrl $(static-libc)
 ifeq ($(copylibs),1)
 	@echo "$(linuxroot)/share/factoryrush/bin"
 	$(admin) mkdir -p $(linuxroot)/share/factoryrush/bin

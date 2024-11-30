@@ -704,16 +704,16 @@ using namespace std::chrono;
 
     void Console::Init(void) {
         if (!initialised) {
+            Console::emulator = !(getenv("DISPLAY") == nullptr);
+
             char path[256];
-            auto length = readlink( "/proc/self/exe" , path, 256);
+            readlink( "/proc/self/exe" , path, 256);
             string initpth = path;
             while (initpth.back() != '/') initpth.pop_back();
             initpth.append("../temp/initialized.dat");
             FILE *initfl = fopen(initpth.c_str(), "w");
             fprintf(initfl, "%d", 1);
             fclose(initfl);
-
-            Console::emulator = !(getenv("DISPLAY") == nullptr);
             
             if (Console::emulator) {
                 fwrite("\033[?1049h", sizeof(char), 8, stderr);
@@ -742,19 +742,26 @@ using namespace std::chrono;
 
                 int code = system(command.c_str());
 
-                initfl = fopen(initpth.c_str(), "w");
-                int isinit; 
+                initfl = fopen(initpth.c_str(), "r");
+                int isinit = 1; 
                 auto ret = fscanf(initfl, "%d", &isinit);
                 fclose(initfl);
 
                 if (!isinit) {
+                    fprintf(stderr, "\npress any key to exit\n");
+                    tcgetattr(STDIN_FILENO,&old_termios);
+                    termios term_ios = old_termios;
+                    term_ios.c_lflag &= ~(ICANON | ECHO);
+                    tcsetattr(STDIN_FILENO, TCSANOW, &term_ios);
                     char x[1];
                     read(STDIN_FILENO, x, 1);
+                    tcsetattr(STDIN_FILENO, TCSANOW, &old_termios);
                     fwrite("\033[?1049l", sizeof(char), 8, stderr);
+                    exit(EXIT_FAILURE);
                 }
-                initpth = "rm -f " + initpth;
-                system(initpth.c_str());
-                exit(code);
+                exit(EXIT_SUCCESS);
+                //exit(code);
+
                 //string error = GenerateEscapeSequence(1,16) + "\nCouldn't get a file descriptor referring to the console.\nCheck if you have acces to /dev/tty and /dev/console.\n" + GenerateEscapeSequence(4,16) + "\n\ttry: " + GenerateEscapeSequence(6,16) + command.c_str() + "\033[0m\n";
                 //throw(runtime_error(error.c_str()));
             }
