@@ -117,13 +117,13 @@ int main(void) {
         auto texture = FileSystem::TextureFromFile(System::ToNativePath(file));
         FileSystem::DrawTextureToScreen(2,2,texture,screen); // już zaziała //to nie zadziala bo screen jest za maly;
 
+        auto menu = Console::Symbol::CreateTexture(L"| Quit | Save | Load | Edit | Help |");
 
         Console::HandleMouseAndFocus();
         auto mouse = Console::GetMouseStatus();
-        wstringstream wstr;
-        wstr << mouse.x << L' ' << mouse.y;
-        auto pos = Console::Symbol::CreateTexture(wstr.str());
-        FileSystem::DrawTextureToScreen(10,1,pos,screen);
+        if (mouse.x > 0 && mouse.y == 0 && mouse.x < 7)  { for (int i = 1; i < 7; ++i) menu[0][i].ReverseColors(); if (mouse.primary)  return EXIT_SUCCESS; }
+
+        FileSystem::DrawTextureToScreen(0,0,menu,screen);
 
         Console::FillScreen(screen);
 

@@ -1,4 +1,5 @@
 #include "Console.hpp"
+#include "dllimport.hpp"
 
 using namespace cpp;
 using namespace uniconv;
@@ -731,9 +732,8 @@ using namespace std::chrono;
                 read(STDIN_FILENO, x, 1);
                 fwrite("\033[?1049l", sizeof(char), 8, stderr);
                 exit(code);
-                
-                string error = GenerateEscapeSequence(1,16) + "\nCouldn't get a file descriptor referring to the console.\nCheck if you have acces to /dev/tty and /dev/console.\n" + GenerateEscapeSequence(4,16) + "\n\ttry: " + GenerateEscapeSequence(6,16) + command.c_str() + "\033[0m\n";
-                throw(runtime_error(error.c_str()));
+                //string error = GenerateEscapeSequence(1,16) + "\nCouldn't get a file descriptor referring to the console.\nCheck if you have acces to /dev/tty and /dev/console.\n" + GenerateEscapeSequence(4,16) + "\n\ttry: " + GenerateEscapeSequence(6,16) + command.c_str() + "\033[0m\n";
+                //throw(runtime_error(error.c_str()));
             }
 
             if (ioctl(fd, KDGKBMODE, &old_kbdmode)) {
@@ -1436,7 +1436,7 @@ Console::Symbol::~Symbol(void) {
 }
 
 void Console::Symbol::ReverseColors(void) {
-    Console_Symbol_ReverseColors(this);
+    cppimp::Console_Symbol_ReverseColors(this);
 }
 
 Console::Symbol & Console::Symbol::operator=(const Console::Symbol & src) {

@@ -183,7 +183,7 @@ namespace cppimp {
         libimport void System_WritePointer$nint$ofs(nint arg1, int32_t arg3, nint arg2);
 
     // actually from c# but who cares
-        libimport nint Console_Symbol_ReverseColors(nint sym);
+        libimport void Console_Symbol_ReverseColors(nint sym);
     //
 
 } // namespace CppImp

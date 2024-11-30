@@ -24,7 +24,6 @@
 #ifndef _MSVC
     #include <windows/quick_exit.h>
 #endif
-    #define KEYBOARD_MAX 256
 #else
     #include <signal.h>
     #include <stdio.h>
@@ -39,16 +38,15 @@
 #ifdef __linux__
     #include <linux/getfd.h>
     #include <linux/kd.h>
+    #include <linux/keyboard.h>
     #include <linux/key.hpp>
     #include <linux/ledctrl.h>
-    #define KEYBOARD_MAX NR_KEY
 #elif __APPLE__
     #include <apple/key.hpp>
-    #define KEYBOARD_MAX 256
 #else
+#endif
+#endif
     #define KEYBOARD_MAX 256
-#endif
-#endif
 
 #define MOUSE_BUTTON_1  1
 #define MOUSE_BUTTON_2  2
