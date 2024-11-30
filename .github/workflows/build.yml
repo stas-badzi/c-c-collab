@@ -37,22 +37,19 @@ jobs:
         with:
           name: DotNetBinaries
           path: .
-      - name: Setup MSYS2
-        uses: msys2/setup-msys2@v2
-      - name: Install Programs
+      - name: Refresh cs
         shell: msys2 {0}
         run: |
           touch cs
           touch csbin
           mkdir cplusplus/obj
           mkdir binaryplus/obj
-          
-          echo Y > yes.in
-          pacman -S make < yes.in
-          pacman -S zip < yes.in
-          (echo && echo && echo Y) > yes.in 
-          pacman -S --needed base-devel mingw-w64-clang-x86_64-toolchain < yes.in
-          rm yes.in
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: make zip mingw-w64-clang-x86_64-toolchain
       - name: Compile code
         shell: msys2 {0}
         env:
