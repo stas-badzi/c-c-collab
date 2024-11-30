@@ -775,7 +775,7 @@ namespace Utility {
             AX = VK_OEM_AX, /* Japanese AX key */
             // MISC2 = VK_OEM_102       = 0xE2;  //  "<>" or "\|" on RT 102-key kbd.
             HELP_ICO = VK_OEM_ICO, /* Help key on ICO */
-            _00_ICO = VK_ICO_00 /* 00 key on ICO */
+            _00_ICO = VK_ICO_00, /* 00 key on ICO */
             CLEAR_ICO = VK_ICO_CLEAR, /* Clear key on ICO (i think) */
 
             // Nokia/Ericsson definitions
