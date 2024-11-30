@@ -82,7 +82,7 @@ jobs:
       - name: Set up Cygwin
         uses: egor-tensin/setup-cygwin@v4
         with:
-          packages: gcc-g++ zip grep gawk
+          packages: gcc-g++ zip grep gawk binutils
       - name: Install Programs
         shell: pwsh
         run: |
