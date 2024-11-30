@@ -16,7 +16,7 @@ namespace Utility {
         public enum Enum : ushort {
             NONE = 0xffff, /* specified Enum is not defined */
         #if _WIN32
-            NUL , /* ␀ */
+            NUL = 0x0, /* ␀ */ // has to be set beacause other wise it would overflow
             CTRL_A , /* Ctrl + A */
             CTRL_B , /* Ctrl + B */
             CTRL_C , /* Ctrl + C */
