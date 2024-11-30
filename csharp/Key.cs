@@ -112,33 +112,33 @@ namespace Utility {
             BRACKETRIGHT = VK_OEM_6, /* ] (on us keybards) */
             ASCIICIRCUM , /* ^  */
             UNEDERSCORE , /* _ */
-            GRAVE = , /* `*/
-            a = 'a', /* a */
-            b = 'b', /* b */
-            c = 'c', /* c */
-            d = 'd', /* d */
-            e = 'e', /* e */
-            f = 'f', /* f */
-            g = 'g', /* g */
-            h = 'h', /* h */
-            i = 'i', /* i */
-            j = 'j', /* j */
-            k = 'k', /* k */
-            l = 'l', /* l */
-            m = 'm', /* m */
-            n = 'n', /* n */
-            o = 'o', /* o */
-            p = 'p', /* p */
-            q = 'q', /* q */
-            r = 'r', /* r */
-            s = 's', /* s */
-            t = 't', /* t */
-            u = 'u', /* u */
-            v = 'v', /* v */
-            w = 'w', /* w */
-            x = 'x', /* x */
-            y = 'y', /* y */
-            z = 'z', /* z */
+            GRAVE , /* `*/
+            a = 'A', /* a */
+            b = 'B', /* b */
+            c = 'C', /* c */
+            d = 'D', /* d */
+            e = 'E', /* e */
+            f = 'F', /* f */
+            g = 'G', /* g */
+            h = 'H', /* h */
+            i = 'I', /* i */
+            j = 'J', /* j */
+            k = 'K', /* k */
+            l = 'L', /* l */
+            m = 'M', /* m */
+            n = 'N', /* n */
+            o = 'O', /* o */
+            p = 'P', /* p */
+            q = 'Q', /* q */
+            r = 'R', /* r */
+            s = 'S', /* s */
+            t = 'T', /* t */
+            u = 'U', /* u */
+            v = 'V', /* v */
+            w = 'W', /* w */
+            x = 'X', /* x */
+            y = 'Y', /* y */
+            z = 'Z', /* z */
             BRACELEFT , /* { */
             BAR , /* | */
             BRACERIGHT , /* } */
@@ -620,7 +620,7 @@ namespace Utility {
             HEXf , /* Hex_F */
             SHIFTLOCK , /* Shift Lock */
             CTRLLOCK , /* AltGr Lock */
-            ALTLOCK , /* Control Lock */
+            ALTLOCK , /* Error: D:\a\c-c-collab\c-c-collab\binarysharp\windows_vkcodes.cs(23,45): error CS1002: ; expected [D:\a\c-c-collab\c-c-collab\binarysharp\cs-factoryrush.csproj]Control Lock */
             ALTGRLOCK , /* Alt Lock */
             SHIFTLLOCK , /* ShiftL Lock */
             SHIFTRLOCK , /* ShiftR Lock */
@@ -751,7 +751,7 @@ namespace Utility {
             LAUNCH_MEDIA_SELECT = VK_LAUNCH_MEDIA_SELECT, /* Select Media */
             LAUNCH_APP1 = VK_LAUNCH_APP1, /* Launch Application 1 */
             LAUNCH_APP2 = VK_LAUNCH_APP2, /* Launch Application 2 */
-            MISC = VK_OEM_8 /* Unknown Miscellaneous Character [VK_OEM_8] */
+            MISC = VK_OEM_8, /* Unknown Miscellaneous Character [VK_OEM_8] */
             PROCCESS = VK_PROCESSKEY, /* Process Key */
             ATTN = VK_ATTN, /* Attn Key */
             CRSEL = VK_CRSEL, /* CrSel Key */
@@ -764,7 +764,7 @@ namespace Utility {
 
             // Other (Not documented)
 
-            KPEQUAL = VK_OEM_NEC_EQUAL /* numpad = */
+            KPEQUAL = VK_OEM_NEC_EQUAL, /* numpad = */
             DICTIONARY = VK_OEM_FJ_JISHO, /* Dictionary key */
             UNREGISTER = VK_OEM_FJ_MASSHOU, /* Unregister word key */
             REGISTERE = VK_OEM_FJ_TOUROKU, /* Register word key */
@@ -775,7 +775,7 @@ namespace Utility {
             AX = VK_OEM_AX, /* Japanese AX key */
             // MISC2 = VK_OEM_102       = 0xE2;  //  "<>" or "\|" on RT 102-key kbd.
             HELP_ICO = VK_OEM_ICO, /* Help key on ICO */
-            00_ICO = VK_ICO_00 /* 00 key on ICO */
+            $00_ICO = VK_ICO_00 /* 00 key on ICO */
             CLEAR_ICO = VK_ICO_CLEAR, /* Clear key on ICO (i think) */
 
             // Nokia/Ericsson definitions
@@ -1571,7 +1571,7 @@ namespace Utility {
 
             // Other (Not documented)
 
-            KPEQUAL , /* numpad , /
+            KPEQUAL , /* numpad , */
             DICTIONARY , /* Dictionary key */
             UNREGISTER , /* Unregister word key */
             REGISTERE , /* Register word key */
@@ -1582,7 +1582,7 @@ namespace Utility {
             AX , /* Japanese AX key */
             // MISC2 , , //  "<>" or "\|" on RT 102-key kbd.
             HELP_ICO , /* Help key on ICO */
-            00_ICO , /* 00 key on ICO */
+            $00_ICO , /* 00 key on ICO */
             CLEAR_ICO , /* Clear key on ICO (i think) */
 
             // Nokia/Ericsson definitions

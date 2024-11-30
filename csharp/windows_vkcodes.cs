@@ -20,7 +20,7 @@ namespace windows {
 
 
         const ushort VK_BACK          = 0x08;
-        const ushort VK_TAB           = 0x09
+        const ushort VK_TAB           = 0x09;
 
         /*
         * 0x0A - 0x0B : reserved
