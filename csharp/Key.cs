@@ -1626,7 +1626,7 @@ namespace Utility {
             GAMEPAD_RIGHT_THUMBSTICK_UP , /* Gamepad Right Thumbstick Up */
             GAMEPAD_RIGHT_THUMBSTICK_DOWN , /* Gamepad Right Thumbstick Down */
             GAMEPAD_RIGHT_THUMBSTICK_RIGHT , /* Gamepad Right Thumbstick Right */
-            GAMEPAD_RIGHT_THUMBSTICK_LEFT , /* Gamepad Right Thumbstick Left */
+            GAMEPAD_RIGHT_THUMBSTICK_LEFT /* Gamepad Right Thumbstick Left */
 
         #elif __APPLE__
             NUL = 0, /* ␀ */
