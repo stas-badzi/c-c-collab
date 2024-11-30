@@ -732,7 +732,7 @@ namespace Utility {
             SUPERR = VK_RWIN, /* Right Super[Windows] key */
             APPS = VK_APPS, /* Applications Key */
             SLEEP = VK_SLEEP, /* Computer Sleep Key */
-            AALT = VK_ALT, /* Any Alt */
+            AALT = VK_MENU, /* Any Alt */
             BROWSER_BACK = VK_BROWSER_BACK, /* Browser Back */
             BROWSER_FORWARD = VK_BROWSER_FORWARD, /* Browser Forward */
             BROWSER_REFRESH = VK_BROWSER_REFRESH, /* Browser Refresh */
@@ -774,7 +774,7 @@ namespace Utility {
             // Various extended or enhanced keyboards
             AX = VK_OEM_AX, /* Japanese AX key */
             // MISC2 = VK_OEM_102       = 0xE2;  //  "<>" or "\|" on RT 102-key kbd.
-            HELP_ICO = VK_OEM_ICO, /* Help key on ICO */
+            HELP_ICO = VK_ICO_HELP, /* Help key on ICO */
             _00_ICO = VK_ICO_00, /* 00 key on ICO */
             CLEAR_ICO = VK_ICO_CLEAR, /* Clear key on ICO (i think) */
 

@@ -309,6 +309,11 @@ namespace windows {
         /*
         * 0xFF : reserved
         */
+
+
+        // werent in winuser.h for some reason
+        public const ushort VK_IME_ON 	= 0x16;
+        public const ushort VK_IME_OFF 	= 0x1A;
     }
 }
 #endif
