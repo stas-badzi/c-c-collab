@@ -315,7 +315,7 @@ endif
 #all unix emulators on windows
 run = ./
 nulldir = nul
-staticgen = ar
+staticgen = ar -rcs$(space)
 os_name = win-$(arch)
 dllname = "$(name).$(dynamic)"
 libname = "$(filename).$(dynamic)"
