@@ -726,7 +726,11 @@ using namespace std::chrono;
             if (fd < 0) {
                 string command = "sudo";
                 for (int i = 0; i < Console::argc; i++) { command.push_back(' '); command.append(argv[i]); }
-                exit(system(command.c_str()));
+                int code =system(command.c_str());
+                char x[1];
+                read(STDIN_FILENO, x, 1);
+                fwrite("\033[?1049l", sizeof(char), 8, stderr);
+                exit(code);
                 
                 string error = GenerateEscapeSequence(1,16) + "\nCouldn't get a file descriptor referring to the console.\nCheck if you have acces to /dev/tty and /dev/console.\n" + GenerateEscapeSequence(4,16) + "\n\ttry: " + GenerateEscapeSequence(6,16) + command.c_str() + "\033[0m\n";
                 throw(runtime_error(error.c_str()));
