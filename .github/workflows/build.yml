@@ -12,6 +12,10 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
       - name: Compile c#
         shell: cmd
         run: |
@@ -185,10 +189,10 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-      - name: Install Programs
-        shell: sh
-        run: |
-          sudo apt-get install -y dotnet-sdk-8.0
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
       - name: Compile code
         shell: bash
         env:
@@ -234,10 +238,10 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-      - name: Install Programs
-        shell: sh
-        run: |
-          brew install --cask dotnet-sdk
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
       - name: Compile code
         shell: bash
         env:
