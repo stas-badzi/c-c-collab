@@ -4,6 +4,8 @@
 #include <vector>
 #include <array>
 #include <bitset>
+#include <clang_constexpr.h>
+
 #ifdef __APPLE__
 #ifndef _GLIBCXX_HAVE_AT_QUICK_EXIT
     #define _GLIBCXX_HAVE_QUICK_EXIT

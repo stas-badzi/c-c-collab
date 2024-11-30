@@ -677,9 +677,9 @@ using namespace std::chrono;
 
 #ifdef __linux__
 // linux
-    inline constexpr string GenerateEscapeSequence(uint8_t,uint8_t);
+    inline clang_constexpr string GenerateEscapeSequence(uint8_t,uint8_t);
 
-    inline constexpr int parse_input(int show_keycodes, char * buf, int n) {
+    inline constexpr int parse_input(int show_keycodes, const char * buf, int n) {
         int out = 0;
         //char buf[16];
         //int n = read(fd, buf, sizeof(buf));
@@ -1257,7 +1257,7 @@ using namespace std::chrono;
 #endif
 
 // all non windows
-    inline constexpr string GenerateEscapeSequence(uint8_t i1, uint8_t i2) {
+    inline clang_constexpr string GenerateEscapeSequence(uint8_t i1, uint8_t i2) {
         string val = "\033[";
         if (i1 < 8) {
             val.append(to_string(30 + i1));
