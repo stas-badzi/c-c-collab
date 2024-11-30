@@ -247,9 +247,16 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
+      - name: Compile c# code
+        shell: bash
+        env:
+          CC: gcc
+          CXX: g++
+        run: |
+          make cs csbin sudo=0 cpp-compiler=clang++ c-compiler=clang
       - name: Set up Clang
         uses: stellar-aria/llvm-embedded-toolchain-for-arm-action@latest
-      - name: Compile code
+      - name: Compile c++ code
         shell: bash
         env:
           CC: gcc
