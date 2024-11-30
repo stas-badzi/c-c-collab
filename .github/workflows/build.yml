@@ -57,7 +57,7 @@ jobs:
           CXX: g++
         run: |
           export PATH="/msys64/clang64/bin/:$PATH"
-          ls -l /msys64/clang64/bin/
+          tree /msys64
           make release sudo=0 c-compiler=clang cpp-compiler=clang++
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
