@@ -44,6 +44,7 @@ jobs:
           touch csbin
           mkdir cplusplus/obj
           mkdir binaryplus/obj
+          mkdir objects
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
         with:
@@ -90,6 +91,7 @@ jobs:
           echo $null >> csbin
           mkdir cplusplus/obj
           mkdir binaryplus/obj
+          mkdir objects
 
           Invoke-WebRequest -Uri "https://github.com/maweil/MakeForWindows/releases/download/v4.4.1/make-bin-win64.zip" -OutFile "make-bin.zip" -Verbose
           Expand-Archive -Force make-bin.zip .
