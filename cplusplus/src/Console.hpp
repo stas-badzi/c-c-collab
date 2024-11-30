@@ -45,6 +45,9 @@
     #include <linux/ledctrl.h>
 #elif __APPLE__
     #include <apple/key.hpp>
+#elif __CYGWIN__
+    #include <windows.h>
+    #include <windows/key.hpp>
 #else
 #endif
 #endif
