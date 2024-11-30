@@ -240,6 +240,10 @@ void Console::Symbol::background(uint8_t val) {
     return Console_Symbol_background$set(symbol, val);
 }
 
+void Console::Symbol::ReverseColors(void) {
+    return Console_Symbol_ReverseColors(symbol);
+}
+
 void* Console::Symbol::Get() {
     return symbol;
 }

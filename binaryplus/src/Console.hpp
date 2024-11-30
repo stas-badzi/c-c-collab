@@ -69,6 +69,8 @@ namespace cpp {
             uint8_t background(void);
             void background(uint8_t val);
 
+            void ReverseColors(void);
+
             Symbol(void);
             Symbol(const Symbol &cp);
             Symbol(void* ptr, bool direct = false);
@@ -76,6 +78,7 @@ namespace cpp {
             ~Symbol();
 
             Symbol operator=(const Symbol &src);
+
 
             void* Get();
 

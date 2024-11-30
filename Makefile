@@ -44,14 +44,14 @@ binname = cpp-factoryrush
 #> name the dynamic library
 filename = factoryrushsharp
 #>source code files
-files = DllExport.cs DllImport.cs FileSystem.cs Terminal.cs Console.cs Utility.cs Exec.cs Control.cs Key.cs
+files = DllExport.cs DllImport.cs FileSystem.cs Terminal.cs Console.cs Utility.cs Exec.cs Control.cs Key.cs linux_keyboard.cs apple_event.cs
 # *******************************
 
 #********* c# binary config *****
 #> name the binary file
 binfile = cs-factoryrush
 #>source code files
-binfiles = Program.cs DllImport.cs FileSystem.cs Terminal.cs Utility.cs Exec.cs
+binfiles = Program.cs DllImport.cs FileSystem.cs Terminal.cs Utility.cs Exec.cs Key.cs linux_keyboard.cs apple_event.cs
 # *******************************
 
 #***** application config ****

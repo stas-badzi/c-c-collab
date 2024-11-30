@@ -41,7 +41,10 @@
     #include <linux/kd.h>
     #include <linux/key.hpp>
     #include <linux/ledctrl.h>
-    #define KEYBOARD_MAX NR_KEYS
+    #define KEYBOARD_MAX NR_KEY
+#elif __APPLE__
+    #include <apple/key.hpp>
+    #define KEYBOARD_MAX 256
 #else
     #define KEYBOARD_MAX 256
 #endif
@@ -151,6 +154,8 @@ namespace cpp {
             Symbol(uint8_t attribute);
 
             ~Symbol(void);
+
+            void ReverseColors(void);
 
             Symbol & operator=(const Symbol &src);
 

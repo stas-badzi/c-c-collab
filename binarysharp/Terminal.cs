@@ -7,6 +7,24 @@ namespace Cpp
 {
     public class Terminal
     {
+        [StructLayout(LayoutKind.Sequential)]  
+        public struct MouseStatus {
+            public bool primary;
+            public bool secondary;
+            public bool middle;
+            public Pair<bool,bool> scroll;
+            public uint x;
+            public uint y; 
+            public MouseStatus() {
+                this.primary = false;
+                this.middle = false;
+                this.secondary = false;
+                this.scroll = new Pair<bool,bool>(false,false);
+                this.x = uint.MaxValue;
+                this.y = uint.MaxValue;
+            }
+        };
+
         public static void Init() {
             CppImp.Console.Init();
         }
@@ -15,72 +33,60 @@ namespace Cpp
             CppImp.Console.Fin();
         }
 
-        public static int HandleKeyboard() {
-            return CppImp.Console.HandleKeyboard();
+        public static void HandleKeyboard() {
+            CppImp.Console.HandleKeyboard();
         }
 
-        public static bool IsKeyDown(int key) {
-            return CppImp.Console.IsKeyDown(key);
+        public static bool IsKeyDown(Key.Enum key) {
+            return CppImp.Console.IsKeyDown((ushort)key);
         }
 
-        public static bool IsKeyToggled(int key) {
-            return CppImp.Console.IsKeyToggled(key);
+        public static ToggledKeys KeysToggled() {
+            var ikt = CppImp.Console.KeysToggled();
+            ToggledKeys ret;
+            ret.CapsLock = Convert.ToBoolean(ikt & 0b1);
+            ret.NumLock = Convert.ToBoolean(ikt & 0b10);
+            ret.ScrollLock = Convert.ToBoolean(ikt & 0b100);
+            return ret;
         }
 
-        public static int KeyPressed() {
-            return CppImp.Console.KeyPressed();
+        public static Key.Enum KeyPressed() {
+            return (Key.Enum)CppImp.Console.KeyPressed();
         }
 
-        public static int KeyReleased() {
-            return CppImp.Console.KeyReleased();
+        public static Key.Enum KeyReleased() {
+            return (Key.Enum)CppImp.Console.KeyReleased();
+        }
+        
+        public static void HandleMouseAndFocus() {
+            CppImp.Console.HandleMouseAndFocus();
         }
 
-        public static ulong[] FillScreen(List<List<Symbol>> symbols) {
-            
-            int ptrsize = IntPtr.Size;
-            int ulngsize = sizeof(ulong);
-            int height = symbols.Count();
-            int width = symbols[0].Count();
+        public static bool IsFocused() {
+            return CppImp.Console.IsFocused();
+        }
 
-            List<IntPtr> list_ptr = new List<IntPtr>(); // Convert 2xlist_Symbol to 2xlist_IntPtr
-            for (int i = 0; i < height; i++)
-            {
-                list_ptr.Add(Exec.AllocateMemory((nuint)(width * ptrsize)));
-                for (int j = 0; j < width; j++)
-                {
-                    Exec.WritePointer<IntPtr>(list_ptr[i], j * ptrsize, symbols[i][j].Get());
-                }
-            }
+        public static unsafe Terminal.MouseStatus GetMouseStatus() {
+            var func = (Terminal.MouseStatus*)CppImp.Console.GetMouseStatus();
+            var ret = *func;
+            Exec.FreeMemory((nint)func);
+            return ret;
+        }
 
-            IntPtr ptr_smb = Exec.AllocateMemory((nuint)(height * ptrsize));
-            
-            for (int i = 0; i < height; i++)
-            {
-                Exec.WritePointer<IntPtr>(ptr_smb, i * ptrsize, list_ptr[i]);
-            }
+        public static Pair<byte, byte> MouseButtonClicked() {
+            IntPtr func = CppImp.Console.MouseButtonClicked();
+            Pair<byte, byte> ret = new(Exec.ReadPointer<byte>(func),Exec.ReadPointer<byte>(func,sizeof(byte)));
+            Exec.FreeMemory(func);
+            return ret;
+        }
 
-            // ptr_ptr_smb = (IntPtr) list_ptr_smb.to_array;
+        public static byte MouseButtonReleased() {
+            return CppImp.Console.MouseButtonReleased();
+        }
 
-            IntPtr ulongints = CppImp.Console.FillScreen(ptr_smb, height, width); // Does the work itself
-
-            Exec.FreeMemory(ptr_smb);
-
-            for (int i = 0; i < height; i++)
-            {
-                Exec.FreeMemory(list_ptr[i]);
-            }
-            
-            // ulongints -> ulongs
-            ulong[] ulongs = new ulong[2];
-
-            ulongs[0] = Convert.ToUInt64(Exec.ReadPointer<Int32>(ulongints, 0));
-            ulongs[1] = Convert.ToUInt64(Exec.ReadPointer<Int32>(ulongints, ulngsize));
-
-            Exec.FreeMemory(ulongints);
-
-            // ???
-
-            return ulongs;
+        public static void FillScreen(List<List<Symbol>> symbols) {
+            nint sym = TypeConvert.TextureToPtr(symbols);
+            CppImp.Console.FillScreen(sym);
         }
 
         public static short GetWindowWidth() {
@@ -91,28 +97,98 @@ namespace Cpp
             return CppImp.Console.GetWindowHeight();
         }
 
+        public static int GetArgC() {
+            return CppImp.Console.GetArgC();
+        }
+
+        public static unsafe string[] GetArgV() {
+            nint* func = (nint*)CppImp.Console.GetArgV();
+            int length = Terminal.GetArgC();
+            string[] ret = new string[length]; // idk, was in c++ => // 4 is max utf bytes in one char
+            for (int i = 0; i < length; i++) {
+                string arg = TypeConvert.PtrToString(func[i]);
+                ret[i] = arg;
+            }
+            Exec.FreeMemory((nint)func);
+            return ret;
+        }
+
+
         public class Symbol
         {
-            ~Symbol() {
-                CppImp.Console.Symbol.Destruct(symbol);
+            private static List<IntPtr> deleteQueue = new List<IntPtr>();
+
+            public static void DestructQueued() {
+                for (var i = 0; i < deleteQueue.Count; i++) {
+                    CppImp.Console.Symbol.Destruct(deleteQueue[i]);
+                }
+                deleteQueue.Clear();
             }
+
+            ~Symbol() {
+                if (this.Armed)
+                    Symbol.deleteQueue.Add(this.symbol);
+            }
+
+            // be carefull not to use the struct after it hes been destructed
+            public void Destruct() {
+                if (this.Armed)
+                    CppImp.Console.Symbol.Destruct(symbol);
+                this.Armed = false;
+            }
+
+            public void ArmPointer() {
+                this.Armed = true;
+            }
+
+            public void UnarmPointer() {
+                this.Armed = false;
+            }
+
+            public unsafe void Set(Symbol cp) {
+                this.Destruct();
+                this.symbol = CppImp.Console.Symbol.Construct(symbol);
+                this.ArmPointer();
+            }
+
+            public void Set(nint sym, bool direct = false) {
+                this.Destruct();
+                this.symbol = direct ? sym : CppImp.Console.Symbol.Construct(sym);
+                this.Armed = !direct;
+            }
+
+            public void Set(char character, byte foreground = 7, byte background = 0) {
+                this.Destruct();
+                this.symbol = CppImp.Console.Symbol.Construct(TypeConvert.Utf8ToUnicode(character),foreground,background);
+                this.ArmPointer();
+            }
+        #if _WIN32
+            public void Set(byte atr = 0x0000) {
+                this.Destruct();
+                this.symbol = CppImp.Console.Symbol.Construct(atr);
+                this.ArmPointer();
+            }
+        #endif
 
             public Symbol() {
                 symbol = CppImp.Console.Symbol.Construct(' ');
+                this.ArmPointer();
             }
 
             public Symbol(Symbol cp) {
                 symbol = CppImp.Console.Symbol.Construct(cp.symbol);
+                this.ArmPointer();
             }
 
             // Direct = do not copy vaues, copy ptr
             public Symbol(nint sym, bool direct = false) {
-                if (direct) symbol = sym;
-                else symbol = CppImp.Console.Symbol.Construct(sym);
+                symbol = direct ? sym : CppImp.Console.Symbol.Construct(sym);
+                Armed = !direct;
             }
         #if _WIN32
             public Symbol(byte atr = 0x0000) {
                 symbol = CppImp.Console.Symbol.Construct(atr);
+                this.ArmPointer();
             }
             public void GetAttribute(byte atr) {
                 CppImp.Console.Symbol.SetAttribute(symbol, atr);
@@ -124,8 +200,12 @@ namespace Cpp
 
             public Symbol(char character, byte foreground = 7, byte background = 0) {
                 symbol = CppImp.Console.Symbol.Construct(TypeConvert.Utf8ToUnicode(character),foreground,background);
+                this.ArmPointer();
             }
 
+            // to edit a Symbol (Console::Symbol too, from;)
+                // too.Destruct(); too = new Symbol(from);
+           
             public char character() {
                 return TypeConvert.UnicodeToUtf8(CppImp.Console.Symbol.character(symbol));
             }
@@ -154,11 +234,12 @@ namespace Cpp
                 CsImp.Terminal.Symbol.ReverseColors(symbol);
             }
 
-            public IntPtr Get() {
+            public nint Get() {
                 return symbol;
             }
             
-            private readonly IntPtr symbol;
+            private IntPtr symbol;
+            private Boolean Armed;
         }
     }    
 }
