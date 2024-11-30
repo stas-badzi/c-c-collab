@@ -51,7 +51,7 @@ jobs:
           pacman -S make < yes.in
           pacman -S zip < yes.in
           (echo && echo && echo Y) > yes.in 
-          pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain < yes.in
+          pacman -S --needed base-devel mingw-w64-clang-x86_64-toolchain < yes.in
           rm yes.in
       - name: Compile code
         shell: msys2 {0}
@@ -60,7 +60,7 @@ jobs:
           CXX: g++
         run: |
           export PATH="/ucrt64/bin:$PATH"
-          make release sudo=0
+          make release sudo=0 c-compiler=clang cpp-compiler=clang++
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -141,7 +141,7 @@ jobs:
           path: bin/Cs.*.zip
   
 #  build-windows:
-#    name: Build dll using clang and exe using g++ on Windows
+#    name: Build using windows clang-cl
 #    needs: compile-cs-windows
 #    runs-on: windows-latest
 #    steps:
@@ -193,13 +193,18 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
+      - name: Set up Clang
+        uses: egor-tensin/setup-clang@v1
+        with:
+          version: latest
+          platform: x64
       - name: Compile code
         shell: bash
         env:
           CC: gcc
           CXX: g++
         run: |
-          make release sudo=0
+          make release sudo=0 c-compiler=clang cpp-compiler=clang++
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -220,7 +225,7 @@ jobs:
       - name: Compile code
         shell: bash
         run: |
-          make release sudo=0
+          make release sudo=0 c-compiler=clang cpp-compiler=clang++
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -242,13 +247,15 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
+      - name: Set up Clang
+        uses: stellar-aria/llvm-embedded-toolchain-for-arm-action@latest
       - name: Compile code
         shell: bash
         env:
           CC: gcc
           CXX: g++
         run: |
-          make release sudo=0
+          make release sudo=0 cpp-compiler=clang++ c-compiler=clang
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -269,7 +276,7 @@ jobs:
       - name: Compile code
         shell: bash
         run: |
-          make release sudo=0
+          make release sudo=0 cpp-compiler=clang++ c-compiler=clang
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
