@@ -18,7 +18,7 @@ namespace CsImp {
         public static extern ulong Add(uint arg1, byte arg2);
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_DoSomething", CharSet = CharSet.Unicode)]
-        public static extern int DoSomething(bool arg1, int arg2);
+        public static extern uint DoSomething(bool arg1, uint arg2);
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_DoSomeThings", CharSet = CharSet.Unicode)]
         public static extern nint DoSomeThings(nint arg1, nint arg2);
@@ -206,22 +206,37 @@ namespace CppImp {
         public static extern void Fin();
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_HandleKeyBoard", CharSet = CharSet.Unicode)]
-        public static extern int HandleKeyboard();
+        public static extern void HandleKeyboard();
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_IsKeyDown", CharSet = CharSet.Unicode)]
-        public static extern bool IsKeyDown(int arg1);
+        public static extern bool IsKeyDown(ushort arg1);
 
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_IsKeyToggled", CharSet = CharSet.Unicode)]
-        public static extern bool IsKeyToggled(int arg1);
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_KeysToggled", CharSet = CharSet.Unicode)]
+        public static extern byte KeysToggled();
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_KeyPressed", CharSet = CharSet.Unicode)]
-        public static extern int KeyPressed();
+        public static extern ushort KeyPressed();
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_KeyReleased", CharSet = CharSet.Unicode)]
-        public static extern int KeyReleased();
+        public static extern ushort KeyReleased();
 
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_FillScreen$ret2", CharSet = CharSet.Unicode)]
-        public static extern IntPtr FillScreen(IntPtr symbols, int height, int width);
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_HandleMouseAndFocus", CharSet = CharSet.Unicode)]
+        public static extern void HandleMouseAndFocus();
+
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_GetMouseStatus", CharSet = CharSet.Unicode)]
+        public static extern IntPtr GetMouseStatus();
+
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_MouseButtonClicked$ret2", CharSet = CharSet.Unicode)]
+        public static extern IntPtr MouseButtonClicked();
+
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_MouseButtonReleased", CharSet = CharSet.Unicode)]
+        public static extern byte MouseButtonReleased();
+
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_IsFocused", CharSet = CharSet.Unicode)]
+        public static extern bool IsFocused();
+
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_FillScreen", CharSet = CharSet.Unicode)]
+        public static extern void FillScreen(IntPtr arg1);
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_GetWindowWidth", CharSet = CharSet.Unicode)]
         public static extern short GetWindowWidth();
@@ -229,11 +244,17 @@ namespace CppImp {
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_GetWindowHeight", CharSet = CharSet.Unicode)]
         public static extern short GetWindowHeight();
 
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_GetArgC", CharSet = CharSet.Unicode)]
+        public static extern int GetArgC();
+
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_GetArgV", CharSet = CharSet.Unicode)]
+        public static extern IntPtr GetArgV();
+
         public struct Symbol {
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_Construct$smb", CharSet = CharSet.Unicode)]
             public static extern IntPtr Construct(IntPtr smb);
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_Construct$cfb", CharSet = CharSet.Unicode)]
-            public static extern IntPtr Construct(Int32 character, byte foreground = 7, byte background = 0);
+            public static extern IntPtr Construct(UInt32 character, byte foreground = 7, byte background = 0);
 
         #if _WIN32
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_Construct$atr", CharSet = CharSet.Unicode)]
@@ -247,18 +268,18 @@ namespace CppImp {
         #endif
 
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_character$set", CharSet = CharSet.Unicode)]
-            public static extern void character(IntPtr smb, Int32 character);
+            public static extern void character(IntPtr smb, UInt32 character);
 
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_character$get", CharSet = CharSet.Unicode)]
-            public static extern Int32 character(IntPtr smb);
+            public static extern UInt32 character(IntPtr smb);
 
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_foreground$set", CharSet = CharSet.Unicode)]
             public static extern void foreground(IntPtr smb, byte foreground);
 
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_foreground$get", CharSet = CharSet.Unicode)]
             public static extern byte foreground(IntPtr smb);
-
-            [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_background$get", CharSet = CharSet.Unicode)]
+//                                                                                                                    $get(fu$ed)
+            [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_background$set", CharSet = CharSet.Unicode)]
             public static extern void background(IntPtr smb, byte background);
 
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_background$get", CharSet = CharSet.Unicode)]
@@ -270,6 +291,8 @@ namespace CppImp {
             [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_operator$eq", CharSet = CharSet.Unicode)]
             public static extern IntPtr operator_eq(IntPtr cp, IntPtr src);
 
+            [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Symbol_Inspect", CharSet = CharSet.Unicode)]
+            public static extern void Inspect(IntPtr sym);
         }
     }
 }

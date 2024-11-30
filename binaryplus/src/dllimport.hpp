@@ -16,6 +16,7 @@
 #include "defines.h"
 
 namespace cppimp {
+
     libimport void Console_Init(void);
 
     libimport void Console_Fin(void);
@@ -180,6 +181,10 @@ namespace cppimp {
         libimport void System_WritePointer$bool$ofs(nint arg1, int32_t arg3, bool arg2);
 
         libimport void System_WritePointer$nint$ofs(nint arg1, int32_t arg3, nint arg2);
+
+    // actually from c# but who cares
+        libimport nint Console_Symbol_ReverseColors(nint sym);
+    //
 
 } // namespace CppImp
 

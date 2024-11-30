@@ -113,6 +113,10 @@ namespace cppimp {
             return out;
         }
     // ~Symbol
+
+    // actually from c# but who cares
+        libimport void* Console_Symbol_ReverseColors(cpp::Console::Symbol* sym);
+    //
 }
 
 namespace csimp {

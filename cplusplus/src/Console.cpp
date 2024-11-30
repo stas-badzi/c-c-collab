@@ -1435,6 +1435,10 @@ Console::Symbol::~Symbol(void) {
     this->background = -1;
 }
 
+void Console::Symbol::ReverseColors(void) {
+    Console_Symbol_ReverseColors(this);
+}
+
 Console::Symbol & Console::Symbol::operator=(const Console::Symbol & src) {
     if (this == &src) { return *this; }
     this->character = src.character;
