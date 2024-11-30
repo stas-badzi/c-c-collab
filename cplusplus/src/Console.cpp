@@ -704,6 +704,14 @@ using namespace std::chrono;
 
     void Console::Init(void) {
         if (!initialised) {
+            char path[256];
+            auto length = readlink( "/proc/self/exe" , path, 256);
+            string initpth = path;
+            while (initpth.back() != '/') initpth.pop_back();
+            initpth.append("../temp/initialized.dat");
+            FILE *initfl = fopen(initpth.c_str(), "w");
+            fprintf(initfl, "%d", 1);
+            fclose(initfl);
 
             Console::emulator = !(getenv("DISPLAY") == nullptr);
             
@@ -727,10 +735,25 @@ using namespace std::chrono;
             if (fd < 0) {
                 string command = "sudo";
                 for (int i = 0; i < Console::argc; i++) { command.push_back(' '); command.append(argv[i]); }
-                int code =system(command.c_str());
-                char x[1];
-                read(STDIN_FILENO, x, 1);
-                fwrite("\033[?1049l", sizeof(char), 8, stderr);
+
+                initfl = fopen(initpth.c_str(), "w");
+                fprintf(initfl, "%d", 0);
+                fclose(initfl);
+
+                int code = system(command.c_str());
+
+                initfl = fopen(initpth.c_str(), "w");
+                int isinit; 
+                auto ret = fscanf(initfl, "%d", &isinit);
+                fclose(initfl);
+
+                if (!isinit) {
+                    char x[1];
+                    read(STDIN_FILENO, x, 1);
+                    fwrite("\033[?1049l", sizeof(char), 8, stderr);
+                }
+                initpth = "rm -f " + initpth;
+                system(initpth.c_str());
                 exit(code);
                 //string error = GenerateEscapeSequence(1,16) + "\nCouldn't get a file descriptor referring to the console.\nCheck if you have acces to /dev/tty and /dev/console.\n" + GenerateEscapeSequence(4,16) + "\n\ttry: " + GenerateEscapeSequence(6,16) + command.c_str() + "\033[0m\n";
                 //throw(runtime_error(error.c_str()));
@@ -742,8 +765,6 @@ using namespace std::chrono;
 
             close(fd);
 
-            char path[256];
-            auto length = readlink( "/proc/self/exe" , path, 256);
             string command = path;
             while (command.back() != '/') command.pop_back();
             command.append("../share/factoryrush/bin/setkbdmode.bin ");
@@ -753,12 +774,8 @@ using namespace std::chrono;
                 throw("setkbdmode.bin error");
             }
 
-            getfd(0);
+            fd = getfd(0);
             if (fd < 0) {
-                string command = "sudo";
-                for (int i = 0; i < Console::argc; i++) { command.push_back(' '); command.append(argv[i]); }
-                exit(system(command.c_str()));
-                
                 string error = GenerateEscapeSequence(1,16) + "\nCouldn't get a file descriptor referring to the console.\nCheck if you have acces to /dev/tty and /dev/console.\n" + GenerateEscapeSequence(4,16) + "\n\ttry: " + GenerateEscapeSequence(6,16) + command.c_str() + "\033[0m\n";
                 throw(runtime_error(error.c_str()));
             }

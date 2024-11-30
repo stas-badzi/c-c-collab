@@ -121,7 +121,14 @@ int main(void) {
 
         Console::HandleMouseAndFocus();
         auto mouse = Console::GetMouseStatus();
-        if (mouse.x > 0 && mouse.y == 0 && mouse.x < 7)  { for (int i = 1; i < 7; ++i) menu[0][i].ReverseColors(); if (mouse.primary)  return EXIT_SUCCESS; }
+        if (mouse.x > 0 && mouse.y == 0 && mouse.x < 7) {
+            for (int i = 1; i < 7; ++i) menu[0][i].ReverseColors();
+            if (mouse.primary) {
+                Control::CleanMemory();
+                Console::Fin();
+                return EXIT_SUCCESS;
+            }
+        }
 
         FileSystem::DrawTextureToScreen(0,0,menu,screen);
 
