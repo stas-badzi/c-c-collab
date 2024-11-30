@@ -15,7 +15,7 @@ release = FactoryRush
 
 #******** c++ config ************
 #> set default compilers
-defcompcxx = cpp
+defcompcxx = c++
 defcompc = cc
 cflags = -Wno-dollar-in-identifier-extension -Wno-unused-command-line-argument
 cxxflags = -Wno-dollar-in-identifier-extension -Wno-unused-command-line-argument
