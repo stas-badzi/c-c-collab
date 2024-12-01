@@ -279,7 +279,7 @@ admin = sudo
 #
 else
 # msys mingw and others
-binflags = -municode
+binflags =
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys
 exec = $(shell cygpath -w /msys2.exe)
@@ -324,7 +324,7 @@ else
 ifeq ($(shell uname -s),Darwin)
 #macos
 nulldir =  /dev/null
-binflags = 
+binflags = -lcuchar
 admin = sudo
 staticgen = ar -rcs$(space)
 run = ./
@@ -480,7 +480,7 @@ else
 	@rm -f binaryplus/obj/*
 endif
 
-resources: source/setkbdmode.c source/getfd.c source/getfd.h source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h
+resources: source/setkbdmode.c source/getfd.c source/getfd.h source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp
 
 	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(staticgen)assets/$(prefix)globals.$(static) objects/globals.o
@@ -497,6 +497,11 @@ ifeq ($(copylibs),1)
 else
 	@mkdir -p binaryplus/bin/../share/factoryrush/bin
 	@cp assets/setkbdmode.$(binary) binaryplus/share/factoryrush/bin
+endif
+else
+ifeq ($(shell uname -s),Darwin)
+	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wextra $(cflags) $(cdb) -Isource -std=c++2b && mv *.o objects/
+	$(staticgen)assets/$(prefix)applecuchar.$(static) objects/cuchar.o
 endif
 endif
 
@@ -554,7 +559,7 @@ ifeq ($(binary),exe)
 else
 ifeq ($(shell uname -s),Darwin)
 #macos
-	cd cplusplus && $(cpp-compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) -L../assets -L$(flibdir) -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) -L../assets -L$(flibdir) -lcuchar -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
 #
 else
 #linux and similar
