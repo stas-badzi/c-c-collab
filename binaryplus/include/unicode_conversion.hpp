@@ -97,10 +97,10 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
     }
     
     inline unichar* Utf8StringToUnicode (utfcstr utf8s) {
-        unichar* out = (unichar*)__dllalloc(sizeof(unichar) * (strlen(utf8s) + 1));
+        unichar* out = (unichar*)__dllalloc(sizeof(unichar) * (wstrlen(utf8s) + 1));
         size_t offset;
-        for (size_t i = 0; i < strlen(utf8s); i++) out[i] = utfs[i];
-        out[strlen(utf8s)] = 0;
+        for (size_t i = 0; i < wstrlen(utf8s); i++) out[i] = utfs[i];
+        out[wstrlen(utf8s)] = 0;
         return out;
     }
 
