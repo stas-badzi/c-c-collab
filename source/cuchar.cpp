@@ -14,7 +14,7 @@ namespace std {
         */
 
         bool complete = false;
-        int csize = 0;
+        size_t csize = 0;
         char32_t out = 0;
         size_t i = 0;
         

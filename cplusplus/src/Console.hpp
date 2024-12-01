@@ -1,9 +1,9 @@
 #pragma once
 
-#include <utility>
 #include <vector>
 #include <array>
 #include <bitset>
+#include <utility>
 #include <clang_constexpr.h>
 
 #ifdef __APPLE__
