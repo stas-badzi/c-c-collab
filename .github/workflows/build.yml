@@ -228,7 +228,6 @@ jobs:
           CXX: g++
         run: |
           export PATH="$(brew --prefix llvm@18)/bin:$PATH"
-          export CPLUS_INCLUDE_PATH="${CPLUS_INCLUDE_PATH:+${CPLUS_INCLUDE_PATH}:}/Library/Developer/CommandLineTools/SDKs/MacOSX15.sdk/usr/include/c++/v1"
           make cs csbin sudo=0 cpp-compiler=clang++ c-compiler=clang
       - name: Set up Clang
         uses: stellar-aria/llvm-embedded-toolchain-for-arm-action@latest
@@ -238,6 +237,7 @@ jobs:
           CC: gcc
           CXX: g++
         run: |
+          export CPLUS_INCLUDE_PATH="${CPLUS_INCLUDE_PATH:+${CPLUS_INCLUDE_PATH}:}/Library/Developer/CommandLineTools/SDKs/MacOSX15.sdk/usr/include/c++/v1"
           make release sudo=0 cpp-compiler=clang++ c-compiler=clang
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
