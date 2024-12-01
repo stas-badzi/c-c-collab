@@ -1,4 +1,3 @@
-#include <bits/c++config.h>
 #include <cwchar>
 #include <cerrno>
 #include <cstdlib>
