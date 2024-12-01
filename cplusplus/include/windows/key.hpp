@@ -1,7 +1,7 @@
 #pragma once
 
 //#include <winuser.h>
-#include <windows.h>
+#include <winuser.h>
 #include <limits>
 
 template<typename EnumType, EnumType UNDEFINED, EnumType... Values>
@@ -777,7 +777,7 @@ struct Key {
         LAUNCH_MEDIA_SELECT = VK_LAUNCH_MEDIA_SELECT, /* Select Media */
         LAUNCH_APP1 = VK_LAUNCH_APP1, /* Launch Application 1 */
         LAUNCH_APP2 = VK_LAUNCH_APP2, /* Launch Application 2 */
-        MISC = VK_OEM_8 /* Unknown Miscellaneous Character [VK_OEM_8] */
+        MISC = VK_OEM_8, /* Unknown Miscellaneous Character [VK_OEM_8] */
         PROCCESS = VK_PROCESSKEY, /* Process Key */
         ATTN = VK_ATTN, /* Attn Key */
         CRSEL = VK_CRSEL, /* CrSel Key */
@@ -790,7 +790,7 @@ struct Key {
 
         // Other (Not documented)
 
-        KPEQUAL = VK_OEM_NEC_EQUAL /* numpad = */
+        KPEQUAL = VK_OEM_NEC_EQUAL, /* numpad = */
         DICTIONARY = VK_OEM_FJ_JISHO, /* Dictionary key */
         UNREGISTER = VK_OEM_FJ_MASSHOU, /* Unregister word key */
         REGISTERE = VK_OEM_FJ_TOUROKU, /* Register word key */
