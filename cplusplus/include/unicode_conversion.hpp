@@ -79,8 +79,6 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
     char* temp = new char[4];
     std::size_t len = std::c32rtomb(temp, utf32, &state);
     delete[] temp;
-    if (len == 0) return std::string();
-    else if (len == (size_t)-1) exit(51);
     std::string mbstr(len,' ');
     std::c32rtomb(&mbstr[0], utf32, &state);
     return mbstr;
@@ -90,7 +88,7 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
 #ifdef _WIN32
     inline utfstr WStringToNative(std::wstring wstr) { return wstr; }
     inline utfchar WCharToNative(wchar_t wchar) { return wchar; }
-    inline std::wstring NativeToWString(utfcstr utfstr) { return utfstr(utfstr); }
+    inline std::wstring NativeToWString(utfcstr str) { return utfstr(str); }
     inline wchar_t NativeToWChar(utfchar utfchar) { return utfchar; }
     // don't use this function anymore
     inline utfchar ReadUtfChar(utfcstr str, size_t offset = 0, size_t* bytes_read = nullptr) {

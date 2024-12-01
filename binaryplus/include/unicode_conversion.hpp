@@ -88,7 +88,7 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
 #ifdef _WIN32
     inline utfstr WStringToNative(std::wstring wstr) { return wstr; }
     inline utfchar WCharToNative(wchar_t wchar) { return wchar; }
-    inline std::wstring NativeToWString(utfcstr utfstr) { return utfstr(utfstr); }
+    inline std::wstring NativeToWString(utfcstr str) { return utfstr(str); }
     inline wchar_t NativeToWChar(utfchar utfchar) { return utfchar; }
     // don't use this function anymore
     inline utfchar ReadUtfChar(utfcstr str, size_t offset = 0, size_t* bytes_read = nullptr) {
