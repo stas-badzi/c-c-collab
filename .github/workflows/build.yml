@@ -55,7 +55,7 @@ jobs:
           CC: gcc
           CXX: g++
         run: |
-          export PATH="/clang64/bin/:$PATH"
+          export PATH="/clang64/bin:$PATH"
           make release sudo=0 c-compiler=clang cpp-compiler=clang++
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
@@ -227,6 +227,7 @@ jobs:
           CC: gcc
           CXX: g++
         run: |
+          export PATH="$(brew --prefix llvm@18)/bin:$PATH"
           make cs csbin sudo=0 cpp-compiler=clang++ c-compiler=clang
       - name: Set up Clang
         uses: stellar-aria/llvm-embedded-toolchain-for-arm-action@latest
