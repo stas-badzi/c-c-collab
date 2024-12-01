@@ -228,6 +228,7 @@ jobs:
           CXX: g++
         run: |
           export PATH="$(brew --prefix llvm@18)/bin:$PATH"
+          echo | clang -E -Wp,-v -
           make cs csbin sudo=0 cpp-compiler=clang++ c-compiler=clang
       - name: Set up Clang
         uses: stellar-aria/llvm-embedded-toolchain-for-arm-action@latest
