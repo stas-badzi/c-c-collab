@@ -213,7 +213,7 @@ jobs:
   
   build-macos-arm64:
     name: Build program using Arm64 MacOS
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
