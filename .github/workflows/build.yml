@@ -230,6 +230,9 @@ jobs:
           export PATH="$(brew --prefix llvm@18)/bin:$PATH"
           echo | clang -E -Wp,-v -
           ls -l /opt/homebrew/Cellar/llvm@18/18.1.8/lib/clang/18/include
+          ls -l /Library/Developer/CommandLineTools/SDKs/MacOSX15.sdk/usr/include
+          ls -l /Library/Developer/CommandLineTools/SDKs/MacOSX15.sdk/usr/include/c++
+          ls -l /Library/Developer/CommandLineTools/SDKs/MacOSX15.sdk/usr/include/c++/v1
           make cs csbin sudo=0 cpp-compiler=clang++ c-compiler=clang
       - name: Set up Clang
         uses: stellar-aria/llvm-embedded-toolchain-for-arm-action@latest

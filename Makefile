@@ -500,7 +500,7 @@ else
 endif
 else
 ifeq ($(shell uname -s),Darwin)
-	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wextra $(cflags) $(cdb) -Isource -std=c++2b && mv *.o objects/
+	$(cpp-compiler) -c source/cuchar.cpp -Wno-unused-parameter -pedantic -Wextra $(cflags) $(cdb) -Isource -std=c++2b && mv *.o objects/
 	$(staticgen)assets/$(prefix)applecuchar.$(static) objects/cuchar.o
 endif
 endif
