@@ -16,7 +16,7 @@
     #include <codecvt>
     #include <bitset>
     #include <exception>
-    #include <cuchar>
+    #include <cuchar.hpp>
 #endif
 
 namespace uniconv {
