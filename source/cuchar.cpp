@@ -21,23 +21,23 @@ namespace std {
         while (i < __n) {
             if (i) {
                 if (out <= 0x7f || out >= 0xc0) { errno = EILSEQ; return -1; }
-                out |= (__s[i] & 0x7f) << (6 * (csize-i-1));
+                out |= (__s[i] & (char)0x7f) << (6 * (csize-i-1));
             } else {
                 if (!__s[i]) {
                     __pc32[i] = U'\0';
                     return 0;
-                } else if (__s[i] <= 0x7f) {
+                } else if (__s[i] <= (char)0x7f) {
                     out |= __s[i];
                     csize = 1;
-                } else if (__s[i] >= 0xc2 && __s[i] <= 0xdf) {
+                } else if (__s[i] >= (char)0xc2 && __s[i] <= (char)0xdf) {
                     csize = 2;
-                    out |= (__s[i] & 0x1f) << 6;
-                } else if (__s[i] >= 0xe0 && __s[i] <= 0xef) {
+                    out |= (__s[i] & (char)0x1f) << 6;
+                } else if (__s[i] >= (char)0xe0 && __s[i] <= (char)0xef) {
                     csize = 3;
-                    out |= (__s[i] & 0x0f) << 12;
-                } else if (__s[i] >= 0xf0 && __s[i] <= 0xf4) {
+                    out |= (__s[i] & (char)0x0f) << 12;
+                } else if (__s[i] >= (char)0xf0 && __s[i] <= (char)0xf4) {
                     csize = 4;
-                    out |= (__s[i] & 0x07) << 18;
+                    out |= (__s[i] & (char)0x07) << 18;
                 } else { errno = EILSEQ; return -1; }
             }
             if (csize == ++i) {
