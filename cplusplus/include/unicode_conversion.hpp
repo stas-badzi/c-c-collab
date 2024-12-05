@@ -98,7 +98,7 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
     inline unichar* Utf8StringToUnicode (utfcstr utf8s) {
         unichar* out = (unichar*)__dllalloc(sizeof(unichar) * (wcslen(utf8s) + 1));
         size_t offset;
-        for (size_t i = 0; i < wcslen(utf8s); i++) out[i] = utfs[i];
+        for (size_t i = 0; i < wcslen(utf8s); i++) out[i] = utf8s[i];
         out[wcslen(utf8s)] = 0;
         return out;
     }
@@ -106,7 +106,7 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
     inline utfstr UnicodeToUtf8String (unichar* unicodes) {
         utfstr out;
         for (int i = 0; unicodes[i] != 0; ++i) {
-            out.append(unicodes[i]);
+            out.push_back(unicodes[i]);
         }
         __dllfree(unicodes);
         return out;

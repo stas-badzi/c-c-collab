@@ -16,7 +16,7 @@ namespace Utility {
         public enum Enum : ushort {
             NONE = 0xffff, /* specified Enum is not defined */
         #if _WIN32
-            NUL , /* ␀ */
+            NUL = 0x0, /* ␀ */
             CTRL_A , /* Ctrl + A */
             CTRL_B , /* Ctrl + B */
             CTRL_C , /* Ctrl + C */
@@ -792,35 +792,7 @@ namespace Utility {
             COPY = VK_OEM_COPY,
             AUTO = VK_OEM_AUTO,
             ENLW = VK_OEM_ENLW,
-            BACKTAB = VK_OEM_BACKTAB,
-
-            // Gamepad
-
-            GAMEPAD_A = VK_GAMEPAD_A, /* Gamepad A */
-            GAMEPAD_B = VK_GAMEPAD_B, /* Gamepad B */
-            GAMEPAD_X = VK_GAMEPAD_X, /* Gamepad X */
-            GAMEPAD_Y = VK_GAMEPAD_Y, /* Gamepad Y */
-            GAMEPAD_RIGHT_SHOULDER = VK_GAMEPAD_RIGHT_SHOULDER, /* Gamepad Right Shoulder */
-            GAMEPAD_LEFT_SHOULDER = VK_GAMEPAD_LEFT_SHOULDER, /* Gamepad Left Shoulder */
-            GAMEPAD_LEFT_TRIGGER = VK_GAMEPAD_LEFT_TRIGGER, /* Gamepad Left Trigger */
-            GAMEPAD_RIGHT_TRIGGER = VK_GAMEPAD_RIGHT_TRIGGER, /* Gamepad Right Trigger */
-            GAMEPAD_DPAD_UP = VK_GAMEPAD_DPAD_UP, /* Gamepad Dpad Up */
-            GAMEPAD_DPAD_DOWN = VK_GAMEPAD_DPAD_DOWN, /* Gamepad Dpad Down */
-            GAMEPAD_DPAD_LEFT = VK_GAMEPAD_DPAD_LEFT, /* Gamepad Dpad Left */
-            GAMEPAD_DPAD_RIGHT = VK_GAMEPAD_DPAD_RIGHT, /* Gamepad Dpad Right */
-            GAMEPAD_MENU = VK_GAMEPAD_MENU, /* Gamepad Menu */
-            GAMEPAD_VIEW = VK_GAMEPAD_VIEW, /* Gamepad View */
-            GAMEPAD_LEFT_THUMBSTICK_BUTTON = VK_GAMEPAD_LEFT_THUMBSTICK_BUTTON, /* Gamepad Left Thumbstick Button */
-            GAMEPAD_RIGHT_THUMBSTICK_BUTTON = VK_GAMEPAD_RIGHT_THUMBSTICK_BUTTON, /* Gamepad Right Thumbstick Button */
-            GAMEPAD_LEFT_THUMBSTICK_UP = VK_GAMEPAD_LEFT_THUMBSTICK_UP, /* Gamepad Left Thumbstick Up */
-            GAMEPAD_LEFT_THUMBSTICK_DOWN = VK_GAMEPAD_LEFT_THUMBSTICK_DOWN, /* Gamepad Left Thumbstick Down */
-            GAMEPAD_LEFT_THUMBSTICK_RIGHT = VK_GAMEPAD_LEFT_THUMBSTICK_RIGHT, /* Gamepad Left Thumbstick Right */
-            GAMEPAD_LEFT_THUMBSTICK_LEFT = VK_GAMEPAD_LEFT_THUMBSTICK_LEFT, /* Gamepad Left Thumbstick Left */
-            GAMEPAD_RIGHT_THUMBSTICK_UP = VK_GAMEPAD_RIGHT_THUMBSTICK_UP, /* Gamepad Right Thumbstick Up */
-            GAMEPAD_RIGHT_THUMBSTICK_DOWN = VK_GAMEPAD_RIGHT_THUMBSTICK_DOWN, /* Gamepad Right Thumbstick Down */
-            GAMEPAD_RIGHT_THUMBSTICK_RIGHT = VK_GAMEPAD_RIGHT_THUMBSTICK_RIGHT, /* Gamepad Right Thumbstick Right */
-            GAMEPAD_RIGHT_THUMBSTICK_LEFT = VK_GAMEPAD_RIGHT_THUMBSTICK_LEFT, /* Gamepad Right Thumbstick Left */
-
+            BACKTAB = VK_OEM_BACKTAB
         #elif __linux__
             // KT_LATIN is always 0 so it's just the values
             NUL = 0, /* ␀ */
@@ -1599,35 +1571,7 @@ namespace Utility {
             COPY , 
             AUTO , 
             ENLW , 
-            BACKTAB , 
-
-            // Gamepad
-
-            GAMEPAD_A , /* Gamepad A */
-            GAMEPAD_B , /* Gamepad B */
-            GAMEPAD_X , /* Gamepad X */
-            GAMEPAD_Y , /* Gamepad Y */
-            GAMEPAD_RIGHT_SHOULDER , /* Gamepad Right Shoulder */
-            GAMEPAD_LEFT_SHOULDER , /* Gamepad Left Shoulder */
-            GAMEPAD_LEFT_TRIGGER , /* Gamepad Left Trigger */
-            GAMEPAD_RIGHT_TRIGGER , /* Gamepad Right Trigger */
-            GAMEPAD_DPAD_UP , /* Gamepad Dpad Up */
-            GAMEPAD_DPAD_DOWN , /* Gamepad Dpad Down */
-            GAMEPAD_DPAD_LEFT , /* Gamepad Dpad Left */
-            GAMEPAD_DPAD_RIGHT , /* Gamepad Dpad Right */
-            GAMEPAD_MENU , /* Gamepad Menu */
-            GAMEPAD_VIEW , /* Gamepad View */
-            GAMEPAD_LEFT_THUMBSTICK_BUTTON , /* Gamepad Left Thumbstick Button */
-            GAMEPAD_RIGHT_THUMBSTICK_BUTTON , /* Gamepad Right Thumbstick Button */
-            GAMEPAD_LEFT_THUMBSTICK_UP , /* Gamepad Left Thumbstick Up */
-            GAMEPAD_LEFT_THUMBSTICK_DOWN , /* Gamepad Left Thumbstick Down */
-            GAMEPAD_LEFT_THUMBSTICK_RIGHT , /* Gamepad Left Thumbstick Right */
-            GAMEPAD_LEFT_THUMBSTICK_LEFT , /* Gamepad Left Thumbstick Left */
-            GAMEPAD_RIGHT_THUMBSTICK_UP , /* Gamepad Right Thumbstick Up */
-            GAMEPAD_RIGHT_THUMBSTICK_DOWN , /* Gamepad Right Thumbstick Down */
-            GAMEPAD_RIGHT_THUMBSTICK_RIGHT , /* Gamepad Right Thumbstick Right */
-            GAMEPAD_RIGHT_THUMBSTICK_LEFT /* Gamepad Right Thumbstick Left */
-
+            BACKTAB
         #elif __APPLE__
             NUL = 0, /* ␀ */
             HOLE = 0xff
