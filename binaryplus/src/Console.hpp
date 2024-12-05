@@ -4,9 +4,11 @@
 #include <vector>
 #include <cstdint>
 #include <unicode_conversion.hpp>
+#include <sstream>
 #ifdef _WIN32
     #include <windows.h>
     #include <windows/key.hpp>
+    #include <iostream>
 #elif __linux__
     #include <linux/key.hpp>
 #else
@@ -110,4 +112,5 @@ namespace cpp {
         static std::pair<uint8_t,uint8_t> MouseButtonClicked(void); // returns button ID and whitch consecutive click was it
         static uint8_t MouseButtonReleased(void); // returns button ID
     };
+    extern std::istream& gin;
 }

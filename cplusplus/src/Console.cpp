@@ -1,6 +1,15 @@
 #include "Console.hpp"
 #include "dllimport.hpp"
 
+namespace cpp {
+    __attribute__((visibility("default"))) std::istream& gin =
+#if defined(__linux__) || defined(__APPLE__)
+    *((std::istream*)&Console::in);
+#else
+    std::cin;
+#endif
+}
+
 using namespace cpp;
 using namespace uniconv;
 using namespace std;
@@ -960,31 +969,39 @@ using namespace std::chrono;
 
         while (bytes > 0) {
             buf_it = 0;
-            if (GetChar() != '\033') { --bytes; buf[0] = '\0'; continue; }
-            --bytes;
-            if (!bytes) return;
-            if (GetChar() != '[') { --bytes; buf[0] = '\0'; continue; }
-            --bytes;
-            if (!bytes) return;
-            switch (GetChar()) {
+            char c = GetChar(); --bytes;
+            if (c != '\033') {
+                in.clear();
+                Console::in.str(Console::in.str()+c);
+                buf[0] = '\0';
+                continue;
+            } else if (bytes == 0) break;
+            c = GetChar(); --bytes;
+            if (c != '[') {
+                in.clear();
+                Console::in.str(Console::in.str()+'\033'+c);
+                buf[0] = '\0';
+                continue;
+            } else if (bytes == 0) break;
+            c = GetChar(); --bytes;
+            switch (c) {
             case 'I':
                 //fprintf(stderr, "gained focus\n");
                 Console::focused = true;
-                break;
+                buf[0] = '\0';
+                continue;
             case 'O':
                 //fprintf(stderr, "lost focus\n");
                 Console::focused = false;
-                break;
+                buf[0] = '\0';
+                continue;
             case '<':
-                //fprintf(stdout, "\\e[<");
-                --bytes;
                 int pos = 0;
                 int val[3] = {0};
                 int it = 2;
                 while (++it) {
                     if (bytes == 0) return;
                     char byte = GetChar(); --bytes;
-                    //fprintf(stdout, "%c", byte);
 
                     if (byte == ';') { ++pos; continue; }
                     
@@ -1054,13 +1071,13 @@ using namespace std::chrono;
                     Console::mouse_status.scroll = {1,false};
                     break;
                 }
-                ++bytes;
-                break;
+                buf[0] = '\0';
+                continue;
             }
-            --bytes; buf[0] = '\0';
+            in.clear();
+            Console::in.str(Console::in.str()+'\033'+'['+c);
+            buf[0] = '\0';
         }
-        
-
         
     }
 
@@ -1341,6 +1358,7 @@ uint8_t Console::last_mouse_button = -1;
 uint8_t Console::last_mouse_combo = 0;
 bool Console::focused = true;
 unsigned short Console::double_click_max = 500;
+istringstream Console::in = istringstream(std::ios_base::ate|std::ios_base::in);
 
 bool Console::IsKeyDown(Key::Enum key) {
     for (auto i = 0; i < KEYBOARD_MAX; ++i)

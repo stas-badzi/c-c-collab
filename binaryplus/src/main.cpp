@@ -25,6 +25,9 @@ int main(void) {
     
 
     chrono::time_point<chrono::high_resolution_clock> start = chrono::high_resolution_clock::now();
+    long double avg = 0;
+    long double old_avg = -1;
+    unsigned long long counter = 0;
     //auto last_mouse = Console::GetMouseStatus();
     //while (true){
     /*
@@ -132,14 +135,28 @@ int main(void) {
 
         FileSystem::DrawTextureToScreen(0,0,menu,screen);
 
+        auto enlapsed_time = chrono::duration_cast<std::chrono::duration<long double, std::milli>>(chrono::high_resolution_clock::now() - start).count();
+        wstringstream wstr;
+        if (counter == INT64_MAX) counter = 0;
+        avg *= counter;
+        avg += (1000.0/enlapsed_time);
+        avg /= ++counter;
+        wstr << "[  " << avg << "FPS  ]";
+        auto pos = Console::Symbol::CreateTexture(wstr.str());
+        start = chrono::high_resolution_clock::now();
+
+        FileSystem::DrawTextureToScreen(2,15,pos,screen);
+
         Console::FillScreen(screen);
 
         Control::CleanMemory();
 
         if (Console::IsFocused()) Console::HandleKeyboard();
+        //string x;
+        //gin >> x;
+        //if (!gin.eof()) cout << 'a' << x << '\n' << flush;
         if (Console::KeyPressed() == Key::Enum::q && IsCtrlDown()) return EXIT_SUCCESS;
         //FileSystem::DrawTextureToScreen(20,2,pos,screen);
-
     }
     return EXIT_FAILURE;
 }

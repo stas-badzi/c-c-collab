@@ -7,7 +7,6 @@
 #include <math.h>
 
 #include "utils/dllalloc.h"
-#include "unicode.hpp"
 
 #ifdef _WIN32
 
@@ -16,7 +15,7 @@
     #include <codecvt>
     #include <bitset>
     #include <exception>
-    #include <cuchar.hpp>
+    #include "cuchar.hpp"
 #endif
 
 namespace uniconv {

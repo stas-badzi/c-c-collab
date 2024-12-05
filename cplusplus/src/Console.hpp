@@ -5,6 +5,7 @@
 #include <bitset>
 #include <utility>
 #include <clang_constexpr.h>
+#include <sstream>
 
 #ifdef __APPLE__
 #ifndef _GLIBCXX_HAVE_AT_QUICK_EXIT
@@ -184,6 +185,7 @@ namespace cpp {
         static enum Key::Enum KeyTyped(void);
 
         static void HandleMouseAndFocus(void);
+        static const char* GetInputStream(void);
         static bool IsFocused(void);
         static struct MouseStatus GetMouseStatus(void);
         static std::pair<uint8_t,uint8_t> MouseButtonClicked(void); // returns button ID and whitch consecutive click was it
@@ -193,7 +195,10 @@ namespace cpp {
 
         static void SetDoubleClickMaxWait(unsigned short milliseconds);
         static unsigned short GetDoubleClickMaxWait(void);
+
+        static std::istringstream in;
     };
+    extern std::istream& gin;
 } // namespace cpp
 
 void SysSleep(int microseconds);

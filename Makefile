@@ -24,7 +24,7 @@ sources = Console.cpp FileSystem.cpp System.cpp dllexport.cpp
 #> header files
 headers = Console.hpp FileSystem.hpp FileSystem.ipp dllimport.hpp System.hpp System.ipp smart_ref.hpp smart_ref.ipp
 #> include files
-includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp unicode.hpp linux/ledctrl.h
+includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp linux/ledctrl.h
 #> name the dynamic library
 name = factoryrushplus
 # *******************************
@@ -35,7 +35,7 @@ binsources = main.cpp Console.cpp FileSystem.cpp System.cpp Control.cpp
 #> header files
 binheaders = dllimport.hpp Console.hpp FileSystem.hpp System.hpp defines.h Control.hpp
 #> include files
-binincludes = dynamic_library.h unicode_conversion.hpp control_heap.h utils/cextern.h control_heap.h utils/dllalloc.h linux/key.hpp windows/key.hpp unicode.hpp
+binincludes = dynamic_library.h unicode_conversion.hpp control_heap.h utils/cextern.h control_heap.h utils/dllalloc.h linux/key.hpp windows/key.hpp
 #> name the binary file
 binname = cpp-factoryrush
 #********************************
@@ -91,8 +91,13 @@ symsysbin = /c/Windows
 # chmod 666 /usr/bin/../temp/initialized.dat
 # (linux only)
 
+ifeq ($(shell uname -s),Linux)
 static-libc = -static-libgcc
 static-libc++ = -static-libstdc++
+else
+static-libc = -static-libgcc
+static-libc++ = -static-libstdc++
+endif
 
 ifeq ($(sudo),1)
 copylibs = 1
@@ -485,6 +490,11 @@ resources: source/setkbdmode.c source/getfd.c source/getfd.h source/globals.c as
 	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(staticgen)assets/$(prefix)globals.$(static) objects/globals.o
 
+#	echo $(c-compiler) -v -o $(prefix)std.$(dynamic) -pedantic -Wextra -shared -fPIC -lm -static-libgcc 2>&1 | grep ld | sed s/-lc/'$$(find -O3 /usr/lib -name libc.a 2>&1 | grep $$(uname -m) | sed 1q)' | sed s/-lm/'$$(find -O3 /usr/lib -name libm.a 2>&1 | grep $$(uname -m) | sed 1q)'/g | sed s/-o/-Bsymbolic\ -o/g > temp.sh
+#	@chmod +x temp.sh
+#	./temp.sh
+#	@rm temp.sh
+
 ifeq ($(shell uname -s),Linux)
 	-@rm *.o 2> $(nulldir)
 	$(c-compiler) -c source/setkbdmode.c source/getfd.c source/ledctrl.c -pedantic -Wextra $(cflags) $(cdb) -Isource -std=c2x && mv *.o objects/
@@ -554,7 +564,15 @@ else
 #
 ifeq ($(binary),exe)
 #windows
+ifeq ($(shell uname -s),Windows_NT)
 	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
+else
+ifeq ($(shell uname -s),windows32)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
+else
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
+endif
+endif
 #
 else
 ifeq ($(shell uname -s),Darwin)
@@ -563,7 +581,8 @@ ifeq ($(shell uname -s),Darwin)
 #
 else
 #linux and similar
-	cd cplusplus && $(cpp-compiler) -shared -o bin/lib$(name).so $(objects) -L../assets -L$(flibdir) -lglobals -llinuxctrl $(flib) -static-libstdc++ -static-libgcc $(ldarg)
+#	cd cplusplus && $(cpp-compiler) -v -shared -o bin/lib$(name).so $(objects) -L../assets -L$(flibdir) -lglobals -llinuxctrl $(flib) $(static-libc++) $(static-libc) $(ldarg) 2>&1 | grep ld | sed 's/-lc/$$(find -O3 \/usr\/lib -name libc.a 2>&1 | grep $$(uname -m) | sed 1q)'/g | sed 's/-lm/$$(find -O3 \/usr\/lib -name libm.a 2>&1 | grep $$(uname -m) | sed 1q)'/g | sed s/-o/-Bsymbolic\ -o/g > temp.sh && chmod +x temp.sh && ./temp.sh && rm temp.sh
+	cd cplusplus && $(cpp-compiler) -shared -o bin/lib$(name).so $(objects) -L../assets -L$(flibdir) -lglobals -llinuxctrl $(flib) $(static-libc++) $(static-libc) $(ldarg)
 endif
 endif
 #
