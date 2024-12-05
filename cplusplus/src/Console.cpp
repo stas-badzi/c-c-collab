@@ -610,9 +610,7 @@ using namespace std::chrono;
                 Console::mouse_status.scroll = { flags[3], flags[3] && HIWORD(mouse.dwButtonState) > 0 };
                 Console::mouse_buttons_down[3] = flags[3] && HIWORD(mouse.dwButtonState) > 0;
                 Console::mouse_buttons_down[4] = flags[3] && HIWORD(mouse.dwButtonState) > 0;
-                Console::this_mouse_combo = flags[2] ? 2 : 1;
-
-                uint8_t button
+                Console::this_mouse_combo = (flags[2] ? this_mouse_combo : 0) + 1; 
             }
 
             if (event[2]) {
@@ -695,9 +693,9 @@ using namespace std::chrono;
     }
 
     Console::Symbol::Symbol(uint8_t attribute) {
-    this->character = L' ';
-    this->SetAttribute(attribute);
-}
+        this->character = L' ';
+        this->SetAttribute(attribute);
+    }
 #else
 // Not linux (Probably Posix and Unix)
 
