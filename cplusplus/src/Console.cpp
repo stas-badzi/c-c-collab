@@ -667,6 +667,24 @@ using namespace std::chrono;
         Sleep((int)(microseconds/1000));
     }
 
+    bool Console::IsKeyDown(Key::Enum key) {
+        return Console::key_states[static_cast<size_t>(key)];
+    }
+
+    Key::Enum cpp::Console::KeyTyped(void) {
+        return Key::Enum::NONE;
+    }
+
+    Key::Enum Console::KeyPressed(void) {
+        if (Console::key_hit < 0) return Key::Enum::NONE;
+        return static_cast<Key::Enum>(Console::key_hit);
+    }
+
+    Key::Enum Console::KeyReleased(void) {
+        if (Console::key_released < 0) return Key::Enum::NONE;
+        return static_cast<Key::Enum>(Console::key_released);
+    }
+
     uint8_t Console::Symbol::GetAttribute(void) {
         return GenerateAtrVal(this->foreground,this->background);
     }
@@ -1157,6 +1175,27 @@ using namespace std::chrono;
         return;
     }
 
+    bool Console::IsKeyDown(Key::Enum key) {
+        for (auto i = 0; i < KEYBOARD_MAX; ++i)
+            if (Console::key_states[i] && Console::key_chart[0][i] == key)
+                return true;
+        return false;
+    }
+
+    Key::Enum cpp::Console::KeyTyped(void) {
+        return Key::Enum::NONE;
+    }
+
+    Key::Enum Console::KeyPressed(void) {
+        if (Console::key_hit < 0) return Key::Enum::NONE;
+        return Console::key_chart[0][Console::key_hit];
+    }
+
+    Key::Enum Console::KeyReleased(void) {
+        if (Console::key_released < 0) return Key::Enum::NONE;
+        return Console::key_chart[0][Console::key_released];
+    }
+
     struct termios Console::old_fdterm = termios();
     int Console::old_kbdmode = int();
     int Console::fd = int();
@@ -1360,29 +1399,8 @@ bool Console::focused = true;
 unsigned short Console::double_click_max = 500;
 istringstream Console::in = istringstream(std::ios_base::ate|std::ios_base::in);
 
-bool Console::IsKeyDown(Key::Enum key) {
-    for (auto i = 0; i < KEYBOARD_MAX; ++i)
-        if (Console::key_states[i] && Console::key_chart[0][i] == key)
-            return true;
-    return false;
-}
-
-Key::Enum cpp::Console::KeyTyped(void) {
-    return Key::Enum::NONE;
-}
-
 struct ToggledKeys Console::KeysToggled(void) {
     return Console::keys_toggled;
-}
-
-Key::Enum Console::KeyPressed(void) {
-    if (Console::key_hit < 0) return Key::Enum::NONE;
-    return Console::key_chart[0][Console::key_hit];
-}
-
-Key::Enum Console::KeyReleased(void) {
-    if (Console::key_released < 0) return Key::Enum::NONE;
-    return Console::key_chart[0][Console::key_released];
 }
 
 bool Console::IsFocused(void) {

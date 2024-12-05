@@ -24,6 +24,7 @@
 #ifdef _WIN32
     #include <windows.h>
     #include <windows/key.hpp>
+    #include <iostream>
 #ifndef _MSVC
     #include <windows/quick_exit.h>
 #endif
