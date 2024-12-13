@@ -1,3 +1,0 @@
-[submodule "doas-keepenv"]
-	path = doas-keepenv
-	url = https://github.com/stas-badzi/doas-keepenv
