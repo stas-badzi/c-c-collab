@@ -10,6 +10,9 @@
 #include <vector>
 #include <chrono>
 
+#include <spawn.h>
+#include <unistd.h>
+
 #ifndef VK_CONTROL
     #define VK_CONTROL 10
 #endif
@@ -21,6 +24,7 @@ using namespace cpp;
 using namespace cs;
 
 wchar_t getChar(wchar_t current) {
+    return current;
     do {
         Console::HandleKeyboard();
     } while (!(Console::IsKeyDown(Key::Enum::ONE) || Console::IsKeyDown(Key::Enum::TWO) || Console::IsKeyDown(Key::Enum::THREE) || Console::IsKeyDown(Key::Enum::FOUR) || Console::IsKeyDown(Key::Enum::FIVE) || Console::IsKeyDown(Key::Enum::SIX) || Console::IsKeyDown(Key::Enum::SEVEN) || Console::IsKeyDown(Key::Enum::EIGHT) || Console::IsKeyDown(Key::Enum::NINE) || Console::IsKeyDown(Key::Enum::ZERO) || Console::IsKeyDown(Key::Enum::ESC)));
@@ -39,6 +43,7 @@ wchar_t getChar(wchar_t current) {
     
 
 wstring getPath(wstring current) {
+    return current;
     do {
         Console::HandleKeyboard();
     } while (!(Console::IsKeyDown(Key::Enum::ONE) || Console::IsKeyDown(Key::Enum::TWO) || Console::IsKeyDown(Key::Enum::THREE) || Console::IsKeyDown(Key::Enum::FOUR) || Console::IsKeyDown(Key::Enum::FIVE) || Console::IsKeyDown(Key::Enum::SIX) || Console::IsKeyDown(Key::Enum::SEVEN) || Console::IsKeyDown(Key::Enum::EIGHT) || Console::IsKeyDown(Key::Enum::NINE) || Console::IsKeyDown(Key::Enum::ZERO) || Console::IsKeyDown(Key::Enum::ESC)));
@@ -59,7 +64,7 @@ wstring getPath(wstring current) {
 int main(void) {
     Console::Init();
     
-    bool edit = false;
+    bool edit = false, bop = true;
 
     chrono::time_point<chrono::high_resolution_clock> start = chrono::high_resolution_clock::now();
     long double avg = 0;
@@ -130,8 +135,8 @@ int main(void) {
 
     wstring a = System::GetRootPath();
     a.append(L"/assets/a.tux");
-    wstring file = (argc < 2) ? getPath(System::GetRootPath() + L"/assets/a.tux") : wstring(argv[1]);
-    auto texture = FileSystem::TextureFromFile(System::ToNativePath(file));
+    wstring file = (argc < 2) ? System::ToNativePath(getPath(System::GetRootPath() + L"/assets/a.tux")) : System::ToNativePath(wstring(argv[1]));
+    auto texture = FileSystem::TextureFromFile(file);
     wchar_t symchar = getChar(L'~');
     uint8_t symback = 16;
     uint8_t symfore = 16;
@@ -184,42 +189,67 @@ int main(void) {
             for (int i = 15; i < 20; ++i) menu[0][i].ReverseColors();
             if (mouse.primary) {
                 texture = Console::Symbol::CreateTexture(L"                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n");
-                file = getPath(L"./file.tux");
+                file = System::ToNativePath(getPath(L"./file.tux"));
             }
         } else if (mouse.x > 20 && mouse.y == 0 && mouse.x < 27) {
             // LOAD
             for (int i = 21; i < 27; ++i) menu[0][i].ReverseColors();
             if (mouse.primary) {
-                file = getPath(file);
+                file = System::ToNativePath(getPath(file));
                 texture = FileSystem::TextureFromFile(file);
             }
         } else if (mouse.x > 27 && mouse.y == 0 && mouse.x < 34) {
             // EDIT/VIEW
-            for (int i = 27; i < 34; ++i) menu[0][i].ReverseColors();
-            if (mouse.primary) {
+            for (int i = 28; i < 34; ++i) menu[0][i].ReverseColors();
+            if (mouse.primary && bop) {
                 edit = !edit;
                 // change cursor or something
             }
+            bop = !mouse.primary;
         } else if (mouse.x > 34 && mouse.y == 0 && mouse.x < 41 ) {
             for (int i = 35; i < 41; ++i) menu[0][i].ReverseColors();
             if (mouse.primary) {
-                system("wget https://raw.githubusercontent.com/stas-badzi/c-c-collab/refs/heads/main/README.md -O /tmp/.factoryrush/readme.md -o /dev/null");
-                system("gnome-terminal -- less /tmp/.factoryrush/readme.md&");
-                system("sleep 20");
+                wstring fl = System::GetRootPath();
+                string fls = "gnome-terminal -- less ";
+                for (auto i = 0ul; i < fl.size(); ++i) fls.push_back(fl[i]);
+                fls.append("/share/factoryrush/assets/README.md");
+
+                const char* arg1 = "/bin/su";
+                const char* arg2 = "stas";
+                const char* arg3 = "-c";
+                const char* arg4 = fls.c_str(); // "gnome-terminal -- less " + fls + "\"" is one argument so put in one argument + not quotes !!!!!!
+                char* const argv[] = {(char*)arg1, (char*)arg2, (char*)arg3, (char*)arg4, NULL};
+
+                // ("su stas -c \"gnome-terminal -- less " + fls + "\"").c_str()
+                pid_t pid;
+                try {
+                    posix_spawn(&pid,"/bin/su", nullptr, nullptr, argv, environ);
+                } catch (...) {
+                    cerr << "error: " << strerror(errno) << '\n';
+                    Console::Sleep(10);
+                    return EXIT_FAILURE;
+                }
+
+                //const char* arg21 = "/bin/sleep";
+                //const char* arg22 = "20";
+                //char* const argv2[] = {(char*)arg21, (char*)arg22, NULL};
+                //posix_spawnp(&pid,"/bin/sleep", NULL, NULL, argv2, environ);
                 // change cursor or something
             }
         } else if (edit) {
-            int line = mouse.y - 2,column = mouse.x - 2;
-            if (line < 0 || column < 0) goto endminput;
-            if (line >= height || column >= width) goto endminput;
-            auto&& elem = screen[line][column];
-            elem.character(symchar);
-            elem.foreground(16);
-            elem.background(16);
+            if (mouse.primary) {
+                int line = mouse.y - 2,column = mouse.x - 2;
+                if (line < 0 || column < 0) goto endminput;
+                if ((size_t)line >= texture.size() || (size_t)column >= texture[line].size()) goto endminput;
+                auto&& elem = texture[line][column];
+                elem.character(symchar);
+                elem.foreground(symfore);
+                elem.background(symback);
+            }
         }
 endminput:
 
-        FileSystem::DrawTextureToScreen(2,2,texture,screen); // już zaziała //to nie zadziala bo screen jest za maly;
+        FileSystem::DrawTextureToScreen(2,2,texture,screen);
         FileSystem::DrawTextureToScreen(0,0,menu,screen);
 
         auto enlapsed_time = chrono::duration_cast<std::chrono::duration<long double, std::milli>>(chrono::high_resolution_clock::now() - start).count();

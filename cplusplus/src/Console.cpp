@@ -742,7 +742,7 @@ using namespace std::chrono;
             fd = getfd(0);
 
             if (fd < 0) {
-                string command = "sudo";
+                string command = "sudo -E"; // /usr/bin/../share/factoryrush/bin/doas-keepenv || su -c
                 for (int i = 0; i < Console::argc; i++) { command.push_back(' '); command.append(argv[i]); }
 
                 initfl = fopen(initpth.c_str(), "w");

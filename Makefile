@@ -500,13 +500,23 @@ ifeq ($(shell uname -s),Linux)
 	$(c-compiler) -c source/setkbdmode.c source/getfd.c source/ledctrl.c -pedantic -Wextra $(cflags) $(cdb) -Isource -std=c2x && mv *.o objects/
 	ar rcs assets/$(prefix)linuxctrl.$(static) objects/getfd.o objects/ledctrl.o
 	$(c-compiler) -o assets/setkbdmode.$(binary) objects/setkbdmode.o -Lassets -llinuxctrl $(static-libc)
+	git submodule update --init --recursive
 ifeq ($(copylibs),1)
 	@echo "$(linuxroot)/share/factoryrush/bin"
 	$(admin) mkdir -p $(linuxroot)/share/factoryrush/bin
 	$(admin) cp assets/setkbdmode.$(binary) $(linuxroot)/share/factoryrush/bin
+	$(admin) cp utilities/doas-keepenv/doas-keepenv $(linuxroot)/share/factoryrush/bin
+
+	@echo "$(linuxroot)/share/factoryrush/assets"
+	$(admin) mkdir -p $(linuxroot)/share/factoryrush/assets
+	$(admin) cp README.md $(linuxroot)/share/factoryrush/assets
 else
 	@mkdir -p binaryplus/bin/../share/factoryrush/bin
 	@cp assets/setkbdmode.$(binary) binaryplus/share/factoryrush/bin
+	@cp utilities/doas-keepenv/doas-keepenv binaryplus/share/factoryrush/bin
+
+	@mkdir -p binaryplus/bin/../share/factoryrush/assets
+	@cp README.md binaryplus/share/factoryrush/assets
 endif
 else
 ifeq ($(shell uname -s),Darwin)
