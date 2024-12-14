@@ -205,10 +205,9 @@ int main(void) {
                 edit = !edit;
                 // change cursor or something
             }
-            bop = !mouse.primary;
         } else if (mouse.x > 34 && mouse.y == 0 && mouse.x < 41 ) {
             for (int i = 35; i < 41; ++i) menu[0][i].ReverseColors();
-            if (mouse.primary) {
+            if (mouse.primary && bop) {
                 wstring fl = System::GetRootPath();
                 string fls = "gnome-terminal -- less ";
                 for (auto i = 0ul; i < fl.size(); ++i) fls.push_back(fl[i]);
@@ -248,6 +247,7 @@ int main(void) {
             }
         }
 endminput:
+        bop = !mouse.primary;
 
         FileSystem::DrawTextureToScreen(2,2,texture,screen);
         FileSystem::DrawTextureToScreen(0,0,menu,screen);
