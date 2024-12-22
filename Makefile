@@ -693,6 +693,8 @@ ifeq ($(shell uname -s),Darwin)
 	cd binaryplus/bin && install_name_tool -change $$(otool -l $(binname).$(binary) | grep $(filename).dylib | sed 's/ (offset 24)//' | sed 's/         name //') loader_path/$(libname) $(binname).$(binary)
 #
 endif
+ifeq ($(shell uname -s),Linux)
+	cd binaryplus/bin && chmod +s $(binname).$(binary) && $(admin) chown root $(binname).$(binary)
 endif
 
 ifeq ($(shell echo "check quotes"),"check quotes")

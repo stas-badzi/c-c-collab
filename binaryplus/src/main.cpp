@@ -13,6 +13,12 @@
 #include <spawn.h>
 #include <unistd.h>
 
+#ifdef _LINUX_WAIT_H
+    #define __idtype_t_defined
+    typedef int idtype_t;
+#endif
+#include <sys/wait.h>
+
 #ifndef VK_CONTROL
     #define VK_CONTROL 10
 #endif
@@ -212,7 +218,8 @@ int main(void) {
                 string fls = "gnome-terminal -- less ";
                 for (auto i = 0ul; i < fl.size(); ++i) fls.push_back(fl[i]);
                 fls.append("/share/factoryrush/assets/README.md");
-
+                system(fls.c_str());
+                /*
                 const char* arg1 = "/bin/su";
                 const char* arg2 = "stas";
                 const char* arg3 = "-c";
@@ -223,12 +230,13 @@ int main(void) {
                 pid_t pid;
                 try {
                     posix_spawn(&pid,"/bin/su", nullptr, nullptr, argv, environ);
+                    waitpid(pid, nullptr, 0);
                 } catch (...) {
                     cerr << "error: " << strerror(errno) << '\n';
                     Console::Sleep(10);
                     return EXIT_FAILURE;
                 }
-
+*/
                 //const char* arg21 = "/bin/sleep";
                 //const char* arg22 = "20";
                 //char* const argv2[] = {(char*)arg21, (char*)arg22, NULL};
