@@ -896,7 +896,7 @@ using namespace std::chrono;
                 //exit(0x17);
 
                 string args_c;
-                args_c.append(System::Shell("sudo --help 2>&1 >/dev/null") == 127 ? System::Shell("doas 2>&1 >/dev/null") == 127 ? "su -c \"" : "doas "/*doas-keepenv*/ : "sudo -E ");
+                args_c.append(System::Shell("sudo --help 2>&1 >/dev/null") == 127 ? System::Shell("doas 2>&1 >/dev/null") == 127 ? "su -c \"" : "doas-keepenv" : "sudo -E ");
                 bool issu = args_c.size() == 2 && args_c[0] == 's' && args_c[1] == 'u';
                 bool isdoas = args_c[0] == 'd' && args_c[1] == 'o';
                 uint8_t sudolevel = issu ? 1 : isdoas ? 2 : 3; 

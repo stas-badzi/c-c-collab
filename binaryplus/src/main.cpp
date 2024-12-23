@@ -10,6 +10,15 @@
 #include <vector>
 #include <chrono>
 
+#include <spawn.h>
+#include <unistd.h>
+
+#ifdef _LINUX_WAIT_H
+    #define __idtype_t_defined
+    typedef int idtype_t;
+#endif
+#include <sys/wait.h>
+
 #ifndef VK_CONTROL
     #define VK_CONTROL 10
 #endif
@@ -20,9 +29,48 @@ using namespace std;
 using namespace cpp;
 using namespace cs;
 
+wchar_t getChar(wchar_t current) {
+    return current;
+    do {
+        Console::HandleKeyboard();
+    } while (!(Console::IsKeyDown(Key::Enum::ONE) || Console::IsKeyDown(Key::Enum::TWO) || Console::IsKeyDown(Key::Enum::THREE) || Console::IsKeyDown(Key::Enum::FOUR) || Console::IsKeyDown(Key::Enum::FIVE) || Console::IsKeyDown(Key::Enum::SIX) || Console::IsKeyDown(Key::Enum::SEVEN) || Console::IsKeyDown(Key::Enum::EIGHT) || Console::IsKeyDown(Key::Enum::NINE) || Console::IsKeyDown(Key::Enum::ZERO) || Console::IsKeyDown(Key::Enum::ESC)));
+    if (Console::IsKeyDown(Key::Enum::ZERO)) return L' ';
+    if (Console::IsKeyDown(Key::Enum::ONE)) return L'-';
+    if (Console::IsKeyDown(Key::Enum::TWO)) return L'|';
+    if (Console::IsKeyDown(Key::Enum::THREE)) return L'/';
+    if (Console::IsKeyDown(Key::Enum::FOUR)) return L'$';
+    if (Console::IsKeyDown(Key::Enum::FIVE)) return L'&';
+    if (Console::IsKeyDown(Key::Enum::SIX)) return L'%';
+    if (Console::IsKeyDown(Key::Enum::SEVEN)) return L'#';
+    if (Console::IsKeyDown(Key::Enum::EIGHT)) return L'@';
+    if (Console::IsKeyDown(Key::Enum::NINE)) return L'▒';
+    return current;
+}
+    
+
+wstring getPath(wstring current) {
+    return current;
+    do {
+        Console::HandleKeyboard();
+    } while (!(Console::IsKeyDown(Key::Enum::ONE) || Console::IsKeyDown(Key::Enum::TWO) || Console::IsKeyDown(Key::Enum::THREE) || Console::IsKeyDown(Key::Enum::FOUR) || Console::IsKeyDown(Key::Enum::FIVE) || Console::IsKeyDown(Key::Enum::SIX) || Console::IsKeyDown(Key::Enum::SEVEN) || Console::IsKeyDown(Key::Enum::EIGHT) || Console::IsKeyDown(Key::Enum::NINE) || Console::IsKeyDown(Key::Enum::ZERO) || Console::IsKeyDown(Key::Enum::ESC)));
+    wstring a = System::GetRootPath();
+    if (Console::IsKeyDown(Key::Enum::ONE)) return a.append(L"/assets/one.tux");
+    if (Console::IsKeyDown(Key::Enum::TWO)) return a.append(L"/assets/two.tux");
+    if (Console::IsKeyDown(Key::Enum::THREE)) return a.append(L"/assets/three.tux");
+    if (Console::IsKeyDown(Key::Enum::FOUR)) return a.append(L"/assets/four.tux");
+    if (Console::IsKeyDown(Key::Enum::FIVE)) return a.append(L"/assets/five.tux");
+    if (Console::IsKeyDown(Key::Enum::SIX)) return a.append(L"/assets/six.tux");
+    if (Console::IsKeyDown(Key::Enum::SEVEN)) return a.append(L"/assets/seven.tux");
+    if (Console::IsKeyDown(Key::Enum::EIGHT)) return a.append(L"/assets/eight.tux");
+    if (Console::IsKeyDown(Key::Enum::NINE)) return a.append(L"/assets/nine.tux");
+    if (Console::IsKeyDown(Key::Enum::ZERO)) return a.append(L"/assets/zero.tux");
+    return current;
+}
+
 int main(void) {
     Console::Init();
     
+    bool edit = false, bop = true;
 
     chrono::time_point<chrono::high_resolution_clock> start = chrono::high_resolution_clock::now();
     long double avg = 0;
@@ -90,6 +138,14 @@ int main(void) {
 
     int argc = Console::GetArgC();
     wchar_t** argv = Console::GetArgV();
+
+    wstring a = System::GetRootPath();
+    a.append(L"/assets/a.tux");
+    wstring file = (argc < 2) ? System::ToNativePath(getPath(System::GetRootPath() + L"/assets/a.tux")) : System::ToNativePath(wstring(argv[1]));
+    auto texture = FileSystem::TextureFromFile(file);
+    wchar_t symchar = getChar(L'~');
+    uint8_t symback = 16;
+    uint8_t symfore = 16;
     while (true) {
         auto width = Console::GetWindowWidth();
         auto height = Console::GetWindowHeight();
@@ -114,25 +170,94 @@ int main(void) {
         //screen[mouse.y][mouse.x].character(L'▦');
 
         //Console::FillScreen(screen);
-        wstring a = System::GetRootPath();
-        a.append(L"/assets/a.tux");
-        wstring file = (argc < 2) ? System::GetRootPath() + L"/assets/a.tux" : wstring(argv[1]);
-        auto texture = FileSystem::TextureFromFile(System::ToNativePath(file));
-        FileSystem::DrawTextureToScreen(2,2,texture,screen); // już zaziała //to nie zadziala bo screen jest za maly;
 
-        auto menu = Console::Symbol::CreateTexture(L"| Quit | Save | Load | Edit | Help |", array<uint8_t,70>{'\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7'}.data(), array<uint8_t,70>{'\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0'}.data());
+        auto menu = Console::Symbol::CreateTexture((edit ? L"| Quit | Save | New | Load | View | Help |" : L"| Quit | Save | New | Load | Edit | Help |"), array<uint8_t,70>{'\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7'}.data(), array<uint8_t,70>{'\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0'}.data());
+        while (menu[0].size() < (size_t)width) menu[0].push_back({L' ','\0','\7'});
 
         Console::HandleMouseAndFocus();
         auto mouse = Console::GetMouseStatus();
         if (mouse.x > 0 && mouse.y == 0 && mouse.x < 7) {
+            // QUIT
             for (int i = 1; i < 7; ++i) menu[0][i].ReverseColors();
             if (mouse.primary) {
                 Control::CleanMemory();
                 Console::Fin();
                 return EXIT_SUCCESS;
             }
-        }
+        } else if (mouse.x > 7 && mouse.y == 0 && mouse.x < 14) {
+            // SAVE
+            for (int i = 8; i < 14; ++i) menu[0][i].ReverseColors();
+            if (mouse.primary) {
+                FileSystem::FileFromTexture(file, texture);
+            }
+        } else if (mouse.x > 14 && mouse.y == 0 && mouse.x < 20) {
+            // NEW
+            for (int i = 15; i < 20; ++i) menu[0][i].ReverseColors();
+            if (mouse.primary) {
+                texture = Console::Symbol::CreateTexture(L"                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n");
+                file = System::ToNativePath(getPath(L"./file.tux"));
+            }
+        } else if (mouse.x > 20 && mouse.y == 0 && mouse.x < 27) {
+            // LOAD
+            for (int i = 21; i < 27; ++i) menu[0][i].ReverseColors();
+            if (mouse.primary) {
+                file = System::ToNativePath(getPath(file));
+                texture = FileSystem::TextureFromFile(file);
+            }
+        } else if (mouse.x > 27 && mouse.y == 0 && mouse.x < 34) {
+            // EDIT/VIEW
+            for (int i = 28; i < 34; ++i) menu[0][i].ReverseColors();
+            if (mouse.primary && bop) {
+                edit = !edit;
+                // change cursor or something
+            }
+        } else if (mouse.x > 34 && mouse.y == 0 && mouse.x < 41 ) {
+            for (int i = 35; i < 41; ++i) menu[0][i].ReverseColors();
+            if (mouse.primary && bop) {
+                wstring fl = System::GetRootPath();
+                string fls = "gnome-terminal -- less ";
+                for (auto i = 0ul; i < fl.size(); ++i) fls.push_back(fl[i]);
+                fls.append("/share/factoryrush/assets/README.md");
+                system(fls.c_str());
+                /*
+                const char* arg1 = "/bin/su";
+                const char* arg2 = "stas";
+                const char* arg3 = "-c";
+                const char* arg4 = fls.c_str(); // "gnome-terminal -- less " + fls + "\"" is one argument so put in one argument + not quotes !!!!!!
+                char* const argv[] = {(char*)arg1, (char*)arg2, (char*)arg3, (char*)arg4, NULL};
 
+                // ("su stas -c \"gnome-terminal -- less " + fls + "\"").c_str()
+                pid_t pid;
+                try {
+                    posix_spawn(&pid,"/bin/su", nullptr, nullptr, argv, environ);
+                    waitpid(pid, nullptr, 0);
+                } catch (...) {
+                    cerr << "error: " << strerror(errno) << '\n';
+                    Console::Sleep(10);
+                    return EXIT_FAILURE;
+                }
+*/
+                //const char* arg21 = "/bin/sleep";
+                //const char* arg22 = "20";
+                //char* const argv2[] = {(char*)arg21, (char*)arg22, NULL};
+                //posix_spawnp(&pid,"/bin/sleep", NULL, NULL, argv2, environ);
+                // change cursor or something
+            }
+        } else if (edit) {
+            if (mouse.primary) {
+                int line = mouse.y - 2,column = mouse.x - 2;
+                if (line < 0 || column < 0) goto endminput;
+                if ((size_t)line >= texture.size() || (size_t)column >= texture[line].size()) goto endminput;
+                auto&& elem = texture[line][column];
+                elem.character(symchar);
+                elem.foreground(symfore);
+                elem.background(symback);
+            }
+        }
+endminput:
+        bop = !mouse.primary;
+
+        FileSystem::DrawTextureToScreen(2,2,texture,screen);
         FileSystem::DrawTextureToScreen(0,0,menu,screen);
 
         auto enlapsed_time = chrono::duration_cast<std::chrono::duration<long double, std::milli>>(chrono::high_resolution_clock::now() - start).count();
@@ -157,7 +282,10 @@ int main(void) {
         //string x;
         //gin >> x;
         //if (!gin.eof()) cout << 'a' << x << '\n' << flush;
-        if (Console::KeyPressed() == Key::Enum::q && (IsCtrlDown() || Console::KeysToggled().CapsLock) ) return EXIT_SUCCESS;
+       if (Console::KeyPressed() == Key::Enum::q && (IsCtrlDown() || Console::KeysToggled().CapsLock)) return EXIT_SUCCESS;
+        if (Console::KeyPressed() == Key::Enum::s && IsCtrlDown()) symchar = getChar(symchar);
+        if (Console::KeyPressed() == Key::Enum::d && IsCtrlDown()) symback = symback;
+        if (Console::KeyPressed() == Key::Enum::f && IsCtrlDown()) symfore = symfore;
         //FileSystem::DrawTextureToScreen(20,2,pos,screen);
     }
     return EXIT_FAILURE;
