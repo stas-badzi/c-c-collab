@@ -703,6 +703,10 @@ ifeq ($(shell uname -s),Darwin)
 	cd binaryplus/bin && install_name_tool -change $$(otool -l $(binname).$(binary) | grep $(filename).dylib | sed 's/ (offset 24)//' | sed 's/         name //') loader_path/$(libname) $(binname).$(binary)
 #
 endif
+ifeq ($(shell uname -s),Linux)
+#linux
+	cd binaryplus/bin && $(admin)chown root $(binname).$(binary) && $(admin)chmod u+s $(binname).$(binary)$(adminend)
+#
 endif
 
 ifeq ($(shell echo "check quotes"),"check quotes")
@@ -716,8 +720,7 @@ else
 #other
 ifeq ($(copylibs),1)
 	$(admin)cp binaryplus/bin/$(binname).$(binary) $(bindir)$(adminend)
-else
-	cd binaryplus/bin && ls
+endif
 endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
