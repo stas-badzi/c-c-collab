@@ -478,6 +478,11 @@ using namespace uniconv;
             return cpp::System::WritePointer<nint>(arg1,arg3,arg2);
         }
 
+        libimport int Console_sub(int arg1);
+        int sub (int arg1) {
+            return Console_sub(arg1);
+        }
+
     // ~WritePointer<T>
 
 // ~System

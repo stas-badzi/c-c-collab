@@ -80,3 +80,6 @@ resources
 
 #keep
 !*/.gitkeep
+
+# test dir
+test/*

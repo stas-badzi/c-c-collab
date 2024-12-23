@@ -147,6 +147,8 @@ int main(void) {
 
         FileSystem::DrawTextureToScreen(2,15,pos,screen);
 
+        if (mouse.x >= 0 && mouse.y >= 0 && mouse.x < screen[0].size() && mouse.y < screen.size()) screen[mouse.y][mouse.x].character(L'🖱');
+
         Console::FillScreen(screen);
 
         Control::CleanMemory();
@@ -155,8 +157,12 @@ int main(void) {
         //string x;
         //gin >> x;
         //if (!gin.eof()) cout << 'a' << x << '\n' << flush;
-        if (Console::KeyPressed() == Key::Enum::q && IsCtrlDown()) return EXIT_SUCCESS;
+        if (Console::KeyPressed() == Key::Enum::q && (IsCtrlDown() || Console::KeysToggled().CapsLock) ) return EXIT_SUCCESS;
         //FileSystem::DrawTextureToScreen(20,2,pos,screen);
     }
     return EXIT_FAILURE;
+}
+
+int sub(int type) {
+    return type;
 }

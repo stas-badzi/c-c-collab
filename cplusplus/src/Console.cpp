@@ -448,6 +448,7 @@ using namespace std::chrono;
     uint8_t Console::default_fcol = uint8_t();
     uint8_t Console::default_bcol = uint8_t();
     utfcstr* Console::argv = (utfcstr*)malloc(0);
+    wchar_t** Console::subdir = nullptr;
     //pair<uint16_t,uint16_t> Console::xyoffset = pair<uint16_t,uint16_t>();
 
     inline HWND GetHwnd(void) {
@@ -702,6 +703,8 @@ using namespace std::chrono;
 
 #ifdef __linux__
 // linux
+    #include "System.hpp"
+
     inline clang_constexpr string GenerateEscapeSequence(uint8_t,uint8_t);
 
     inline constexpr int parse_input(int show_keycodes, const char * buf, int n) {
@@ -723,9 +726,33 @@ using namespace std::chrono;
 
     char Console::GetChar(void) {
         if (Console::buf_it >= 0 && Console::buf[Console::buf_it]) { ++buf_it; return Console::buf[buf_it-1]; }
-        Console::buf[buf_it] = getc(stdin); Console::buf[++buf_it] = '\0';
+        Console::buf[buf_it] = getc(stdin); if (buf_it < 127) Console::buf[++buf_it] = '\0'; else exit(0x1A);
         return Console::buf[buf_it-1];
     };
+
+    int getparent(int pid) {
+        int ppid;
+        char buf[BUFSIZ*2];
+        char procname[32];
+
+        FILE *fl = fopen(string("/proc/" + to_string(pid) + "/status").c_str(), "r");
+        size_t ret = fread(buf, sizeof(char), BUFSIZ*2-1, fl);
+        if (!ret) return 0;
+        buf[ret++] = '\0'; 
+        fclose(fl);
+        char *ppid_loc = strstr(buf, "\nPPid:");
+        if (ppid_loc) {
+            int ret = sscanf(ppid_loc, "\nPPid:%d", &ppid);
+            if (!ret || ret == EOF) return 0;
+            return ppid;
+        }
+        return 0;
+    }
+
+    inline string FindTerminalEmulator() {
+        string term;
+        return "to be implemented";
+    }
 
     void Console::Init(void) {
         if (!initialised) {
@@ -733,47 +760,184 @@ using namespace std::chrono;
 
             char path[256];
             readlink( "/proc/self/exe" , path, 256);
-            string initpth = path;
-            while (initpth.back() != '/') initpth.pop_back();
-            initpth.append("../temp/initialized.dat");
-            FILE *initfl = fopen(initpth.c_str(), "w");
-            fprintf(initfl, "%d", 1);
-            fclose(initfl);
             
             if (Console::emulator) {
                 fwrite("\033[?1049h", sizeof(char), 8, stderr);
             }
 
+            int sub_process = 0;
+
             FILE *cmdline = fopen("/proc/self/cmdline", "rb");
             char *arg = 0; size_t size = 0;
             int out = getdelim(&arg, &size, 0, cmdline);
             while(out != -1) {
-                Console::argv = (const char**)realloc(Console::argv,++Console::argc); Console::argv[Console::argc-1] = arg;
-                arg = 0; size = 0;
-                out = getdelim(&arg, &size, 0, cmdline);
+                if (strlen(arg) > 1 && arg[0] == '\033') {
+                    string sdir; char* narg;
+                    switch (arg[1]) {
+                    case '&':
+                        // launched as popup
+                        Console::sub_proc = true;
+                        if (strlen(arg) < 3) exit(0x31);
+                        sub_process = 0;
+                        narg = arg + 2;
+                        while (narg[0] != ';') {
+                            if (narg[0] < '0' || narg[0] > '9') exit(0x32);
+                            sub_process *= 10;
+                            sub_process += narg[0] - '0';
+                            ++narg;
+                        }
+                        for (size_t i = 1; narg[i] != ';'; i++){
+                            if (narg[i] == '\0') exit(0x33);
+                            sdir.push_back(narg[i]);
+                        }
+                        Console::subdir = new const char[strlen(sdir.c_str())+1]{0};
+                        strcpy((char*)Console::subdir, sdir.c_str());
+                        
+                        out = getdelim(&arg, &size, 0, cmdline);
+                        break;
+                    case '+':
+                        // launched for permissions
+                        parent = true;
+                        if (strlen(arg) < 6) exit(0x36);
+
+                        // root type
+                        narg = arg + 2;
+                        while (narg[0] != ';') {
+                            if (narg[0] < '0' || narg[0] > '9') exit(0x37);
+                            root_type *= 10;
+                            root_type += narg[0] - '0';
+                            ++narg;
+                        }
+
+                        // parent pid
+                        pid = 0;
+                        ++narg;
+                        while (narg[0] != ';') {
+                            if (narg[0] < '0' || narg[0] > '9') exit(0x37);
+                            pid *= 10;
+                            pid += narg[0] - '0';
+                            ++narg;
+                        }
+                        break;
+                    default:
+                        exit(0x3F);
+                    }
+                    out = getdelim(&arg, &size, 0, cmdline);
+                } else {
+                    Console::argv = (const char**)realloc(Console::argv,++Console::argc); Console::argv[Console::argc-1] = arg;
+                    arg = 0; size = 0;
+                    out = getdelim(&arg, &size, 0, cmdline);
+                }
             }
-            //if (numeric_limits<char>::is_signed) for (int i=0; i < Console::argc; ++i) for(int j=0; j < strlen(Console::argv[i]); ++j) ((char**)(Console::argv))[i][j] = (Console::argv)[i][j] + INT8_MIN;
             fclose(cmdline);
 
-            fd = getfd(0);
+            struct stat st;
+            //int parent_pid;
+            //int cnt;
+            if (Console::sub_proc) goto subdirset;
+            Console::pid = parent ? pid : getpid();
 
-            if (fd < 0) {
-                string command = "sudo";
-                for (int i = 0; i < Console::argc; i++) { command.push_back(' '); command.append(argv[i]); }
+            if (stat("/tmp/.factoryrush/", &st) == -1)
+                mkdir("/tmp/.factoryrush/", 0777);
+            
+            /*
+            parent_pid = getppid();
+            cnt = 0;
+    parentcheck:
+            parent = (stat((string("/tmp/.factoryrush/") + to_string(parent_pid)).c_str(), &st) != -1);
+            if (parent || cnt > 5) goto sureparent;
+            cmdline = fopen(string("/proc/" + to_string(parent_pid) + "/cmdline").c_str(), "rb");
+            out = getdelim(&arg, &size, 0, cmdline);
+            fclose(cmdline);
+            if ((arg[0] == 'd' && arg[1] == 'o' && arg[2] == 'a' && arg[3] == 's' && arg[4] == '\0') || (arg[0] == 's' && arg[1] == 'u' && arg[2] == 'd' && arg[3] == 'o' && arg[4] == '\0') || (arg[0] == 's' && arg[1] == 'u' && arg[2] == '\0') || (arg[0] == 's' && arg[1] == 'h' && arg[2] == '\0')) {
+                parent_pid = getparent(parent_pid);
+                ++cnt;
+                goto parentcheck;
+            }
+    sureparent:
+            Console::pid = parent ? parent_pid : getpid();
+            */
+            Console::subdir = new const char[to_string(Console::pid).size() + 2]{0};
+            strcpy((char*)Console::subdir, to_string(Console::pid).c_str());
+            ((char*)Console::subdir)[to_string(Console::pid).size()] = '/';
+    subdirset:
+            if (!parent && !sub_proc && (stat((string("/tmp/.factoryrush/") + subdir).c_str(), &st) == -1))
+                mkdir((string("/tmp/.factoryrush/") + subdir).c_str(), 0777);
+
+            string initpth = (string("/tmp/.factoryrush/") + subdir + string("initialized.dat"));
+            FILE *initfl = fopen(initpth.c_str(), "w");
+            fprintf(initfl, "%d", 1);
+            fclose(initfl);
+
+            fd = getfd(0);
+            if (!Console::emulator) {
+                fb_fd = open("/dev/fb0", O_RDONLY);
+
+                // initially in the middle of the screen
+                fb_var_screeninfo vinfo;
+                if (ioctl(Console::fb_fd, FBIOGET_VSCREENINFO, &vinfo)) {
+                    perror("Error reading variable information");
+                    exit(0x70);
+                }
+                Console::pixelpos.first = vinfo.xres/2;
+                Console::pixelpos.second = vinfo.yres/2;
+                ioctl(STDERR_FILENO, TIOCGWINSZ, &window_size);
+                Console::mouse_status.x = window_size.ws_col/2;
+                Console::mouse_status.y = window_size.ws_row/2;
+
+                mouse_fd = getmousefd(nullptr);
+            }
+
+            if (fd < 0 || fb_fd < 0 || mouse_fd < 0) {
+                if (sub_proc) exit(0x34);
+                if (parent) exit(0x38);
+                if (Console::root_type) exit(0x20);
+                // now this shouldn't happen at all so maybe add this:
+                //exit(0x17);
+
+                string args_c;
+                args_c.append(System::Shell("sudo --help 2>&1 >/dev/null") == 127 ? System::Shell("doas 2>&1 >/dev/null") == 127 ? "su -c \"" : "doas "/*doas-keepenv*/ : "sudo -E ");
+                bool issu = args_c.size() == 2 && args_c[0] == 's' && args_c[1] == 'u';
+                bool isdoas = args_c[0] == 'd' && args_c[1] == 'o';
+                uint8_t sudolevel = issu ? 1 : isdoas ? 2 : 3; 
+
+                fwrite("\033[H", sizeof(char), 3, stderr);
+                fwrite("\033[J", sizeof(char), 3, stderr);
+
+                for (int i = 0; i < Console::argc; i++)
+                    args_c.append(Console::argv[i]);
+                    args_c.push_back(' ');
+                
+                args_c.push_back('\033');
+                args_c.push_back('+');
+                args_c.append(to_string(sudolevel));
+                args_c.push_back('\\');
+                args_c.push_back(';');
+                args_c.append(to_string(Console::pid));
+                args_c.push_back('\\');
+                args_c.push_back(';');
+
+                if (issu) args_c.push_back('\"');
 
                 initfl = fopen(initpth.c_str(), "w");
                 fprintf(initfl, "%d", 0);
                 fclose(initfl);
 
-                int code = system(command.c_str());
+                auto log = (GenerateEscapeSequence(1,16) + "\nCouldn\'t get a file descriptor referring to the console." + GenerateEscapeSequence(16,16) + "\nTry logging in" + (issu ? "\n[su] " : "\n"));
+                fwrite(log.c_str(), sizeof(char), log.size(), stderr);
+                int code = System::Shell(args_c.c_str()); 
 
                 initfl = fopen(initpth.c_str(), "r");
                 int isinit = 1; 
-                auto ret = fscanf(initfl, "%d", &isinit);
+                auto retx = fscanf(initfl, "%d", &isinit);
                 fclose(initfl);
 
+                remove((string("/tmp/.factoryrush/") + Console::subdir + "initialized.dat").c_str());
+                remove((string("/tmp/.factoryrush/") + Console::subdir).c_str());
+
                 if (!isinit) {
-                    fprintf(stderr, "\npress any key to exit\n");
+                    log = (GenerateEscapeSequence(1,16) + "Authentication failed" + GenerateEscapeSequence(16,16) + "\nPress any key to exit\n");
+                    fwrite(log.c_str(), sizeof(char), log.size(), stderr);
                     tcgetattr(STDIN_FILENO,&old_termios);
                     termios term_ios = old_termios;
                     term_ios.c_lflag &= ~(ICANON | ECHO);
@@ -799,10 +963,12 @@ using namespace std::chrono;
 
             string command = path;
             while (command.back() != '/') command.pop_back();
-            command.append("../share/factoryrush/bin/setkbdmode.bin ");
-            command.push_back('0' + K_MEDIUMRAW);
+            command.append("../share/factoryrush/bin/setkbdmode.bin");
+            char val[2] = { ('0' + K_MEDIUMRAW),'\0' };
 
-            if (system(command.c_str()) < 0) {
+            auto ret2 = System::RunProgram(command.c_str(),val,nullptr);
+            auto old_kbdmode2 = ret2;
+            if (ret2 < 0) {
                 throw("setkbdmode.bin error");
             }
 
@@ -811,8 +977,6 @@ using namespace std::chrono;
                 string error = GenerateEscapeSequence(1,16) + "\nCouldn't get a file descriptor referring to the console.\nCheck if you have acces to /dev/tty and /dev/console.\n" + GenerateEscapeSequence(4,16) + "\n\ttry: " + GenerateEscapeSequence(6,16) + command.c_str() + "\033[0m\n";
                 throw(runtime_error(error.c_str()));
             }
-
-            //locale::global(locale(""));
 
             tcgetattr(STDIN_FILENO,&old_termios);
             termios term_ios = old_termios;
@@ -827,7 +991,7 @@ using namespace std::chrono;
             term_ios.c_cc[VTIME] = 1;
             tcsetattr(fd, TCSANOW, &term_ios);
 
-            if (emulator) {
+            if (Console::emulator) {
                 fwrite("\033[?1004h", sizeof(char), 8, stderr);
 
                 fwrite("\033[?1003h", sizeof(char), 8, stderr);
@@ -925,11 +1089,37 @@ using namespace std::chrono;
             signal(SIGTTIN, quick_exit);
             signal(SIGTTOU, quick_exit);
 
+            if (sub_process) {
+                Console::ret = sub(sub_process);
+                Console::Fin();
+                exit(ret);
+            }
         }
     }
 
     void Console::Fin(void) {
         if (initialised) {
+            
+            // remove files
+            if (Console::sub_proc) {
+                FILE *fl;
+
+                fl = fopen((string("/tmp/.factoryrush/") + Console::subdir + "return.dat").c_str(), "w");
+                string ret_str = to_string(Console::ret);
+                fwrite(ret_str.c_str(), sizeof(char), strlen(ret_str.c_str()), fl);
+                fclose(fl);
+
+                fl = fopen((string("/tmp/.factoryrush/") + Console::subdir + "initialized.dat").c_str(), "w");
+                fwrite("-1", sizeof(char), 2, fl);
+                fclose(fl);
+
+            } else if (!Console::parent) {
+                remove((string("/tmp/.factoryrush/") + Console::subdir + "initialized.dat").c_str());
+                // if parent exists than it will remove it
+                remove((string("/tmp/.factoryrush/") + Console::subdir).c_str());
+            }
+
+            delete[] Console::subdir;
 
             if (Console::emulator) {
                 fwrite("\033[?1004l", sizeof(char), 8, stderr);
@@ -937,12 +1127,20 @@ using namespace std::chrono;
                 fwrite("\033[?1003l", sizeof(char), 8, stderr);
                 fwrite("\033[?1015l", sizeof(char), 8, stderr);
                 fwrite("\033[?1006l", sizeof(char), 8, stderr);
+            } else {
+                fwrite("\033[H", sizeof(char), 3, stderr);
+                fwrite("\033[J", sizeof(char), 3, stderr);
             }
             
             //ioctl(fd, KDSETMODE, old_kbdmode);
             tcsetattr(fd,TCSANOW,&old_fdterm);
             close(fd);
-            
+
+            if (!Console::emulator) {
+                close(fb_fd);
+                close(mouse_fd);
+            }
+
             tcsetattr(STDIN_FILENO,TCSANOW,&old_termios);
 
             if (Console::emulator) {
@@ -953,10 +1151,11 @@ using namespace std::chrono;
             auto length = readlink( "/proc/self/exe" , path, 256);
             string command = path;
             while (command.back() != '/') command.pop_back();
-            command.append("../share/factoryrush/bin/setkbdmode.bin ");
-            command.push_back('0' + old_kbdmode);
-            old_kbdmode = system(command.c_str());
-            if (old_kbdmode < 0) {
+            command.append("../share/factoryrush/bin/setkbdmode.bin");
+            char val[2] = "0"; val[0] += old_kbdmode;
+            auto ret2 = System::RunProgram(command.c_str(),val,nullptr);
+            old_kbdmode = ret2;
+            if (ret2 < 0) {
                 throw("setkbdmode.bin error");
             }
 
@@ -976,125 +1175,261 @@ using namespace std::chrono;
         Console::mouse_buttons_down[4] = false;
         Console::mouse_status.scroll = {false,false};
 
-        bool mousedown = false;
-        int bytes;
+        if (Console::emulator) {
+            bool mousedown = false;
+            int bytes;
 
-        ioctl(STDIN_FILENO, FIONREAD, &bytes);
-        
-        bytes += strlen(Console::buf);
+            ioctl(STDIN_FILENO, FIONREAD, &bytes);
+            
+            bytes += strlen(Console::buf);
 
-        while (bytes > 0) {
-            buf_it = 0;
-            char c = GetChar(); --bytes;
-            if (c != '\033') {
-                in.clear();
-                Console::in.str(Console::in.str()+c);
-                buf[0] = '\0';
-                continue;
-            } else if (bytes == 0) break;
-            c = GetChar(); --bytes;
-            if (c != '[') {
-                in.clear();
-                Console::in.str(Console::in.str()+'\033'+c);
-                buf[0] = '\0';
-                continue;
-            } else if (bytes == 0) break;
-            c = GetChar(); --bytes;
-            switch (c) {
-            case 'I':
-                //fprintf(stderr, "gained focus\n");
-                Console::focused = true;
-                buf[0] = '\0';
-                continue;
-            case 'O':
-                //fprintf(stderr, "lost focus\n");
-                Console::focused = false;
-                buf[0] = '\0';
-                continue;
-            case '<':
-                int pos = 0;
-                int val[3] = {0};
-                int it = 2;
-                while (++it) {
-                    if (bytes == 0) return;
-                    char byte = GetChar(); --bytes;
+            while (bytes > 0) {
+                buf_it = 0;
+                char c = GetChar(); --bytes;
+                if (c != '\033') {
+                    in.clear();
+                    Console::in.str(Console::in.str()+c);
+                    buf[0] = '\0';
+                    continue;
+                } else if (bytes == 0) break;
+                c = GetChar(); --bytes;
+                if (c != '[') {
+                    in.clear();
+                    Console::in.str(Console::in.str()+'\033'+c);
+                    buf[0] = '\0';
+                    continue;
+                } else if (bytes == 0) break;
+                c = GetChar(); --bytes;
+                switch (c) {
+                case 'I':
+                    //fprintf(stderr, "gained focus\n");
+                    Console::focused = true;
+                    buf[0] = '\0';
+                    continue;
+                case 'O':
+                    //fprintf(stderr, "lost focus\n");
+                    Console::focused = false;
+                    buf[0] = '\0';
+                    continue;
+                case '<':
+                    int pos = 0;
+                    int val[3] = {0};
+                    int it = 2;
+                    while (++it) {
+                        if (bytes == 0) return;
+                        char byte = GetChar(); --bytes;
 
-                    if (byte == ';') { ++pos; continue; }
+                        if (byte == ';') { ++pos; continue; }
+                        
+                        if (byte == 'M') { mousedown = true; break; }
+                        if (byte == 'm') { mousedown = false; break; }
+
+                        int num = byte - '0';
+                        if (num < 0 || num > 9) exit(31);
+
+                        val[pos] *= 10;
+                        val[pos] += num;
+                    };
+                    //fprintf(stdout, "%c", '\n');
+
+                    Console::mouse_status.x = --val[1];
+                    Console::mouse_status.y = --val[2];
+                    //fprintf(stderr, "mouse: %d %d\n", Console::mouse_status.x, Console::mouse_status.y);
+                    bitset<8> event(val[0]);
+
+                    if (event[5]) { ++bytes; break; } // move event
                     
-                    if (byte == 'M') { mousedown = true; break; }
-                    if (byte == 'm') { mousedown = false; break; }
+                    uint8_t button = 0b0;
+                    
+                    button += 0b1 * event[0];
+                    button += 0b10 * event[1];
+                    button += 0b100 * event[6];
+                    button += 0b1000 * event[7];
+                    if (button < 3 /*Button 1-3*/) ++button; // are encoded as 0-2 and there is no button 3 encoded so we add one to make it BUTTON(X) = x
 
-                    int num = byte - '0';
-                    if (num < 0 || num > 9) exit(31);
+                    chrono::time_point<chrono::high_resolution_clock> now = chrono::high_resolution_clock::now();
+                    uint8_t fullbutton = 0b000000;
+                    fullbutton |= 0b0000001 * button; // BBBB
+                    fullbutton |= 0b0010000 * event[2]; // Shift
+                    fullbutton |= 0b0100000 * event[3]; // Meta
+                    fullbutton |= 0b1000000 * event[4]; // Ctrl
+                    // fullbutton == 0bCMSBBBB
 
-                    val[pos] *= 10;
-                    val[pos] += num;
-                };
-                //fprintf(stdout, "%c", '\n');
-
-                Console::mouse_status.x = --val[1];
-                Console::mouse_status.y = --val[2];
-                //fprintf(stderr, "mouse: %d %d\n", Console::mouse_status.x, Console::mouse_status.y);
-                bitset<8> event(val[0]);
-
-                if (event[5]) { ++bytes; break; } // move event
-                
-                uint8_t button = 0b0;
-                
-                button += 0b1 * event[0];
-                button += 0b10 * event[1];
-                button += 0b100 * event[6];
-                button += 0b1000 * event[7];
-                if (button < 3 /*Button 1-3*/) ++button; // are encoded as 0-2 and there is no button 3 encoded so we add one to make it BUTTON(X) = x
-
-                chrono::time_point<chrono::high_resolution_clock> now = chrono::high_resolution_clock::now();
-                uint8_t fullbutton = 0b000000;
-                fullbutton |= 0b0000001 * button; // BBBB
-                fullbutton |= 0b0010000 * event[2]; // Shift
-                fullbutton |= 0b0100000 * event[3]; // Meta
-                fullbutton |= 0b1000000 * event[4]; // Ctrl
-                // fullbutton == 0bCMSBBBB
-
-                if (mousedown) {
-                    if (Console::last_mouse_button == fullbutton && now - Console::last_click_time <= chrono::milliseconds(Console::double_click_max)) {
-                        if (Console::last_mouse_combo < UINT8_MAX) ++Console::last_mouse_combo;
-                    } else {
-                        Console::last_mouse_button = (button < 3) ? fullbutton : -1;
-                        Console::last_mouse_combo = 1;
+                    if (mousedown) {
+                        if (Console::last_mouse_button == fullbutton && now - Console::last_click_time <= chrono::milliseconds(Console::double_click_max)) {
+                            if (Console::last_mouse_combo < UINT8_MAX) ++Console::last_mouse_combo;
+                        } else {
+                            Console::last_mouse_button = (button < 3 || button > 5) ? fullbutton : -1;
+                            Console::last_mouse_combo = 1;
+                        }
+                        Console::last_click_time = now;
                     }
-                    Console::last_click_time = now;
-                }
 
-                Console::this_mouse_combo = ( Console::last_click_time == now ) ? Console::last_mouse_combo : 1;
-                Console::this_mouse_down = mousedown;
-                Console::mouse_buttons_down[fullbutton] = this_mouse_down;
-                Console::this_mouse_button = fullbutton;
-                
-                switch (button) {
-                case 1:
-                    Console::mouse_status.primary = mousedown;
-                    break;
-                case 2:
-                    Console::mouse_status.middle = mousedown;
-                    break;
-                case 3:
-                    Console::mouse_status.secondary = mousedown;
-                    break;
-                case 4:
-                    Console::mouse_status.scroll = {1,true};
-                    break;
-                case 5:
-                    Console::mouse_status.scroll = {1,false};
-                    break;
+                    Console::this_mouse_combo = ( Console::last_click_time == now ) ? Console::last_mouse_combo : 1;
+                    Console::this_mouse_down = mousedown;
+                    Console::mouse_buttons_down[fullbutton] = this_mouse_down;
+                    Console::this_mouse_button = fullbutton;
+                    
+                    switch (button) {
+                    case 1:
+                        Console::mouse_status.primary = mousedown;
+                        break;
+                    case 2:
+                        Console::mouse_status.middle = mousedown;
+                        break;
+                    case 3:
+                        Console::mouse_status.secondary = mousedown;
+                        break;
+                    case 4:
+                        Console::mouse_status.scroll = {1,true};
+                        break;
+                    case 5:
+                        Console::mouse_status.scroll = {1,false};
+                        break;
+                    }
+                    buf[0] = '\0';
+                    continue;
                 }
+                in.clear();
+                Console::in.str(Console::in.str()+'\033'+'['+c);
                 buf[0] = '\0';
-                continue;
             }
-            in.clear();
-            Console::in.str(Console::in.str()+'\033'+'['+c);
-            buf[0] = '\0';
+        } else {
+            // redirect cin to Console::in
+            int bytes;
+            ioctl(STDIN_FILENO, FIONREAD, &bytes);
+            while (bytes > 0) {
+                char c = getc(stdin);
+                Console::in.str(Console::in.str()+c);
+                --bytes;
+            }
+
+            // mouse cursor emulation
+            input_event ie;
+            int x = 0;
+            while (true) {
+                auto len = read(Console::mouse_fd, &ie, sizeof(input_event));
+                if (len == -1)
+                    break;
+                ++x;
+                //printf("EVENT1: TYPE=%d, CODE=%d, VALUE=%d\n", ie.type, ie.code, ie.value);
+                if (ie.type == EV_SYN && (ie.code == SYN_REPORT || ie.code == SYN_MT_REPORT)) if (Console::discard_mouse) {Console::evnts_siz = 0; Console::discard_mouse = false;} else goto parsego;
+                else if (ie.type == EV_SYN && ie.code == SYN_DROPPED) { Console::discard_mouse = true; Console::evnts_siz = 0; }
+                else if (evnts_siz < 255) { events[evnts_siz] = ie; ++evnts_siz; }
+                else goto parsego;
+                continue;
+            parsego:
+                fb_var_screeninfo vinfo;
+                if (ioctl(Console::fb_fd, FBIOGET_VSCREENINFO, &vinfo)) {
+                    perror("Error reading variable information");
+                    exit(0x72);
+                }
+                if (ioctl(STDERR_FILENO, TIOCGWINSZ, &window_size)) {
+                    perror("Error reading window size");
+                    exit(0x73);
+                }
+                int button = 0; bool mousedown = false;
+                for (int i = 0; i < evnts_siz; i++) {
+                //printf("EVENT2: TYPE=%d, CODE=%d, VALUE=%d\n", events[i].type, events[i].code, events[i].value);
+                    switch (events[i].type)
+                    {
+                    case EV_REL:
+                        switch (events[i].code)
+                        {
+                        case REL_X:
+                            if (events[i].value > 0 || static_cast<int64_t>(Console::pixelpos.first) > -events[i].value) Console::pixelpos.first += events[i].value;
+                            Console::pixelpos.first = min(vinfo.xres, Console::pixelpos.first );
+                            break;
+                        
+                        case REL_Y:
+                            if (events[i].value > 0 || static_cast<int64_t>(Console::pixelpos.second) > -events[i].value) Console::pixelpos.second += events[i].value;
+                            Console::pixelpos.second = min(vinfo.yres, Console::pixelpos.second );
+                            break;
+                        case REL_WHEEL:
+                            Console::mouse_status.scroll = {true,events[i].value > 0};
+                            button = 5-(events[i].value > 0);
+                            mousedown = true;
+                            break;
+                        case REL_Z:
+                        case REL_RX:
+                        case REL_RY:
+                        case REL_RZ:
+                        case REL_HWHEEL:
+                        case REL_DIAL:
+                        case REL_WHEEL_HI_RES:
+                            break;
+                        default:
+                            break;
+                        }
+                        break;
+                    
+                    case EV_KEY:
+                        switch (events[i].code)
+                        {
+                    #if (BTN_MOUSE != BTN_LEFT)
+                        case BTN_MOUSE:
+                    #endif
+                        case BTN_LEFT:
+                            Console::mouse_status.primary = events[i].value;
+                            button = 1;
+                            mousedown = events[i].value;
+                            break;
+                        case BTN_RIGHT:
+                            Console::mouse_status.secondary = events[i].value;
+                            button = 3;
+                            mousedown = events[i].value;
+                            break;
+                        case BTN_MIDDLE:
+                            Console::mouse_status.middle = events[i].value;
+                            button = 2;
+                            mousedown = events[i].value;
+                            break;
+                        case BTN_SIDE:
+                        case BTN_EXTRA:
+                        case BTN_FORWARD:
+                        case BTN_BACK:
+                        case BTN_TASK:
+                            break;
+                        default:
+                            break;
+                        }
+                        break;
+                    }
+                }
+                int width = window_size.ws_col;
+                int height = window_size.ws_row;
+                long double divx = vinfo.xres / width;
+                long double divy = vinfo.yres / height;
+                Console::mouse_status.x = pixelpos.first/divx;
+                Console::mouse_status.y = pixelpos.second/divy;
+
+                if (button) {
+                    chrono::time_point<chrono::high_resolution_clock> now = chrono::high_resolution_clock::now();
+                    uint8_t fullbutton = 0b000000;
+                    fullbutton |= 0b0000001 * button; // BBBB
+                        //fullbutton |= 0b0010000 * IsKeyDown(Key::Enum::ShiftL)]; // Shift
+                        //fullbutton |= 0b0100000 * ; // Meta
+                        //fullbutton |= 0b1000000 * ; // Ctrl
+                    //fullbutton == 0bCMSBBBB
+
+                    if (mousedown) {
+                        if (Console::last_mouse_button == fullbutton && now - Console::last_click_time <= chrono::milliseconds(Console::double_click_max)) {
+                            if (Console::last_mouse_combo < UINT8_MAX) ++Console::last_mouse_combo;
+                        } else {
+                            Console::last_mouse_button = (button < 3 || button > 5) ? fullbutton : -1;
+                            Console::last_mouse_combo = 1;
+                        }
+                        Console::last_click_time = now;
+                    }
+
+                    Console::this_mouse_combo = ( Console::last_click_time == now ) ? Console::last_mouse_combo : 1;
+                    Console::this_mouse_down = mousedown;
+                    Console::mouse_buttons_down[fullbutton] = this_mouse_down;
+                    Console::this_mouse_button = fullbutton;
+                }
+                evnts_siz = 0;
+            }
         }
-        
     }
 
     void Console::HandleKeyboard(void) {
@@ -1197,6 +1532,11 @@ using namespace std::chrono;
     struct termios Console::old_fdterm = termios();
     int Console::old_kbdmode = int();
     int Console::fd = int();
+    int Console::fb_fd = int();
+    int Console::mouse_fd = int();
+    bool Console::discard_mouse = false;
+    bool Console::parent = false;
+    uint8_t Console::root_type = uint8_t(0);
     utfcstr* Console::argv = (const char**)malloc(8);
     Key::Enum Console::key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX] = { { Key::Enum::NONE } };
 
@@ -1372,8 +1712,12 @@ using namespace std::chrono;
 
     struct termios Console::old_termios = termios();
     winsize Console::window_size = winsize();
-    char Console::buf[256] = "\0";
-    int8_t Console::buf_it = -1; 
+    char Console::buf[127] = "\0";
+    int8_t Console::buf_it = -1;
+    pair<uint32_t,uint32_t> Console::pixelpos = pair<uint32_t,uint32_t>(0,0);
+    input_event Console::events[255] = {input_event()};
+    uint8_t Console::evnts_siz = 0;
+    const char* Console::subdir = nullptr;
 #endif
 
 int Console::argc = 0;
@@ -1388,14 +1732,17 @@ std::chrono::time_point<std::chrono::high_resolution_clock> Console::last_click_
 
 int Console::key_hit = int();
 int Console::key_released = int();
-uint8_t Console::this_mouse_button = -1;
-uint8_t Console::this_mouse_combo = 0;
-bool Console::this_mouse_down = false;
-uint8_t Console::last_mouse_button = -1;
-uint8_t Console::last_mouse_combo = 0;
-bool Console::focused = true;
-unsigned short Console::double_click_max = 500;
+uint8_t Console::this_mouse_button = uint8_t(-1);
+uint8_t Console::this_mouse_combo = uint8_t(0);
+bool Console::this_mouse_down = bool(false);
+uint8_t Console::last_mouse_button = uint8_t(-1);
+uint8_t Console::last_mouse_combo = uint8_t(0);
+bool Console::focused = bool(true);
+unsigned short Console::double_click_max = ushort(500);
 istringstream Console::in = istringstream(std::ios_base::ate|std::ios_base::in);
+int Console::pid = int(-1); 
+int Console::ret = int(-1);
+bool Console::sub_proc = bool(false);
 
 struct ToggledKeys Console::KeysToggled(void) {
     return Console::keys_toggled;

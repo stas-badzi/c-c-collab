@@ -12,6 +12,9 @@
     #include <windows.h>
 #else
     #include <unistd.h>
+#ifndef _LINUX_WAIT_H
+    #include <sys/wait.h>
+#endif
 #endif
 
 #define nint void*
@@ -21,6 +24,8 @@ namespace cpp {
     private:
         static uniconv::utfstr GetRoot(void);
         static uniconv::utfstr root;
+        static pid_t tpid;
+        static void SendSignal(int signal);
     public:
         static uniconv::utfstr GetRootPath(void);
         static uniconv::utfstr ToNativePath(uniconv::utfstr path);
@@ -34,6 +39,12 @@ namespace cpp {
         template<typename T> static T ReadPointer(nint pointer, int offset);
         template<typename T> static void WritePointer(nint& pointer, T value);
         template<typename T> static void WritePointer(nint& pointer, int offset, T value);
+        
+        static int Shell(uniconv::utfcstr arg);
+        static int RunProgram(uniconv::utfcstr path, uniconv::utfcstr args, ...);
+        static int RunProgramS(uniconv::utfcstr file, uniconv::utfcstr args, ...);
+        static int RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]);
+        static int RunProgramS(uniconv::utfcstr file, uniconv::utfcstr const args[]);
     };
 }
 

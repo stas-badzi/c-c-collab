@@ -48,6 +48,6 @@ int main(int, char *argv[])
   }
 
   close(fd);
- 
+  
   return orig_mode;
 }

@@ -41,10 +41,16 @@
     #include <string.h>
 #ifdef __linux__
     #include <linux/getfd.h>
+    #include <linux/mousefd.h>
+    #include <linux/input.h>
+    #include <linux/fb.h>
     #include <linux/kd.h>
     #include <linux/keyboard.h>
     #include <linux/key.hpp>
     #include <linux/ledctrl.h>
+    #include <sys/types.h>
+    #include <sys/stat.h>
+    #include <fcntl.h>
 #elif __APPLE__
     #include <apple/key.hpp>
 #elif __CYGWIN__
@@ -76,6 +82,10 @@
 #define MOUSE_MODIFIER_CONTROL 0b1000000 // 2^6
 #define MOUSE_MODIFIER_ALT MOUSE_MODIFIER_META // 2^6
 
+int sub(int);
+
+void SysSleep(int microseconds);
+
 namespace cpp {
     class Console {
     public:
@@ -88,6 +98,34 @@ namespace cpp {
             unsigned int y; // in console chracters
             MouseStatus(void);
         };
+
+        struct ClientInfo {
+            enum class OS {
+                WINDOWS,
+                MSYS2,
+                CYGWIN,
+                LINUX,
+                MACOS,
+                BSD
+            } operating_system;
+
+            enum class Arch {
+                X64,
+                ARM64,
+                ARM,
+                X86
+            } architecture;
+
+            enum class Term {
+                conhost,
+                mintty,
+                //windows_terminal, // terminal emulator
+                terminal_emulator,
+                linux_console,
+                windows_server,
+                macos_recovery_treminal
+            } terminal;
+        } client_info;
         
     private:
         static bool initialised;
@@ -108,7 +146,11 @@ namespace cpp {
         static uniconv::utfcstr* argv;
         static struct ToggledKeys keys_toggled;
         static bool emulator;
+        static int pid;
+        static bool sub_proc;
+        static int ret;
         #ifdef _WIN32
+            static const wchar_t* subdir;
             //static std::vector<std::vector<COLORREF>> SaveScreen(void);
             //static std::pair<std::pair<uint16_t,uint16_t>,std::pair<uint16_t,uint16_t>> GetOffsetSymSize(int color1 = 3, int color2 = 9, int color3 = 1);
             
@@ -130,14 +172,22 @@ namespace cpp {
             //static std::pair<uint16_t,uint16_t> xyoffset;
             //static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
         #else
+            static const char* subdir;
             static struct termios old_termios;
             static struct winsize window_size;
-            static char buf[256]; static int8_t buf_it;
+            static char buf[127]; static int8_t buf_it;
         #ifdef __linux__
             static inline char GetChar(void);
             static struct termios old_fdterm;
             static int old_kbdmode;
             static int fd;
+            static int fb_fd;
+            static std::pair<uint32_t,uint32_t> pixelpos; 
+            static input_event events[255]; static uint8_t evnts_siz;
+            static int mouse_fd;
+            static bool discard_mouse;
+            static bool parent;
+            static uint8_t root_type;
             static Key::Enum key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX];
         #endif
         #endif
@@ -186,7 +236,6 @@ namespace cpp {
         static enum Key::Enum KeyTyped(void);
 
         static void HandleMouseAndFocus(void);
-        static const char* GetInputStream(void);
         static bool IsFocused(void);
         static struct MouseStatus GetMouseStatus(void);
         static std::pair<uint8_t,uint8_t> MouseButtonClicked(void); // returns button ID and whitch consecutive click was it
@@ -201,5 +250,3 @@ namespace cpp {
     };
     extern std::istream& gin;
 } // namespace cpp
-
-void SysSleep(int microseconds);

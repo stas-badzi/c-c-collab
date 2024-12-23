@@ -24,14 +24,14 @@ sources = Console.cpp FileSystem.cpp System.cpp dllexport.cpp
 #> header files
 headers = Console.hpp FileSystem.hpp FileSystem.ipp dllimport.hpp System.hpp System.ipp smart_ref.hpp smart_ref.ipp
 #> include files
-includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp linux/ledctrl.h
+includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp linux/ledctrl.h linux/mousefd.h
 #> name the dynamic library
 name = factoryrushplus
 # *******************************
 
 #******** c++ binary config *****
 #> source files
-binsources = main.cpp Console.cpp FileSystem.cpp System.cpp Control.cpp
+binsources = main.cpp Console.cpp FileSystem.cpp System.cpp Control.cpp dllexport.cpp
 #> header files
 binheaders = dllimport.hpp Console.hpp FileSystem.hpp System.hpp defines.h Control.hpp
 #> include files
@@ -237,7 +237,8 @@ ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 #windows
 nulldir = nul-Wdollar-in-identifier-extension
 binflags = 
-admin = sudo
+admin = sudo$(space)
+adminend =
 staticgen = lib /OUT:
 run = .\
 os_name = win-$(arch)
@@ -245,8 +246,8 @@ binary = exe
 static = lib
 dynamic = dll
 prefix = $(empty)
-dllname = "$(name).$(dynamic)"
-libname = "$(filename).$(dynamic)"
+dllname = '$(name).$(dynamic)'
+libname = '$(filename).$(dynamic)'
 libdir = $(winlib)
 bindir = $(winbin)
 #
@@ -255,7 +256,8 @@ ifeq ($(shell uname -s),WINDOWS_NT)
 #windows i think
 nulldir = nul
 binflags = 
-admin = sudo
+admin = sudo$(space)
+adminend =
 staticgen = lib /OUT:
 run = .\
 os_name = win-$(arch)
@@ -263,8 +265,8 @@ binary = exe
 static = lib
 prefix = $(empty)
 dynamic = dll
-dllname = "$(name).$(dynamic)"
-libname = "$(filename).$(dynamic)"
+dllname = '$(name).$(dynamic)'
+libname = '$(filename).$(dynamic)'
 libdir = $(winlib)
 bindir = $(winbin)
 #
@@ -280,7 +282,8 @@ dynamic = dll
 binflags = 
 libdir = $(cygwinlib)
 bindir = $(cygwinbin)
-admin = sudo
+admin = sudo$(space)
+adminend =
 #
 else
 # msys mingw and others
@@ -314,7 +317,8 @@ prefix = $(empty)
 dynamic = dll
 libdir = $(msyslib)
 bindir = $(msysbin)
-admin = sudo
+admin = sudo$(space)
+adminend =
 #
 endif
 #all unix emulators on windows
@@ -322,15 +326,16 @@ run = ./
 nulldir = nul
 staticgen = ar -rcs$(space)
 os_name = win-$(arch)
-dllname = "$(name).$(dynamic)"
-libname = "$(filename).$(dynamic)"
+dllname = '$(name).$(dynamic)'
+libname = '$(filename).$(dynamic)'
 #
 else
 ifeq ($(shell uname -s),Darwin)
 #macos
 nulldir =  /dev/null
 binflags = -lcuchar
-admin = sudo
+admin = sudo$(space)
+adminend =
 staticgen = ar -rcs$(space)
 run = ./
 os_name = osx-$(arch)
@@ -345,12 +350,27 @@ else
 #linux and similar[other]
 nulldir = /dev/null
 binflags = 
-admin = sudo
+ifneq ($(shell which doas),$(empty))
+	admin = doas$(space)
+	adminend =
+else
+ifneq ($(shell which sudo),$(empty))
+	admin = sudo$(space)
+	adminend =
+else
+ifneq ($(shell which su),$(empty))
+	admin = su -c "
+	adminend = "
+else
+	$(error "neither sudo, doas or su not found")
+endif
+endif
+endif
 staticgen = ar rcs$(space)
 run = ./
 os_name = linux-$(arch)
-libname = "lib$(filename).so"
-dllname = "lib$(name).so"
+libname = 'lib$(filename).so'
+dllname = 'lib$(name).so'
 binary = bin
 static = a
 prefix = lib
@@ -485,7 +505,7 @@ else
 	@rm -f binaryplus/obj/*
 endif
 
-resources: source/setkbdmode.c source/getfd.c source/getfd.h source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp
+resources: source/setkbdmode.c source/getfd.c source/getfd.h source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h
 
 	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(staticgen)assets/$(prefix)globals.$(static) objects/globals.o
@@ -497,13 +517,13 @@ resources: source/setkbdmode.c source/getfd.c source/getfd.h source/globals.c as
 
 ifeq ($(shell uname -s),Linux)
 	-@rm *.o 2> $(nulldir)
-	$(c-compiler) -c source/setkbdmode.c source/getfd.c source/ledctrl.c -pedantic -Wextra $(cflags) $(cdb) -Isource -std=c2x && mv *.o objects/
-	ar rcs assets/$(prefix)linuxctrl.$(static) objects/getfd.o objects/ledctrl.o
+	$(c-compiler) -c source/setkbdmode.c source/getfd.c source/ledctrl.c source/mousefd.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
+	ar rcs assets/$(prefix)linuxctrl.$(static) objects/getfd.o objects/ledctrl.o objects/mousefd.o objects/setkbdmode.o
 	$(c-compiler) -o assets/setkbdmode.$(binary) objects/setkbdmode.o -Lassets -llinuxctrl $(static-libc)
 ifeq ($(copylibs),1)
 	@echo "$(linuxroot)/share/factoryrush/bin"
-	$(admin) mkdir -p $(linuxroot)/share/factoryrush/bin
-	$(admin) cp assets/setkbdmode.$(binary) $(linuxroot)/share/factoryrush/bin
+	$(admin)mkdir -p $(linuxroot)/share/factoryrush/bin$(adminend)
+	$(admin)cp assets/setkbdmode.$(binary) $(linuxroot)/share/factoryrush/bin$(adminend)
 else
 	@mkdir -p binaryplus/bin/../share/factoryrush/bin
 	@cp assets/setkbdmode.$(binary) binaryplus/share/factoryrush/bin
@@ -553,7 +573,7 @@ ifeq ($(debug),1)
 endif
 
 ifeq ($(copylibs),1)
-	$(admin) cp cplusplus/bin/$(dllname) $(libdir)
+	$(admin)cp cplusplus/bin/$(dllname) $(libdir)$(adminend)
 else
 	@cp cplusplus/bin/$(dllname) binaryplus/bin
 	@cp cplusplus/bin/$(dllname) binarysharp/bin/exe
@@ -590,7 +610,7 @@ endif
 ifeq ($(shell echo "check quotes"),"check quotes")
 #windows
 ifeq ($(copylibs),1)
-	$(admin) copy cplusplus\bin\$(dllname) $(libdir)
+	$(admin)copy cplusplus\bin\$(dllname) $(libdir)$(adminend)
 else
 	@copy cplusplus\bin\$(dllname) binaryplus\bin
 	@copy cplusplus\bin\$(dllname) binarysharp\bin\exe
@@ -599,7 +619,7 @@ endif
 else
 #other
 ifeq ($(copylibs),1)
-	$(admin) cp cplusplus/bin/$(dllname) $(libdir)
+	$(admin)cp cplusplus/bin/$(dllname) $(libdir)$(adminend)
 else
 	@cp cplusplus/bin/$(dllname) binaryplus/bin
 	@cp cplusplus/bin/$(dllname) binarysharp/bin/exe
@@ -626,7 +646,7 @@ ifeq ($(debug),1)
 	@cp csharp/bin/lib/$(filename).pdb cplusplus/bin
 endif
 ifeq ($(copylibs),1)
-	$(admin) cp csharp/bin/lib/$(libname) $(libdir)
+	$(admin)cp csharp/bin/lib/$(libname) $(libdir)$(adminend)
 else
 	@cp csharp/bin/lib/$(libname) binarysharp/bin/exe
 	@cp csharp/bin/lib/$(libname) binaryplus/bin
@@ -637,7 +657,7 @@ ifeq ($(shell echo "check quotes"),"check quotes")
 	@cd csharp/bin/$(configuration)/net9.0/$(os_name)/native/ && @echo . > null.exp && @echo . > null.lib && @echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(libname)
 	@move csharp\bin\$(configuration)\net9.0\$(os_name)\native\$(libname) csharp\bin\lib
 ifeq ($(copylibs),1)
-	$(admin) copy csharp\bin\lib\$(libname) $(libdir)
+	$(admin)copy csharp\bin\lib\$(libname) $(libdir)$(adminend)
 else
 	@copy csharp\bin\lib\$(libname) binarysharp\bin\exe
 	@copy csharp\bin\lib\$(libname) binaryplus\bin
@@ -647,7 +667,7 @@ else
 	@cd csharp/bin/$(configuration)/net9.0/$(os_name)/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
 	@mv -f csharp/bin/$(configuration)/net9.0/$(os_name)/native/* csharp/bin/lib/$(libname)
 ifeq ($(copylibs),1)
-	$(admin) cp csharp/bin/lib/$(libname) $(libdir)
+	$(admin)cp csharp/bin/lib/$(libname) $(libdir)$(adminend)
 else
 	@cp csharp/bin/lib/$(libname) binarysharp/bin/exe
 	@cp csharp/bin/lib/$(libname) binaryplus/bin
@@ -688,14 +708,14 @@ endif
 ifeq ($(shell echo "check quotes"),"check quotes")
 #windows
 ifeq ($(copylibs),1)
-	$(admin) copy binaryplus\bin\$(binname).$(binary) $(bindir)
+	$(admin)copy binaryplus\bin\$(binname).$(binary) $(bindir)$(adminend)
 else
 	cd binaryplus\bin && dir
 endif
 else
 #other
 ifeq ($(copylibs),1)
-	$(admin) cp binaryplus/bin/$(binname).$(binary) $(bindir)
+	$(admin)cp binaryplus/bin/$(binname).$(binary) $(bindir)$(adminend)
 else
 	cd binaryplus/bin && ls
 endif
@@ -708,7 +728,7 @@ ifeq ($(msvc),1)
 	@cd binarysharp/bin/$(arch)/$(configuration)/net9.0/$(os_name)/native/ && for i in *.$(binary); do if [ ! "$$i" = '$(binname).$(binary)' ]; then mv $$i $(binname).$(binary); fi; done 
 	@mv binarysharp/bin/$(arch)/$(configuration)/net9.0/$(os_name)/native/* binarysharp/bin/exe
 ifeq ($(copylibs),1)
-	$(admin) cp binarysharp/bin/exe/$(binfile).$(binary) $(bindir)
+	$(admin)cp binarysharp/bin/exe/$(binfile).$(binary) $(bindir)$(adminend)
 else
 endif
 else
@@ -726,14 +746,14 @@ endif
 ifeq ($(shell echo "check quotes"),"check quotes")
 #windows
 ifeq ($(copylibs),1)
-	$(admin) copy binarysharp\bin\exe\$(binfile).$(binary) $(bindir)
+	$(admin)copy binarysharp\bin\exe\$(binfile).$(binary) $(bindir)$(adminend)
 else
 	@cd binarysharp\bin\exe && dir
 endif
 else
 #other
 ifeq ($(copylibs),1)
-	$(admin) cp binarysharp/bin/exe/$(binfile).$(binary) $(bindir)
+	$(admin)cp binarysharp/bin/exe/$(binfile).$(binary) $(bindir)$(adminend)
 else
 	@cd binarysharp/bin/exe && ls
 endif

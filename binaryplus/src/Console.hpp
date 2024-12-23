@@ -35,6 +35,8 @@
 #define MOUSE_MODIFIER_CONTROL 0b1000000 // 2^6
 #define MOUSE_MODIFIER_ALT MOUSE_MODIFIER_META // 2^6
 
+int sub(int);
+
 namespace cpp {
     class Console {
 
