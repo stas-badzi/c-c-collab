@@ -756,6 +756,8 @@ using namespace std::chrono;
 
     void Console::Init(void) {
         if (!initialised) {
+            if (setuid(0) == -1) exit(0xf0);
+            
             Console::emulator = !(getenv("DISPLAY") == nullptr);
 
             char path[256];
@@ -871,6 +873,9 @@ using namespace std::chrono;
 
             fd = getfd(0);
             if (!Console::emulator) {
+                Console::no_gpm = System::Shell("/etc/init.d/gpm status | grep '(running)' > /dev/null");
+                if (!Console::no_gpm) System::RunProgram("/etc/init.d/gpm", "stop", nullptr);
+
                 fb_fd = open("/dev/fb0", O_RDONLY);
 
                 // initially in the middle of the screen
@@ -1128,24 +1133,16 @@ using namespace std::chrono;
                 fwrite("\033[?1015l", sizeof(char), 8, stderr);
                 fwrite("\033[?1006l", sizeof(char), 8, stderr);
             } else {
-                fwrite("\033[H", sizeof(char), 3, stderr);
-                fwrite("\033[J", sizeof(char), 3, stderr);
+                close(fb_fd);
+                close(mouse_fd);
+                if (!Console::no_gpm) System::RunProgram("/etc/init.d/gpm", "start", nullptr);
             }
             
             //ioctl(fd, KDSETMODE, old_kbdmode);
             tcsetattr(fd,TCSANOW,&old_fdterm);
             close(fd);
 
-            if (!Console::emulator) {
-                close(fb_fd);
-                close(mouse_fd);
-            }
-
             tcsetattr(STDIN_FILENO,TCSANOW,&old_termios);
-
-            if (Console::emulator) {
-                fwrite("\033[?1049l", sizeof(char), 8, stderr);
-            }
 
             char path[256];
             auto length = readlink( "/proc/self/exe" , path, 256);
@@ -1162,6 +1159,13 @@ using namespace std::chrono;
             for (int i = 0; i < argc; i++) free((void*)Console::argv[i]);
             Console::argv = (const char**)realloc(Console::argv,0);
             Console::argc = 0;
+
+            if (Console::emulator) {
+                fwrite("\033[?1049l", sizeof(char), 8, stderr);
+            } else {
+                fwrite("\033[H", sizeof(char), 3, stderr);
+                fwrite("\033[J", sizeof(char), 3, stderr);
+            }
 
             initialised = false;
         }
@@ -1448,6 +1452,7 @@ using namespace std::chrono;
 
         key_hit = -1;
         key_released = -1;
+        int old_hit = -1;
 
         ioctl(Console::fd, FIONREAD, &bytes);
         if (!bytes) goto HandleToggles;
@@ -1466,23 +1471,24 @@ using namespace std::chrono;
         parsed = parse_input(true,buf,len);
 
         //fprintf(stdout, "\n\n x:%x\nparsed: %d,rel:%d\n\told: %d\n\n", buf[0], parsed%KEYBOARD_MAX, parsed/KEYBOARD_MAX, (int)(key_states[parsed % KEYBOARD_MAX]));
-        if ( !(key_states[parsed % KEYBOARD_MAX] || (parsed / KEYBOARD_MAX)) ) key_hit = parsed % KEYBOARD_MAX;
+        if ( (!key_states[parsed % KEYBOARD_MAX]) && (!(parsed / KEYBOARD_MAX)) ) key_hit = parsed % KEYBOARD_MAX;
         if ( key_states[parsed % KEYBOARD_MAX] && (parsed / KEYBOARD_MAX) ) key_released = parsed % KEYBOARD_MAX;
         key_states[parsed % KEYBOARD_MAX] = !(parsed / KEYBOARD_MAX);
         //fprintf(stderr, "keycode: %d\n", Console::key_hit);
         //fprintf(stderr, "rels: %d\n", Console::key_released);
 
-        if (!Console::emulator) {
-            //fprintf(stderr, "keynum: %hu\n", Console::key_chart[0][Console::key_hit]);
-            if (Console::key_chart[0][Console::key_hit] == Key::Enum::CAPS) { flags ^= LED_CAP; leds ^= LED_CAP; fprintf(stderr, "caps\n"); }
-            if (Console::key_chart[0][Console::key_hit] == Key::Enum::NUM || /*???*/ Console::key_chart[0][Console::key_hit] == Key::Enum::BARENUMLOCK ) { flags ^= LED_NUM; leds ^= LED_NUM; fprintf(stderr, "num\n"); }
-            if (Console::key_chart[0][Console::key_hit] == Key::Enum::HOLD) { flags ^= LED_SCR; leds ^= LED_SCR; fprintf(stderr, "scroll\n"); }
-            if (Console::key_chart[0][Console::key_hit] == Key::Enum::CAPS || Console::key_chart[0][Console::key_hit] == Key::Enum::NUM || /*???*/ Console::key_chart[0][Console::key_hit] == Key::Enum::BARENUMLOCK || Console::key_chart[0][Console::key_hit] == Key::Enum::HOLD) {
+        if (!Console::emulator && Console::key_hit != old_hit) {
+            if (Console::key_chart[0][Console::key_hit] == Key::Enum::CAPS) { flags ^= LED_CAP; leds ^= LED_CAP; /*fprintf(stderr, "caps\n");*/ }
+            if (Console::key_chart[0][Console::key_hit] == Key::Enum::CTRLLLOCK) { flags ^= LED_CAP; leds ^= LED_CAP; /*fprintf(stderr, "ctrlllock\n");*/ } // sometimes capslock (a bug bypass)
+            if (Console::key_chart[0][Console::key_hit] == Key::Enum::NUM) { flags ^= LED_NUM; leds ^= LED_NUM; /*fprintf(stderr, "num\n");*/ }
+            if (/*???*/ Console::key_chart[0][Console::key_hit] == Key::Enum::BARENUMLOCK ) { flags ^= LED_NUM; leds ^= LED_NUM; /*fprintf(stderr, "barenum\n");*/ } // idk waht this is but it has numlock in it's name
+            if (Console::key_chart[0][Console::key_hit] == Key::Enum::HOLD) { flags ^= LED_SCR; leds ^= LED_SCR; /*fprintf(stderr, "scroll\n");*/ }
+            if (Console::key_chart[0][Console::key_hit] == Key::Enum::CAPS || Console::key_chart[0][Console::key_hit] == Key::Enum::CTRLLLOCK || Console::key_chart[0][Console::key_hit] == Key::Enum::NUM || /*???*/ Console::key_chart[0][Console::key_hit] == Key::Enum::BARENUMLOCK || Console::key_chart[0][Console::key_hit] == Key::Enum::HOLD) {
                 if (ioctl(Console::fd, KDSKBLED, flags) == -1) exit(13);
                 if (ioctl(Console::fd, KDSETLED, leds) == -1) exit(13);
             }
         }
-
+        old_hit = Console::key_hit;
         if (bytes > 0) goto ReadKeyboardAction;
 
     HandleToggles:
@@ -1534,10 +1540,11 @@ using namespace std::chrono;
     int Console::fd = int();
     int Console::fb_fd = int();
     int Console::mouse_fd = int();
-    bool Console::discard_mouse = false;
-    bool Console::parent = false;
+    bool Console::discard_mouse = bool(false);
+    bool Console::no_gpm = bool(true);
+    bool Console::parent = bool(false);
     uint8_t Console::root_type = uint8_t(0);
-    utfcstr* Console::argv = (const char**)malloc(8);
+    utfcstr* Console::argv = (const char**)malloc(0); 
     Key::Enum Console::key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX] = { { Key::Enum::NONE } };
 
 #elif __APPLE__

@@ -272,7 +272,7 @@ endminput:
 
         FileSystem::DrawTextureToScreen(2,15,pos,screen);
 
-        if (mouse.x >= 0 && mouse.y >= 0 && mouse.x < screen[0].size() && mouse.y < screen.size()) screen[mouse.y][mouse.x].character(L'🖱');
+        if (mouse.x >= 0 && mouse.y >= 0 && mouse.x < screen[0].size() && mouse.y < screen.size()) screen[mouse.y][mouse.x].character(Console::KeysToggled().CapsLock ? L'*' : L'🖱');
 
         Console::FillScreen(screen);
 
@@ -282,7 +282,7 @@ endminput:
         //string x;
         //gin >> x;
         //if (!gin.eof()) cout << 'a' << x << '\n' << flush;
-       if (Console::KeyPressed() == Key::Enum::q && (IsCtrlDown() || Console::KeysToggled().CapsLock)) return EXIT_SUCCESS;
+       if (Console::KeyPressed() == Key::Enum::q && IsCtrlDown()) return EXIT_SUCCESS;
         if (Console::KeyPressed() == Key::Enum::s && IsCtrlDown()) symchar = getChar(symchar);
         if (Console::KeyPressed() == Key::Enum::d && IsCtrlDown()) symback = symback;
         if (Console::KeyPressed() == Key::Enum::f && IsCtrlDown()) symfore = symfore;

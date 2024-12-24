@@ -186,6 +186,7 @@ namespace cpp {
             static input_event events[255]; static uint8_t evnts_siz;
             static int mouse_fd;
             static bool discard_mouse;
+            static bool no_gpm;
             static bool parent;
             static uint8_t root_type;
             static Key::Enum key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX];
