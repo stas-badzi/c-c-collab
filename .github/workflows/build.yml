@@ -21,15 +21,17 @@ jobs:
         run: |
           make cs sudo=0
           make csbin sudo=0
+          cd csharp/bin/lib
+          dir
       - name: Export dynamic library
         uses: actions/upload-artifact@v4
         with:
-          name: CSharbpWinDll
+          name: CSharpWinDll
           path: csharp/bin/lib/factoryrushsharp.dll
       - name: Export executable
         uses: actions/upload-artifact@v4
         with:
-          name: CSharbpWinExe
+          name: CSharpWinExe
           path: binarysharp/bin/exe/cs-factoryrush.exe
 
   build-msys:
@@ -40,12 +42,12 @@ jobs:
       - name: Import C# compiled dynamic library
         uses: actions/download-artifact@v4
         with:
-          name: CSharbpWinDll
+          name: CSharpWinDll
           path: csharp/bin/lib/factoryshsharp.dll
       - name: Import C# compiled executable
         uses: actions/download-artifact@v4
         with:
-          name: CSharbpWinExe
+          name: CSharpWinExe
           path: binarysharp/bin/exe/cs-factoryrush.exe
       - name: Copy C# where it's needed
         run: |
@@ -86,12 +88,12 @@ jobs:
       - name: Import C# compiled dynamic library
         uses: actions/download-artifact@v4
         with:
-          name: CSharbpWinDll
+          name: CSharpWinDll
           path: csharp/bin/lib/factoryshsharp.dll
       - name: Import C# compiled executable
         uses: actions/download-artifact@v4
         with:
-          name: CSharbpWinExe
+          name: CSharpWinExe
           path: binarysharp/bin/exe/cs-factoryrush.exe
       - name: Set up Cygwin
         uses: egor-tensin/setup-cygwin@v4
