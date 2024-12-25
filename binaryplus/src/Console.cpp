@@ -22,6 +22,7 @@ Console::MouseStatus::MouseStatus(void) {
 }
 
 void Console::Init(void) {
+    Console_sub$define(Console_sub);
     Console_Init();
 }
 

@@ -168,7 +168,7 @@ namespace cpp {
             static HDC device;
             static DWORD old_console;
             static HANDLE old_buffer;
-            static inline clang_constexpr uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2);
+            static inline constexpr uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2);
             //static std::pair<uint16_t,uint16_t> xyoffset;
             //static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
         #else

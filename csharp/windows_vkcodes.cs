@@ -1,5 +1,6 @@
 #if _WIN32
 namespace windows {
+#pragma warning disable CS8981
     public class keyboard {
         /*
         * Virtual Keys, Standard Set
@@ -43,19 +44,13 @@ namespace windows {
         public const ushort VK_HANGEUL       = 0x15;  /* old name - should be here for compatibility */
         public const ushort VK_HANGUL        = 0x15;
 
-        /*
-        * 0x16 : unassigned
-        */
-
+        public const ushort VK_IME_ON        = 0x16;
         public const ushort VK_JUNJA         = 0x17;
         public const ushort VK_FINAL         = 0x18;
         public const ushort VK_HANJA         = 0x19;
         public const ushort VK_KANJI         = 0x19;
 
-        /*
-        *= 0x1A : unassigned
-        */
-
+        public const ushort VK_IME_OFF       = 0x1A;
         public const ushort VK_ESCAPE        = 0x1B;
 
         public const ushort VK_CONVERT       = 0x1C;
@@ -310,5 +305,6 @@ namespace windows {
         * 0xFF : reserved
         */
     }
+#pragma warning restore CS8981
 }
 #endif

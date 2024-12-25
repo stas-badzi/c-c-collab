@@ -2,7 +2,12 @@
 #include "dllimport.hpp"
 
 namespace cpp {
-    __attribute__((visibility("default"))) std::istream& gin =
+#ifdef _WIN32
+    __declspec(dllexport)
+#else
+    __attribute__((visibility("default")))
+#endif
+    std::istream& gin =
 #if defined(__linux__) || defined(__APPLE__)
     *((std::istream*)&Console::in);
 #else
@@ -16,8 +21,6 @@ using namespace std;
 using namespace std::chrono;
 
 #ifdef _WIN32
-#include <iostream>
-
     inline constexpr uint8_t Console::GenerateAtrVal(uint8_t i1, uint8_t i2) {
         uint8_t val = 0x0000;
         if (i1 == 0) { val |= 0x0000; }
@@ -447,8 +450,8 @@ using namespace std::chrono;
     DWORD Console::old_console = DWORD();
     uint8_t Console::default_fcol = uint8_t();
     uint8_t Console::default_bcol = uint8_t();
-    utfcstr* Console::argv = (utfcstr*)malloc(0);
-    wchar_t** Console::subdir = nullptr;
+    utfcstr* Console::argv = (utfcstr*)malloc(sizeof(utfcstr));
+    const wchar_t* Console::subdir = nullptr;
     //pair<uint16_t,uint16_t> Console::xyoffset = pair<uint16_t,uint16_t>();
 
     inline HWND GetHwnd(void) {
@@ -458,6 +461,7 @@ using namespace std::chrono;
         SetConsoleTitle(pszNewWindowTitle);
         SysSleep(40e3);
         hwndFound=FindWindow(NULL, pszNewWindowTitle);
+        if (hwndFound == NULL) hwndFound = GetForegroundWindow();
         return(hwndFound);
     }
 
@@ -521,12 +525,13 @@ using namespace std::chrono;
 
     void Console::FillScreen(vector<vector<Symbol> > symbols) {
         Symbol empty_sym = Symbol(L' ', 16, 16);
-        const size_t win_width = GetWindowWidth(), win_height = GetWindowHeight(), height = symbols.size(), width = height > 0 ? symbols[0].size() : 0;
+        const size_t win_width = GetWindowWidth(), win_height = GetWindowHeight(), height = symbols.size();
 
         wchar_t* screen = new wchar_t[win_height*win_width];
         WORD* attributes = new WORD[win_height*win_width];
 
 		for (size_t i = 0; i < win_height; i++) {
+            const size_t width = symbols[i].size();
 			for (size_t j = 0; j < win_width; j++) {
                 if (i >= height || j >= width) {
                     screen[ i*win_width + j ] =  empty_sym.character;
@@ -608,10 +613,15 @@ using namespace std::chrono;
                 Console::mouse_status.primary = GetKeyState(VK_LBUTTON) & 0x8000;
                 Console::mouse_status.secondary = GetKeyState(VK_RBUTTON) & 0x8000;
                 Console::mouse_status.middle = GetKeyState(VK_MBUTTON) & 0x8000;
-                Console::mouse_status.scroll = { flags[3], flags[3] && HIWORD(mouse.dwButtonState) > 0 };
-                Console::mouse_buttons_down[3] = flags[3] && HIWORD(mouse.dwButtonState) > 0;
-                Console::mouse_buttons_down[4] = flags[3] && HIWORD(mouse.dwButtonState) > 0;
-                Console::this_mouse_combo = (flags[2] ? this_mouse_combo : 0) + 1; 
+                Console::mouse_status.scroll = { flags[2], flags[2] && (HIWORD(mouse.dwButtonState) > 0) };
+                Console::mouse_buttons_down[0] = mouse_status.primary;
+                Console::mouse_buttons_down[1] = mouse_status.middle;
+                Console::mouse_buttons_down[2] = mouse_status.secondary;
+                Console::mouse_buttons_down[3] = flags[2] && (HIWORD(mouse.dwButtonState) > 0);
+                Console::mouse_buttons_down[4] = flags[2] && !(HIWORD(mouse.dwButtonState) > 0);
+                Console::mouse_buttons_down[5] = GetKeyState(VK_XBUTTON1) & 0x8000;
+                Console::mouse_buttons_down[6] = GetKeyState(VK_XBUTTON2) & 0x8000;
+                Console::this_mouse_combo = (flags[1] ? this_mouse_combo : 0) + 1; 
             }
 
             if (event[2]) {
@@ -1745,7 +1755,7 @@ bool Console::this_mouse_down = bool(false);
 uint8_t Console::last_mouse_button = uint8_t(-1);
 uint8_t Console::last_mouse_combo = uint8_t(0);
 bool Console::focused = bool(true);
-unsigned short Console::double_click_max = ushort(500);
+unsigned short Console::double_click_max = (unsigned short)(500);
 istringstream Console::in = istringstream(std::ios_base::ate|std::ios_base::in);
 int Console::pid = int(-1); 
 int Console::ret = int(-1);

@@ -52,6 +52,13 @@ namespace cppimp {
     libimport int32_t Console_GetArgC(void);
 
     libimport uniconv::unichar** Console_GetArgV(void);
+    
+#ifdef __cplusplus
+    extern "C"
+#endif
+    int Console_sub(int);
+
+    libimport void Console_sub$define(int (*arg1)(int));
 
     libimport void* Console_Symbol_Construct$smb(void* smb);
 

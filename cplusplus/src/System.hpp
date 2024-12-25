@@ -24,8 +24,10 @@ namespace cpp {
     private:
         static uniconv::utfstr GetRoot(void);
         static uniconv::utfstr root;
+#ifdef __UNIX__
         static pid_t tpid;
         static void SendSignal(int signal);
+#endif
     public:
         static uniconv::utfstr GetRootPath(void);
         static uniconv::utfstr ToNativePath(uniconv::utfstr path);

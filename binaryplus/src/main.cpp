@@ -10,19 +10,6 @@
 #include <vector>
 #include <chrono>
 
-#include <spawn.h>
-#include <unistd.h>
-
-#ifdef _LINUX_WAIT_H
-    #define __idtype_t_defined
-    typedef int idtype_t;
-#endif
-#include <sys/wait.h>
-
-#ifndef VK_CONTROL
-    #define VK_CONTROL 10
-#endif
-
 #define IsCtrlDown() (Console::IsKeyDown(Key::Enum::CTRL) || Console::IsKeyDown(Key::Enum::CTRLL) || Console::IsKeyDown(Key::Enum::CTRLR))
 
 using namespace std;
@@ -30,7 +17,10 @@ using namespace cpp;
 using namespace cs;
 
 wchar_t getChar(wchar_t current) {
-    return current;
+    wstringstream wstr;
+    wstr << "Press 1-9 to change the symbol\nESC to cancel\n...\n";
+    auto texture = Console::Symbol::CreateTexture(wstr.str());
+    Console::FillScreen(texture);
     do {
         Console::HandleKeyboard();
     } while (!(Console::IsKeyDown(Key::Enum::ONE) || Console::IsKeyDown(Key::Enum::TWO) || Console::IsKeyDown(Key::Enum::THREE) || Console::IsKeyDown(Key::Enum::FOUR) || Console::IsKeyDown(Key::Enum::FIVE) || Console::IsKeyDown(Key::Enum::SIX) || Console::IsKeyDown(Key::Enum::SEVEN) || Console::IsKeyDown(Key::Enum::EIGHT) || Console::IsKeyDown(Key::Enum::NINE) || Console::IsKeyDown(Key::Enum::ZERO) || Console::IsKeyDown(Key::Enum::ESC)));
@@ -272,8 +262,7 @@ endminput:
 
         FileSystem::DrawTextureToScreen(2,15,pos,screen);
 
-        if (mouse.x >= 0 && mouse.y >= 0 && mouse.x < screen[0].size() && mouse.y < screen.size()) screen[mouse.y][mouse.x].character(Console::KeysToggled().CapsLock ? L'*' : L'🖱');
-
+        if (mouse.x < screen[0].size() && mouse.y < screen.size()) screen[mouse.y][mouse.x].character(Console::KeysToggled().CapsLock ? L'*' : L'⮙');
         Console::FillScreen(screen);
 
         Control::CleanMemory();

@@ -1,6 +1,10 @@
-#include <dynamic_library.h>
-#include "Console.hpp"
+#include "dllimport.hpp"
 
-libexport int Console_sub(int arg1) {
-    return sub(arg1);
-}
+int sub(int type);
+
+#ifdef __cplusplus
+    extern "C"
+#endif
+    int Console_sub(int arg1) {
+        return sub(arg1);
+    }

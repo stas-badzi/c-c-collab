@@ -160,10 +160,10 @@ using namespace uniconv;
     }
 
     libexport unichar** Console_GetArgV(void) {
-        int __argc = cpp::Console::GetArgC();
-        utfcstr* __argv = cpp::Console::GetArgV();
+        int _argc = cpp::Console::GetArgC();
+        utfcstr* _argv = cpp::Console::GetArgV();
         unichar** out = (unichar**)__dllalloc(sizeof(unichar*)*__argc);
-        for (int i = 0; i < __argc; i++) {
+        for (int i = 0; i < _argc; i++) {
             /*
             unichar* loc = (unichar*)__dllalloc(sizeof(unichar) * (strlen(__argv[i]) + 1));
             size_t offset = 0;
@@ -175,9 +175,19 @@ using namespace uniconv;
             loc[num] = 0;
             loc = (unichar*)realloc(loc,sizeof(unichar) * ++num);
             */
-            out[i] = Utf8StringToUnicode(__argv[i]);;
+            out[i] = Utf8StringToUnicode(_argv[i]);;
         }
         return out;
+    }
+
+    int (*Console_sub)(int);
+
+    int sub (int arg1) {
+        return Console_sub(arg1);
+    }
+
+    libexport void Console_sub$define(int (*arg1)(int)) {
+        Console_sub = arg1;
     }
 
     // Symbol
@@ -476,11 +486,6 @@ using namespace uniconv;
 
         libexport void System_WritePointer$nint$ofs(nint arg1, int32_t arg3, nint arg2) {
             return cpp::System::WritePointer<nint>(arg1,arg3,arg2);
-        }
-
-        libimport int Console_sub(int arg1);
-        int sub (int arg1) {
-            return Console_sub(arg1);
         }
 
     // ~WritePointer<T>
