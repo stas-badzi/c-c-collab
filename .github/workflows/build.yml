@@ -21,29 +21,38 @@ jobs:
         run: |
           make cs sudo=0
           make csbin sudo=0
-      - name: Export binaries
+      - name: Export dynamic library
         uses: actions/upload-artifact@v4
         with:
-          name: DotNetBinaries
-          path: .
+          name: CSharbpWinDll
+          path: csharp/bin/lib/factoryrushsharp.dll
+      - name: Export executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: CSharbpWinExe
+          path: binarysharp/bin/exe/cs-factoryrush.exe
 
   build-msys:
     name: Build program using MSYS2
     needs: compile-cs-windows
     runs-on: windows-latest
     steps:
-      - name: Import C# compiled source code
+      - name: Import C# compiled dynamic library
         uses: actions/download-artifact@v4
         with:
-          name: DotNetBinaries
-          path: .
-      - name: Refresh cs
+          name: CSharbpWinDll
+          path: csharp/bin/lib/factoryshsharp.dll
+      - name: Import C# compiled executable
+        uses: actions/download-artifact@v4
+        with:
+          name: CSharbpWinExe
+          path: binarysharp/bin/exe/cs-factoryrush.exe
+      - name: Copy C# where it's needed
         run: |
           touch cs
           touch csbin
-          mkdir cplusplus/obj
-          mkdir binaryplus/obj
-          mkdir objects
+          cp csharp/bin/lib/factoryshsharp.dll cplusplus/bin/factoryrush.dll
+          cp csharp/bin/lib/factoryshsharp.dll binaryplus/bin/factoryrush.dll
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
         with:
@@ -73,11 +82,16 @@ jobs:
     needs: compile-cs-windows
     runs-on: windows-latest
     steps:
-      - name: Import C# compiled source code
+      - name: Import C# compiled dynamic library
         uses: actions/download-artifact@v4
         with:
-          name: DotNetBinaries
-          path: .
+          name: CSharbpWinDll
+          path: csharp/bin/lib/factoryshsharp.dll
+      - name: Import C# compiled executable
+        uses: actions/download-artifact@v4
+        with:
+          name: CSharbpWinExe
+          path: binarysharp/bin/exe/cs-factoryrush.exe
       - name: Set up Cygwin
         uses: egor-tensin/setup-cygwin@v4
         with:
@@ -87,9 +101,8 @@ jobs:
         run: |
           echo $null >> cs
           echo $null >> csbin
-          mkdir cplusplus/obj
-          mkdir binaryplus/obj
-          mkdir objects
+          cp csharp\bin\lib\factoryshsharp.dll cplusplus\bin\factoryrush.dll
+          cp csharp\bin\lib\factoryshsharp.dll binaryplus\bin\factoryrush.dll
 
           Invoke-WebRequest -Uri "https://github.com/maweil/MakeForWindows/releases/download/v4.4.1/make-bin-win64.zip" -OutFile "make-bin.zip" -Verbose
           Expand-Archive -Force make-bin.zip .
