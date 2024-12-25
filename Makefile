@@ -91,12 +91,17 @@ symsysbin = /c/Windows
 # chmod 666 /usr/bin/../temp/initialized.dat
 # (linux only)
 
-ifeq ($(shell uname -s),Linux)
-static-libc = -static-libgcc
+ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
+static-libc = -static-libgcc -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic
+static-libc++ = -static-libstdc++
+else
+ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
+static-libc = -static-libgcc -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic
 static-libc++ = -static-libstdc++
 else
 static-libc = -static-libgcc
 static-libc++ = -static-libstdc++
+endif
 endif
 
 ifeq ($(sudo),1)
@@ -138,17 +143,17 @@ else
 ldarg = -fuse-ld=$(linker)
 endif
 
+ifeq ($(msvc),1)
+defcompcxx = cl
+defcompc = cl
+endif
+
 ifeq ($(cpp-compiler),$(empty))
 cpp-compiler = $(defcompcxx)
 endif
 
 ifeq ($(c-compiler),$(empty))
 c-compiler = $(defcompc)
-endif
-
-ifeq ($(msvc),1)
-cpp-compiler = cl
-c-compiler = cl
 endif
 
 ifeq ($(shell uname -s),Darwin)
@@ -235,7 +240,7 @@ endif
 
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 #windows
-nulldir = nul-Wdollar-in-identifier-extension
+nulldir = nul
 binflags = 
 admin = sudo$(space)
 adminend =
@@ -277,7 +282,7 @@ ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin only
 binary = exe
 static = a
-prefix = lib
+prefix = $(empty)
 dynamic = dll
 binflags = 
 libdir = $(cygwinlib)
