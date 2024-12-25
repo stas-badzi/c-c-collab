@@ -64,6 +64,7 @@ jobs:
           CC: gcc
           CXX: g++
         run: |
+          tree
           export PATH="/clang64/bin:$PATH"
           make release sudo=0 c-compiler=clang cpp-compiler=clang++
       - name: Upload C++ binaries

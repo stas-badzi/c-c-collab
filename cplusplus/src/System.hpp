@@ -24,7 +24,7 @@ namespace cpp {
     private:
         static uniconv::utfstr GetRoot(void);
         static uniconv::utfstr root;
-#ifdef __UNIX__
+#ifdef __unix__
         static pid_t tpid;
         static void SendSignal(int signal);
 #endif
