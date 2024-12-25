@@ -18,7 +18,7 @@ using namespace cs;
 
 wchar_t getChar(wchar_t current) {
     wstringstream wstr;
-    wstr << "Press 1-9 to change the symbol\nESC to cancel\n...\n";
+    wstr << "Press 0-9 to change the symbol\nESC to cancel\n...\n";
     auto texture = Console::Symbol::CreateTexture(wstr.str());
     Console::FillScreen(texture);
     do {
