@@ -162,14 +162,14 @@ using namespace uniconv;
     libexport unichar** Console_GetArgV(void) {
         int _argc = cpp::Console::GetArgC();
         utfcstr* _argv = cpp::Console::GetArgV();
-        unichar** out = (unichar**)__dllalloc(sizeof(unichar*)*__argc);
+        unichar** out = (unichar**)__dllalloc(sizeof(unichar*)*_argc);
         for (int i = 0; i < _argc; i++) {
             /*
-            unichar* loc = (unichar*)__dllalloc(sizeof(unichar) * (strlen(__argv[i]) + 1));
+            unichar* loc = (unichar*)__dllalloc(sizeof(unichar) * (strlen(_argv[i]) + 1));
             size_t offset = 0;
             int num = 0;
-            for (size_t j = 0; j < strlen(__argv[i]); j += offset) {
-                loc[num] = Utf8ToUnicode(ReadUtfChar(__argv[i], j, &offset));
+            for (size_t j = 0; j < strlen(_argv[i]); j += offset) {
+                loc[num] = Utf8ToUnicode(ReadUtfChar(_argv[i], j, &offset));
                 ++num;
             }
             loc[num] = 0;
