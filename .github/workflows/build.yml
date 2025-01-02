@@ -39,16 +39,20 @@ jobs:
     needs: compile-cs-windows
     runs-on: windows-latest
     steps:
-      - name: Import C# compiled dynamic library
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinDll
-          path: csharp/bin/lib/factoryshsharp.dll
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
         with:
           update: true
           install: make zip tree mingw-w64-clang-x86_64-toolchain
+      - name: clone-repository
+        shell: msys2 {0}
+        run: |
+          git clone https://github.com/stas-badzi/c-c-collab.git .
+      - name: Import C# compiled dynamic library
+        uses: actions/download-artifact@v4
+        with:
+          name: CSharpWinDll
+          path: csharp/bin/lib/factoryshsharp.dll
       - name: Import C# compiled executable
         uses: actions/download-artifact@v4
         with:
