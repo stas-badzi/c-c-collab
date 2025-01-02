@@ -27,7 +27,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: CSharpWinDll
-          path: csharp/bin/lib/factoryrushsharp.dll
+          path: binarysharp/bin/exe/factoryrushsharp.dll
       - name: Export executable
         uses: actions/upload-artifact@v4
         with:
