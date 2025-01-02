@@ -255,7 +255,7 @@ namespace cpp {
     };
     extern
 #ifdef __WIN32
-    __declspec(dllimport)
+    __declspec(dllexport)
 #else
     __attribute__((visibility("default")))
 #endif
