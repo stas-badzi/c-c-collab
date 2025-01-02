@@ -43,7 +43,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           update: true
-          install: make zip tree mingw-w64-clang-x86_64-toolchain
+          install: make git zip tree mingw-w64-clang-x86_64-toolchain
       - name: clone-repository
         shell: msys2 {0}
         run: |
