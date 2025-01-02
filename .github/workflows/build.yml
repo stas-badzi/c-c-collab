@@ -68,7 +68,7 @@ jobs:
         run: |
           tree
           export PATH="/clang64/bin:$PATH"
-          make release sudo=0 c-compiler=clang cpp-compiler=clang++
+          make sudo=0 c-compiler=clang cpp-compiler=clang++
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -118,7 +118,7 @@ jobs:
           CXX: g++
         run: |
           cd $(cygpath -u "${{ github.workspace }}")
-          ./make release sudo=0
+          ./make sudo=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -194,7 +194,7 @@ jobs:
           CC: gcc
           CXX: g++
         run: |
-          make release sudo=0 c-compiler=clang cpp-compiler=clang++
+          make sudo=0 c-compiler=clang cpp-compiler=clang++
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -215,7 +215,7 @@ jobs:
       - name: Compile code
         shell: bash
         run: |
-          make release sudo=0 c-compiler=clang cpp-compiler=clang++
+          make sudo=0 c-compiler=clang cpp-compiler=clang++
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -252,7 +252,7 @@ jobs:
           CXX: g++
         run: |
           export CPLUS_INCLUDE_PATH="${CPLUS_INCLUDE_PATH:+${CPLUS_INCLUDE_PATH}:}/Library/Developer/CommandLineTools/SDKs/MacOSX15.sdk/usr/include/c++/v1"
-          make release sudo=0 cpp-compiler=clang++ c-compiler=clang
+          make sudo=0 cpp-compiler=clang++ c-compiler=clang
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
