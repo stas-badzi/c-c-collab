@@ -104,6 +104,76 @@ using namespace std::chrono;
     inline constexpr COLORREF GetPixel(int x, int y, int width, int height, RGBQUAD* pixels) {
         return RGB(pixels[(height-y-1)*width + x].rgbRed, pixels[(height-y-1)*width + x].rgbGreen, pixels[(height-y-1)*width + x].rgbBlue);
     }
+
+    vector<DWORD> GetChildProcessIds(DWORD parentProcId) {
+  vector<DWORD> vec; int i = 0;
+  HANDLE hp = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  PROCESSENTRY32 pe = PROCESSENTRY32();
+  pe.dwSize = sizeof(PROCESSENTRY32);
+  if (Process32First(hp, &pe)) {
+    do {
+      if (pe.th32ParentProcessID == parentProcId) {
+        vec.push_back(pe.th32ProcessID); i++;
+      }
+    } while (Process32Next(hp, &pe));
+  }
+  CloseHandle(hp);
+  return vec;
+}
+
+DWORD GetParentProcessId(DWORD childProcId) {
+    HANDLE hp = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    PROCESSENTRY32 pe = PROCESSENTRY32();
+    pe.dwSize = sizeof(PROCESSENTRY32);
+    if (Process32First(hp, &pe)) {
+        do {
+            if (pe.th32ProcessID == childProcId) {
+                return pe.th32ParentProcessID;
+            }
+        } while (Process32Next(hp, &pe));
+    }
+    CloseHandle(hp);
+    return 0;
+}
+
+std::wstring GetProcessExecutableName(DWORD processId) {
+    HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
+    if (processHandle) {
+        wchar_t exePath[MAX_PATH];
+        if (GetModuleFileNameEx(processHandle, NULL, exePath, MAX_PATH)) {
+            CloseHandle(processHandle);
+            HMODULE moduleHandle = LoadLibrary(exePath);
+            if (!moduleHandle) return std::wstring();
+            PIMAGE_NT_HEADERS nth = ImageNtHeader((PVOID)moduleHandle);
+            if (!nth) return std::wstring();
+            if (nth->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || nth->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_OS2_CUI || nth->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_POSIX_CUI) {  
+                // Check parent process
+                DWORD parentProcessId = GetParentProcessId(processId);
+                std::wstring parentExeName = GetProcessExecutableName(parentProcessId);
+                if (!parentExeName.empty())
+                    return parentExeName;
+                // Check child processes
+                auto childProcessIds = GetChildProcessIds(processId);
+                for (auto&& childProcessId : childProcessIds) {
+                    std::wstring childExeName = GetProcessExecutableName(childProcessId);
+                    if (!childExeName.empty())
+                        return childExeName;
+                }
+                return std::wstring(exePath);
+            }
+            return std::wstring(exePath);
+        }
+        CloseHandle(processHandle);
+    }
+    return std::wstring();
+}
+
+std::wstring GetWindowExecutableName(HWND hwnd) {
+    DWORD processId;
+    GetWindowThreadProcessId(hwnd, &processId);
+    return GetProcessExecutableName(processId);
+}
+
 /*
     vector<vector<COLORREF>> Console::SaveScreen(void) {
 
@@ -147,8 +217,8 @@ using namespace std::chrono;
 
         return colors;
     }
-*/
-/*
+
+
     pair<pair<uint16_t,uint16_t>,pair<uint16_t,uint16_t>> Console::GetOffsetSymSize(int color1, int color2, int color3) {
         
     //~setup   
@@ -443,16 +513,6 @@ using namespace std::chrono;
         return pair<pair<uint16_t,uint16_t>,pair<uint16_t,uint16_t>>(xyoffset,symsize);
     }
 */
-    HANDLE Console::screen = HANDLE();
-    HANDLE Console::fd = HANDLE();
-    HWND Console::window = HWND();
-    HDC Console::device = HDC();
-    DWORD Console::old_console = DWORD();
-    uint8_t Console::default_fcol = uint8_t();
-    uint8_t Console::default_bcol = uint8_t();
-    utfcstr* Console::argv = (utfcstr*)malloc(sizeof(utfcstr));
-    const wchar_t* Console::subdir = nullptr;
-    //pair<uint16_t,uint16_t> Console::xyoffset = pair<uint16_t,uint16_t>();
 
     inline HWND GetHwnd(void) {
         HWND hwndFound;
@@ -467,6 +527,8 @@ using namespace std::chrono;
 
     void Console::Init(void) {
         if (!initialised) {
+            //System::RunProgram(L"C:\\msys64\\usr\\bin\\sleep", L"10", nullptr);
+
             Console::screen = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
             SetConsoleActiveScreenBuffer(Console::screen);
             
@@ -707,6 +769,18 @@ using namespace std::chrono;
         this->character = L' ';
         this->SetAttribute(attribute);
     }
+
+    HANDLE Console::screen = HANDLE();
+    HANDLE Console::fd = HANDLE();
+    HWND Console::window = HWND();
+    HDC Console::device = HDC();
+    DWORD Console::old_console = DWORD();
+    uint8_t Console::default_fcol = uint8_t();
+    uint8_t Console::default_bcol = uint8_t();
+    utfcstr* Console::argv = (utfcstr*)malloc(sizeof(utfcstr));
+    const wchar_t* Console::subdir = nullptr;
+    //pair<uint16_t,uint16_t> Console::xyoffset = pair<uint16_t,uint16_t>();
+
 #else
 // Not linux (Probably Posix and Unix)
 

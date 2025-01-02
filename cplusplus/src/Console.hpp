@@ -6,6 +6,7 @@
 #include <utility>
 #include <clang_constexpr.h>
 #include <sstream>
+#include "System.hpp"
 
 #ifdef __APPLE__
 #ifndef _GLIBCXX_HAVE_AT_QUICK_EXIT
@@ -23,6 +24,9 @@
 
 #ifdef _WIN32
     #include <windows.h>
+    #include <tlhelp32.h>
+    #include <psapi.h>
+    #include <dbghelp.h>
     #include <windows/key.hpp>
     #include <iostream>
 #ifndef _MSVC
@@ -249,5 +253,11 @@ namespace cpp {
 
         static std::istringstream in;
     };
-    extern std::istream& gin;
+    extern
+#ifdef __WIN32
+    __declspec(dllimport)
+#else
+    __attribute__((visibility("default")))
+#endif
+    std::istream& gin;
 } // namespace cpp

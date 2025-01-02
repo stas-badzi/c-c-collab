@@ -558,7 +558,7 @@ endif
 
 cpprun:
 ifeq ($(binary),exe)
-	-wt -f "$(dir)\binaryplus\bin\$(binname).$(binary)"
+	-$(run)binaryplus\bin\$(binname).$(binary)
 else
 ifeq ($(sudo),1)
 	$(bindir)/$(binname).$(binary)
@@ -599,12 +599,12 @@ else
 ifeq ($(binary),exe)
 #windows
 ifeq ($(shell uname -s),Windows_NT)
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals -ldbghelp $(flib) $(static-libc++) $(static-libc) $(ldarg)
 else
 ifeq ($(shell uname -s),windows32)
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals -ldbghelp $(flib) $(static-libc++) $(static-libc) $(ldarg)
 else
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals -ldbghelp $(flib) $(static-libc++) $(static-libc) $(ldarg)
 endif
 endif
 #

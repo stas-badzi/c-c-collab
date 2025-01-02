@@ -12,6 +12,7 @@
     #include <windows.h>
 #else
     #include <unistd.h>
+    #include <pthread.h>
 #ifndef _LINUX_WAIT_H
     #include <sys/wait.h>
 #endif
@@ -47,6 +48,13 @@ namespace cpp {
         static int RunProgramS(uniconv::utfcstr file, uniconv::utfcstr args, ...);
         static int RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]);
         static int RunProgramS(uniconv::utfcstr file, uniconv::utfcstr const args[]);
+        
+        static int ShellAsync(uniconv::utfcstr arg, bool& is_running);  
+        static int RunProgramAsync(uniconv::utfcstr path, bool& is_running, uniconv::utfcstr args, ...);
+        static int RunProgramAsyncS(uniconv::utfcstr file, bool& is_running, uniconv::utfcstr args, ...);
+        static int RunProgramAsync(uniconv::utfcstr path, bool& is_running, uniconv::utfcstr const args[]);
+        static int RunProgramAsyncS(uniconv::utfcstr file, bool& is_running, uniconv::utfcstr const args[]);
+        
     };
 }
 
