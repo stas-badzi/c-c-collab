@@ -155,17 +155,25 @@ namespace Cs
 
         public static void DrawTextureToScreen(int x, int y, List<List<Terminal.Symbol>> texture, List<List<Terminal.Symbol>> screen)
         {
-            int? width = texture[0].Count;
-            int? scrWidth = screen[0].Count;
             int? height = texture.Count;
             int? scrHeight = screen.Count;
 
-            for (int i = 0; i < height; i++)
+            for (int i = 0; i < height && y+i < scrHeight; i++)
             {
-                for (int j = 0; j < width; j++)
-                {
-                    if (y+i >= 0 && y+i < scrHeight && x+j >= 0 && x+j < scrWidth)
-                    {
+                if (y+i < 0) {
+                    i = -y;
+                    --i;
+                    continue;
+                }
+                int? width = texture[i].Count;
+                int? scrWidth = screen[y+i].Count;
+                for (int j = 0; j < width && x+j < scrWidth; j++) {
+                    if (x+j < 0) {
+                        j = -x;
+                        --j;
+                        continue;
+                    }
+                    try {
                         var elem = texture[i][j];
                         if (elem.character() != '\t') {
                             screen[y+i][x+j].character(elem.character());
@@ -176,6 +184,8 @@ namespace Cs
                         if (elem.background() < 16) {
                             screen[y+i][x+j].background(elem.background());
                         }
+                    } catch (Exception e) {
+                        Environment.FailFast($"Unhandled exception: " + e.Message + "\nAt: " + e.StackTrace);
                     }
                 }
             }
