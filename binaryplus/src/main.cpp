@@ -16,15 +16,27 @@ using namespace std;
 using namespace cpp;
 using namespace cs;
 
-wchar_t getChar(wchar_t current) {
+wchar_t getChar(wchar_t current) { // Symbol handling
     wstringstream wstr;
     wstr << "Press 0-9 to change the symbol\nESC to cancel\n...\n";
     auto texture = Console::Symbol::CreateTexture(wstr.str());
     Console::FillScreen(texture);
     do {
         Console::HandleKeyboard();
-    } while (!(Console::IsKeyDown(Key::Enum::ONE) || Console::IsKeyDown(Key::Enum::TWO) || Console::IsKeyDown(Key::Enum::THREE) || Console::IsKeyDown(Key::Enum::FOUR) || Console::IsKeyDown(Key::Enum::FIVE) || Console::IsKeyDown(Key::Enum::SIX) || Console::IsKeyDown(Key::Enum::SEVEN) || Console::IsKeyDown(Key::Enum::EIGHT) || Console::IsKeyDown(Key::Enum::NINE) || Console::IsKeyDown(Key::Enum::ZERO) || Console::IsKeyDown(Key::Enum::ESC)));
-    if (Console::IsKeyDown(Key::Enum::ZERO)) return L' ';
+    } while (!( // Waiting for a key to be pressed
+        Console::IsKeyDown(Key::Enum::ONE) || 
+        Console::IsKeyDown(Key::Enum::TWO) || 
+        Console::IsKeyDown(Key::Enum::THREE) || 
+        Console::IsKeyDown(Key::Enum::FOUR) || 
+        Console::IsKeyDown(Key::Enum::FIVE) || 
+        Console::IsKeyDown(Key::Enum::SIX) || 
+        Console::IsKeyDown(Key::Enum::SEVEN) || 
+        Console::IsKeyDown(Key::Enum::EIGHT) || 
+        Console::IsKeyDown(Key::Enum::NINE) ||
+        Console::IsKeyDown(Key::Enum::ZERO) || 
+        Console::IsKeyDown(Key::Enum::ESC)));
+
+    // Parsing the key pressed into a symbol
     if (Console::IsKeyDown(Key::Enum::ONE)) return L'-';
     if (Console::IsKeyDown(Key::Enum::TWO)) return L'|';
     if (Console::IsKeyDown(Key::Enum::THREE)) return L'/';
@@ -34,6 +46,7 @@ wchar_t getChar(wchar_t current) {
     if (Console::IsKeyDown(Key::Enum::SEVEN)) return L'#';
     if (Console::IsKeyDown(Key::Enum::EIGHT)) return L'@';
     if (Console::IsKeyDown(Key::Enum::NINE)) return L'▒';
+    if (Console::IsKeyDown(Key::Enum::ZERO)) return L' ';
     return current;
 }
     
@@ -42,7 +55,20 @@ wstring getPath(wstring current) {
     return current;
     do {
         Console::HandleKeyboard();
-    } while (!(Console::IsKeyDown(Key::Enum::ONE) || Console::IsKeyDown(Key::Enum::TWO) || Console::IsKeyDown(Key::Enum::THREE) || Console::IsKeyDown(Key::Enum::FOUR) || Console::IsKeyDown(Key::Enum::FIVE) || Console::IsKeyDown(Key::Enum::SIX) || Console::IsKeyDown(Key::Enum::SEVEN) || Console::IsKeyDown(Key::Enum::EIGHT) || Console::IsKeyDown(Key::Enum::NINE) || Console::IsKeyDown(Key::Enum::ZERO) || Console::IsKeyDown(Key::Enum::ESC)));
+    } while (!( // Waiting for a key to be pressed
+        Console::IsKeyDown(Key::Enum::ONE) || 
+        Console::IsKeyDown(Key::Enum::TWO) || 
+        Console::IsKeyDown(Key::Enum::THREE) || 
+        Console::IsKeyDown(Key::Enum::FOUR) || 
+        Console::IsKeyDown(Key::Enum::FIVE) || 
+        Console::IsKeyDown(Key::Enum::SIX) || 
+        Console::IsKeyDown(Key::Enum::SEVEN) || 
+        Console::IsKeyDown(Key::Enum::EIGHT) || 
+        Console::IsKeyDown(Key::Enum::NINE) ||
+        Console::IsKeyDown(Key::Enum::ZERO) || 
+        Console::IsKeyDown(Key::Enum::ESC)));
+
+    // Parsing the key pressed into a path
     wstring a = System::GetRootPath();
     if (Console::IsKeyDown(Key::Enum::ONE)) return a.append(L"/assets/one.tux");
     if (Console::IsKeyDown(Key::Enum::TWO)) return a.append(L"/assets/two.tux");
@@ -62,6 +88,7 @@ int main(void) {
     
     bool edit = false, bop = true;
 
+    // FPS counting
     chrono::time_point<chrono::high_resolution_clock> start = chrono::high_resolution_clock::now();
     long double avg = 0;
     long double old_avg = -1;
@@ -126,17 +153,21 @@ int main(void) {
     
     //*}
 
+    // Getting the arguments
     int argc = Console::GetArgC();
     wchar_t** argv = Console::GetArgV();
 
     wstring a = System::GetRootPath();
     a.append(L"/assets/a.tux");
     wstring file = (argc < 2) ? System::ToNativePath(getPath(System::GetRootPath() + L"/assets/a.tux")) : System::ToNativePath(wstring(argv[1]));
-    auto texture = FileSystem::TextureFromFile(file);
+    auto texture = FileSystem::TextureFromFile(file); // Load the texture to edit
     wchar_t symchar = getChar(L'~');
     uint8_t symback = 16;
     uint8_t symfore = 16;
+
+    // START
     while (true) {
+        // Get window area
         auto width = Console::GetWindowWidth();
         auto height = Console::GetWindowHeight();
 
@@ -147,7 +178,7 @@ int main(void) {
         //uint8_t* fore = new uint8_t[width]();
         //po new jest delete;
         //ale jakby co masz vectory i vector.data() / vector.dat() nie pamietam
-        for (int16_t l = 0; l < height; l++) {
+        for (int16_t l = 0; l < height; l++) { // Fill screen with empty symbols
             screen.push_back(vector<Console::Symbol>());
             for (int16_t i = 0; i < width; i++) {
                 auto sym = Console::Symbol(L'▒',(uint8_t)16,(uint8_t)16);
@@ -160,6 +191,8 @@ int main(void) {
         //screen[mouse.y][mouse.x].character(L'▦');
 
         //Console::FillScreen(screen);
+
+        // Menu buttons
 
         auto menu = Console::Symbol::CreateTexture((edit ? L"| Quit | Save | New | Load | View | Help |" : L"| Quit | Save | New | Load | Edit | Help |"), array<uint8_t,70>{'\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7'}.data(), array<uint8_t,70>{'\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0'}.data());
         while (menu[0].size() < (size_t)width) menu[0].push_back({L' ','\0','\7'});
@@ -199,7 +232,6 @@ int main(void) {
             for (int i = 28; i < 34; ++i) menu[0][i].ReverseColors();
             if (mouse.primary && bop) {
                 edit = !edit;
-                // change cursor or something
             }
         } else if (mouse.x > 34 && mouse.y == 0 && mouse.x < 41 ) {
             for (int i = 35; i < 41; ++i) menu[0][i].ReverseColors();
@@ -234,7 +266,7 @@ int main(void) {
                 // change cursor or something
             }
         } else if (edit) {
-            if (mouse.primary) {
+            if (mouse.primary) { // Edit mode
                 int line = mouse.y - 2,column = mouse.x - 2;
                 if (line < 0 || column < 0) goto endminput;
                 if ((size_t)line >= texture.size() || (size_t)column >= texture[line].size()) goto endminput;
@@ -277,6 +309,7 @@ endminput:
         if (Console::KeyPressed() == Key::Enum::f && IsCtrlDown()) symfore = symfore;
         //FileSystem::DrawTextureToScreen(20,2,pos,screen);
     }
+    // END
     return EXIT_FAILURE;
 }
 
