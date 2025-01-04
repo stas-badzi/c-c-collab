@@ -1,4 +1,4 @@
-#include "FileSystem.hpp"
+#include "TextureSystem.hpp"
 #include "System.hpp"
 #include "dllimport.hpp"
 
@@ -8,8 +8,8 @@ using namespace std;
 using namespace cs;
 using namespace cpp;
 
-vector<wstring> FileSystem::ImportText(wstring filename) {
-    unichar** textptr = FileSystem_ImportText(Utf8StringToUnicode(WStringToNative(filename).c_str()));
+vector<wstring> TextureSystem::ImportText(wstring filename) {
+    unichar** textptr = TextureSystem_ImportText(Utf8StringToUnicode(WStringToNative(filename).c_str()));
 
 
     vector<wstring> utftext;
@@ -29,7 +29,7 @@ vector<wstring> FileSystem::ImportText(wstring filename) {
     
 }
 
-void FileSystem::ExportText(wstring file, vector<wstring> lines) {
+void TextureSystem::ExportText(wstring file, vector<wstring> lines) {
     unichar** unilines = new unichar*[lines.size()];
 
     for (size_t i = 0; i < lines.size(); i++) {
@@ -43,35 +43,35 @@ void FileSystem::ExportText(wstring file, vector<wstring> lines) {
     }
     unilines[lines.size()] = new unichar[1]{0};
     
-    FileSystem_ExportText(Utf8StringToUnicode(WStringToNative(file).c_str()),unilines);
+    TextureSystem_ExportText(Utf8StringToUnicode(WStringToNative(file).c_str()),unilines);
 }
 
-vector<vector<Console::Symbol> > FileSystem::TextureFromFile(wstring filepath) {
+vector<vector<Console::Symbol> > TextureSystem::TextureFromFile(wstring filepath) {
     unichar* arg1 = Utf8StringToUnicode(WStringToNative(filepath).c_str());
-    void* ret = csimp::FileSystem_TextureFromFile(arg1);
+    void* ret = csimp::TextureSystem_TextureFromFile(arg1);
 
     return PtrToTexture(ret);
 }
 
-void FileSystem::FileFromTexture(wstring filepath, vector<vector<Console::Symbol> > texture, bool recycle) {
+void TextureSystem::FileFromTexture(wstring filepath, vector<vector<Console::Symbol> > texture, bool recycle) {
     unichar* filepathPtr = Utf8StringToUnicode(WStringToNative(filepath).c_str());
     void* texturePtr = TextureToPtr(texture);
 
-    csimp::FileSystem_FileFromTexture(filepathPtr, texturePtr, recycle);
+    csimp::TextureSystem_FileFromTexture(filepathPtr, texturePtr, recycle);
 }
 
-void FileSystem::DrawTextureToScreen(int x, int y, vector<vector<Console::Symbol> > texture, vector<vector<Console::Symbol> >& screen) {
+void TextureSystem::DrawTextureToScreen(int x, int y, vector<vector<Console::Symbol> > texture, vector<vector<Console::Symbol> >& screen) {
     auto texturePtr = TextureToPtr(texture);
     auto screenPtr = TextureToPtr(screen);
 
-    csimp::FileSystem_DrawTextureToScreen(x, y, texturePtr, screenPtr);
+    csimp::TextureSystem_DrawTextureToScreen(x, y, texturePtr, screenPtr);
 }
 
-void FileSystem::PlaySound(wstring filepath, bool wait)
+void TextureSystem::PlaySound(wstring filepath, bool wait)
 {
     auto filepathPtr = Utf8StringToUnicode(WStringToNative(filepath).c_str());
 
-    csimp::FileSystem_PlaySound(filepathPtr, wait);
+    csimp::TextureSystem_PlaySound(filepathPtr, wait);
 }
 
 vector<vector<Console::Symbol> > cs::PtrToTexture(nint ptr, bool direct) {
@@ -133,7 +133,7 @@ void* cs::TextureToPtr(vector<vector<Console::Symbol> >& texture) {
     return ret;
 }
 
-wstring cs::FileSystem::DoSomeThings(vector<bool> taki, wstring s) {
+wstring cs::TextureSystem::DoSomeThings(vector<bool> taki, wstring s) {
     auto str = Utf8StringToUnicode(WStringToNative(s).c_str());
     const int int32_size = sizeof(int32_t);
     const int bool_size = sizeof(bool);
@@ -144,5 +144,5 @@ wstring cs::FileSystem::DoSomeThings(vector<bool> taki, wstring s) {
     for (int32_t i = 0; i < size; i++) {
         System::WritePointer(vecptr, int32_size + i * bool_size, (bool)taki[i]);
     }
-    return NativeToWString(UnicodeToUtf8String(csimp::FileSystem_DoSomeThings(vecptr, str)).c_str());
+    return NativeToWString(UnicodeToUtf8String(csimp::TextureSystem_DoSomeThings(vecptr, str)).c_str());
 }

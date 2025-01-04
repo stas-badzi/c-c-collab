@@ -1,5 +1,5 @@
 #include "Console.hpp"
-#include "FileSystem.hpp"
+#include "TextureSystem.hpp"
 #include "System.hpp"
 #include "Control.hpp"
 
@@ -126,7 +126,7 @@ int main(void) {
         Console::FillScreen(screen);
         Console::Sleep(0.1);
 
-        //FileSystem::DrawTextureToScreen(20,2,pos,screen);
+        //TextureSystem::DrawTextureToScreen(20,2,pos,screen);
         */
         /**//* 
         if (max(mouse.y-1,0u) >= 0 && max(mouse.x-1,0u) >= 0 && max(mouse.y-1,0u) < height && max(mouse.x-1,0u) < width)
@@ -160,7 +160,7 @@ int main(void) {
     wstring a = System::GetRootPath();
     a.append(L"/assets/a.tux");
     wstring file = (argc < 2) ? System::ToNativePath(getPath(System::GetRootPath() + L"/assets/a.tux")) : System::ToNativePath(wstring(argv[1]));
-    auto texture = FileSystem::TextureFromFile(file); // Load the texture to edit
+    auto texture = TextureSystem::TextureFromFile(file); // Load the texture to edit
     wchar_t symchar = getChar(L'~');
     uint8_t symback = 16;
     uint8_t symfore = 16;
@@ -211,7 +211,7 @@ int main(void) {
             // SAVE
             for (int i = 8; i < 14; ++i) menu[0][i].ReverseColors();
             if (mouse.primary) {
-                FileSystem::FileFromTexture(file, texture);
+                TextureSystem::FileFromTexture(file, texture);
             }
         } else if (mouse.x > 14 && mouse.y == 0 && mouse.x < 20) {
             // NEW
@@ -225,7 +225,7 @@ int main(void) {
             for (int i = 21; i < 27; ++i) menu[0][i].ReverseColors();
             if (mouse.primary) {
                 file = System::ToNativePath(getPath(file));
-                texture = FileSystem::TextureFromFile(file);
+                texture = TextureSystem::TextureFromFile(file);
             }
         } else if (mouse.x > 27 && mouse.y == 0 && mouse.x < 34) {
             // EDIT/VIEW
@@ -279,8 +279,8 @@ int main(void) {
 endminput:
         bop = !mouse.primary;
 
-        FileSystem::DrawTextureToScreen(2,2,texture,screen);
-        FileSystem::DrawTextureToScreen(0,0,menu,screen);
+        TextureSystem::DrawTextureToScreen(2,2,texture,screen);
+        TextureSystem::DrawTextureToScreen(0,0,menu,screen);
 
         // Count FPS
         auto enlapsed_time = chrono::duration_cast<std::chrono::duration<long double, std::milli>>(chrono::high_resolution_clock::now() - start).count();
@@ -293,7 +293,7 @@ endminput:
         auto pos = Console::Symbol::CreateTexture(wstr.str());
         start = chrono::high_resolution_clock::now();
 
-        FileSystem::DrawTextureToScreen(2,15,pos,screen);
+        TextureSystem::DrawTextureToScreen(2,15,pos,screen);
 
         if (mouse.x < screen[0].size() && mouse.y < screen.size()) screen[mouse.y][mouse.x].character(Console::KeysToggled().CapsLock ? L'*' : L'⮙');
         Console::FillScreen(screen);
@@ -308,7 +308,7 @@ endminput:
         if (Console::KeyPressed() == Key::Enum::s && IsCtrlDown()) symchar = getChar(symchar);
         if (Console::KeyPressed() == Key::Enum::d && IsCtrlDown()) symback = symback;
         if (Console::KeyPressed() == Key::Enum::f && IsCtrlDown()) symfore = symfore;
-        //FileSystem::DrawTextureToScreen(20,2,pos,screen);
+        //TextureSystem::DrawTextureToScreen(20,2,pos,screen);
     }
     // END
     return EXIT_FAILURE;

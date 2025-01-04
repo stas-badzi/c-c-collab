@@ -5,7 +5,7 @@
 #include "Console.hpp"
 
 namespace cs {
-    class FileSystem {
+    class TextureSystem {
     public:
         static std::vector<std::wstring> ImportText(std::wstring filename);
         static void ExportText(std::wstring file, std::vector<std::wstring> lines);
@@ -13,7 +13,6 @@ namespace cs {
         static void FileFromTexture(std::wstring filepath, std::vector<std::vector<cpp::Console::Symbol> > texture, bool recycle = false);
         static void DrawTextureToScreen(int x, int y, std::vector<std::vector<cpp::Console::Symbol> > texture, std::vector<std::vector<cpp::Console::Symbol> >& screen);
         static void PlaySound(std::wstring filepath, bool wait = false);
-        static std::wstring DoSomeThings(std::vector<bool> taki, std::wstring s);
     };
  
     void* TextureToPtr(std::vector<std::vector<cpp::Console::Symbol> >& texture);
