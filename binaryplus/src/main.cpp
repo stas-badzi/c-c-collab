@@ -282,6 +282,7 @@ endminput:
         FileSystem::DrawTextureToScreen(2,2,texture,screen);
         FileSystem::DrawTextureToScreen(0,0,menu,screen);
 
+        // Count FPS
         auto enlapsed_time = chrono::duration_cast<std::chrono::duration<long double, std::milli>>(chrono::high_resolution_clock::now() - start).count();
         wstringstream wstr;
         if (counter == INT64_MAX) counter = 0;

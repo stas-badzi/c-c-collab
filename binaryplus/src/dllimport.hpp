@@ -10,6 +10,7 @@
 #elif __linux__
 #include <linux/key.hpp>
 #elif _APPLE_
+// #include <kastracja.hpp>
 #else
 #endif
 
@@ -196,22 +197,19 @@ namespace cppimp {
 } // namespace CppImp
 
 namespace csimp {
+// TextureSystem    
+    libimport uniconv::unichar** TextureSystem_ImportText(uniconv::unichar* file);
     
-    libimport uniconv::unichar** FileSystem_ImportText(uniconv::unichar* file);
-    
-    libimport void FileSystem_ExportText(uniconv::unichar* file, uniconv::unichar** content);
+    libimport void TextureSystem_ExportText(uniconv::unichar* file, uniconv::unichar** content);
 
-    libimport void* FileSystem_TextureFromFile(uniconv::unichar* arg1);
+    libimport void* TextureSystem_TextureFromFile(uniconv::unichar* arg1);
 
-    libimport void FileSystem_FileFromTexture(uniconv::unichar* filepathPtr, void* texturePtr, bool recycle);
+    libimport void TextureSystem_FileFromTexture(uniconv::unichar* filepathPtr, void* texturePtr, bool recycle);
 
-    libimport void FileSystem_DrawTextureToScreen(int x, int y, void* texturePtr, void* screenPtr);
-
-    libimport void FileSystem_PlaySound(uniconv::unichar* filepathPtr, bool wait);
-
-    libimport uniconv::unichar* FileSystem_DoSomeThings(void* list, uniconv::unichar* str);
-
+    libimport void TextureSystem_DrawTextureToScreen(int x, int y, void* texturePtr, void* screenPtr);
 // Control
     libimport void Control_CleanMemory(void);
+// Other
+    libimport void _PlaySound(uniconv::unichar* filepathPtr, bool wait);
 
 } // namespace csimp
