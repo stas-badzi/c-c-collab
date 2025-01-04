@@ -103,13 +103,13 @@ namespace CsExp {
                 Console.Symbol.ReverseColors(new Terminal.Symbol(sym, true));
             }
         }
-    }
 
-    [UnmanagedCallersOnly(EntryPoint = "_PlaySound")]
-    public static void _PlaySound(IntPtr filepathPtr, bool wait = false) {
-        if (filepathPtr == IntPtr.Zero)
-            throw new Exception("Intptr $filepathPtr Empty");
+        [UnmanagedCallersOnly(EntryPoint = "Console_PlaySound")]
+        public static void PlaySound(IntPtr filepathPtr, bool wait = false) {
+            if (filepathPtr == IntPtr.Zero)
+                throw new Exception("Intptr $filepathPtr Empty");
 
-        Cs.PlaySound(TypeConvert.PtrToString(filepathPtr),wait);
+            Cs.Console.PlaySound(TypeConvert.PtrToString(filepathPtr),wait);
+        }
     }
 }
