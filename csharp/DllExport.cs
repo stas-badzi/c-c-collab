@@ -103,8 +103,10 @@ namespace CsExp {
                 Console.Symbol.ReverseColors(new Terminal.Symbol(sym, true));
             }
         }
+    }
 
-        [UnmanagedCallersOnly(EntryPoint = "Console_PlaySound")]
+    public class SoundSystem {
+        [UnmanagedCallersOnly(EntryPoint = "SoundSystem_PlaySound")]
         public static void PlaySound(IntPtr filepathPtr, bool wait = false) {
             if (filepathPtr == IntPtr.Zero)
                 throw new Exception("Intptr $filepathPtr Empty");

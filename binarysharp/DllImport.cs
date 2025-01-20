@@ -25,7 +25,12 @@ namespace CsImp {
         public static extern void FileFromTexture(nint filepathPtr, nint texturePtr, bool recycle = false);
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "TextureSystem_DrawTextureToScreen", CharSet = CharSet.Unicode)]
         public static extern void DrawTextureToScreen(int x, int y, nint texturePtr, nint screenPtr);
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "TextureSystem_PlaySound", CharSet = CharSet.Unicode)]
+    }
+
+    public class SoundSystem {
+        private const string DllSource =  @"" + DllHandle.Prefix + "factoryrushsharp" + DllHandle.Suffix;
+        
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SoundSystem_PlaySound", CharSet = CharSet.Unicode)]
         public static extern void PlaySound(nint filepathPtr, bool wait = false);
     }
 }

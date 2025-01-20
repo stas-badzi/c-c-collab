@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.Security.Cryptography;
+using System;
 using Cpp;
 using Cs;
 using Utility;
@@ -6,7 +7,7 @@ using Utility;
 namespace BinarySharp {
     public class Program {
         static int Main(string[] args) {
-            TextureSystem.PlaySound(Path.Combine([AppContext.BaseDirectory,"..","sounds","shoot.wav"]), true);
+            SoundSystem.PlaySound(Path.Combine([AppContext.BaseDirectory,"..","sounds","shoot.wav"]), true);
             return 0;
         }
     }

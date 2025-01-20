@@ -63,9 +63,5 @@ namespace Cs {
             Exec.FreeMemory(texturePtr);
             Exec.FreeMemory(screenPtr);
         }
-        public static void PlaySound(string filepath, bool wait = false)
-        {
-            CsImp.TextureSystem.PlaySound(TypeConvert.StringToPtr(filepath),wait);
-        }
     }
 }
