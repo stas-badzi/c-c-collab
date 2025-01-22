@@ -2,7 +2,7 @@ using System;
 using Microsoft.VisualBasic.FileIO;
 using Cpp;
 using System.Collections.Generic;
-using Texture = System.Collections.Generic.List<System.Collections.Generic.List<Cpp.Terminal.Symbol>>
+using Texture = System.Collections.Generic.List<System.Collections.Generic.List<Cpp.Terminal.Symbol>>;
 
 namespace Cs {
     public class Tile { // Texture struct

@@ -67,13 +67,6 @@ void TextureSystem::DrawTextureToScreen(int x, int y, vector<vector<Console::Sym
     csimp::TextureSystem_DrawTextureToScreen(x, y, texturePtr, screenPtr);
 }
 
-void TextureSystem::PlaySound(wstring filepath, bool wait)
-{
-    auto filepathPtr = Utf8StringToUnicode(WStringToNative(filepath).c_str());
-
-    csimp::TextureSystem_PlaySound(filepathPtr, wait);
-}
-
 vector<vector<Console::Symbol> > cs::PtrToTexture(nint ptr, bool direct) {
     vector<vector<Console::Symbol> > ret;
 
@@ -131,18 +124,4 @@ void* cs::TextureToPtr(vector<vector<Console::Symbol> >& texture) {
     }
 
     return ret;
-}
-
-wstring cs::TextureSystem::DoSomeThings(vector<bool> taki, wstring s) {
-    auto str = Utf8StringToUnicode(WStringToNative(s).c_str());
-    const int int32_size = sizeof(int32_t);
-    const int bool_size = sizeof(bool);
-    int32_t size = taki.size(), count;
-    void* vecptr = System::AllocateMemory(int32_size + size * bool_size); 
-
-    System::WritePointer<int32_t>(vecptr, size);
-    for (int32_t i = 0; i < size; i++) {
-        System::WritePointer(vecptr, int32_size + i * bool_size, (bool)taki[i]);
-    }
-    return NativeToWString(UnicodeToUtf8String(csimp::TextureSystem_DoSomeThings(vecptr, str)).c_str());
 }

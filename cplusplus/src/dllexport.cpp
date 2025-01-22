@@ -5,7 +5,7 @@
 
 #include "Console.hpp"
 #include "System.hpp"
-#include "FileSystem.hpp"
+#include "TextureSystem.hpp"
 #include <control_heap.h>
 
 // don't ask (compiler optimazations forced me to do this)

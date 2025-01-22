@@ -152,7 +152,7 @@ namespace Cs
                 'E' => 14,
                 'F' => 15,
                 _ => 16
-            }
+            };
         }
         private static char ByteToHex(byte input) {
             if (input >= 0 && input <= 9) // 0-9
@@ -165,7 +165,7 @@ namespace Cs
                 14 => 'E',
                 15 => 'F',
                 _ => '-'
-            }
+            };
         }
     }
 }

@@ -121,16 +121,16 @@ namespace cppimp {
 
 namespace csimp {
     
-    libimport uniconv::unichar** FileSystem_ImportText(uniconv::unichar* file);
+    libimport uniconv::unichar** TextureSystem_ImportText(uniconv::unichar* file);
     
-    libimport void FileSystem_ExportText(uniconv::unichar* file, uniconv::unichar** content);
+    libimport void TextureSystem_ExportText(uniconv::unichar* file, uniconv::unichar** content);
 
-    libimport void* FileSystem_TextureFromFile(uniconv::unichar* arg1);
+    libimport void* TextureSystem_TextureFromFile(uniconv::unichar* arg1);
 
-    libimport void FileSystem_FileFromTexture(uniconv::unichar* filepathPtr, void* texturePtr, bool recycle);
+    libimport void TextureSystem_FileFromTexture(uniconv::unichar* filepathPtr, void* texturePtr, bool recycle);
 
-    libimport void FileSystem_DrawTextureToScreen(int x, int y, void* texturePtr, void* screenPtr);
+    libimport void TextureSystem_DrawTextureToScreen(int x, int y, void* texturePtr, void* screenPtr);
 
-    libimport void FileSystem_PlaySound(uniconv::unichar* filepathPtr, bool wait);
+    libimport void TextureSystem_PlaySound(uniconv::unichar* filepathPtr, bool wait);
 
 } // namespace csimp

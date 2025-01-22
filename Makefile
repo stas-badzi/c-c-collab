@@ -20,9 +20,9 @@ defcompc = cc
 cflags = -Wno-dollar-in-identifier-extension -Wno-unused-command-line-argument
 cxxflags = -Wno-dollar-in-identifier-extension -Wno-unused-command-line-argument
 #> source files
-sources = Console.cpp FileSystem.cpp System.cpp dllexport.cpp
+sources = Console.cpp TextureSystem.cpp System.cpp dllexport.cpp
 #> header files
-headers = Console.hpp FileSystem.hpp FileSystem.ipp dllimport.hpp System.hpp System.ipp smart_ref.hpp smart_ref.ipp
+headers = Console.hpp TextureSystem.hpp TextureSystem.ipp dllimport.hpp System.hpp System.ipp smart_ref.hpp smart_ref.ipp
 #> include files
 includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp linux/ledctrl.h linux/mousefd.h
 #> name the dynamic library
@@ -31,9 +31,9 @@ name = factoryrushplus
 
 #******** c++ binary config *****
 #> source files
-binsources = main.cpp Console.cpp FileSystem.cpp System.cpp Control.cpp dllexport.cpp
+binsources = main.cpp Console.cpp TextureSystem.cpp System.cpp Control.cpp dllexport.cpp
 #> header files
-binheaders = dllimport.hpp Console.hpp FileSystem.hpp System.hpp defines.h Control.hpp
+binheaders = dllimport.hpp Console.hpp TextureSystem.hpp System.hpp defines.h Control.hpp
 #> include files
 binincludes = dynamic_library.h unicode_conversion.hpp control_heap.h utils/cextern.h control_heap.h utils/dllalloc.h linux/key.hpp windows/key.hpp
 #> name the binary file
@@ -44,14 +44,14 @@ binname = cpp-factoryrush
 #> name the dynamic library
 filename = factoryrushsharp
 #>source code files
-files = DllExport.cs DllImport.cs FileSystem.cs Terminal.cs Console.cs Utility.cs Exec.cs Control.cs Key.cs linux_keyboard.cs apple_event.cs windows_vkcodes.cs
+files = DllExport.cs DllImport.cs TextureSystem.cs Terminal.cs Console.cs Utility.cs Exec.cs Control.cs Key.cs linux_keyboard.cs apple_event.cs windows_vkcodes.cs SoundSystem.cs
 # *******************************
 
 #********* c# binary config *****
 #> name the binary file
 binfile = cs-factoryrush
 #>source code files
-binfiles = Program.cs DllImport.cs FileSystem.cs Terminal.cs Utility.cs Exec.cs Key.cs linux_keyboard.cs apple_event.cs windows_vkcodes.cs
+binfiles = Program.cs DllImport.cs TextureSystem.cs Terminal.cs Utility.cs Exec.cs Key.cs linux_keyboard.cs apple_event.cs windows_vkcodes.cs SoundSystem.cs
 # *******************************
 
 #***** application config ****

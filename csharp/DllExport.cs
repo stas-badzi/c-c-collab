@@ -100,7 +100,7 @@ namespace CsExp {
         public class Symbol {
             [UnmanagedCallersOnly(EntryPoint = "Console_Symbol_ReverseColors")]
             public static void ReverseColors(nint sym) {
-                Console.Symbol.ReverseColors(new Terminal.Symbol(sym, true));
+                Cs.Console.Symbol.ReverseColors(new Terminal.Symbol(sym, true));
             }
         }
     }
@@ -111,7 +111,7 @@ namespace CsExp {
             if (filepathPtr == IntPtr.Zero)
                 throw new Exception("Intptr $filepathPtr Empty");
 
-            Cs.Console.PlaySound(TypeConvert.PtrToString(filepathPtr),wait);
+            Cs.SoundSystem.PlaySound(TypeConvert.PtrToString(filepathPtr),wait);
         }
     }
 }
