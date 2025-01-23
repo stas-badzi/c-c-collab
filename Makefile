@@ -355,12 +355,12 @@ else
 #linux and similar[other]
 nulldir = /dev/null
 binflags = 
-ifneq ($(shell which doas),$(empty))
-	admin = doas$(space)
-	adminend =
-else
 ifneq ($(shell which sudo),$(empty))
 	admin = sudo$(space)
+	adminend =
+else
+ifneq ($(shell which doas),$(empty))
+	admin = doas$(space)
 	adminend =
 else
 ifneq ($(shell which su),$(empty))

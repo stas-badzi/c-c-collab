@@ -110,16 +110,16 @@ struct __pid_bool {
 void* WaitForProgram(void* pid_running_ret) {
     thread_inout inout = *(thread_inout*)pid_running_ret;
     int wexit, status;
-    __pid_bool args = (__pid_bool*)inout.args;
+    __pid_bool args = *(__pid_bool*)inout.args;
     pid_t pid = args.pid;
     bool& is_running = args.is_running;
     is_running = true;
     pid_t ret; CALL_RETRY(ret,waitpid((pid_t)pid, &wexit, 0))
     is_running = false;
     if (ret != (pid_t)pid)
-        return -1;
+        return (void*)-1;
     if (!WIFEXITED(wexit))
-        return -1;
+        return (void*)-1;
     status = WEXITSTATUS(wexit);
     *(int*)inout.ret = status;
     return 0;
@@ -195,12 +195,7 @@ int cpp::System::RunProgramAsync(uniconv::utfcstr path, bool& is_running, unicon
         old_handler[SIGTSTP] = signal(SIGTSTP, System::SendSignal);
         old_handler[SIGTTIN] = signal(SIGTTIN, System::SendSignal);
         old_handler[SIGTTOU] = signal(SIGTTOU, System::SendSignal);
-        int wexit;
-
-        __pid_bool args = {tpid, is_running};
-        thread_inout inout = {&args, &status};
-        pthread_create(&thread, nullptr, WaitForProgram, &inout);
-        return status;
+        return 0;
     }
     signal(SIGHUP, old_handler[SIGHUP]);
     signal(SIGINT, old_handler[SIGINT]);
