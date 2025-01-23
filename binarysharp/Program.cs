@@ -1,4 +1,6 @@
-﻿using System.Collections.ObjectModel;
+﻿using System.Data;
+using System.Security.Cryptography;
+using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
 using System;
@@ -10,6 +12,7 @@ namespace BinarySharp {
     public class Program {
         static int Main(string[] args) {
             Terminal.Init();
+            var sym = new Terminal.Symbol('▒',16,16);
             while (true) {
                 var width = Terminal.GetWindowWidth();
                 var height = Terminal.GetWindowHeight();
@@ -19,7 +22,6 @@ namespace BinarySharp {
                 for (int h = 0; h < height; h++) {
                     screen.Add(new List<Terminal.Symbol>());
                     for (int w = 0; w < width; w++) {
-                        var sym = new Terminal.Symbol('▒',16,16);
                         screen[h].Add(sym);
                     }
                 }
@@ -31,9 +33,17 @@ namespace BinarySharp {
 
                 if (Terminal.IsFocused()) Terminal.HandleKeyboard();
 
-                if (Terminal.KeyPressed() == Key.Enum.ESC) return 0;
-                //if (Terminal.IsKeyDown(Key.Enum.ESC))
-                    //break;
+                //if (Terminal.KeyPressed() == Key.Enum.ESC) return 0;
+                switch (Terminal.KeyPressed()) {
+                    case Key.Enum.ESC:
+                        return 0;
+                    case Key.Enum.a:
+                        sym = new Terminal.Symbol('A',15,15);
+                        break;
+                    case Key.Enum.b:
+                        sym = new Terminal.Symbol('▒',16,16);
+                        break;
+                }
             }
             return 0;
         }
