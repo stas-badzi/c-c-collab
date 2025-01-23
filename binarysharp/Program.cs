@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
 using System;
 using Cpp;
-using CppImp;
 using Cs;
 using Utility;
 
@@ -20,7 +19,7 @@ namespace BinarySharp {
                 for (int h = 0; h < height; h++) {
                     screen.Add(new List<Terminal.Symbol>());
                     for (int w = 0; w < width; w++) {
-                        var sym = new Terminal.Symbol('X',16,16);
+                        var sym = new Terminal.Symbol('▒',16,16);
                         screen[h].Add(sym);
                     }
                 }
