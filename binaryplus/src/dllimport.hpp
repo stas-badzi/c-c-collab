@@ -52,6 +52,8 @@ namespace cppimp {
     libimport int32_t Console_GetArgC(void);
 
     libimport uniconv::unichar** Console_GetArgV(void);
+
+    libimport int Console_PopupWindow(int type, int argc, uniconv::unichar* argv[]);
     
 #ifdef __cplusplus
     extern "C"
@@ -92,7 +94,9 @@ namespace cppimp {
 
 // System
 
-    libimport uniconv::unichar* System_GetRootPath(void);
+    libimport uniconv::unichar* System_GetRootDir(void);
+
+    libimport uniconv::unichar* System_GetSelfPath(void);
     
     libimport uniconv::unichar* System_ToNativePath(uniconv::unichar* arg1);
     

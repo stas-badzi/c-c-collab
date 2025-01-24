@@ -6,6 +6,8 @@
 #include <utility>
 #include <clang_constexpr.h>
 #include <sstream>
+#include <fstream>
+#include <filesystem>
 #include "System.hpp"
 
 #ifdef __APPLE__
@@ -153,6 +155,8 @@ namespace cpp {
         static int pid;
         static bool sub_proc;
         static int ret;
+        static std::array<bool,UINT16_MAX> used_pids;
+        static uint16_t next_pid;
         #ifdef _WIN32
             static const wchar_t* subdir;
             //static std::vector<std::vector<COLORREF>> SaveScreen(void);
@@ -175,6 +179,7 @@ namespace cpp {
             static inline constexpr uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2);
             //static std::pair<uint16_t,uint16_t> xyoffset;
             //static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
+            static uniconv::utfstr GetTerminalExecutableName();
         #else
             static const char* subdir;
             static struct termios old_termios;
@@ -251,13 +256,20 @@ namespace cpp {
         static void SetDoubleClickMaxWait(unsigned short milliseconds);
         static unsigned short GetDoubleClickMaxWait(void);
 
-        static std::istringstream in;
-    };
-    extern
-#ifdef __WIN32
-    __declspec(dllexport)
+        static int PopupWindow(int type, int argc, uniconv::utfcstr argv[]);
+#ifdef _WIN32
+        static std::wistringstream in;
+        static std::wofstream out;
 #else
-    __attribute__((visibility("default")))
+        static std::istringstream in;
+        static std::ofstream out;
 #endif
-    std::istream& gin;
+    };
+#ifdef _WIN32
+    extern __declspec(dllexport) std::wistream& gin;
+    extern __declspec(dllexport) std::wostream& gout;
+#else
+    extern __attribute__((visibility("default"))) std::istream& gin;
+    extern __attribute__((visibility("default"))) std::ostream& gout;
+#endif
 } // namespace cpp

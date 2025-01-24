@@ -10,12 +10,14 @@ using namespace std;
 using namespace uniconv;
 
 utfstr System::root = System::GetRoot();
+utfstr System::self = utfstr();
 
 #ifdef _WIN32
     utfstr System::GetRoot(void) {
         wchar_t buf[255];
         DWORD size = GetModuleFileName(NULL, buf, 255);
         wchar_t* edit = buf;
+        System::self = edit;
         while (edit[--size] != '\\') buf[size] = '\0';
         edit[size + 1] = '.';
         edit[size + 2] = '.';
@@ -29,62 +31,354 @@ utfstr System::root = System::GetRoot();
         return path;
     }
 
-    int cpp::System::Shell(uniconv::utfcstr arg) {
-        return System::RunProgram(L"", arg);
+    int cpp::System::MakeDirectory(utfcstr path) {
+        SECURITY_ATTRIBUTES sec_atrs{};
+        sec_atrs.nLength = sizeof(SECURITY_ATTRIBUTES);
+        sec_atrs.lpSecurityDescriptor = nullptr;
+        sec_atrs.bInheritHandle = false;
+        if (CreateDirectory(path, &sec_atrs)) return 0;
+        return GetLastError(); 
     }
 
+    int cpp::System::Shell(uniconv::utfcstr arg) {
+        return System::RunProgram(L"C:\\Windows\\System32\\cmd.exe", L"/c", arg);
+    }
+
+    bool cpp::System::ShellAsync(uniconv::utfcstr arg) {
+        return System::RunProgramAsync(L"C:\\Windows\\System32\\cmd.exe", L"/c", arg);
+    }
+
+    // instead or runnning conhost.exe, run cmd.exe or another program with RunProgramC
     int cpp::System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
         va_list args;
-        wstring args_v = path;
+        wstring args_v = L'\"' + wstring(path) + L'\"';
+        bool no_args = true;
         if (arg == nullptr) goto noargs;
+        no_args = false;
+        va_start(args, arg);
+        args_v += L" ";
+        args_v += arg;
+        for (int i = 2; i < 64; i++) {
+            const wchar_t* argx = va_arg(args, const wchar_t*);
+            if (argx == nullptr) break;
+            args_v += L" ";
+            args_v += argx;
+        }
+        args_v += L"\"";
+        va_end(args);
+    noargs:
+        if (!PathFileExists(path) && !PathFileExists((path + wstring(L".exe")).c_str())) {
+            return -1;
+        }
+        PROCESS_INFORMATION pi = PROCESS_INFORMATION();
+        STARTUPINFO si = STARTUPINFO();
+        si.cb = sizeof(STARTUPINFO);
+        int status;
+        DWORD dwCreationFlags = CREATE_PRESERVE_CODE_AUTHZ_LEVEL;
+        if (no_args)
+            status = CreateProcess(path, nullptr, nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
+        else status = CreateProcess(path, (wchar_t*)args_v.c_str(), nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
+        
+        if (!status) { cerr << "CreateProcess failed: " << GetLastError() << endl; exit(0x63); }
+        CloseHandle(pi.hThread);
+        WaitForSingleObject(pi.hProcess, INFINITE);
+        bool isdone = false;
+        DWORD exitcode = -1;
+        if (GetExitCodeProcess(pi.hProcess, &exitcode)) {
+            return exitcode;
+        } else {
+            CloseHandle(pi.hProcess);
+            cerr << "GetExitCodeProcess failed: " << GetLastError() << endl;
+            exit(0x63);
+        }
+    }
+
+    int cpp::System::RunProgramC(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
+        va_list args;
+        wstring args_v = L'\"' + wstring(path) + L'\"';
+        bool no_args = true;
+        if (arg == nullptr) goto noargs;
+        no_args = false;
+        args_v += L" \"";
         va_start(args, arg);
         args_v += arg;
         for (int i = 2; i < 64; i++) {
             const wchar_t* argx = va_arg(args, const wchar_t*);
             if (argx == nullptr) break;
-            args_v += argx; 
+            args_v += L"\" \"";
+            args_v += argx;
         }
+        args_v += L"\"";
         va_end(args);
     noargs:
+        if (!PathFileExists(path) && !PathFileExists((path + wstring(L".exe")).c_str())) {
+            return -1;
+        }
         PROCESS_INFORMATION pi = PROCESS_INFORMATION();
         STARTUPINFO si = STARTUPINFO();
         si.cb = sizeof(STARTUPINFO);
-        si.dwFlags = STARTF_USESTDHANDLES;
-        si.hStdInput = NULL;
-        si.hStdOutput = NULL;
-        si.hStdError = NULL;
-        si.wShowWindow = SW_NORMAL;
-        si.lpDesktop = (wchar_t*)path;
-        si.lpTitle = NULL;
-        si.dwX = 0; // change later (maybe)
-        si.dwY = 0; // same
-        si.dwXSize = 0; // and same
-        si.dwYSize = 0; // ---''---
-        si.dwXCountChars = 0;
-        si.dwYCountChars = 0;
-        si.dwFillAttribute = 0;
-
-        if (path == NULL) cerr << "path is null" << endl;
-        else wcerr << L"path is " << path << endl;
-        if (args_v.empty()) cerr << "args_v is empty" << endl;
-        else wcerr << L"args_v is " << args_v << endl;
-        int status = CreateProcess(path, (wchar_t*)args_v.c_str(), nullptr, nullptr, false, CREATE_PRESERVE_CODE_AUTHZ_LEVEL, nullptr, nullptr, &si, &pi);
-        if (!status) { cerr << "CreateProcess failed: " << GetLastError() << endl; exit(0x63); }
+        int status;
+        DWORD dwCreationFlags = CREATE_PRESERVE_CODE_AUTHZ_LEVEL | CREATE_NEW_CONSOLE;
+        if (no_args)
+            status = CreateProcess(path, nullptr, nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
+        else status = CreateProcess(path, (wchar_t*)args_v.c_str(), nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
+        
+        if (!status) { cerr << "CreateProcess failed: " << GetLastError() << endl; exit(0x75); }
+        CloseHandle(pi.hThread);
+        WaitForSingleObject(pi.hProcess, INFINITE);
         bool isdone = false;
-        DWORD exitcode;
-        while (!GetExitCodeProcess(pi.hProcess, &exitcode) && GetLastError() == STILL_ACTIVE) Sleep(1);
-        return exitcode;
+        DWORD exitcode = -1;
+        if (GetExitCodeProcess(pi.hProcess, &exitcode)) {
+            return exitcode;
+        } else {
+            CloseHandle(pi.hProcess);
+            cerr << "GetExitCodeProcess failed: " << GetLastError() << endl;
+            exit(0x63);
+        }
     }
 
+    
+    // instead or runnning conhost.exe, run cmd.exe or another program with RunProgramAsyncC
+    bool cpp::System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
+        va_list args;
+        wstring args_v = L'\"' + wstring(path) + L'\"';
+        bool no_args = true;
+        if (arg == nullptr) goto noargs;
+        no_args = false;
+        va_start(args, arg);
+        args_v += L" \"";
+        args_v += arg;
+        for (int i = 2; i < 64; i++) {
+            const wchar_t* argx = va_arg(args, const wchar_t*);
+            if (argx == nullptr) break;
+            args_v += L"\" \"";
+            args_v += argx;
+        }
+        args_v += L"\"";
+        va_end(args);
+    noargs:
+        if (!PathFileExists(path) && !PathFileExists((path + wstring(L".exe")).c_str())) {
+            return false;
+        }
+
+        PROCESS_INFORMATION pi = PROCESS_INFORMATION();
+        STARTUPINFO si = STARTUPINFO();
+        si.cb = sizeof(STARTUPINFO);
+        int status;
+        DWORD dwCreationFlags = CREATE_PRESERVE_CODE_AUTHZ_LEVEL;
+        //wcerr << path << L' ' << args_v << endl;
+        if (no_args)
+            status = CreateProcess(path, nullptr, nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
+        else status = CreateProcess(path, (wchar_t*)args_v.c_str(), nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
+        
+        if (!status) { cerr << "CreateProcess failed: " << GetLastError() << endl; exit(0x63); }
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
+        return true;
+    }
+
+    bool cpp::System::RunProgramAsyncC(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
+        va_list args;
+        wstring args_v = L'\"' + wstring(path) + L'\"';
+        bool no_args = true;
+        if (arg == nullptr) goto noargs;
+        no_args = false;
+        va_start(args, arg);
+        args_v += L" \"";
+        args_v += arg;
+        for (int i = 2; i < 64; i++) {
+            const wchar_t* argx = va_arg(args, const wchar_t*);
+            if (argx == nullptr) break;
+            args_v += L"\" \"";
+            args_v += argx;
+        }
+        args_v += L"\"";
+        va_end(args);
+    noargs:
+        if (!PathFileExists(path) && !PathFileExists((path + wstring(L".exe")).c_str())) {
+            return false;
+        }
+        PROCESS_INFORMATION pi = PROCESS_INFORMATION();
+        STARTUPINFO si = STARTUPINFO();
+        si.cb = sizeof(STARTUPINFO);
+        int status;
+        DWORD dwCreationFlags = CREATE_PRESERVE_CODE_AUTHZ_LEVEL | CREATE_NEW_CONSOLE;
+        if (no_args)
+            status = CreateProcess(path, nullptr, nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
+        else status = CreateProcess(path, (wchar_t*)args_v.c_str(), nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
+        
+        if (!status) { cerr << "CreateProcess failed: " << GetLastError() << endl; exit(0x75); }
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
+        return true;
+    }
+
+    int cpp::System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
+        wstring args_v = L'\"' + wstring(path) + L'\"';
+        bool no_args = true;
+        if (args[0] == nullptr) goto noargs;
+        no_args = false;
+        args_v += L" ";
+        args_v += args[0];
+        for (int i = 2; i < 64; i++) {
+            const wchar_t* argx = args[i-1];
+            if (argx == nullptr) break;
+            args_v += L" ";
+            args_v += argx;
+        }
+        args_v += L"\"";
+    noargs:
+        if (!PathFileExists(path) && !PathFileExists((path + wstring(L".exe")).c_str())) {
+            return -1;
+        }
+        PROCESS_INFORMATION pi = PROCESS_INFORMATION();
+        STARTUPINFO si = STARTUPINFO();
+        si.cb = sizeof(STARTUPINFO);
+        int status;
+        DWORD dwCreationFlags = CREATE_PRESERVE_CODE_AUTHZ_LEVEL;
+        if (no_args)
+            status = CreateProcess(path, nullptr, nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
+        else status = CreateProcess(path, (wchar_t*)args_v.c_str(), nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
+        
+        if (!status) { cerr << "CreateProcess failed: " << GetLastError() << endl; exit(0x63); }
+        CloseHandle(pi.hThread);
+        WaitForSingleObject(pi.hProcess, INFINITE);
+        bool isdone = false;
+        DWORD exitcode = -1;
+        if (GetExitCodeProcess(pi.hProcess, &exitcode)) {
+            return exitcode;
+        } else {
+            CloseHandle(pi.hProcess);
+            cerr << "GetExitCodeProcess failed: " << GetLastError() << endl;
+            exit(0x63);
+        }
+    }
+
+    int cpp::System::RunProgramC(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
+        wstring args_v = L'\"' + wstring(path) + L'\"';
+        bool no_args = true;
+        if (args[0] == nullptr) goto noargs;
+        no_args = false;
+        args_v += L" \"";
+        args_v += args[0];
+        for (int i = 2; i < 64; i++) {
+            const wchar_t* argx = args[i-1];
+            if (argx == nullptr) break;
+            args_v += L"\" \"";
+            args_v += argx;
+        }
+        args_v += L"\"";
+    noargs:
+        if (!PathFileExists(path) && !PathFileExists((path + wstring(L".exe")).c_str())) {
+            return -1;
+        }
+        PROCESS_INFORMATION pi = PROCESS_INFORMATION();
+        STARTUPINFO si = STARTUPINFO();
+        si.cb = sizeof(STARTUPINFO);
+        int status;
+        DWORD dwCreationFlags = CREATE_PRESERVE_CODE_AUTHZ_LEVEL | CREATE_NEW_CONSOLE;
+        if (no_args)
+            status = CreateProcess(path, nullptr, nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
+        else status = CreateProcess(path, (wchar_t*)args_v.c_str(), nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
+        
+        if (!status) { cerr << "CreateProcess failed: " << GetLastError() << endl; exit(0x75); }
+        CloseHandle(pi.hThread);
+        WaitForSingleObject(pi.hProcess, INFINITE);
+        bool isdone = false;
+        DWORD exitcode = -1;
+        if (GetExitCodeProcess(pi.hProcess, &exitcode)) {
+            return exitcode;
+        } else {
+            CloseHandle(pi.hProcess);
+            cerr << "GetExitCodeProcess failed: " << GetLastError() << endl;
+            exit(0x63);
+        }
+    }
+
+    
+    // instead or runnning conhost.exe, run cmd.exe or another program with RunProgramAsyncC
+    bool cpp::System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
+        wstring args_v = L'\"' + wstring(path) + L'\"';
+        bool no_args = true;
+        if (args[0] == nullptr) goto noargs;
+        no_args = false;
+        args_v += L" \"";
+        args_v += args[0];
+        for (int i = 2; i < 64; i++) {
+            const wchar_t* argx = args[i-1];
+            if (argx == nullptr) break;
+            args_v += L"\" \"";
+            args_v += argx;
+        }
+        args_v += L"\"";
+    noargs:
+        if (!PathFileExists(path) && !PathFileExists((path + wstring(L".exe")).c_str())) {
+            return false;
+        }
+
+        PROCESS_INFORMATION pi = PROCESS_INFORMATION();
+        STARTUPINFO si = STARTUPINFO();
+        si.cb = sizeof(STARTUPINFO);
+        int status;
+        DWORD dwCreationFlags = CREATE_PRESERVE_CODE_AUTHZ_LEVEL;
+        //wcerr << path << L' ' << args_v << endl;
+        if (no_args)
+            status = CreateProcess(path, nullptr, nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
+        else status = CreateProcess(path, (wchar_t*)args_v.c_str(), nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
+        
+        if (!status) { cerr << "CreateProcess failed: " << GetLastError() << endl; exit(0x63); }
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
+        return true;
+    }
+
+    bool cpp::System::RunProgramAsyncC(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
+        wstring args_v = L'\"' + wstring(path) + L'\"';
+        bool no_args = true;
+        if (args[0] == nullptr) goto noargs;
+        no_args = false;
+        args_v += L" \"";
+        args_v += args[0];
+        for (int i = 2; i < 64; i++) {
+            const wchar_t* argx = args[i-1];
+            if (argx == nullptr) break;
+            args_v += L"\" \"";
+            args_v += argx;
+        }
+        args_v += L"\"";
+    noargs:
+        if (!PathFileExists(path) && !PathFileExists((path + wstring(L".exe")).c_str())) {
+            return false;
+        }
+        PROCESS_INFORMATION pi = PROCESS_INFORMATION();
+        STARTUPINFO si = STARTUPINFO();
+        si.cb = sizeof(STARTUPINFO);
+        int status;
+        DWORD dwCreationFlags = CREATE_PRESERVE_CODE_AUTHZ_LEVEL | CREATE_NEW_CONSOLE;
+        if (no_args)
+            status = CreateProcess(path, nullptr, nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
+        else status = CreateProcess(path, (wchar_t*)args_v.c_str(), nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
+        
+        if (!status) { cerr << "CreateProcess failed: " << GetLastError() << endl; exit(0x75); }
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
+        return true;
+    }
+
+    
 #else
 
+int cpp::System::MakeDirectory(utfcstr path) {
+    if (mkdir(path, 0777) == 0) return 0;
+    return errno;
+}
 
 int cpp::System::Shell(uniconv::utfcstr command) {
     return System::RunProgram("/bin/sh", "-c", command, nullptr); 
 }
 
-int cpp::System::ShellAsync(uniconv::utfcstr command, bool& is_running) {
-    return System::RunProgramAsync("/bin/sh", is_running, "-c", command, nullptr);
+void cpp::System::ShellAsync(uniconv::utfcstr command) {
+    System::RunProgramAsync("/bin/sh", is_running, "-c", command, nullptr);
 }
 
 #define CALL_RETRY(retvar, expression) do { \
@@ -125,7 +419,7 @@ void* WaitForProgram(void* pid_running_ret) {
     return 0;
 }
 
-int cpp::System::RunProgramAsync(uniconv::utfcstr path, bool& is_running, uniconv::utfcstr arg, ...) {
+int cpp::System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
     is_running = true;
     int status;
     System::tpid = fork();
@@ -171,61 +465,7 @@ int cpp::System::RunProgramAsync(uniconv::utfcstr path, bool& is_running, unicon
         va_end(args);
         execv(path, args_c);
         exit(127);
-    } else {
-        old_handler[SIGHUP] = signal(SIGHUP, System::SendSignal);
-        old_handler[SIGINT] = signal(SIGINT, System::SendSignal);
-        old_handler[SIGQUIT] = signal(SIGQUIT, System::SendSignal);
-        old_handler[SIGILL] = signal(SIGILL, System::SendSignal);
-        old_handler[SIGTRAP] = signal(SIGTRAP, System::SendSignal);
-        old_handler[SIGABRT] = signal(SIGABRT, System::SendSignal);
-        old_handler[SIGIOT] = signal(SIGIOT, System::SendSignal);
-        old_handler[SIGFPE] = signal(SIGFPE, System::SendSignal);
-        old_handler[SIGKILL] = signal(SIGKILL, System::SendSignal);
-        old_handler[SIGUSR1] = signal(SIGUSR1, System::SendSignal);
-        old_handler[SIGSEGV] = signal(SIGSEGV, System::SendSignal);
-        old_handler[SIGUSR2] = signal(SIGUSR2, System::SendSignal);
-        old_handler[SIGPIPE] = signal(SIGPIPE, System::SendSignal);
-        old_handler[SIGTERM] = signal(SIGTERM, System::SendSignal);
-    #ifdef SIGSTKFLT
-        old_handler[SIGSTKFLT] = signal(SIGSTKFLT, System::SendSignal);
-    #endif
-        old_handler[SIGCHLD] = signal(SIGCHLD, System::SendSignal);
-        old_handler[SIGCONT] = signal(SIGCONT, System::SendSignal);
-        old_handler[SIGSTOP] = signal(SIGSTOP, System::SendSignal);
-        old_handler[SIGTSTP] = signal(SIGTSTP, System::SendSignal);
-        old_handler[SIGTTIN] = signal(SIGTTIN, System::SendSignal);
-        old_handler[SIGTTOU] = signal(SIGTTOU, System::SendSignal);
-        int wexit;
-
-        __pid_bool args = {tpid, is_running};
-        thread_inout inout = {&args, &status};
-        pthread_create(&thread, nullptr, WaitForProgram, &inout);
-        return status;
-    }
-    signal(SIGHUP, old_handler[SIGHUP]);
-    signal(SIGINT, old_handler[SIGINT]);
-    signal(SIGQUIT, old_handler[SIGQUIT]);
-    signal(SIGILL, old_handler[SIGILL]);
-    signal(SIGTRAP, old_handler[SIGTRAP]);
-    signal(SIGABRT, old_handler[SIGABRT]);
-    signal(SIGIOT, old_handler[SIGIOT]);
-    signal(SIGFPE, old_handler[SIGFPE]);
-    signal(SIGKILL, old_handler[SIGKILL]);
-    signal(SIGUSR1, old_handler[SIGUSR1]);
-    signal(SIGSEGV, old_handler[SIGSEGV]);
-    signal(SIGUSR2, old_handler[SIGUSR2]);
-    signal(SIGPIPE, old_handler[SIGPIPE]);
-    signal(SIGTERM, old_handler[SIGTERM]);
-#ifdef SIGSTKFLT
-    signal(SIGSTKFLT, old_handler[SIGSTKFLT]);
-#endif
-    signal(SIGCHLD, old_handler[SIGCHLD]);
-    signal(SIGCONT, old_handler[SIGCONT]);
-    signal(SIGSTOP, old_handler[SIGSTOP]);
-    signal(SIGTSTP, old_handler[SIGTSTP]);
-    signal(SIGTTIN, old_handler[SIGTTIN]);
-    signal(SIGTTOU, old_handler[SIGTTOU]);
-    return status;
+    } else return;
 }
 
 
@@ -625,11 +865,11 @@ int cpp::System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]
     return status;
 }
 
-utfstr System::GetRoot(void)
-{
+utfstr System::GetRoot(void) {
     char buf[255] = {'\0'};
     ssize_t size = readlink("/proc/self/exe", buf, 255);
     char *edit = buf;
+    System::self = edit;
     while (edit[--size] != '/')
         buf[size] = '\0';
     edit[size + 1] = '.';
@@ -644,11 +884,15 @@ utfstr System::GetRoot(void)
     }
 #endif
 
-    utfstr System::GetRootPath(void)
-    {
-        return System::root;
+utfstr System::GetRootDir(void) {
+    return System::root;
 }
 
+
+
+uniconv::utfstr cpp::System::GetSelfPath(void) {
+    return System::self;
+}
 
 
 nint System::AllocateMemory(size_t bytes) {

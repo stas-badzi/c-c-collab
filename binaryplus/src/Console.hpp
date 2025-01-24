@@ -106,6 +106,7 @@ namespace cpp {
         static int16_t GetWindowHeight(void);
         static int32_t GetArgC(void);
         static wchar_t** GetArgV(void);
+        static int PopupWindow(int type, int argc, wchar_t* argv[]);
         static void Sleep(double seconds = 1.0);
         static void FillScreen(std::vector<std::vector<Symbol> > symbols);
         static void HandleMouseAndFocus(void);
@@ -114,5 +115,11 @@ namespace cpp {
         static std::pair<uint8_t,uint8_t> MouseButtonClicked(void); // returns button ID and whitch consecutive click was it
         static uint8_t MouseButtonReleased(void); // returns button ID
     };
+#if defined(_WIN32) || defined(__CYGWIN__)
+    extern __declspec(dllimport) std::wistream& gin;
+    extern __declspec(dllimport) std::wostream& gout;
+#else
     extern std::istream& gin;
+    extern std::ostream& gout;
+#endif
 }

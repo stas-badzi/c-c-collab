@@ -48,8 +48,8 @@ namespace CppImp {
         private const string DllSource = @"" + DllHandle.Prefix + "factoryrushplus" + DllHandle.Suffix;
         
 
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "System_GetRootPath", CharSet = CharSet.Unicode)]
-        public static extern IntPtr GetRootPath();
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "System_GetRootDir", CharSet = CharSet.Unicode)]
+        public static extern IntPtr GetRootDir();
         
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "System_ToNativePath", CharSet = CharSet.Unicode)]
         public static extern IntPtr ToNativePath(IntPtr arg1);

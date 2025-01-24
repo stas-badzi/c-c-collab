@@ -180,6 +180,24 @@ using namespace uniconv;
         return out;
     }
 
+    libexport int Console_PopupWindow(int type, int argc, uniconv::unichar* argv[]) {
+        uniconv::utfcstr* args = (uniconv::utfcstr*)System::AllocateMemory(sizeof(uniconv::utfcstr)*argc);
+        for (int i = 0; i < argc; i++) {
+            uniconv::utfstr arg = UnicodeToUtf8String(argv[i]).c_str();
+            args[i] = (uniconv::utfcstr)System::AllocateMemory(sizeof(wchar_t)*arg.size());
+        #ifdef _WIN32
+            wchar_t* loc = (wchar_t*)args[i];
+        #else
+            char* loc = (char*)args[i];
+        #endif
+            for (size_t j = 0; j < arg.size(); j++) loc[j] = arg[j];
+        }
+        System::FreeMemory(argv);
+        int ret = Console::PopupWindow(type, argc, args);
+        System::FreeMemory(args);
+        return ret;
+    }
+
     int (*Console_sub)(int);
 
     int sub (int arg1) {
@@ -301,8 +319,12 @@ using namespace uniconv;
 // ~Console
 
 // System
-    libexport uniconv::unichar* System_GetRootPath(void) {
-        return uniconv::Utf8StringToUnicode(cpp::System::GetRootPath().c_str());
+    libexport uniconv::unichar* System_GetRootDir(void) {
+        return uniconv::Utf8StringToUnicode(cpp::System::GetRootDir().c_str());
+    }
+
+    libexport uniconv::unichar* System_GetSelfPath(void) {
+        return uniconv::Utf8StringToUnicode(cpp::System::GetSelfPath().c_str());
     }
     
     libexport uniconv::unichar* System_ToNativePath(uniconv::unichar* arg1) {

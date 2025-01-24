@@ -43,7 +43,7 @@ wstring getPath(wstring current) {
     do {
         Console::HandleKeyboard();
     } while (!(Console::IsKeyDown(Key::Enum::ONE) || Console::IsKeyDown(Key::Enum::TWO) || Console::IsKeyDown(Key::Enum::THREE) || Console::IsKeyDown(Key::Enum::FOUR) || Console::IsKeyDown(Key::Enum::FIVE) || Console::IsKeyDown(Key::Enum::SIX) || Console::IsKeyDown(Key::Enum::SEVEN) || Console::IsKeyDown(Key::Enum::EIGHT) || Console::IsKeyDown(Key::Enum::NINE) || Console::IsKeyDown(Key::Enum::ZERO) || Console::IsKeyDown(Key::Enum::ESC)));
-    wstring a = System::GetRootPath();
+    wstring a = System::GetRootDir();
     if (Console::IsKeyDown(Key::Enum::ONE)) return a.append(L"/assets/one.tux");
     if (Console::IsKeyDown(Key::Enum::TWO)) return a.append(L"/assets/two.tux");
     if (Console::IsKeyDown(Key::Enum::THREE)) return a.append(L"/assets/three.tux");
@@ -129,9 +129,9 @@ int main(void) {
     int argc = Console::GetArgC();
     wchar_t** argv = Console::GetArgV();
 
-    wstring a = System::GetRootPath();
+    wstring a = System::GetRootDir();
     a.append(L"/assets/a.tux");
-    wstring file = (argc < 2) ? System::ToNativePath(getPath(System::GetRootPath() + L"/assets/a.tux")) : System::ToNativePath(wstring(argv[1]));
+    wstring file = (argc < 2) ? System::ToNativePath(getPath(System::GetRootDir() + L"/assets/a.tux")) : System::ToNativePath(wstring(argv[1]));
     auto texture = FileSystem::TextureFromFile(file);
     wchar_t symchar = getChar(L'~');
     uint8_t symback = 16;
@@ -204,11 +204,12 @@ int main(void) {
         } else if (mouse.x > 34 && mouse.y == 0 && mouse.x < 41 ) {
             for (int i = 35; i < 41; ++i) menu[0][i].ReverseColors();
             if (mouse.primary && bop) {
-                wstring fl = System::GetRootPath();
-                string fls = "gnome-terminal -- less ";
-                for (auto i = 0ul; i < fl.size(); ++i) fls.push_back(fl[i]);
-                fls.append("/share/factoryrush/assets/README.md");
-                system(fls.c_str());
+                Console::PopupWindow(1,0,nullptr);
+                //wstring fl = System::GetRootDir();
+                //string fls = "gnome-terminal -- less ";
+                //for (auto i = 0ul; i < fl.size(); ++i) fls.push_back(fl[i]);
+                //fls.append("/share/factoryrush/assets/README.md");
+                //system(fls.c_str());
                 /*
                 const char* arg1 = "/bin/su";
                 const char* arg2 = "stas";
@@ -275,11 +276,15 @@ endminput:
         if (Console::KeyPressed() == Key::Enum::s && IsCtrlDown()) symchar = getChar(symchar);
         if (Console::KeyPressed() == Key::Enum::d && IsCtrlDown()) symback = symback;
         if (Console::KeyPressed() == Key::Enum::f && IsCtrlDown()) symfore = symfore;
+        if (Console::KeyPressed() == Key::Enum::THREE && Console::IsKeyDown(Key::Enum::a)) Console::PopupWindow(1,0,nullptr);
         //FileSystem::DrawTextureToScreen(20,2,pos,screen);
     }
     return EXIT_FAILURE;
 }
 
 int sub(int type) {
+    auto&& sym = Console::Symbol::CreateTexture(L"▒frfjyyjyjt\n");
+    Console::FillScreen(sym);
+    Console::Sleep(10);
     return type;
 }

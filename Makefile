@@ -599,12 +599,12 @@ else
 ifeq ($(binary),exe)
 #windows
 ifeq ($(shell uname -s),Windows_NT)
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals -ldbghelp $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals -ldbghelp -lshlwapi -lshell32 $(flib) $(static-libc++) $(static-libc) $(ldarg)
 else
 ifeq ($(shell uname -s),windows32)
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals -ldbghelp $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals -ldbghelp -lshlwapi -lshell32 $(flib) $(static-libc++) $(static-libc) $(ldarg)
 else
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals -ldbghelp $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals -ldbghelp -lshlwapi -lshell32 $(flib) $(static-libc++) $(static-libc) $(ldarg)
 endif
 endif
 #
