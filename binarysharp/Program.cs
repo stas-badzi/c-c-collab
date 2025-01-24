@@ -1,8 +1,4 @@
-﻿using System.Data;
-using System.Security.Cryptography;
-using System.Collections.ObjectModel;
-using System.ComponentModel.DataAnnotations;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System;
 using Cpp;
 using Cs;
@@ -36,6 +32,7 @@ namespace BinarySharp {
                 //if (Terminal.KeyPressed() == Key.Enum.ESC) return 0;
                 switch (Terminal.KeyPressed()) {
                     case Key.Enum.ESC:
+                        Terminal.Fin();
                         return 0;
                     case Key.Enum.a:
                         sym = new Terminal.Symbol('A',15,15);
@@ -43,9 +40,15 @@ namespace BinarySharp {
                     case Key.Enum.b:
                         sym = new Terminal.Symbol('▒',16,16);
                         break;
+                    case Key.Enum.s:
+                        SoundSystem.PlaySound(GetSoundPath("shoot", "mp3"), false);
+                        break;
                 }
             }
             return 0;
         }
+    private static string GetSoundPath(string name, string suffix = "wav") {
+        return Path.Combine([AppContext.BaseDirectory,"..","sounds",$"{name}.{suffix}"]);
+    }
     }
 }
