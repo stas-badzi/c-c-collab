@@ -605,6 +605,9 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
             if (_temp) Console::argv = (const wchar_t**)_temp;
             else exit(0x73);
 
+            wstring appdata = _wgetenv(L"APPDATA");
+            appdata.append(L"\\.factoryrush\\");
+
             wstring tmp = filesystem::temp_directory_path().native();
             tmp.append(L"\\.factoryrush\\");
 
@@ -630,7 +633,11 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
         subdirset:
             delete sec_atrs;
 
-            filesystem::path out_file = filesystem::path(tmp+Console::subdir+L"main.log");
+            auto t = std::time(nullptr);
+            auto tm = *std::localtime(&t);
+            wstringstream ss;
+            ss << std::put_time(&tm, L"logs\\%Y-%m-%d_%H:%M:%S.log");
+            filesystem::path out_file = filesystem::path(appdata + ss.str());
             Console::out.open(out_file);
             
             initialised = true;
