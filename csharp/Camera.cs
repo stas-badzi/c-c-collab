@@ -9,7 +9,7 @@ namespace Cs {
     public class Camera {
         public Texture buffer { get; }
         public Tuple<int, int> viewportCenter { get; } // <height index, width index>
-        public static emptySym = new Terminal.Symbol(L' ', 16, 16);
+        public static Terminal.Symbol emptySym = new Terminal.Symbol(L' ', 16, 16);
 
         public Camera(int width, int height, Terminal.Symbol symbol = Camera.emptySym) {
             if (height % 2f == 0 || width % 2f == 0)
