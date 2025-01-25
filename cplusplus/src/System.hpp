@@ -50,10 +50,10 @@ namespace cpp {
         static int RunProgramS(uniconv::utfcstr file, uniconv::utfcstr const args[]);
         
         static int ShellAsync(uniconv::utfcstr arg, bool& is_running);  
-        static int RunProgramAsync(uniconv::utfcstr path, bool& is_running, uniconv::utfcstr args, ...);
-        static int RunProgramAsyncS(uniconv::utfcstr file, bool& is_running, uniconv::utfcstr args, ...);
-        static int RunProgramAsync(uniconv::utfcstr path, bool& is_running, uniconv::utfcstr const args[]);
-        static int RunProgramAsyncS(uniconv::utfcstr file, bool& is_running, uniconv::utfcstr const args[]);
+        static int RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr args, ...);
+        static int RunProgramAsyncS(uniconv::utfcstr file, uniconv::utfcstr args, ...);
+        static int RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[]);
+        static int RunProgramAsyncS(uniconv::utfcstr file, uniconv::utfcstr const args[]);
         
     };
 }
