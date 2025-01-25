@@ -527,6 +527,33 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
         return pair<pair<uint16_t,uint16_t>,pair<uint16_t,uint16_t>>(xyoffset,symsize);
     }
 */
+    struct NameHwnd {
+        wchar_t* name;
+        HWND hwnd;
+    };
+
+    BOOL CALLBACK FindWindowBegin(_In_ HWND   hwnd, _In_ LPARAM lParam) {
+        NameHwnd* namehwnd = (NameHwnd*)lParam;
+        wchar_t* pszFindWindow = namehwnd->name;
+        wchar_t pszWindowTitle[1024];
+        GetWindowText(hwnd, pszWindowTitle, 1024);
+        bool right = true;
+        if (wcslen(pszWindowTitle) < wcslen(pszFindWindow)) return TRUE;
+        for (size_t i = 0; i < wcslen(pszFindWindow); ++i) {
+            if (pszWindowTitle[i] != pszFindWindow[i]) {
+                right = false;
+                break;
+            }
+        }
+        //wcout << pszWindowTitle << L' ' << pszFindWindow << ':' << right << L'\n';
+        if (!right) return TRUE;
+        if (wcslen(pszWindowTitle) == wcslen(pszFindWindow) || !isdigit(pszWindowTitle[wcslen(pszWindowTitle)])) {
+            namehwnd->hwnd = hwnd;
+            return FALSE;
+        }
+        return TRUE;
+    }
+
     inline HWND GetHwnd(void) {
         HWND hwndFound;
         wchar_t pszNewWindowTitle[1024];
@@ -534,34 +561,30 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
         SetConsoleTitle(pszNewWindowTitle);
         SysSleep(40e3);
         hwndFound=FindWindow(NULL, pszNewWindowTitle);
-        if (!(good = hwndFound)) hwndFound = GetForegroundWindow();
+        if (!(good = hwndFound)) {
+            if (mintty) {
+                NameHwnd namehwnd = {pszNewWindowTitle, 0};
+                BOOL ret = EnumWindows(FindWindowBegin, (LPARAM)&namehwnd);
+                Console::out << L"EnumWindows: " << ret << endl;
+                if (!ret) {
+                    good = true;
+                    hwndFound = namehwnd.hwnd;
+                    Console::out << L"Window: " << hwndFound << " good: " << good << endl;
+                    return hwndFound;
+                }
+            }
+            hwndFound = GetForegroundWindow();
+            wchar_t pszWindowTitle[1024];
+            int siz = GetWindowText(hwndFound, pszWindowTitle, 1024);
+            pszWindowTitle[siz] = L'\0';
+            if (wcscmp(pszWindowTitle, pszNewWindowTitle) == 0) good = true;
+        }
+        Console::out << L"Window: " << hwndFound << " good: " << good << endl;
         return hwndFound;
     }
 
     void Console::Init(void) {
         if (!initialised) {
-            Console::screen = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
-            SetConsoleActiveScreenBuffer(Console::screen);
-            
-            Console::fd = GetStdHandle(STD_INPUT_HANDLE);
-            GetConsoleMode(Console::fd, &Console::old_console);
-            SetConsoleMode(Console::fd, ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT | ENABLE_WINDOW_INPUT);
-
-            auto term_prog = _wgetenv(L"TERM_PROGRAM");
-            mintty = term_prog && wstring(term_prog) == L"mintty";
-            wt = _wgetenv(L"WT_SESSION") != NULL;
-            Console::window = GetHwnd();
-            Console::device = GetDC(NULL);
-            //Console::xyoffset = Console::GetXYCharOffset();
-
-            CONSOLE_SCREEN_BUFFER_INFO csbi;
-            GetConsoleScreenBufferInfo(Console::screen, &csbi);
-            auto val = AtrValToColors(csbi.wAttributes);
-            Console::default_fcol = val.first;
-            Console::default_bcol = val.second;
-            
-            Console::mouse_status.x = 0;
-            Console::mouse_status.y = 0;
             
             int sub_process = 0;
             auto winargv = (const wchar_t**)CommandLineToArgvW(GetCommandLine(), &Console::argc);
@@ -569,7 +592,7 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
             int j = 0;
             for (int i = 0; i < Console::argc; i++) {
                 auto&& arg = winargv[i+j];
-                if (wcslen(arg) > 1 && arg[0] == L'@') {
+                if (wcslen(arg) > 1 && arg[0] == L'\033') {
                     wstring sdir; const wchar_t* narg;
                     switch (arg[1]) {
                         case L'&':
@@ -578,13 +601,13 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
                             if (wcslen(arg) < 3) exit(0x31);
                             sub_process = 0;
                             narg = arg + 2;
-                            while (narg[0] != L';') {
+                            while (narg[0] != L'~') {
                                 if (narg[0] < L'0' || narg[0] > L'9') exit(0x32);
                                 sub_process *= 10;
                                 sub_process += narg[0] - L'0';
                                 ++narg;
                             }
-                            for (size_t i = 1; narg[i] != L';'; i++){
+                            for (size_t i = 1; narg[i] != L'~'; i++){
                                 if (narg[i] == L'\0') exit(0x33);
                                 sdir.push_back(narg[i]);
                             }
@@ -623,6 +646,12 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
             if (!PathIsDirectory(tmp.c_str()))
                 CreateDirectory(tmp.c_str(), sec_atrs);
 
+            if (!PathIsDirectory(appdata.c_str()))
+                CreateDirectory(appdata.c_str(), sec_atrs);
+
+            if (!PathIsDirectory((appdata+L"logs").c_str()))
+                CreateDirectory((appdata+L"logs").c_str(), sec_atrs);
+
             Console::subdir = new const wchar_t[to_wstring(Console::pid).size() + 2]{0};
             wcscpy((wchar_t*)Console::subdir, to_wstring(Console::pid).c_str());
             ((wchar_t*)Console::subdir)[to_wstring(Console::pid).size()] = L'/';
@@ -635,10 +664,51 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
 
             auto t = std::time(nullptr);
             auto tm = *std::localtime(&t);
-            wstringstream ss;
-            ss << std::put_time(&tm, L"logs\\%Y-%m-%d_%H:%M:%S.log");
-            filesystem::path out_file = filesystem::path(appdata + ss.str());
-            Console::out.open(out_file);
+            wstringstream ss; ss << L"logs\\";
+            if (Console::sub_proc) ss << sub_process << L'\\';
+            ss << std::put_time(&tm, L"%Y-%m-%d_%H\'%M\'%S");
+            unsigned int filenum = 0;
+        logfile:
+            filesystem::path out_file = filesystem::path(appdata + ss.str() + L".log");
+            HANDLE logfl = CreateFile(out_file.c_str(), GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+            if (logfl == (void*)-1) {
+                auto err = GetLastError();
+                if (err == ERROR_ALREADY_EXISTS) {
+                    ss << L"-" << ++filenum;
+                    goto logfile;
+                }
+                wcerr << L"Couldn't create log file: " << out_file.native() << L", with error: " << err << '\n'; 
+                exit(0xC2);
+            }
+            CloseHandle(logfl);
+            Console::out.open(out_file,ios::out);
+            if (!Console::out.is_open()) {
+                wcerr << L"Couldn't open log file: " << out_file.native() << L", with error: " << GetLastError() << '\n'; 
+                exit(0xC1);
+            }
+
+            Console::screen = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
+            SetConsoleActiveScreenBuffer(Console::screen);
+            
+            Console::fd = GetStdHandle(STD_INPUT_HANDLE);
+            GetConsoleMode(Console::fd, &Console::old_console);
+            SetConsoleMode(Console::fd, ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT | ENABLE_WINDOW_INPUT);
+
+            auto term_prog = _wgetenv(L"TERM_PROGRAM");
+            mintty = term_prog && wstring(term_prog) == L"mintty";
+            wt = _wgetenv(L"WT_SESSION") != NULL;
+            Console::window = GetHwnd();
+            Console::device = GetDC(NULL);
+            //Console::xyoffset = Console::GetXYCharOffset();
+
+            CONSOLE_SCREEN_BUFFER_INFO csbi;
+            GetConsoleScreenBufferInfo(Console::screen, &csbi);
+            auto val = AtrValToColors(csbi.wAttributes);
+            Console::default_fcol = val.first;
+            Console::default_bcol = val.second;
+            
+            Console::mouse_status.x = 0;
+            Console::mouse_status.y = 0;
             
             initialised = true;
 
@@ -977,13 +1047,13 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
                         if (strlen(arg) < 3) exit(0x31);
                         sub_process = 0;
                         narg = arg + 2;
-                        while (narg[0] != ';') {
+                        while (narg[0] != '~') {
                             if (narg[0] < '0' || narg[0] > '9') exit(0x32);
                             sub_process *= 10;
                             sub_process += narg[0] - '0';
                             ++narg;
                         }
-                        for (size_t i = 1; narg[i] != ';'; i++){
+                        for (size_t i = 1; narg[i] != '~'; i++){
                             if (narg[i] == '\0') exit(0x33);
                             sdir.push_back(narg[i]);
                         }
@@ -999,7 +1069,7 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
 
                         // root type
                         narg = arg + 2;
-                        while (narg[0] != ';') {
+                        while (narg[0] != '~') {
                             if (narg[0] < '0' || narg[0] > '9') exit(0x37);
                             root_type *= 10;
                             root_type += narg[0] - '0';
@@ -1009,7 +1079,7 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
                         // parent pid
                         pid = 0;
                         ++narg;
-                        while (narg[0] != ';') {
+                        while (narg[0] != '~') {
                             if (narg[0] < '0' || narg[0] > '9') exit(0x37);
                             pid *= 10;
                             pid += narg[0] - '0';
@@ -1116,10 +1186,10 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
                 args_c.push_back('+');
                 args_c.append(to_string(sudolevel));
                 args_c.push_back('\\');
-                args_c.push_back(';');
+                args_c.push_back('~');
                 args_c.append(to_string(Console::pid));
                 args_c.push_back('\\');
-                args_c.push_back(';');
+                args_c.push_back('~');
 
                 if (issu) args_c.push_back('\"');
 
@@ -2080,10 +2150,16 @@ newpidgen:
     #define sep u8'/'
 #endif
     utfstr procdir = utfstr(N("proc")) + sep  + to_nstring(npid) + sep;
-    System::MakeDirectory(utfstr(Console::subdir + procdir).c_str());
-    utfstr info = N("@&");
-    info.append(to_nstring(type)).push_back(N(';'));
-    info.append(procdir).push_back(N(';'));
+    System::MakeDirectory((filesystem::temp_directory_path().native() + subdir + procdir).c_str());
+#if defined(_WIN32) || defined(__CYGWIN__)
+    wchar_t* appdata = _wgetenv(L"APPDATA");
+#else
+    char* appdata = getenv("HOME");
+#endif
+    System::MakeDirectory((utfstr(appdata) + sep + N(".factoryrush") + sep + N("logs") + sep + to_nstring(type) + sep).c_str());
+    utfstr info = N("\033&");
+    info.append(to_nstring(type)).push_back(N('~'));
+    info.append(procdir).push_back(N('~'));
     utfstr root_pth = System::GetSelfPath();
 
 #ifdef _WIN32

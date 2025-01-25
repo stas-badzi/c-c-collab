@@ -9,6 +9,7 @@
 #include <sstream>
 #include <vector>
 #include <chrono>
+#include <cassert>  
 
 #define IsCtrlDown() (Console::IsKeyDown(Key::Enum::CTRL) || Console::IsKeyDown(Key::Enum::CTRLL) || Console::IsKeyDown(Key::Enum::CTRLR))
 
@@ -60,7 +61,7 @@ wstring getPath(wstring current) {
 int main(void) {
     Console::Init();
     
-    bool edit = false, bop = true;
+    bool edit = false, bop = true, a3 = true;
 
     chrono::time_point<chrono::high_resolution_clock> start = chrono::high_resolution_clock::now();
     long double avg = 0;
@@ -274,15 +275,16 @@ endminput:
         //if (!gin.eof()) cout << 'a' << x << '\n' << flush;
        if (Console::KeyPressed() == Key::Enum::q && IsCtrlDown()) return EXIT_SUCCESS;
         if (Console::KeyPressed() == Key::Enum::s && IsCtrlDown()) symchar = getChar(symchar);
-        if (Console::KeyPressed() == Key::Enum::d && IsCtrlDown()) symback = symback;
         if (Console::KeyPressed() == Key::Enum::f && IsCtrlDown()) symfore = symfore;
-        if (Console::KeyPressed() == Key::Enum::THREE && Console::IsKeyDown(Key::Enum::a)) Console::PopupWindow(1,0,nullptr);
+        if (Console::KeyPressed() == Key::Enum::THREE && Console::IsKeyDown(Key::Enum::a) && a3) { Console::PopupWindow(0,0,nullptr); a3 = false; }
+        if (!Console::IsKeyDown(Key::Enum::THREE)) a3 = true;
         //FileSystem::DrawTextureToScreen(20,2,pos,screen);
     }
     return EXIT_FAILURE;
 }
 
 int sub(int type) {
+    assert(type != 0);
     auto&& sym = Console::Symbol::CreateTexture(L"▒frfjyyjyjt\n");
     Console::FillScreen(sym);
     Console::Sleep(10);
