@@ -167,5 +167,13 @@ namespace Cs
                 _ => '-'
             };
         }
+        public class Tile { // Texture struct
+            public Texture texture;
+            public string id;
+            public Tile(string id, Texture texture) {
+                this.id = id;
+                this.texture = texture;
+            }
+        }
     }
 }
