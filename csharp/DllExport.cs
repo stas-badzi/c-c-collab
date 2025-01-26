@@ -123,6 +123,7 @@ namespace CsExp {
                 throw new Exception("Intptr $symbolPtr Empty");
 
             Cs.Camera camera = new Cs.Camera(width, height, new Terminal.Symbol(symbolPtr, true))
+            Marshal.FreeHGlobal(symbolPtr);
             return camera.Get();
         }
         [UnmanagedCallersOnly(EntryPoint = "Camera_FromTexture")]
@@ -132,6 +133,7 @@ namespace CsExp {
 
             var texture = TypeConvert.PtrToTexture(texturePtr);
             Cs.Camera camera = Cs.Camera.FromTexture(texture);
+            Marshal.FreeHGlobal(texturePtr);
             return camera.Get();
         }
         [UnmanagedCallersOnly(EntryPoint = "Camera_DrawTextureToCamera")]
@@ -143,8 +145,8 @@ namespace CsExp {
 
             var texture = TypeConvert.PtrToTexture(texturePtr);
             var camera = new Cs.Camera(camera);
-
-            camera.DrawTextureToCamera(texture, new Tuple<int, int>(centerY, centerX));
+           Marshal.FreeHGlobal(texturePtr);
+           Marshal.FreeHGlobal(cameraPtr);          camera.DrawTextureToCamera(texture, new Tuple<int, int>(centerY, centerX));
         }
     }
 }
