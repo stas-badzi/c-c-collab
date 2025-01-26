@@ -138,7 +138,7 @@ namespace CsExp {
         public static void DrawTextureToCamera(nint texturePtr, int centerY, int centerX, nint cameraPtr) {
             if (texturePtr == IntPtr.Zero)
                 throw new Exception("Intptr $texturePtr Empty");
-            if (texturePtr == IntPtr.Zero)
+            if (cameraPtr == IntPtr.Zero)
                 throw new Exception("Intptr $cameraPtr Empty");
 
             var texture = TypeConvert.PtrToTexture(texturePtr);
