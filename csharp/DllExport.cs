@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
+using System.Collections.Generic;
 using Utility;
 using Cs;
 using System.Drawing;
@@ -118,24 +119,32 @@ namespace CsExp {
     public class Camera {
         [UnmanagedCallersOnly(EntryPoint = "Camera_Construct")]
         public static IntPtr Construct(int width, int height, nint symbolPtr) {
-            return IntPtr.Zero;
-
             if (symbolPtr == IntPtr.Zero)
                 throw new Exception("Intptr $symbolPtr Empty");
+
+            Cs.Camera camera = new Cs.Camera(width, height, new Terminal.Symbol(symbolPtr, true))
+            return camera.Get();
         }
         [UnmanagedCallersOnly(EntryPoint = "Camera_FromTexture")]
         public static IntPtr FromTexture(nint texturePtr) {
-            return IntPtr.Zero;
-
             if (texturePtr == IntPtr.Zero)
                 throw new Exception("Intptr $texturePtr Empty");
+
+            var texture = TypeConvert.PtrToTexture(texturePtr);
+            Cs.Camera camera = Cs.Camera.FromTexture(texture);
+            return camera.Get();
         }
         [UnmanagedCallersOnly(EntryPoint = "Camera_DrawTextureToCamera")]
-        public static void DrawTextureToCamera(nint texturePtr, int centerY, int centerX, nint camera) {
-            return;
-
+        public static void DrawTextureToCamera(nint texturePtr, int centerY, int centerX, nint cameraPtr) {
             if (texturePtr == IntPtr.Zero)
                 throw new Exception("Intptr $texturePtr Empty");
+            if (texturePtr == IntPtr.Zero)
+                throw new Exception("Intptr $cameraPtr Empty");
+
+            var texture = TypeConvert.PtrToTexture(texturePtr);
+            var camera = new Cs.Camera(camera);
+
+            camera.DrawTextureToCamera(texture, new Tuple<int, int>(centerY, centerX));
         }
     }
 }
