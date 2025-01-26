@@ -9,9 +9,8 @@ namespace Cs {
     public class Camera {
         public Texture buffer { get; }
         public Tuple<int, int> viewportCenter { get; } // <height index, width index>
-        public static Terminal.Symbol emptySym = new Terminal.Symbol(L' ', 16, 16);
 
-        public Camera(int width, int height, Terminal.Symbol symbol = Camera.emptySym) {
+        public Camera(int width, int height, Terminal.Symbol symbol) {
             if (height % 2f == 0 || width % 2f == 0)
                 throw new ArgumentException("Camera does not have a middle point because either height or width is even");
             var buffer = new Texture();
@@ -50,7 +49,7 @@ namespace Cs {
 
             for (int i = 0; i < this.buffer.Count; i++) {
                 for (int j = 0; j < this.buffer[i].Count; j++) {
-                    this.buffer[i][j] = Camera.emptySym;
+                    this.buffer[i][j] = new Terminal.Symbol(" ", 16, 16);
                 }
             }
 
