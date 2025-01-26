@@ -117,16 +117,25 @@ namespace CsExp {
 
     public class Camera {
         [UnmanagedCallersOnly(EntryPoint = "Camera_Construct")]
-        public static IntPtr Construct(int width, int height, nint symbol) {
+        public static IntPtr Construct(int width, int height, nint symbolPtr) {
             return IntPtr.Zero;
+
+            if (symbolPtr == IntPtr.Zero)
+                throw new Exception("Intptr $symbolPtr Empty");
         }
         [UnmanagedCallersOnly(EntryPoint = "Camera_FromTexture")]
-        public static IntPtr FromTexture(nint texture) {
+        public static IntPtr FromTexture(nint texturePtr) {
             return IntPtr.Zero;
+
+            if (texturePtr == IntPtr.Zero)
+                throw new Exception("Intptr $texturePtr Empty");
         }
         [UnmanagedCallersOnly(EntryPoint = "Camera_DrawTextureToCamera")]
-        public static void DrawTextureToCamera(nint texture, int centerY, int centerX) {
+        public static void DrawTextureToCamera(nint texturePtr, int centerY, int centerX, nint camera) {
             return;
+
+            if (texturePtr == IntPtr.Zero)
+                throw new Exception("Intptr $texturePtr Empty");
         }
     }
 }
