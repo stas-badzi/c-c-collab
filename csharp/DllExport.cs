@@ -114,4 +114,19 @@ namespace CsExp {
             Cs.SoundSystem.PlaySound(TypeConvert.PtrToString(filepathPtr),wait);
         }
     }
+
+    public class Camera {
+        [UnmanagedCallersOnly(EntryPoint = "Camera_Construct")]
+        public static IntPtr Construct(int width, int height, nint symbol) {
+            return IntPtr.Zero;
+        }
+        [UnmanagedCallersOnly(EntryPoint = "Camera_FromTexture")]
+        public static IntPtr FromTexture(nint texture) {
+            return IntPtr.Zero;
+        }
+        [UnmanagedCallersOnly(EntryPoint = "Camera_DrawTextureToCamera")]
+        public static void DrawTextureToCamera(nint texture, int centerY, int centerX) {
+            return;
+        }
+    }
 }

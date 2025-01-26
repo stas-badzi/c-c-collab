@@ -39,6 +39,9 @@ namespace Cs {
 
             return new Camera(texture, vpC);
         }
+        public IntPtr ToPtr() {
+            return IntPtr.Zero;
+        }
         public void DrawTextureToCamera(Texture texture, Tuple<int, int> center) {  
             return;
 
