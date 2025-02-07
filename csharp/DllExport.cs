@@ -122,7 +122,7 @@ namespace CsExp {
             if (symbolPtr == IntPtr.Zero)
                 throw new Exception("Intptr $symbolPtr Empty");
 
-            Cs.Camera camera = new Cs.Camera(width, height, new Terminal.Symbol(symbolPtr, true))
+            Cs.Camera camera = new Cs.Camera(width, height, new Terminal.Symbol(symbolPtr, true));
             Marshal.FreeHGlobal(symbolPtr);
             return camera.Get();
         }

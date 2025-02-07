@@ -27,7 +27,7 @@ namespace Cs {
             this.viewportCenter = vpC;
         }
         public Camera(nint cameraPtr) { // For DllExport
-            int offset = 0
+            int offset = 0;
             var int32_size = sizeof(int);
             var IntPtr_size = IntPtr.Size;
 
@@ -40,7 +40,7 @@ namespace Cs {
             buffer = new List<List<Terminal.Symbol>>();
 
             for (int i = 0; i < height; i++) {
-                buffer.Add(new List<Terminal.Symbol>);
+                buffer.Add(new List<Terminal.Symbol>());
                 int width = Marshal.ReadInt32(cameraPtr, offset);
                 offset += int32_size;
                 for (int j = 0; j < width; j++) {
@@ -105,9 +105,7 @@ namespace Cs {
             // both viewport values
             return ret;
         }
-        public void DrawTextureToCamera(Texture texture, Tuple<int, int> center) {  
-            return;
-
+        public void DrawTextureToCamera(Texture texture, Tuple<int, int> center) {
             float height = (float)texture.Count;
             float width = (float)texture[0].Count;
             if (height % 2f == 0 || width % 2f == 0)
@@ -120,13 +118,15 @@ namespace Cs {
             }
 
             for (int i = center.Item1 + (int)Math.Floor(height/2f); i < height; i++) {
+                int placeholder1 = 0;
                 if (i > 0) {
-                    int placeholder1 = Math.Abs(i);
+                    placeholder1 = Math.Abs(i);
                     i = 0;
                 }
                 for (int j = center.Item2 + (int)Math.Floor(width/2f); j < width; j++) {
+                    int placeholder2 = 0
                     if (j > 0) {
-                        int placeholder2 = Math.Abs(j);
+                        placeholder2 = Math.Abs(j);
                         j = 0;
                     }
 
