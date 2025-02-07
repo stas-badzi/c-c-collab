@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using Microsoft.VisualBasic.FileIO;
 using Cs;
+using CsImp;
 using Cpp;
 using Texture = System.Collections.Generic.List<System.Collections.Generic.List<Cpp.Terminal.Symbol>>;
 
@@ -11,8 +12,16 @@ namespace Cs {
         public Texture buffer { get; }
         public Tuple<int, int> viewportCenter { get; }
 
+        public Camera(int width, int height, Terminal.Symbol symbol) {
+            return new Camera(CsImp.Camera_Construct(width, height, symbol.Get()));
+        }
+
+        public static Camera FromTexture(Texture texture) {
+            return new Camera(CsImp.Camera_FromTexture(texture.Get()));
+        }
+
         public void DrawTextureToCamera(Texture texture, Tuple<int, int> center) {
-            
+            CsImp.Camera.DrawTextureToCamera(Utility.TextureToPtr(texture), center.Item1, center.Item2, this.Get());
         }
 
         public IntPtr Get() { // For DllImport
