@@ -44,7 +44,7 @@ namespace Cs {
                 int width = Marshal.ReadInt32(cameraPtr, offset);
                 offset += int32_size;
                 for (int j = 0; j < width; j++) {
-                    buffer.Add(new Terminal.Symbol(Marshal.ReadIntPtr(cameraPtr, offset)));
+                    buffer[i].Add(new Terminal.Symbol(Marshal.ReadIntPtr(cameraPtr, offset)));
                     offset += IntPtr_size;
                 }
             }
@@ -113,7 +113,7 @@ namespace Cs {
 
             for (int i = 0; i < this.buffer.Count; i++) {
                 for (int j = 0; j < this.buffer[i].Count; j++) {
-                    this.buffer[i][j] = new Terminal.Symbol(" ", 16, 16);
+                    this.buffer[i][j] = new Terminal.Symbol(' ', 16, 16);
                 }
             }
 

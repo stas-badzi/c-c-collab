@@ -144,7 +144,7 @@ namespace CsExp {
                 throw new Exception("Intptr $cameraPtr Empty");
 
             var texture = TypeConvert.PtrToTexture(texturePtr);
-            var camera = new Cs.Camera(camera);
+            var camera = new Cs.Camera(cameraPtr);
             Marshal.FreeHGlobal(texturePtr);
             Marshal.FreeHGlobal(cameraPtr);          
             camera.DrawTextureToCamera(texture, new Tuple<int, int>(centerY, centerX));

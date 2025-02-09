@@ -6,6 +6,8 @@ using Cs;
 using CsImp;
 using Cpp;
 using Texture = System.Collections.Generic.List<System.Collections.Generic.List<Cpp.Terminal.Symbol>>;
+using Terminal = Cpp.Terminal;
+using TypeConvert = Utility.TypeConvert;
 
 namespace Cs {
     public class Camera {
@@ -13,15 +15,16 @@ namespace Cs {
         public Tuple<int, int> viewportCenter { get; }
 
         public Camera(int width, int height, Terminal.Symbol symbol) {
-            return new Camera(CsImp.Camera_Construct(width, height, symbol.Get()));
+            var ret = new Camera(CsImp.Camera.Construct(width, height, symbol.Get()));
+            (this.buffer, this.viewportCenter) = (ret.buffer, ret.viewportCenter);
         }
 
         public static Camera FromTexture(Texture texture) {
-            return new Camera(CsImp.Camera_FromTexture(texture.Get()));
+            return new Camera(CsImp.Camera.FromTexture(TypeConvert.TextureToPtr(texture)));
         }
 
         public void DrawTextureToCamera(Texture texture, Tuple<int, int> center) {
-            CsImp.Camera.DrawTextureToCamera(Utility.TextureToPtr(texture), center.Item1, center.Item2, this.Get());
+            CsImp.Camera.DrawTextureToCamera(TypeConvert.TextureToPtr(texture), center.Item1, center.Item2, this.Get());
         }
 
         public IntPtr Get() { // For DllImport
@@ -60,7 +63,7 @@ namespace Cs {
             return ret;
         }
         public Camera(nint cameraPtr) { // For DllExport
-            int offset = 0
+            int offset = 0;
             var int32_size = sizeof(int);
             var IntPtr_size = IntPtr.Size;
 
@@ -73,11 +76,11 @@ namespace Cs {
             buffer = new List<List<Terminal.Symbol>>();
 
             for (int i = 0; i < height; i++) {
-                buffer.Add(new List<Terminal.Symbol>);
+                buffer.Add(new List<Terminal.Symbol>());
                 int width = Marshal.ReadInt32(cameraPtr, offset);
                 offset += int32_size;
                 for (int j = 0; j < width; j++) {
-                    buffer.Add(new Terminal.Symbol(Marshal.ReadIntPtr(cameraPtr, offset)));
+                    buffer[i].Add(new Terminal.Symbol(Marshal.ReadIntPtr(cameraPtr, offset)));
                     offset += IntPtr_size;
                 }
             }
