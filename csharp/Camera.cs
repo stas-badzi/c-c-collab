@@ -117,35 +117,16 @@ namespace Cs {
                 }
             }
 
-            for (int i = center.Item1 + (int)Math.Floor(height/2f); i < height; i++) {
-                int placeholder1 = 0;
-                if (i > 0) {
-                    placeholder1 = Math.Abs(i);
-                    i = 0;
-                }
-                for (int j = center.Item2 + (int)Math.Floor(width/2f); j < width; j++) {
-                    int placeholder2 = 0
-                    if (j > 0) {
-                        placeholder2 = Math.Abs(j);
-                        j = 0;
-                    }
+            int startX = Math.Max(0, center.Item1 - (int)Math.Floor(height / 2f));
+            int startY = Math.Max(0, center.Item2 - (int)Math.Floor(width / 2f));
+            int endX = Math.Min(this.buffer.Count, startX + texture.Count);
+            int endY = Math.Min(this.buffer[0].Count, startY + texture[0].Count);
 
-                    this.buffer[i][j] = texture[i + placeholder1][j + placeholder2];
+            for (int i = startX, ti = 0; i < endX; i++, ti++) {
+                for (int j = startY, tj = 0; j < endY; j++, tj++) {
+                    this.buffer[i][j] = texture[ti][tj];
                 }
             }
-            /*
-            i = middleY + floor(textureYSize / 2) or 0
-            if i > 0:
-                placeholder1 = abs(i)
-                i = 0
-                
-            j = middleX + floor(textureXSize / 2) or 0
-            if j > 0:
-                placeholder2 = abs(j)
-                j = 0
-
-            buffer[i][j] = texture[i + placeholder1][j + placeholder2]
-            */
         }
     }
 }
