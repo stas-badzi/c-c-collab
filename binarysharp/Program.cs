@@ -25,6 +25,9 @@ namespace BinarySharp {
                 Terminal.HandleMouseAndFocus();
                 var mouse = Terminal.GetMouseStatus();
 
+                var Camera = new Camera(20, 20, new Terminal.Symbol('C',14,14));
+                
+                
                 Terminal.FillScreen(screen);
 
                 if (Terminal.IsFocused()) Terminal.HandleKeyboard();
@@ -41,14 +44,14 @@ namespace BinarySharp {
                         sym = new Terminal.Symbol('▒',16,16);
                         break;
                     case Key.Enum.s:
-                        SoundSystem.PlaySound(GetSoundPath("shoot", "mp3"), false);
+                        SoundSystem.PlaySound(GetSoundPath("shoot.mp3"), false);
                         break;
                 }
             }
             return 0;
         }
-    private static string GetSoundPath(string name, string suffix = "wav") {
-        return Path.Combine([AppContext.BaseDirectory,"..","sounds",$"{name}.{suffix}"]);
+    private static string GetSoundPath(string filename) {
+        return Path.Combine([AppContext.BaseDirectory,"..","sounds",filename]);
     }
     }
 }

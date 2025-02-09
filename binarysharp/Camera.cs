@@ -2,12 +2,12 @@ using System;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using Microsoft.VisualBasic.FileIO;
+using Utility;
 using Cs;
 using CsImp;
 using Cpp;
 using Texture = System.Collections.Generic.List<System.Collections.Generic.List<Cpp.Terminal.Symbol>>;
 using Terminal = Cpp.Terminal;
-using TypeConvert = Utility.TypeConvert;
 
 namespace Cs {
     public class Camera {
@@ -90,7 +90,7 @@ namespace Cs {
             this.buffer = buffer;
             this.viewportCenter = viewportCenter;
 
-            Marshal.FreeHGlobal(cameraPtr);
+            Exec.FreeMemory(cameraPtr);
         }
     }
 }
