@@ -43,6 +43,12 @@
     #define KEYBOARD_MAX NR_KEYS
 #else
     #define KEYBOARD_MAX 256
+#ifdef __APPLE__
+
+#else
+    #include <apple/key.hpp>
+    #include <apple/args.h>
+#endif
 #endif
 #endif
 

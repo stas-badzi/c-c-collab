@@ -704,9 +704,9 @@ namespace Utility {
             CONSOLE62 = ((((ushort)KT_CONS)<<8)|61), /* Console_62 */
             CONSOLE63 = ((((ushort)KT_CONS)<<8)|62), /* Console_63 */
 
-        #elif _APPLE_
-            ...
-        #elif __BSD__
+        #elif __APPLE__
+            
+        #elif __FreeBSD__
             ...
         #else
             ...

@@ -462,7 +462,7 @@ else
 	@rm -f cplusplus/obj/*
 endif
 
-resources: source/getfd.h source/setkbdmode.c source/getfd.c source/globals.c assets/a.tux
+resources: source/getfd.h source/setkbdmode.c source/getfd.c source/getkeystate.h source/getkeystate.m source/globals.c assets/a.tux
 
 	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(staticgen)assets/globals.$(static) objects/globals.o
@@ -480,6 +480,12 @@ else
 	@mkdir -p binaryplus/bin/../share/factoryrush/bin
 	@cp assets/setkbdmode.$(binary) binaryplus/share/factoryrush/bin
 endif
+
+endif
+
+ifeq ($(shell uname -s),Darwin)
+	$(c-compiler) -c source/getkeystate.m -framework CoreGraphics -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
+	ar rcs assets/getkeystate.$(static) objects/getkeystate.o
 endif
 
 ifeq ($(shell echo "check quotes"),"check quotes")

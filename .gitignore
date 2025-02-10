@@ -47,6 +47,7 @@
 *.sln
 *.xml
 *.DS_Store
+*.dSYM/*
 
 
 #generated code
