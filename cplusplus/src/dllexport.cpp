@@ -160,24 +160,52 @@ using namespace uniconv;
     }
 
     libexport unichar** Console_GetArgV(void) {
-        int __argc = cpp::Console::GetArgC();
-        utfcstr* __argv = cpp::Console::GetArgV();
-        unichar** out = (unichar**)__dllalloc(sizeof(unichar*)*__argc);
-        for (int i = 0; i < __argc; i++) {
+        int _argc = cpp::Console::GetArgC();
+        utfcstr* _argv = cpp::Console::GetArgV();
+        unichar** out = (unichar**)__dllalloc(sizeof(unichar*)*_argc);
+        for (int i = 0; i < _argc; i++) {
             /*
-            unichar* loc = (unichar*)__dllalloc(sizeof(unichar) * (strlen(__argv[i]) + 1));
+            unichar* loc = (unichar*)__dllalloc(sizeof(unichar) * (strlen(_argv[i]) + 1));
             size_t offset = 0;
             int num = 0;
-            for (size_t j = 0; j < strlen(__argv[i]); j += offset) {
-                loc[num] = Utf8ToUnicode(ReadUtfChar(__argv[i], j, &offset));
+            for (size_t j = 0; j < strlen(_argv[i]); j += offset) {
+                loc[num] = Utf8ToUnicode(ReadUtfChar(_argv[i], j, &offset));
                 ++num;
             }
             loc[num] = 0;
             loc = (unichar*)realloc(loc,sizeof(unichar) * ++num);
             */
-            out[i] = Utf8StringToUnicode(__argv[i]);;
+            out[i] = Utf8StringToUnicode(_argv[i]);;
         }
         return out;
+    }
+
+    libexport int Console_PopupWindow(int type, int argc, uniconv::unichar* argv[]) {
+        uniconv::utfcstr* args = (uniconv::utfcstr*)System::AllocateMemory(sizeof(uniconv::utfcstr)*argc);
+        for (int i = 0; i < argc; i++) {
+            uniconv::utfstr arg = UnicodeToUtf8String(argv[i]).c_str();
+            args[i] = (uniconv::utfcstr)System::AllocateMemory(sizeof(wchar_t)*arg.size());
+        #ifdef _WIN32
+            wchar_t* loc = (wchar_t*)args[i];
+        #else
+            char* loc = (char*)args[i];
+        #endif
+            for (size_t j = 0; j < arg.size(); j++) loc[j] = arg[j];
+        }
+        System::FreeMemory(argv);
+        int ret = Console::PopupWindow(type, argc, args);
+        System::FreeMemory(args);
+        return ret;
+    }
+
+    int (*Console_sub)(int);
+
+    int sub (int arg1) {
+        return Console_sub(arg1);
+    }
+
+    libexport void Console_sub$define(int (*arg1)(int)) {
+        Console_sub = arg1;
     }
 
     // Symbol
@@ -291,8 +319,12 @@ using namespace uniconv;
 // ~Console
 
 // System
-    libexport uniconv::unichar* System_GetRootPath(void) {
-        return uniconv::Utf8StringToUnicode(cpp::System::GetRootPath().c_str());
+    libexport uniconv::unichar* System_GetRootDir(void) {
+        return uniconv::Utf8StringToUnicode(cpp::System::GetRootDir().c_str());
+    }
+
+    libexport uniconv::unichar* System_GetSelfPath(void) {
+        return uniconv::Utf8StringToUnicode(cpp::System::GetSelfPath().c_str());
     }
     
     libexport uniconv::unichar* System_ToNativePath(uniconv::unichar* arg1) {

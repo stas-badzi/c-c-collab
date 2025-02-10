@@ -6,11 +6,15 @@ using namespace std;
 using namespace uniconv;
 
 wstring System::ToNativePath(wstring path) {
-    return NativeToWString(UnicodeToUtf8String(cppimp::System_ToNativePath(Utf8StringToUnicode(WStringToNative(path).c_str()))));
+    return NativeToWString(UnicodeToUtf8String(cppimp::System_ToNativePath(Utf8StringToUnicode(WStringToNative(path).c_str()))).c_str());
 }
 
-wstring System::GetRootPath(void) {
-    return NativeToWString(UnicodeToUtf8String(cppimp::System_GetRootPath()));
+wstring System::GetRootDir(void) {
+    return NativeToWString(UnicodeToUtf8String(cppimp::System_GetRootDir()).c_str());
+}
+
+wstring System::GetSelfPath(void) {
+    return NativeToWString(UnicodeToUtf8String(cppimp::System_GetSelfPath()).c_str());
 }
 
 nint System::AllocateMemory(size_t bytes) {

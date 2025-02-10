@@ -7,7 +7,6 @@
 #include <math.h>
 
 #include "utils/dllalloc.h"
-#include "unicode.hpp"
 
 #ifdef _WIN32
 
@@ -16,6 +15,7 @@
     #include <codecvt>
     #include <bitset>
     #include <exception>
+    #include "cuchar.hpp"
 #endif
 
 namespace uniconv {
@@ -39,6 +39,8 @@ namespace uniconv {
     }
 
 #ifdef _WIN32
+    #define to_nstring(val) to_wstring(val)
+    #define N(val) L##val
     typedef wchar_t utfchar;
     typedef std::wstring utfstr;
     typedef const wchar_t* utfcstr;
@@ -48,6 +50,8 @@ namespace uniconv {
         return out;
     }
 #else
+    #define to_nstring(val) to_string(val)
+    #define N(val) u8##val
     typedef std::string utfchar;
     typedef std::string utfstr;
     typedef const char* utfcstr;
@@ -59,12 +63,11 @@ inline unichar Utf8ToUnicode(utfchar utf8_code) {
 #ifdef _WIN32
     return utf8_code;
 #else
-    std::u8string u8code;
-    for (auto &&c : utf8_code) u8code.push_back(GetUnsignedChar(c));
-    char16_t* ret = unicode::UnicodeToUTF16(unicode::UTF8ToUnicode(u8code.c_str()));
-    unichar utf16 = ret[0];
-    free(ret);
-    return utf16;
+    std::mbstate_t state{}; 
+    char32_t utf32;
+    const char* utf8 = utf8_code.c_str();
+    auto siz = std::mbrtoc32(&utf32,utf8,strlen(utf8),&state);
+    return utf32;
 #endif
 }
 
@@ -74,23 +77,21 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
 #ifdef _WIN32
     return unicode;
 #else
-    char16_t param[2] = u"X";
-    param[0] = unicode;
-    unicode_t func = unicode::UTF16ToUnicode(param);
-    auto ret = unicode::UnicodeToUTF8(func);
-    std::u8string u8code = ret;
-    free(ret);
-    std::string utf8_code;
-    for (auto &&c : u8code) utf8_code.push_back(GetDefaultChar(c));
-    
-    return utf8_code;
+    std::mbstate_t state{};
+    char32_t utf32 = unicode;
+    char* temp = new char[4];
+    std::size_t len = std::c32rtomb(temp, utf32, &state);
+    delete[] temp;
+    std::string mbstr(len,' ');
+    std::c32rtomb(&mbstr[0], utf32, &state);
+    return mbstr;
 #endif
 }
 
 #ifdef _WIN32
     inline utfstr WStringToNative(std::wstring wstr) { return wstr; }
     inline utfchar WCharToNative(wchar_t wchar) { return wchar; }
-    inline std::wstring NativeToWString(utfstr utfstr) { return utfstr; }
+    inline std::wstring NativeToWString(utfcstr str) { return utfstr(str); }
     inline wchar_t NativeToWChar(utfchar utfchar) { return utfchar; }
     // don't use this function anymore
     inline utfchar ReadUtfChar(utfcstr str, size_t offset = 0, size_t* bytes_read = nullptr) {
@@ -99,17 +100,17 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
     }
     
     inline unichar* Utf8StringToUnicode (utfcstr utf8s) {
-        unichar* out = (unichar*)__dllalloc(sizeof(unichar) * (strlen(utf8s) + 1));
+        unichar* out = (unichar*)__dllalloc(sizeof(unichar) * (wcslen(utf8s) + 1));
         size_t offset;
-        for (size_t i = 0; i < strlen(utf8s); i++) out[i] = utfs[i];
-        out[strlen(utf8s)] = 0;
+        for (size_t i = 0; i < wcslen(utf8s); i++) out[i] = utf8s[i];
+        out[wcslen(utf8s)] = 0;
         return out;
     }
 
     inline utfstr UnicodeToUtf8String (unichar* unicodes) {
         utfstr out;
         for (int i = 0; unicodes[i] != 0; ++i) {
-            out.append(unicodes[i]);
+            out.push_back(unicodes[i]);
         }
         __dllfree(unicodes);
         return out;
@@ -175,57 +176,66 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
         return out;
     }
 
-    inline utfstr WStringToNative(std::wstring wstr) {
-        utfstr out = "";
-        for (unsigned i = 0; i < wstr.size(); ++i) {
-            out.append(UnicodeToUtf8(GetUnsignedWChar(wstr[i])));
-        }
-        return out;
-    }
-
-    inline utfchar WCharToNative(wchar_t wchar) {
-        return UnicodeToUtf8(GetUnsignedWChar(wchar));
-    }
-
-    inline std::wstring NativeToWString(utfstr utfstr) {
-        std::wstring out = L"";
-        size_t locread = 0;
-        for (size_t read = 0; read < utfstr.size(); read += locread) {
-            out.push_back(GetDefaultWChar(Utf8ToUnicode(ReadUtfChar(utfstr.c_str(), read, &locread))));
-        }
-        return out;
-    }
-
-    inline wchar_t NativeToWChar(utfchar utfchar) {
-        return GetDefaultWChar(Utf8ToUnicode(utfchar));
-    }
-
     inline unichar* Utf8StringToUnicode (utfcstr utf8s) {
-        std::u8string param;
-        for (size_t i = 0; i < strlen(utf8s); ++i) {
-            param.push_back(GetUnsignedChar(utf8s[i]));
+        std::mbstate_t state{};
+        size_t length = strlen(utf8s);
+        int offset = 0;
+        std::u32string str;
+        const char* ptr = utf8s, *end = ptr + length + 1;
+        while (ptr < end) {
+            char32_t utf32;
+            auto siz = std::mbrtoc32(&utf32,ptr,end-ptr,&state);
+            if (siz <= 0) break;
+            str.push_back(utf32);
+            ptr += siz;
         }
-        auto func = unicode::UTF8StringToUnicode(param);
-        auto ret = unicode::UnicodeToUTF16String(func);
-        free(func);
         
-        unichar* out = (unichar*)__dllalloc(sizeof(unichar) * (ret.size() + 1));
-        size_t offset;
-        for (size_t i = 0; i < strlen(utf8s); i++) out[i] = ret[i];
-        out[ret.size()] = 0;
+        unichar* out = (unichar*)__dllalloc(sizeof(unichar) * (str.size() + 1));
+        for (size_t i = 0; i < str.size(); i++) out[i] = str[i];
+        out[str.size()] = 0;
         return out;
     }
 
     inline utfstr UnicodeToUtf8String (unichar* unicodes) {
-        std::u16string param;
-        for (int i = 0; unicodes[i] != 0; ++i) param.push_back(unicodes[i]);
+        std::mbstate_t state{};
+        
+        std::string out;
+        for (int i = 0; unicodes[i] != 0; ++i) {
+            char32_t utf32 = unicodes[i];
+            char* temp = new char[4];
+            std::size_t len = std::c32rtomb(temp, utf32, &state);
+            delete[] temp;
+            std::string mbstr(len,' ');
+            std::c32rtomb(&mbstr[0], utf32, &state);
+            out.append(mbstr);
+        }
         __dllfree(unicodes);
-        unicode_t* func = unicode::UTF16StringToUnicode(param);
-        std::u8string ret = unicode::UnicodeToUTF8String(func);
-        free(func);
-        utfstr out;
-        for (auto &&c : ret) out.push_back(GetDefaultChar(c));
         return out;
+    }
+
+    inline utfstr WStringToNative(std::wstring wstr) {
+        unichar* uninput = (unichar*)__dllalloc(sizeof(unichar) * (wstr.size() + 1) );
+        for (size_t i = 0; i < wstr.size(); ++i)
+            uninput[i] = wstr[i];
+        uninput[wstr.size()] = 0;
+        return UnicodeToUtf8String(uninput);
+    }
+
+    inline utfchar WCharToNative(wchar_t wchar) {
+        return UnicodeToUtf8(wchar);
+    }
+
+    inline std::wstring NativeToWString(utfcstr utf8str) {
+        auto ret =  Utf8StringToUnicode(utf8str);
+        std::wstring out = L"";
+        for (size_t i = 0; ret[i] != 0; i++)
+            out.push_back(ret[i]);
+        __dllfree(ret);
+        return out;
+    }
+
+    inline wchar_t NativeToWChar(utfchar utfchar) {
+        return Utf8ToUnicode(utfchar);
     }
 
 #endif

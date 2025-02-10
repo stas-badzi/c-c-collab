@@ -231,7 +231,7 @@ namespace Cpp
             }
 
             public void ReverseColors() {
-                Cs.Console.Symbol.ReverseColors(new Symbol(symbol, true));
+                Cs.Console.Symbol.ReverseColors(this);
             }
 
             public nint Get() {

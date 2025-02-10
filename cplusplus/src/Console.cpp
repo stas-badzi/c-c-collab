@@ -1,4 +1,15 @@
 #include "Console.hpp"
+#include "dllimport.hpp"
+
+namespace cpp {
+#if defined(_WIN32) || defined(__CYGWIN__)
+    __declspec(dllexport) std::wistream& gin = std::wcin;
+    __declspec(dllexport) std::wostream& gout = *((std::wostream*)&Console::out);
+#else
+    __attribute__((visibility("default"))) std::istream& gin = *((std::istream*)&Console::in);
+    __attribute__((visibility("default"))) std::ostream& gout = *((std::ostream*)&Console::out);
+#endif
+}
 
 using namespace cpp;
 using namespace uniconv;
@@ -6,9 +17,11 @@ using namespace std;
 using namespace std::chrono;
 
 #ifdef _WIN32
-#include <iostream>
+    static bool mintty = false;
+    static bool wt = false;
+    static bool good = false;
 
-    inline uint8_t Console::GenerateAtrVal(uint8_t i1, uint8_t i2) {
+    inline constexpr uint8_t Console::GenerateAtrVal(uint8_t i1, uint8_t i2) {
         uint8_t val = 0x0000;
         if (i1 == 0) { val |= 0x0000; }
         if (i1 == 1) { val |= FOREGROUND_RED; }
@@ -48,7 +61,7 @@ using namespace std::chrono;
     }
 
     // first foreground second background
-    inline pair<uint8_t,uint8_t> AtrValToColors(uint8_t val) {
+    inline constexpr pair<uint8_t,uint8_t> AtrValToColors(uint8_t val) {
         pair<uint8_t,uint8_t> out;
 
         out.first = 0x0000;
@@ -88,9 +101,93 @@ using namespace std::chrono;
         return out;
     }
 
-    inline COLORREF GetPixel(int x, int y, int width, int height, RGBQUAD* pixels) {
+    inline constexpr COLORREF GetPixel(int x, int y, int width, int height, RGBQUAD* pixels) {
         return RGB(pixels[(height-y-1)*width + x].rgbRed, pixels[(height-y-1)*width + x].rgbGreen, pixels[(height-y-1)*width + x].rgbBlue);
     }
+
+    vector<DWORD> GetChildProcessIds(DWORD parentProcId) {
+        vector<DWORD> vec; int i = 0;
+        HANDLE hp = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        PROCESSENTRY32 pe = PROCESSENTRY32();
+        pe.dwSize = sizeof(PROCESSENTRY32);
+        if (Process32First(hp, &pe)) {
+            do {
+            if (pe.th32ParentProcessID == parentProcId) {
+                vec.push_back(pe.th32ProcessID); i++;
+            }
+            } while (Process32Next(hp, &pe));
+        }
+        CloseHandle(hp);
+        return vec;
+    }
+
+DWORD GetParentProcessId(DWORD childProcId) {
+    HANDLE hp = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    PROCESSENTRY32 pe = PROCESSENTRY32();
+    pe.dwSize = sizeof(PROCESSENTRY32);
+    if (Process32First(hp, &pe)) {
+        do {
+            if (pe.th32ProcessID == childProcId) {
+                return pe.th32ParentProcessID;
+            }
+        } while (Process32Next(hp, &pe));
+    }
+    CloseHandle(hp);
+    return 0;
+}
+
+std::wstring GetProcessExecutableName(DWORD processId) {
+    //Console::out << "Process: " << processId << endl << '\t';
+    HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
+    if (processHandle) {
+        wchar_t exePath[MAX_PATH];
+        if (GetModuleFileNameEx(processHandle, NULL, exePath, MAX_PATH)) {
+            //wcerr << L"Found name: " << exePath << endl << L'\t';
+            CloseHandle(processHandle);
+            HMODULE moduleHandle = LoadLibrary(exePath);
+            int err = GetLastError();
+            if (err == ERROR_ACCESS_DENIED) return exePath;
+            if (!moduleHandle) //cerr << "Failed to load module: " << err << endl;
+            if (!moduleHandle) return std::wstring();
+            //cerr << "Handle: " << moduleHandle << endl << '\t';
+            PIMAGE_NT_HEADERS nth = ImageNtHeader((PVOID)moduleHandle);
+            if (!nth) return std::wstring();
+            //cerr << "Image NT Header: " << nth << endl << '\t';
+            if (nth->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || nth->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_OS2_CUI || nth->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_POSIX_CUI) {  
+                //cerr << "Subsystem: Console" << endl << '\t';
+                // Check child processes
+                auto childProcessIds = GetChildProcessIds(processId);
+                for (auto&& childProcessId : childProcessIds) {
+                    std::wstring childExeName = GetProcessExecutableName(childProcessId);
+                    if (!childExeName.empty())
+                        return childExeName;
+                // Check parent process
+                DWORD parentProcessId = GetParentProcessId(processId);
+                std::wstring parentExeName = GetProcessExecutableName(parentProcessId);
+                if (!parentExeName.empty())
+                    return parentExeName;
+                }
+                return std::wstring(exePath);
+            }
+            //cerr << "Subsystem: GUI" << endl << '\t';
+            return std::wstring(exePath);
+        }
+        CloseHandle(processHandle);
+    }
+    return std::wstring();
+}
+
+std::wstring GetWindowExecutableName(HWND hwnd) {
+    //cerr << "Window: " << hwnd << endl;
+    DWORD processId;
+    GetWindowThreadProcessId(hwnd, &processId);
+    return GetProcessExecutableName(processId);
+}
+
+uniconv::utfstr Console::GetTerminalExecutableName() {
+    return GetWindowExecutableName(Console::window);
+}
+
 /*
     vector<vector<COLORREF>> Console::SaveScreen(void) {
 
@@ -134,8 +231,8 @@ using namespace std::chrono;
 
         return colors;
     }
-*/
-/*
+
+
     pair<pair<uint16_t,uint16_t>,pair<uint16_t,uint16_t>> Console::GetOffsetSymSize(int color1, int color2, int color3) {
         
     //~setup   
@@ -430,15 +527,32 @@ using namespace std::chrono;
         return pair<pair<uint16_t,uint16_t>,pair<uint16_t,uint16_t>>(xyoffset,symsize);
     }
 */
-    HANDLE Console::screen = HANDLE();
-    HANDLE Console::fd = HANDLE();
-    HWND Console::window = HWND();
-    HDC Console::device = HDC();
-    DWORD Console::old_console = DWORD();
-    uint8_t Console::default_fcol = uint8_t();
-    uint8_t Console::default_bcol = uint8_t();
-    utfcstr* Console::argv = (utfcstr*)malloc(0);
-    //pair<uint16_t,uint16_t> Console::xyoffset = pair<uint16_t,uint16_t>();
+    struct NameHwnd {
+        wchar_t* name;
+        HWND hwnd;
+    };
+
+    BOOL CALLBACK FindWindowBegin(_In_ HWND   hwnd, _In_ LPARAM lParam) {
+        NameHwnd* namehwnd = (NameHwnd*)lParam;
+        wchar_t* pszFindWindow = namehwnd->name;
+        wchar_t pszWindowTitle[1024];
+        GetWindowText(hwnd, pszWindowTitle, 1024);
+        bool right = true;
+        if (wcslen(pszWindowTitle) < wcslen(pszFindWindow)) return TRUE;
+        for (size_t i = 0; i < wcslen(pszFindWindow); ++i) {
+            if (pszWindowTitle[i] != pszFindWindow[i]) {
+                right = false;
+                break;
+            }
+        }
+        //wcout << pszWindowTitle << L' ' << pszFindWindow << ':' << right << L'\n';
+        if (!right) return TRUE;
+        if (wcslen(pszWindowTitle) == wcslen(pszFindWindow) || !isdigit(pszWindowTitle[wcslen(pszWindowTitle)])) {
+            namehwnd->hwnd = hwnd;
+            return FALSE;
+        }
+        return TRUE;
+    }
 
     inline HWND GetHwnd(void) {
         HWND hwndFound;
@@ -447,11 +561,132 @@ using namespace std::chrono;
         SetConsoleTitle(pszNewWindowTitle);
         SysSleep(40e3);
         hwndFound=FindWindow(NULL, pszNewWindowTitle);
-        return(hwndFound);
+        if (!(good = hwndFound)) {
+            if (mintty) {
+                NameHwnd namehwnd = {pszNewWindowTitle, 0};
+                BOOL ret = EnumWindows(FindWindowBegin, (LPARAM)&namehwnd);
+                Console::out << L"EnumWindows: " << ret << endl;
+                if (!ret) {
+                    good = true;
+                    hwndFound = namehwnd.hwnd;
+                    Console::out << L"Window: " << hwndFound << " good: " << good << endl;
+                    return hwndFound;
+                }
+            }
+            hwndFound = GetForegroundWindow();
+            wchar_t pszWindowTitle[1024];
+            int siz = GetWindowText(hwndFound, pszWindowTitle, 1024);
+            pszWindowTitle[siz] = L'\0';
+            if (wcscmp(pszWindowTitle, pszNewWindowTitle) == 0) good = true;
+        }
+        Console::out << L"Window: " << hwndFound << " good: " << good << endl;
+        return hwndFound;
     }
 
     void Console::Init(void) {
         if (!initialised) {
+            
+            int sub_process = 0;
+            auto winargv = (const wchar_t**)CommandLineToArgvW(GetCommandLine(), &Console::argc);
+            Console::argv = (const wchar_t**)malloc(sizeof(wchar_t*) * Console::argc);
+            int j = 0;
+            for (int i = 0; i < Console::argc; i++) {
+                auto&& arg = winargv[i+j];
+                if (wcslen(arg) > 1 && arg[0] == L'\033') {
+                    wstring sdir; const wchar_t* narg;
+                    switch (arg[1]) {
+                        case L'&':
+                            // launched as popup
+                            Console::sub_proc = true;
+                            if (wcslen(arg) < 3) exit(0x31);
+                            sub_process = 0;
+                            narg = arg + 2;
+                            while (narg[0] != L'~') {
+                                if (narg[0] < L'0' || narg[0] > L'9') exit(0x32);
+                                sub_process *= 10;
+                                sub_process += narg[0] - L'0';
+                                ++narg;
+                            }
+                            for (size_t i = 1; narg[i] != L'~'; i++){
+                                if (narg[i] == L'\0') exit(0x33);
+                                sdir.push_back(narg[i]);
+                            }
+                            Console::subdir = new const wchar_t[wcslen(sdir.c_str())+1]{0};
+                            wcscpy((wchar_t*)Console::subdir, sdir.c_str());
+                            ++j; --i; --Console::argc;
+                            break;
+                        case L'\\':
+                            exit(0xE4);
+                        default:
+                            Console::argv[i] = arg;
+                            break;
+                    }
+                }
+            }
+
+            auto _temp = realloc(Console::argv, sizeof(wchar_t*) * Console::argc);
+            if (_temp) Console::argv = (const wchar_t**)_temp;
+            else exit(0x73);
+
+            wstring appdata = _wgetenv(L"APPDATA");
+            appdata.append(L"\\.factoryrush\\");
+
+            wstring tmp = filesystem::temp_directory_path().native();
+            tmp.append(L"\\.factoryrush\\");
+
+            LPSECURITY_ATTRIBUTES sec_atrs = new SECURITY_ATTRIBUTES();
+            sec_atrs->nLength = sizeof(sec_atrs);
+            sec_atrs->lpSecurityDescriptor = nullptr;
+            sec_atrs->bInheritHandle = false;
+
+            Console::pid = _getpid();
+
+            if (Console::sub_proc) goto subdirset;
+            
+            if (!PathIsDirectory(tmp.c_str()))
+                CreateDirectory(tmp.c_str(), sec_atrs);
+
+            if (!PathIsDirectory(appdata.c_str()))
+                CreateDirectory(appdata.c_str(), sec_atrs);
+
+            if (!PathIsDirectory((appdata+L"logs").c_str()))
+                CreateDirectory((appdata+L"logs").c_str(), sec_atrs);
+
+            Console::subdir = new const wchar_t[to_wstring(Console::pid).size() + 2]{0};
+            wcscpy((wchar_t*)Console::subdir, to_wstring(Console::pid).c_str());
+            ((wchar_t*)Console::subdir)[to_wstring(Console::pid).size()] = L'/';
+
+            if (!PathIsDirectory((tmp+subdir).c_str()))
+                CreateDirectory((tmp+subdir).c_str(), sec_atrs);
+            
+        subdirset:
+            delete sec_atrs;
+
+            auto t = std::time(nullptr);
+            auto tm = *std::localtime(&t);
+            wstringstream ss; ss << L"logs\\";
+            if (Console::sub_proc) ss << sub_process << L'\\';
+            ss << std::put_time(&tm, L"%Y-%m-%d_%H\'%M\'%S");
+            unsigned int filenum = 0;
+        logfile:
+            filesystem::path out_file = filesystem::path(appdata + ss.str() + L".log");
+            HANDLE logfl = CreateFile(out_file.c_str(), GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+            if (logfl == (void*)-1) {
+                auto err = GetLastError();
+                if (err == ERROR_ALREADY_EXISTS) {
+                    ss << L"-" << ++filenum;
+                    goto logfile;
+                }
+                wcerr << L"Couldn't create log file: " << out_file.native() << L", with error: " << err << '\n'; 
+                exit(0xC2);
+            }
+            CloseHandle(logfl);
+            Console::out.open(out_file,ios::out);
+            if (!Console::out.is_open()) {
+                wcerr << L"Couldn't open log file: " << out_file.native() << L", with error: " << GetLastError() << '\n'; 
+                exit(0xC1);
+            }
+
             Console::screen = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
             SetConsoleActiveScreenBuffer(Console::screen);
             
@@ -459,8 +694,11 @@ using namespace std::chrono;
             GetConsoleMode(Console::fd, &Console::old_console);
             SetConsoleMode(Console::fd, ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT | ENABLE_WINDOW_INPUT);
 
+            auto term_prog = _wgetenv(L"TERM_PROGRAM");
+            mintty = term_prog && wstring(term_prog) == L"mintty";
+            wt = _wgetenv(L"WT_SESSION") != NULL;
             Console::window = GetHwnd();
-            Console::device = GetDC(Console::window);
+            Console::device = GetDC(NULL);
             //Console::xyoffset = Console::GetXYCharOffset();
 
             CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -472,6 +710,8 @@ using namespace std::chrono;
             Console::mouse_status.x = 0;
             Console::mouse_status.y = 0;
             
+            initialised = true;
+
             atexit(Console::Fin);
             at_quick_exit(Console::Fin);
 
@@ -482,14 +722,20 @@ using namespace std::chrono;
             signal(SIGSEGV, quick_exit);
             signal(SIGTERM, quick_exit);
             signal(SIGBREAK, quick_exit);
-            
-            initialised = true;
+
+            if (sub_process) {
+                Console::ret = sub(sub_process);
+                Console::Fin();
+                exit(Console::ret);
+            }
         }
     }
 
     void Console::Fin(void) {
         if (initialised) {
+            delete[] Console::subdir;
             SetConsoleMode(Console::fd, old_console);
+            ReleaseDC(0, device);
             SetConsoleActiveScreenBuffer((HANDLE)nullptr);
 
             initialised = false;
@@ -509,13 +755,15 @@ using namespace std::chrono;
     }
 
     void Console::FillScreen(vector<vector<Symbol> > symbols) {
+        try {
         Symbol empty_sym = Symbol(L' ', 16, 16);
-        const size_t win_width = GetWindowWidth(), win_height = GetWindowHeight(), height = symbols.size(), width = height > 0 ? symbols[0].size() : 0;
+        const size_t win_width = GetWindowWidth(), win_height = GetWindowHeight(), height = symbols.size();
 
         wchar_t* screen = new wchar_t[win_height*win_width];
         WORD* attributes = new WORD[win_height*win_width];
 
 		for (size_t i = 0; i < win_height; i++) {
+            const size_t width = symbols[i].size();
 			for (size_t j = 0; j < win_width; j++) {
                 if (i >= height || j >= width) {
                     screen[ i*win_width + j ] =  empty_sym.character;
@@ -535,9 +783,12 @@ using namespace std::chrono;
         
 		delete[] screen;
 		delete[] attributes;
+        } catch (exception e) {
+            cout << e.what() << endl;
+        }
     }
 
-    void Console::HandleKeyboard() {
+    void Console::HandleKeyboard(void) {
 
         // toggles
         Console::keys_toggled.ScrollLock = GetKeyState(VK_SCROLL) & 1;
@@ -557,21 +808,27 @@ using namespace std::chrono;
     }
 
     void Console::HandleMouseAndFocus(void) {
-        Console::focused = (Console::window == GetForegroundWindow());
+        if (mintty && !good) {
+            auto file = Console::GetTerminalExecutableName();
+            if (file.find(L"mintty") == std::wstring::npos) {
+                Console::window = GetForegroundWindow();
+            }
+            file = Console::GetTerminalExecutableName();
+            good = focused = file.find(L"mintty") != std::wstring::npos;
+        } else
+            Console::focused = (Console::window == GetForegroundWindow());
 
         INPUT_RECORD record;
-        DWORD evnts,numRead;
+        DWORD evnts=0,numRead;
         
-        if(!GetNumberOfConsoleInputEvents(Console::fd, &evnts)) {
-            cerr << "GetNumberOfConsoleInputEvents";
-            exit(GetLastError());
-        }
+        GetNumberOfConsoleInputEvents(Console::fd, &evnts);
         if (!evnts) return;
         for (unsigned i = 0; i < evnts; ++i) {
         
             if(!ReadConsoleInput(Console::fd, &record, 1, &numRead)) {
-                cerr << "ReadConsoleInput";
-                exit(GetLastError());
+                Console::out << "ReadConsoleInput";
+                int err = GetLastError();
+                exit(0x82);
             }
             bitset<5> event(record.EventType);
             if (event[0]) {
@@ -597,12 +854,15 @@ using namespace std::chrono;
                 Console::mouse_status.primary = GetKeyState(VK_LBUTTON) & 0x8000;
                 Console::mouse_status.secondary = GetKeyState(VK_RBUTTON) & 0x8000;
                 Console::mouse_status.middle = GetKeyState(VK_MBUTTON) & 0x8000;
-                Console::mouse_status.scroll = { flags[3], flags[3] && HIWORD(mouse.dwButtonState) > 0 };
-                Console::mouse_buttons_down[3] = flags[3] && HIWORD(mouse.dwButtonState) > 0;
-                Console::mouse_buttons_down[4] = flags[3] && HIWORD(mouse.dwButtonState) > 0;
-                Console::this_mouse_combo = flags[2] ? 2 : 1;
-
-                uint8_t button
+                Console::mouse_status.scroll = { flags[2], flags[2] && (HIWORD(mouse.dwButtonState) > 0) };
+                Console::mouse_buttons_down[0] = mouse_status.primary;
+                Console::mouse_buttons_down[1] = mouse_status.middle;
+                Console::mouse_buttons_down[2] = mouse_status.secondary;
+                Console::mouse_buttons_down[3] = flags[2] && (HIWORD(mouse.dwButtonState) > 0);
+                Console::mouse_buttons_down[4] = flags[2] && !(HIWORD(mouse.dwButtonState) > 0);
+                Console::mouse_buttons_down[5] = GetKeyState(VK_XBUTTON1) & 0x8000;
+                Console::mouse_buttons_down[6] = GetKeyState(VK_XBUTTON2) & 0x8000;
+                Console::this_mouse_combo = (flags[1] ? this_mouse_combo : 0) + 1; 
             }
 
             if (event[2]) {
@@ -657,6 +917,24 @@ using namespace std::chrono;
         Sleep((int)(microseconds/1000));
     }
 
+    bool Console::IsKeyDown(Key::Enum key) {
+        return Console::key_states[static_cast<size_t>(key)];
+    }
+
+    Key::Enum cpp::Console::KeyTyped(void) {
+        return Key::Enum::NONE;
+    }
+
+    Key::Enum Console::KeyPressed(void) {
+        if (Console::key_hit < 0) return Key::Enum::NONE;
+        return static_cast<Key::Enum>(Console::key_hit);
+    }
+
+    Key::Enum Console::KeyReleased(void) {
+        if (Console::key_released < 0) return Key::Enum::NONE;
+        return static_cast<Key::Enum>(Console::key_released);
+    }
+
     uint8_t Console::Symbol::GetAttribute(void) {
         return GenerateAtrVal(this->foreground,this->background);
     }
@@ -667,18 +945,34 @@ using namespace std::chrono;
     }
 
     Console::Symbol::Symbol(uint8_t attribute) {
-    this->character = L' ';
-    this->SetAttribute(attribute);
-}
+        this->character = L' ';
+        this->SetAttribute(attribute);
+    }
+
+    HANDLE Console::screen = HANDLE();
+    HANDLE Console::fd = HANDLE();
+    HWND Console::window = HWND();
+    HDC Console::device = HDC();
+    DWORD Console::old_console = DWORD();
+    uint8_t Console::default_fcol = uint8_t();
+    uint8_t Console::default_bcol = uint8_t();
+    utfcstr* Console::argv = (utfcstr*)malloc(sizeof(utfcstr));
+    const wchar_t* Console::subdir = nullptr;
+    wistringstream Console::in = wistringstream(std::ios_base::ate|std::ios_base::in);
+    wofstream Console::out = wofstream();
+    //pair<uint16_t,uint16_t> Console::xyoffset = pair<uint16_t,uint16_t>();
+
 #else
 // Not linux (Probably Posix and Unix)
 
 
 #ifdef __linux__
 // linux
-    string GenerateEscapeSequence(uint8_t,uint8_t);
+    #include "System.hpp"
 
-    inline int parse_input(int show_keycodes, char * buf, int n) {
+    inline clang_constexpr string GenerateEscapeSequence(uint8_t,uint8_t);
+
+    inline constexpr int parse_input(int show_keycodes, const char * buf, int n) {
         int out = 0;
         //char buf[16];
         //int n = read(fd, buf, sizeof(buf));
@@ -695,29 +989,244 @@ using namespace std::chrono;
         return out;
     };
 
+    char Console::GetChar(void) {
+        if (Console::buf_it >= 0 && Console::buf[Console::buf_it]) { ++buf_it; return Console::buf[buf_it-1]; }
+        Console::buf[buf_it] = getc(stdin); if (buf_it < 127) Console::buf[++buf_it] = '\0'; else exit(0x1A);
+        return Console::buf[buf_it-1];
+    };
+
+    int getparent(int pid) {
+        int ppid;
+        char buf[BUFSIZ*2];
+        char procname[32];
+
+        FILE *fl = fopen(string("/proc/" + to_string(pid) + "/status").c_str(), "r");
+        size_t ret = fread(buf, sizeof(char), BUFSIZ*2-1, fl);
+        if (!ret) return 0;
+        buf[ret++] = '\0'; 
+        fclose(fl);
+        char *ppid_loc = strstr(buf, "\nPPid:");
+        if (ppid_loc) {
+            int ret = sscanf(ppid_loc, "\nPPid:%d", &ppid);
+            if (!ret || ret == EOF) return 0;
+            return ppid;
+        }
+        return 0;
+    }
+
+    inline string FindTerminalEmulator() {
+        string term;
+        return "to be implemented";
+    }
+
     void Console::Init(void) {
         if (!initialised) {
+            if (setuid(0) == -1) exit(0xf0);
+            
+            Console::emulator = !(getenv("DISPLAY") == nullptr);
+
+            char path[256];
+            readlink( "/proc/self/exe" , path, 256);
+            
+            if (Console::emulator) {
+                fwrite("\033[?1049h", sizeof(char), 8, stderr);
+            }
+
+            int sub_process = 0;
 
             FILE *cmdline = fopen("/proc/self/cmdline", "rb");
             char *arg = 0; size_t size = 0;
             int out = getdelim(&arg, &size, 0, cmdline);
             while(out != -1) {
-                Console::argv = (const char**)realloc(Console::argv,++Console::argc); Console::argv[Console::argc-1] = arg;
-                arg = 0; size = 0;
-                out = getdelim(&arg, &size, 0, cmdline);
+                if (strlen(arg) > 1 && arg[0] == '\033') {
+                    string sdir; char* narg;
+                    switch (arg[1]) {
+                    case '&':
+                        // launched as popup
+                        Console::sub_proc = true;
+                        if (strlen(arg) < 3) exit(0x31);
+                        sub_process = 0;
+                        narg = arg + 2;
+                        while (narg[0] != '~') {
+                            if (narg[0] < '0' || narg[0] > '9') exit(0x32);
+                            sub_process *= 10;
+                            sub_process += narg[0] - '0';
+                            ++narg;
+                        }
+                        for (size_t i = 1; narg[i] != '~'; i++){
+                            if (narg[i] == '\0') exit(0x33);
+                            sdir.push_back(narg[i]);
+                        }
+                        Console::subdir = new const char[strlen(sdir.c_str())+1]{0};
+                        strcpy((char*)Console::subdir, sdir.c_str());
+                        
+                        out = getdelim(&arg, &size, 0, cmdline);
+                        break;
+                    case '+':
+                        // launched for permissions
+                        parent = true;
+                        if (strlen(arg) < 6) exit(0x36);
+
+                        // root type
+                        narg = arg + 2;
+                        while (narg[0] != '~') {
+                            if (narg[0] < '0' || narg[0] > '9') exit(0x37);
+                            root_type *= 10;
+                            root_type += narg[0] - '0';
+                            ++narg;
+                        }
+
+                        // parent pid
+                        pid = 0;
+                        ++narg;
+                        while (narg[0] != '~') {
+                            if (narg[0] < '0' || narg[0] > '9') exit(0x37);
+                            pid *= 10;
+                            pid += narg[0] - '0';
+                            ++narg;
+                        }
+                        break;
+                    default:
+                        exit(0x3F);
+                    }
+                    out = getdelim(&arg, &size, 0, cmdline);
+                } else {
+                    Console::argv = (const char**)realloc(Console::argv,++Console::argc); Console::argv[Console::argc-1] = arg;
+                    arg = 0; size = 0;
+                    out = getdelim(&arg, &size, 0, cmdline);
+                }
             }
-            //if (numeric_limits<char>::is_signed) for (int i=0; i < Console::argc; ++i) for(int j=0; j < strlen(Console::argv[i]); ++j) ((char**)(Console::argv))[i][j] = (Console::argv)[i][j] + INT8_MIN;
             fclose(cmdline);
 
-            fd = getfd(0);
+            struct stat st;
+            //int parent_pid;
+            //int cnt;
+            Console::pid = parent ? pid : getpid();
+            if (Console::sub_proc) goto subdirset;
 
-            if (fd < 0) {
-                string command = "sudo";
-                for (int i = 0; i < Console::argc; i++) { command.push_back(' '); command.append(argv[i]); }
-                exit(system(command.c_str()));
+            if (stat("/tmp/.factoryrush/", &st) == -1)
+                mkdir("/tmp/.factoryrush/", 0777);
+            
+            /*
+            parent_pid = getppid();
+            cnt = 0;
+    parentcheck:
+            parent = (stat((string("/tmp/.factoryrush/") + to_string(parent_pid)).c_str(), &st) != -1);
+            if (parent || cnt > 5) goto sureparent;
+            cmdline = fopen(string("/proc/" + to_string(parent_pid) + "/cmdline").c_str(), "rb");
+            out = getdelim(&arg, &size, 0, cmdline);
+            fclose(cmdline);
+            if ((arg[0] == 'd' && arg[1] == 'o' && arg[2] == 'a' && arg[3] == 's' && arg[4] == '\0') || (arg[0] == 's' && arg[1] == 'u' && arg[2] == 'd' && arg[3] == 'o' && arg[4] == '\0') || (arg[0] == 's' && arg[1] == 'u' && arg[2] == '\0') || (arg[0] == 's' && arg[1] == 'h' && arg[2] == '\0')) {
+                parent_pid = getparent(parent_pid);
+                ++cnt;
+                goto parentcheck;
+            }
+    sureparent:
+            Console::pid = parent ? parent_pid : getpid();
+            */
+            Console::subdir = new const char[to_string(Console::pid).size() + 2]{0};
+            strcpy((char*)Console::subdir, to_string(Console::pid).c_str());
+            ((char*)Console::subdir)[to_string(Console::pid).size()] = '/';
+            
+            if (!parent && (stat((string("/tmp/.factoryrush/") + subdir).c_str(), &st) == -1))
+                mkdir((string("/tmp/.factoryrush/") + subdir).c_str(), 0777);
+    subdirset:
+
+            string initpth = (string("/tmp/.factoryrush/") + subdir + string("initialized.dat"));
+            FILE *initfl = fopen(initpth.c_str(), "w");
+            fprintf(initfl, "%d", 1);
+            fclose(initfl);
+
+            fd = getfd(0);
+            if (!Console::emulator) {
+                if (stat("/tmp/.factoryrush/", &st) == -1) Console::no_gpm = true;
+                else {
+                    Console::no_gpm = System::Shell("/etc/init.d/gpm status | grep '(running)' > /dev/null");
+                    if (!Console::no_gpm) System::RunProgram("/etc/init.d/gpm", "stop", nullptr);
+                }
+
+                fb_fd = open("/dev/fb0", O_RDONLY);
+
+                // initially in the middle of the screen
+                fb_var_screeninfo vinfo;
+                if (ioctl(Console::fb_fd, FBIOGET_VSCREENINFO, &vinfo)) {
+                    perror("Error reading variable information");
+                    exit(0x70);
+                }
+                Console::pixelpos.first = vinfo.xres/2;
+                Console::pixelpos.second = vinfo.yres/2;
+                ioctl(STDERR_FILENO, TIOCGWINSZ, &window_size);
+                Console::mouse_status.x = window_size.ws_col/2;
+                Console::mouse_status.y = window_size.ws_row/2;
+
+                mouse_fd = getmousefd(nullptr);
+            }
+
+            if (fd < 0 || fb_fd < 0 || mouse_fd < 0) {
+                if (sub_proc) exit(0x34);
+                if (parent) exit(0x38);
+                if (Console::root_type) exit(0x20);
+                // now this shouldn't happen at all so maybe add this:
+                //exit(0x17);
+
+                string args_c;
+                args_c.append(System::Shell("sudo --help 2>&1 >/dev/null") == 127 ? System::Shell("doas 2>&1 >/dev/null") == 127 ? "su -c \"" : "doas-keepenv" : "sudo -E ");
+                bool issu = args_c.size() == 2 && args_c[0] == 's' && args_c[1] == 'u';
+                bool isdoas = args_c[0] == 'd' && args_c[1] == 'o';
+                uint8_t sudolevel = issu ? 1 : isdoas ? 2 : 3; 
+
+                fwrite("\033[H", sizeof(char), 3, stderr);
+                fwrite("\033[J", sizeof(char), 3, stderr);
+
+                for (int i = 0; i < Console::argc; i++)
+                    args_c.append(Console::argv[i]);
+                    args_c.push_back(' ');
                 
-                string error = GenerateEscapeSequence(1,16) + "\nCouldn't get a file descriptor referring to the console.\nCheck if you have acces to /dev/tty and /dev/console.\n" + GenerateEscapeSequence(4,16) + "\n\ttry: " + GenerateEscapeSequence(6,16) + command.c_str() + "\033[0m\n";
-                throw(runtime_error(error.c_str()));
+                args_c.push_back('\033');
+                args_c.push_back('+');
+                args_c.append(to_string(sudolevel));
+                args_c.push_back('\\');
+                args_c.push_back('~');
+                args_c.append(to_string(Console::pid));
+                args_c.push_back('\\');
+                args_c.push_back('~');
+
+                if (issu) args_c.push_back('\"');
+
+                initfl = fopen(initpth.c_str(), "w");
+                fprintf(initfl, "%d", 0);
+                fclose(initfl);
+
+                auto log = (GenerateEscapeSequence(1,16) + "\nCouldn\'t get a file descriptor referring to the console." + GenerateEscapeSequence(16,16) + "\nTry logging in" + (issu ? "\n[su] " : "\n"));
+                fwrite(log.c_str(), sizeof(char), log.size(), stderr);
+                int code = System::Shell(args_c.c_str()); 
+
+                initfl = fopen(initpth.c_str(), "r");
+                int isinit = 1; 
+                auto retx = fscanf(initfl, "%d", &isinit);
+                fclose(initfl);
+
+                remove((string("/tmp/.factoryrush/") + Console::subdir + "initialized.dat").c_str());
+                remove((string("/tmp/.factoryrush/") + Console::subdir).c_str());
+
+                if (!isinit) {
+                    log = (GenerateEscapeSequence(1,16) + "Authentication failed" + GenerateEscapeSequence(16,16) + "\nPress any key to exit\n");
+                    fwrite(log.c_str(), sizeof(char), log.size(), stderr);
+                    tcgetattr(STDIN_FILENO,&old_termios);
+                    termios term_ios = old_termios;
+                    term_ios.c_lflag &= ~(ICANON | ECHO);
+                    tcsetattr(STDIN_FILENO, TCSANOW, &term_ios);
+                    char x[1];
+                    read(STDIN_FILENO, x, 1);
+                    tcsetattr(STDIN_FILENO, TCSANOW, &old_termios);
+                    fwrite("\033[?1049l", sizeof(char), 8, stderr);
+                    exit(EXIT_FAILURE);
+                }
+                exit(EXIT_SUCCESS);
+                //exit(code);
+
+                //string error = GenerateEscapeSequence(1,16) + "\nCouldn't get a file descriptor referring to the console.\nCheck if you have acces to /dev/tty and /dev/console.\n" + GenerateEscapeSequence(4,16) + "\n\ttry: " + GenerateEscapeSequence(6,16) + command.c_str() + "\033[0m\n";
+                //throw(runtime_error(error.c_str()));
             }
 
             if (ioctl(fd, KDGKBMODE, &old_kbdmode)) {
@@ -726,34 +1235,22 @@ using namespace std::chrono;
 
             close(fd);
 
-            char path[256];
-            auto length = readlink( "/proc/self/exe" , path, 256);
             string command = path;
             while (command.back() != '/') command.pop_back();
-            command.append("../share/factoryrush/bin/setkbdmode.bin ");
-            command.push_back('0' + K_MEDIUMRAW);
+            command.append("../share/factoryrush/bin/setkbdmode.bin");
+            char val[2] = { ('0' + K_MEDIUMRAW),'\0' };
 
-            if (system(command.c_str()) < 0) {
+            auto ret2 = System::RunProgram(command.c_str(),val,nullptr);
+            auto old_kbdmode2 = ret2;
+            if (ret2 < 0) {
                 throw("setkbdmode.bin error");
             }
 
-            getfd(0);
+            fd = getfd(0);
             if (fd < 0) {
-                string command = "sudo";
-                for (int i = 0; i < Console::argc; i++) { command.push_back(' '); command.append(argv[i]); }
-                exit(system(command.c_str()));
-                
                 string error = GenerateEscapeSequence(1,16) + "\nCouldn't get a file descriptor referring to the console.\nCheck if you have acces to /dev/tty and /dev/console.\n" + GenerateEscapeSequence(4,16) + "\n\ttry: " + GenerateEscapeSequence(6,16) + command.c_str() + "\033[0m\n";
                 throw(runtime_error(error.c_str()));
             }
-            
-            fwrite("\033[?1049h", sizeof(char), 8, stderr);
-            
-            fwrite("\033[?1004h", sizeof(char), 8, stderr);
-
-            fwrite("\033[?1003h", sizeof(char), 8, stderr);
-            fwrite("\033[?1015h", sizeof(char), 8, stderr);
-            fwrite("\033[?1006h", sizeof(char), 8, stderr);
 
             tcgetattr(STDIN_FILENO,&old_termios);
             termios term_ios = old_termios;
@@ -768,11 +1265,17 @@ using namespace std::chrono;
             term_ios.c_cc[VTIME] = 1;
             tcsetattr(fd, TCSANOW, &term_ios);
 
-            //
-            
+            if (Console::emulator) {
+                fwrite("\033[?1004h", sizeof(char), 8, stderr);
+
+                fwrite("\033[?1003h", sizeof(char), 8, stderr);
+                fwrite("\033[?1015h", sizeof(char), 8, stderr);
+                fwrite("\033[?1006h", sizeof(char), 8, stderr);
+            }
+
             for (auto t = 0; t < MAX_NR_KEYMAPS; t++) {
                 if (t > UCHAR_MAX) {
-                    exit(17);
+                    exit(18);
                 }
                 for (auto i = 0; i < NR_KEYS; i++) {
                     if (i > UCHAR_MAX) {
@@ -790,9 +1293,9 @@ using namespace std::chrono;
 
                     if (!i && ke.kb_value == K_NOSUCHMAP)
                         break;
-
-                    struct lk_array *map;
-                    int code = ke.kb_value + 1;
+                    
+                    if (KTYP(ke.kb_value) == KT_LETTER)
+                        ke.kb_value = K(KT_LATIN, KVAL(ke.kb_value));
 
                     if (ke.kb_value == UINT16_MAX) {
                         // ? idk mabe just push back UNDEFIEND
@@ -801,6 +1304,35 @@ using namespace std::chrono;
                     key_chart[t][i] = Key::Class::ToEnum(ke.kb_value);
                 }
             }
+
+            //
+            
+            /*HandleToggles once so next time we can see if they changed
+            {
+                char flags, leds;
+                if (ioctl(Console::fd, KDGKBLED, &flags) == -1)
+                    exit(12);
+            
+                if (ioctl(Console::fd, KDGETLED, &leds) == -1)
+                    exit(11);
+                
+
+                short mode = (flags & 0x7);
+                short light = (leds & 0x7);
+                Console::keys_toggled.ScrollLock = mode & LED_SCR;
+
+                // toggled keys get
+                int capslock = getled("capslock") > 0 || mode & LED_CAP || light & LED_CAP;
+                int scrolllock = getled("scrolllock") > 0 || mode & LED_SCR || light & LED_SCR;
+                int numlock = getled("numlock") > 0 || mode & LED_NUM || light & LED_NUM;
+                int micmute = getled("micmute") > 0; // unused for now
+
+                Console::keys_toggled.ScrollLock = getled("scrolllock");
+                Console::keys_toggled.NumLock = getled("numlock");
+                Console::keys_toggled.CapsLock = getled("capslock");
+            }//*/
+
+            locale::global(locale(""));
 
             initialised = true;
 
@@ -831,41 +1363,78 @@ using namespace std::chrono;
             signal(SIGTTIN, quick_exit);
             signal(SIGTTOU, quick_exit);
 
+            if (sub_process) {
+                Console::ret = sub(sub_process);
+                Console::Fin();
+                exit(ret);
+            }
         }
     }
 
     void Console::Fin(void) {
         if (initialised) {
             
+            // remove files
+            if (Console::sub_proc) {
+                FILE *fl;
+
+                fl = fopen((string("/tmp/.factoryrush/") + Console::subdir + "return.dat").c_str(), "w");
+                string ret_str = to_string(Console::ret);
+                fwrite(ret_str.c_str(), sizeof(char), strlen(ret_str.c_str()), fl);
+                fclose(fl);
+
+                fl = fopen((string("/tmp/.factoryrush/") + Console::subdir + "initialized.dat").c_str(), "w");
+                fwrite("-1", sizeof(char), 2, fl);
+                fclose(fl);
+
+            } else if (!Console::parent) {
+                remove((string("/tmp/.factoryrush/") + Console::subdir + "initialized.dat").c_str());
+                // if parent exists than it will remove it
+                remove((string("/tmp/.factoryrush/") + Console::subdir).c_str());
+            }
+
+            delete[] Console::subdir;
+
+            if (Console::emulator) {
+                fwrite("\033[?1004l", sizeof(char), 8, stderr);
+
+                fwrite("\033[?1003l", sizeof(char), 8, stderr);
+                fwrite("\033[?1015l", sizeof(char), 8, stderr);
+                fwrite("\033[?1006l", sizeof(char), 8, stderr);
+            } else {
+                close(fb_fd);
+                close(mouse_fd);
+                if (!Console::no_gpm) System::RunProgram("/etc/init.d/gpm", "start", nullptr);
+            }
+            
             //ioctl(fd, KDSETMODE, old_kbdmode);
             tcsetattr(fd,TCSANOW,&old_fdterm);
             close(fd);
 
             tcsetattr(STDIN_FILENO,TCSANOW,&old_termios);
-            
-            fwrite("\033[?1049l", sizeof(char), 8, stderr);
-            
-            fwrite("\033[?1004l", sizeof(char), 8, stderr);
-
-            fwrite("\033[?1003l", sizeof(char), 8, stderr);
-            fwrite("\033[?1015l", sizeof(char), 8, stderr);
-            fwrite("\033[?1006l", sizeof(char), 8, stderr);
 
             char path[256];
             auto length = readlink( "/proc/self/exe" , path, 256);
             string command = path;
             while (command.back() != '/') command.pop_back();
-            command.append("../share/factoryrush/bin/setkbdmode.bin ");
-            command.push_back('0' + old_kbdmode);
-            old_kbdmode = system(command.c_str());
-            if (old_kbdmode < 0) {
+            command.append("../share/factoryrush/bin/setkbdmode.bin");
+            char val[2] = "0"; val[0] += old_kbdmode;
+            auto ret2 = System::RunProgram(command.c_str(),val,nullptr);
+            old_kbdmode = ret2;
+            if (ret2 < 0) {
                 throw("setkbdmode.bin error");
             }
 
             for (int i = 0; i < argc; i++) free((void*)Console::argv[i]);
             Console::argv = (const char**)realloc(Console::argv,0);
             Console::argc = 0;
-            
+
+            if (Console::emulator) {
+                fwrite("\033[?1049l", sizeof(char), 8, stderr);
+            } else {
+                fwrite("\033[H", sizeof(char), 3, stderr);
+                fwrite("\033[J", sizeof(char), 3, stderr);
+            }
 
             initialised = false;
         }
@@ -877,152 +1446,375 @@ using namespace std::chrono;
         Console::this_mouse_combo = 0;
         Console::mouse_buttons_down[3] = false;
         Console::mouse_buttons_down[4] = false;
+        Console::mouse_status.scroll = {false,false};
 
-        bool mousedown = false;
-        int bytes;
+        if (Console::emulator) {
+            bool mousedown = false;
+            int bytes;
 
-        ioctl(fileno(stdin), FIONREAD, &bytes);
+            ioctl(STDIN_FILENO, FIONREAD, &bytes);
+            
+            bytes += strlen(Console::buf);
 
-        if (bytes < 3) {
-            return;
-        }
-
-        if (getc(stdin) != '\033') return;
-        if (getc(stdin) != '[') return;
-        if (bytes == 3) {
-            switch (getc(stdin)) {
-            case 'I':
-                Console::focused = true;
-                return;
-            case 'O':
-                Console::focused = false;
-                return;
-            default:
-                return;
-            }
-        }
-        if (getc(stdin) != '<') return;
-        bytes -= 3;
-        while (bytes > 6) {
-            int pos = 0;
-            int val[3] = {0};
             while (bytes > 0) {
-                char byte = getc(stdin); --bytes;
+                buf_it = 0;
+                char c = GetChar(); --bytes;
+                if (c != '\033') {
+                    in.clear();
+                    Console::in.str(Console::in.str()+c);
+                    buf[0] = '\0';
+                    continue;
+                } else if (bytes == 0) break;
+                c = GetChar(); --bytes;
+                if (c != '[') {
+                    in.clear();
+                    Console::in.str(Console::in.str()+'\033'+c);
+                    buf[0] = '\0';
+                    continue;
+                } else if (bytes == 0) break;
+                c = GetChar(); --bytes;
+                switch (c) {
+                case 'I':
+                    //fprintf(stderr, "gained focus\n");
+                    Console::focused = true;
+                    buf[0] = '\0';
+                    continue;
+                case 'O':
+                    //fprintf(stderr, "lost focus\n");
+                    Console::focused = false;
+                    buf[0] = '\0';
+                    continue;
+                case '<':
+                    int pos = 0;
+                    int val[3] = {0};
+                    int it = 2;
+                    while (++it) {
+                        if (bytes == 0) return;
+                        char byte = GetChar(); --bytes;
 
-                if (byte == ';') { ++pos; continue; }
-                
-                if (byte == 'M') { mousedown = true; break; }
-                if (byte == 'm') { mousedown = false; break; }
+                        if (byte == ';') { ++pos; continue; }
+                        
+                        if (byte == 'M') { mousedown = true; break; }
+                        if (byte == 'm') { mousedown = false; break; }
 
-                int num = byte - '0';
-                if (num < 0 || num > 9) return;
+                        int num = byte - '0';
+                        if (num < 0 || num > 9) exit(31);
 
-                val[pos] *= 10;
-                val[pos] += num;
-            };
+                        val[pos] *= 10;
+                        val[pos] += num;
+                    };
+                    //fprintf(stdout, "%c", '\n');
 
-            Console::mouse_status.x = val[1];
-            Console::mouse_status.y = val[2];
+                    Console::mouse_status.x = --val[1];
+                    Console::mouse_status.y = --val[2];
+                    //fprintf(stderr, "mouse: %d %d\n", Console::mouse_status.x, Console::mouse_status.y);
+                    bitset<8> event(val[0]);
 
-            bitset<8> event(val[0]);
+                    if (event[5]) { ++bytes; break; } // move event
+                    
+                    uint8_t button = 0b0;
+                    
+                    button += 0b1 * event[0];
+                    button += 0b10 * event[1];
+                    button += 0b100 * event[6];
+                    button += 0b1000 * event[7];
+                    if (button < 3 /*Button 1-3*/) ++button; // are encoded as 0-2 and there is no button 3 encoded so we add one to make it BUTTON(X) = x
 
-            if (event[5]) {
-                return; // move event
-            }
-            
-            uint8_t button = 0b0;
-            
-            button += 0b1 * event[0];
-            button += 0b10 * event[1];
-            button += 0b100 * event[6];
-            button += 0b1000 * event[7];
-            if (button < 3 /*Button 1-3*/) ++button; // are encoded as 0-2 and there is no button 3 encoded so we add one to make it BUTTON(X) = x
+                    chrono::time_point<chrono::high_resolution_clock> now = chrono::high_resolution_clock::now();
+                    uint8_t fullbutton = 0b000000;
+                    fullbutton |= 0b0000001 * button; // BBBB
+                    fullbutton |= 0b0010000 * event[2]; // Shift
+                    fullbutton |= 0b0100000 * event[3]; // Meta
+                    fullbutton |= 0b1000000 * event[4]; // Ctrl
+                    // fullbutton == 0bCMSBBBB
 
-            chrono::time_point<chrono::high_resolution_clock> now = chrono::high_resolution_clock::now();
-            uint8_t fullbutton = 0b000000;
-            fullbutton |= 0b0000001 * button; // BBBB
-            fullbutton |= 0b0010000 * event[2]; // Shift
-            fullbutton |= 0b0100000 * event[3]; // Meta
-            fullbutton |= 0b1000000 * event[4]; // Ctrl
-            // fullbutton == 0bCMSBBBB
+                    if (mousedown) {
+                        if (Console::last_mouse_button == fullbutton && now - Console::last_click_time <= chrono::milliseconds(Console::double_click_max)) {
+                            if (Console::last_mouse_combo < UINT8_MAX) ++Console::last_mouse_combo;
+                        } else {
+                            Console::last_mouse_button = (button < 3 || button > 5) ? fullbutton : -1;
+                            Console::last_mouse_combo = 1;
+                        }
+                        Console::last_click_time = now;
+                    }
 
-            if (mousedown) {
-                if (Console::last_mouse_button == fullbutton && now - Console::last_click_time <= chrono::milliseconds(Console::double_click_max)) {
-                    if (Console::last_mouse_combo < UINT8_MAX) ++Console::last_mouse_combo;
-                } else {
-                    Console::last_mouse_button = (button < 3) ? fullbutton : -1;
-                    Console::last_mouse_combo = 1;
+                    Console::this_mouse_combo = ( Console::last_click_time == now ) ? Console::last_mouse_combo : 1;
+                    Console::this_mouse_down = mousedown;
+                    Console::mouse_buttons_down[fullbutton] = this_mouse_down;
+                    Console::this_mouse_button = fullbutton;
+                    
+                    switch (button) {
+                    case 1:
+                        Console::mouse_status.primary = mousedown;
+                        break;
+                    case 2:
+                        Console::mouse_status.middle = mousedown;
+                        break;
+                    case 3:
+                        Console::mouse_status.secondary = mousedown;
+                        break;
+                    case 4:
+                        Console::mouse_status.scroll = {1,true};
+                        break;
+                    case 5:
+                        Console::mouse_status.scroll = {1,false};
+                        break;
+                    }
+                    buf[0] = '\0';
+                    continue;
                 }
-                Console::last_click_time = now;
+                in.clear();
+                Console::in.str(Console::in.str()+'\033'+'['+c);
+                buf[0] = '\0';
+            }
+        } else {
+            // redirect cin to Console::in
+            int bytes;
+            ioctl(STDIN_FILENO, FIONREAD, &bytes);
+            while (bytes > 0) {
+                char c = getc(stdin);
+                Console::in.str(Console::in.str()+c);
+                --bytes;
             }
 
-            Console::this_mouse_combo = ( Console::last_click_time == now ) ? Console::last_mouse_combo : 1;
-            Console::this_mouse_down = mousedown;
-            Console::mouse_buttons_down[fullbutton] = this_mouse_down;
-            Console::this_mouse_button = fullbutton;
-            
-            switch (button) {
-            case 0:
-                Console::mouse_status.primary = mousedown;
-                break;
-            case 1:
-                Console::mouse_status.middle = mousedown;
-                break;
-            case 2:
-                Console::mouse_status.secondary = mousedown;
-                break;
-            case 4:
-                Console::mouse_status.scroll = {1,true};
-                break;
-            case 5:
-                Console::mouse_status.scroll = {1,false};
-                break;
+            // mouse cursor emulation
+            input_event ie;
+            int x = 0;
+            while (true) {
+                auto len = read(Console::mouse_fd, &ie, sizeof(input_event));
+                if (len == -1)
+                    break;
+                ++x;
+                //printf("EVENT1: TYPE=%d, CODE=%d, VALUE=%d\n", ie.type, ie.code, ie.value);
+                if (ie.type == EV_SYN && (ie.code == SYN_REPORT || ie.code == SYN_MT_REPORT)) if (Console::discard_mouse) {Console::evnts_siz = 0; Console::discard_mouse = false;} else goto parsego;
+                else if (ie.type == EV_SYN && ie.code == SYN_DROPPED) { Console::discard_mouse = true; Console::evnts_siz = 0; }
+                else if (evnts_siz < 255) { events[evnts_siz] = ie; ++evnts_siz; }
+                else goto parsego;
+                continue;
+            parsego:
+                fb_var_screeninfo vinfo;
+                if (ioctl(Console::fb_fd, FBIOGET_VSCREENINFO, &vinfo)) {
+                    perror("Error reading variable information");
+                    exit(0x72);
+                }
+                if (ioctl(STDERR_FILENO, TIOCGWINSZ, &window_size)) {
+                    perror("Error reading window size");
+                    exit(0x73);
+                }
+                int button = 0; bool mousedown = false;
+                for (int i = 0; i < evnts_siz; i++) {
+                //printf("EVENT2: TYPE=%d, CODE=%d, VALUE=%d\n", events[i].type, events[i].code, events[i].value);
+                    switch (events[i].type)
+                    {
+                    case EV_REL:
+                        switch (events[i].code)
+                        {
+                        case REL_X:
+                            if (events[i].value > 0 || static_cast<int64_t>(Console::pixelpos.first) > -events[i].value) Console::pixelpos.first += events[i].value;
+                            Console::pixelpos.first = min(vinfo.xres, Console::pixelpos.first );
+                            break;
+                        
+                        case REL_Y:
+                            if (events[i].value > 0 || static_cast<int64_t>(Console::pixelpos.second) > -events[i].value) Console::pixelpos.second += events[i].value;
+                            Console::pixelpos.second = min(vinfo.yres, Console::pixelpos.second );
+                            break;
+                        case REL_WHEEL:
+                            Console::mouse_status.scroll = {true,events[i].value > 0};
+                            button = 5-(events[i].value > 0);
+                            mousedown = true;
+                            break;
+                        case REL_Z:
+                        case REL_RX:
+                        case REL_RY:
+                        case REL_RZ:
+                        case REL_HWHEEL:
+                        case REL_DIAL:
+                        case REL_WHEEL_HI_RES:
+                            break;
+                        default:
+                            break;
+                        }
+                        break;
+                    
+                    case EV_KEY:
+                        switch (events[i].code)
+                        {
+                    #if (BTN_MOUSE != BTN_LEFT)
+                        case BTN_MOUSE:
+                    #endif
+                        case BTN_LEFT:
+                            Console::mouse_status.primary = events[i].value;
+                            button = 1;
+                            mousedown = events[i].value;
+                            break;
+                        case BTN_RIGHT:
+                            Console::mouse_status.secondary = events[i].value;
+                            button = 3;
+                            mousedown = events[i].value;
+                            break;
+                        case BTN_MIDDLE:
+                            Console::mouse_status.middle = events[i].value;
+                            button = 2;
+                            mousedown = events[i].value;
+                            break;
+                        case BTN_SIDE:
+                        case BTN_EXTRA:
+                        case BTN_FORWARD:
+                        case BTN_BACK:
+                        case BTN_TASK:
+                            break;
+                        default:
+                            break;
+                        }
+                        break;
+                    }
+                }
+                int width = window_size.ws_col;
+                int height = window_size.ws_row;
+                long double divx = vinfo.xres / width;
+                long double divy = vinfo.yres / height;
+                Console::mouse_status.x = pixelpos.first/divx;
+                Console::mouse_status.y = pixelpos.second/divy;
+
+                if (button) {
+                    chrono::time_point<chrono::high_resolution_clock> now = chrono::high_resolution_clock::now();
+                    uint8_t fullbutton = 0b000000;
+                    fullbutton |= 0b0000001 * button; // BBBB
+                        //fullbutton |= 0b0010000 * IsKeyDown(Key::Enum::ShiftL)]; // Shift
+                        //fullbutton |= 0b0100000 * ; // Meta
+                        //fullbutton |= 0b1000000 * ; // Ctrl
+                    //fullbutton == 0bCMSBBBB
+
+                    if (mousedown) {
+                        if (Console::last_mouse_button == fullbutton && now - Console::last_click_time <= chrono::milliseconds(Console::double_click_max)) {
+                            if (Console::last_mouse_combo < UINT8_MAX) ++Console::last_mouse_combo;
+                        } else {
+                            Console::last_mouse_button = (button < 3 || button > 5) ? fullbutton : -1;
+                            Console::last_mouse_combo = 1;
+                        }
+                        Console::last_click_time = now;
+                    }
+
+                    Console::this_mouse_combo = ( Console::last_click_time == now ) ? Console::last_mouse_combo : 1;
+                    Console::this_mouse_down = mousedown;
+                    Console::mouse_buttons_down[fullbutton] = this_mouse_down;
+                    Console::this_mouse_button = fullbutton;
+                }
+                evnts_siz = 0;
             }
         }
-        return;
     }
 
     void Console::HandleKeyboard(void) {
 
-        // toggled keys get
-        
-        char flags;
+        char flags, leds;
         if (ioctl(Console::fd, KDGKBLED, &flags) == -1)
+            exit(11);
+        
+        if (ioctl(Console::fd, KDGETLED, &leds) == -1)
             exit(12);
-
-        short mode = (flags & 0x7);
-
-        Console::keys_toggled.ScrollLock = mode & LED_SCR;
-        Console::keys_toggled.NumLock = mode & LED_NUM;
-        Console::keys_toggled.CapsLock = mode & LED_CAP;
 
         // key presses and releases
 
-        int bytes;
-        char buf[16];
-        //ioctl(fileno(stdin), FIONREAD, &bytes);
-
-        bytes = read(fd, buf, sizeof(buf));
-
-        if (bytes <= 0) {
-            return;
-        }
-
-        int parsed = parse_input(true,buf,bytes);
+        int bytes, parsed, len;
+        char buf[1];
 
         key_hit = -1;
         key_released = -1;
-        if ( !key_states[parsed % KEYBOARD_MAX] && (parsed / KEYBOARD_MAX) ) key_hit = parsed % KEYBOARD_MAX;
-        if ( key_states[parsed % KEYBOARD_MAX] && !(parsed / KEYBOARD_MAX) ) key_released = parsed % KEYBOARD_MAX;
+        int old_hit = -1;
+
+        ioctl(Console::fd, FIONREAD, &bytes);
+        if (!bytes) goto HandleToggles;
+    
+    ReadKeyboardAction:
+        len = read(Console::fd, buf, sizeof(buf)); bytes -= len;
+        // TODO -> parse multi-byte sequences
+
+        if (len <= 0) {
+            if (len < 0) { fprintf(stderr, "\nread error: %d\n", errno); exit(15); } 
+            goto HandleToggles;
+        }
+
+        //fprintf(stderr, "bytes: %d\n", bytes);
+
+        parsed = parse_input(true,buf,len);
+
+        //fprintf(stdout, "\n\n x:%x\nparsed: %d,rel:%d\n\told: %d\n\n", buf[0], parsed%KEYBOARD_MAX, parsed/KEYBOARD_MAX, (int)(key_states[parsed % KEYBOARD_MAX]));
+        if ( (!key_states[parsed % KEYBOARD_MAX]) && (!(parsed / KEYBOARD_MAX)) ) key_hit = parsed % KEYBOARD_MAX;
+        if ( key_states[parsed % KEYBOARD_MAX] && (parsed / KEYBOARD_MAX) ) key_released = parsed % KEYBOARD_MAX;
         key_states[parsed % KEYBOARD_MAX] = !(parsed / KEYBOARD_MAX);
+        //fprintf(stderr, "keycode: %d\n", Console::key_hit);
+        //fprintf(stderr, "rels: %d\n", Console::key_released);
+
+        if (!Console::emulator && Console::key_hit != old_hit) {
+            if (Console::key_chart[0][Console::key_hit] == Key::Enum::CAPS) { flags ^= LED_CAP; leds ^= LED_CAP; /*fprintf(stderr, "caps\n");*/ }
+            if (Console::key_chart[0][Console::key_hit] == Key::Enum::CTRLLLOCK) { flags ^= LED_CAP; leds ^= LED_CAP; /*fprintf(stderr, "ctrlllock\n");*/ } // sometimes capslock (a bug bypass)
+            if (Console::key_chart[0][Console::key_hit] == Key::Enum::NUM) { flags ^= LED_NUM; leds ^= LED_NUM; /*fprintf(stderr, "num\n");*/ }
+            if (/*???*/ Console::key_chart[0][Console::key_hit] == Key::Enum::BARENUMLOCK ) { flags ^= LED_NUM; leds ^= LED_NUM; /*fprintf(stderr, "barenum\n");*/ } // idk waht this is but it has numlock in it's name
+            if (Console::key_chart[0][Console::key_hit] == Key::Enum::HOLD) { flags ^= LED_SCR; leds ^= LED_SCR; /*fprintf(stderr, "scroll\n");*/ }
+            if (Console::key_chart[0][Console::key_hit] == Key::Enum::CAPS || Console::key_chart[0][Console::key_hit] == Key::Enum::CTRLLLOCK || Console::key_chart[0][Console::key_hit] == Key::Enum::NUM || /*???*/ Console::key_chart[0][Console::key_hit] == Key::Enum::BARENUMLOCK || Console::key_chart[0][Console::key_hit] == Key::Enum::HOLD) {
+                if (ioctl(Console::fd, KDSKBLED, flags) == -1) exit(13);
+                if (ioctl(Console::fd, KDSETLED, leds) == -1) exit(13);
+            }
+        }
+        old_hit = Console::key_hit;
+        if (bytes > 0) goto ReadKeyboardAction;
+
+    HandleToggles:
+
+        short mode = (flags & 0x7);
+        short light = (leds & 0x7);
+
+        // toggled keys get
+        int capslock = getled("capslock") > 0 || mode & LED_CAP || light & LED_CAP;
+        int scrolllock = getled("scrolllock") > 0 || mode & LED_SCR || light & LED_SCR;
+        int numlock = getled("numlock") > 0 || mode & LED_NUM || light & LED_NUM;
+        int micmute = getled("micmute") > 0; // unused for now
+
+        Console::keys_toggled.ScrollLock = scrolllock;
+        Console::keys_toggled.NumLock = numlock;
+        Console::keys_toggled.CapsLock = capslock;
+
+        //if (Console::keys_toggled.CapsLock) fprintf(stderr, "caps lock\n");
+        //if (Console::keys_toggled.NumLock) fprintf(stderr, "num lock\n");
+        //if (Console::keys_toggled.ScrollLock) fprintf(stderr, "scroll lock\n");
+        //if (micmute) fprintf(stderr, "mic mute\n");
 
         return;
     }
 
+    bool Console::IsKeyDown(Key::Enum key) {
+        for (auto i = 0; i < KEYBOARD_MAX; ++i)
+            if (Console::key_states[i] && Console::key_chart[0][i] == key)
+                return true;
+        return false;
+    }
+
+    Key::Enum cpp::Console::KeyTyped(void) {
+        return Key::Enum::NONE;
+    }
+
+    Key::Enum Console::KeyPressed(void) {
+        if (Console::key_hit < 0) return Key::Enum::NONE;
+        return Console::key_chart[0][Console::key_hit];
+    }
+
+    Key::Enum Console::KeyReleased(void) {
+        if (Console::key_released < 0) return Key::Enum::NONE;
+        return Console::key_chart[0][Console::key_released];
+    }
+
     struct termios Console::old_fdterm = termios();
     int Console::old_kbdmode = int();
-    utfcstr* Console::argv = (const char**)malloc(8);
-    Key::Enum Console::key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX] = { { Key::Enum::UNDEFINED } };
+    int Console::fd = int();
+    int Console::fb_fd = int();
+    int Console::mouse_fd = int();
+    bool Console::discard_mouse = bool(false);
+    bool Console::no_gpm = bool(true);
+    bool Console::parent = bool(false);
+    uint8_t Console::root_type = uint8_t(0);
+    utfcstr* Console::argv = (const char**)malloc(0); 
+    Key::Enum Console::key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX] = { { Key::Enum::NONE } };
 
 #elif __APPLE__
 // macOS
@@ -1135,12 +1927,12 @@ using namespace std::chrono;
 #endif
 
 // all non windows
-    inline string GenerateEscapeSequence(uint8_t i1, uint8_t i2) {
+    inline clang_constexpr string GenerateEscapeSequence(uint8_t i1, uint8_t i2) {
         string val = "\033[";
         if (i1 < 8) {
             val.append(to_string(30 + i1));
         } else if (i1 < 16) {
-            val.append(to_string(90 + i1));
+            val.append(to_string(82 + i1));
         } else {
             val.append("39");
         }
@@ -1148,7 +1940,7 @@ using namespace std::chrono;
         if (i2 < 8) {
             val.append(to_string(40 + i2));
         } else if (i2 < 16) {
-            val.append(to_string(100 + i2));
+            val.append(to_string(92 + i2));
         } else {
             val.append("49");
         }
@@ -1172,7 +1964,7 @@ using namespace std::chrono;
         size_t width = GetWindowWidth(), height = GetWindowHeight();
         for (size_t i = 0; i < height; i++) {
             for (size_t j = 0; j < width; j++) {
-                if (i >= symbols.size() || j >= symbols[0].size()) {
+                if (i >= symbols.size() || j >= symbols[i].size()) {
                     screen.append("\033[0m ");
                     continue;
                 }
@@ -1196,10 +1988,19 @@ using namespace std::chrono;
 
     struct termios Console::old_termios = termios();
     winsize Console::window_size = winsize();
+    char Console::buf[127] = "\0";
+    int8_t Console::buf_it = -1;
+    pair<uint32_t,uint32_t> Console::pixelpos = pair<uint32_t,uint32_t>(0,0);
+    input_event Console::events[255] = {input_event()};
+    uint8_t Console::evnts_siz = 0;
+    const char* Console::subdir = nullptr;
+    istringstream Console::in = istringstream(std::ios_base::ate|std::ios_base::in);
+    ofstream Console::out = ofstream();
 #endif
 
 int Console::argc = 0;
 
+bool Console::emulator = false;
 bool Console::initialised = false;
 bitset<KEYBOARD_MAX> Console::key_states = bitset<KEYBOARD_MAX>(0);
 struct ToggledKeys Console::keys_toggled = ToggledKeys();
@@ -1209,35 +2010,22 @@ std::chrono::time_point<std::chrono::high_resolution_clock> Console::last_click_
 
 int Console::key_hit = int();
 int Console::key_released = int();
-uint8_t Console::this_mouse_button = -1;
-uint8_t Console::this_mouse_combo = 0;
-bool Console::this_mouse_down = false;
-uint8_t Console::last_mouse_button = -1;
-uint8_t Console::last_mouse_combo = 0;
-bool Console::focused = true;
-unsigned short Console::double_click_max = 500;
+uint8_t Console::this_mouse_button = uint8_t(-1);
+uint8_t Console::this_mouse_combo = uint8_t(0);
+bool Console::this_mouse_down = bool(false);
+uint8_t Console::last_mouse_button = uint8_t(-1);
+uint8_t Console::last_mouse_combo = uint8_t(0);
+bool Console::focused = bool(true);
+unsigned short Console::double_click_max = (unsigned short)(500);
+int Console::pid = int(-1); 
+int Console::ret = int(-1);
+bool Console::sub_proc = bool(false);
 
-bool Console::IsKeyDown(Key::Enum key) {
-    for (auto i = 0; i < KEYBOARD_MAX; ++i)
-        if (Console::key_states[i] && Console::key_chart[0][i] == key)
-            return true;
-    return false;
-}
-
-Key::Enum cpp::Console::KeyTyped(void) {
-    return Key::Enum::UNDEFINED;
-}
+uint16_t Console::next_pid = uint16_t(1000);
+array<bool,UINT16_MAX> Console::used_pids = array<bool,UINT16_MAX>{0};
 
 struct ToggledKeys Console::KeysToggled(void) {
     return Console::keys_toggled;
-}
-
-Key::Enum Console::KeyPressed(void) {
-    return Console::key_chart[0][Console::key_hit];
-}
-
-Key::Enum Console::KeyReleased(void) {
-    return Console::key_chart[0][Console::key_released];
 }
 
 bool Console::IsFocused(void) {
@@ -1304,8 +2092,8 @@ Console::MouseStatus::MouseStatus(void) {
     this->middle = false;
     this->secondary = false;
     this->scroll = pair<bool,bool>(false,false);
-    this->x = -1;
-    this->y = -1;
+    this->x = 0;
+    this->y = 0;
 }
 
 Console::Symbol::Symbol(utfchar character, uint8_t foreground, uint8_t background) {
@@ -1332,10 +2120,88 @@ Console::Symbol::~Symbol(void) {
     this->background = -1;
 }
 
+void Console::Symbol::ReverseColors(void) {
+    cppimp::Console_Symbol_ReverseColors(this);
+}
+
 Console::Symbol & Console::Symbol::operator=(const Console::Symbol & src) {
     if (this == &src) { return *this; }
     this->character = src.character;
     this->background = src.background;
     this->foreground = src.foreground;
     return *this;
+}
+
+
+int cpp::Console::PopupWindow(int type, int argc, uniconv::utfcstr argv[]) {
+    auto term = Console::GetTerminalExecutableName();
+    int pc = 0;
+newpidgen:
+    if (++pc > UINT16_MAX) exit(0xF1); // no pid left
+    if (Console::next_pid == UINT16_MAX) Console::next_pid = 0;
+    short npid = ++Console::next_pid;
+    if (Console::used_pids[npid]) goto newpidgen;
+    Console::used_pids[npid] = true;
+
+    utfcstr* args = (utfcstr*)System::AllocateMemory(sizeof(void*) * (argc+3));
+#if defined(_WIN32) || defined(__CYGWIN__)
+    #define sep L'\\'
+#else
+    #define sep u8'/'
+#endif
+    utfstr procdir = utfstr(N("proc")) + sep  + to_nstring(npid) + sep;
+    System::MakeDirectory((filesystem::temp_directory_path().native() + subdir + procdir).c_str());
+#if defined(_WIN32) || defined(__CYGWIN__)
+    wchar_t* appdata = _wgetenv(L"APPDATA");
+#else
+    char* appdata = getenv("HOME");
+#endif
+    System::MakeDirectory((utfstr(appdata) + sep + N(".factoryrush") + sep + N("logs") + sep + to_nstring(type) + sep).c_str());
+    utfstr info = N("\033&");
+    info.append(to_nstring(type)).push_back(N('~'));
+    info.append(procdir).push_back(N('~'));
+    utfstr root_pth = System::GetSelfPath();
+
+#ifdef _WIN32
+    if (mintty && !good) {
+        if (term.find(L"mintty") == std::wstring::npos) {
+            Console::window = GetForegroundWindow();
+        }
+        term = Console::GetTerminalExecutableName();
+        if (!(good = term.find(L"mintty") != std::wstring::npos))
+            goto console;
+    } else if (!term.size())
+        goto console;
+#elif __CYGWIN__
+    if (!term.size()) {
+        term.append(L"C:\\cygwin64\\bin\\mintty.exe");
+    }
+#elif __APPLE__
+    if (!term.size()) {
+        term.append(u8"/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal"); // idk if this is the actual path
+    }
+#elif __linux__
+    if (!term.size()) {
+        term.append(u8"/usr/bin/gnome-terminal"); // todo - find default terminal emulator
+    }
+#else
+    return -1;
+#endif
+    args[0] = root_pth.c_str();
+    args[1] = info.c_str();
+    for (int i = 1; i <= argc; i++) args[i+1] = argv[i-1];
+    args[argc+2] = nullptr;
+    if (!System::RunProgramAsync(term.c_str(), args)) return -1;
+#ifdef _WIN32
+    goto contcons;
+console:
+    for (int i = 0; i < argc; i++) args[i] = argv[i];
+    args[argc] = info.c_str();
+    args[argc+1] = nullptr;
+    if (!System::RunProgramAsyncC(root_pth.c_str(), args)) return -1;
+contcons:
+#endif
+    System::FreeMemory(args);
+    csimp::FileSystem_PlaySound(uniconv::Utf8StringToUnicode(N("C:\\Users\\sssba\\Documents\\c-c-collab\\assets\\illegal-operation.mp3")), 0); 
+    return 0;
 }

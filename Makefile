@@ -24,18 +24,18 @@ sources = Console.cpp FileSystem.cpp System.cpp dllexport.cpp
 #> header files
 headers = Console.hpp FileSystem.hpp FileSystem.ipp dllimport.hpp System.hpp System.ipp smart_ref.hpp smart_ref.ipp
 #> include files
-includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp unicode.hpp
+includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp linux/ledctrl.h linux/mousefd.h
 #> name the dynamic library
 name = factoryrushplus
 # *******************************
 
 #******** c++ binary config *****
 #> source files
-binsources = main.cpp Console.cpp FileSystem.cpp System.cpp Control.cpp
+binsources = main.cpp Console.cpp FileSystem.cpp System.cpp Control.cpp dllexport.cpp
 #> header files
 binheaders = dllimport.hpp Console.hpp FileSystem.hpp System.hpp defines.h Control.hpp
 #> include files
-binincludes = dynamic_library.h unicode_conversion.hpp control_heap.h utils/cextern.h control_heap.h utils/dllalloc.h linux/key.hpp windows/key.hpp unicode.hpp
+binincludes = dynamic_library.h unicode_conversion.hpp control_heap.h utils/cextern.h control_heap.h utils/dllalloc.h linux/key.hpp windows/key.hpp
 #> name the binary file
 binname = cpp-factoryrush
 #********************************
@@ -44,14 +44,14 @@ binname = cpp-factoryrush
 #> name the dynamic library
 filename = factoryrushsharp
 #>source code files
-files = DllExport.cs DllImport.cs FileSystem.cs Terminal.cs Console.cs Utility.cs Exec.cs Control.cs Key.cs
+files = DllExport.cs DllImport.cs FileSystem.cs Terminal.cs Console.cs Utility.cs Exec.cs Control.cs Key.cs linux_keyboard.cs apple_event.cs windows_vkcodes.cs
 # *******************************
 
 #********* c# binary config *****
 #> name the binary file
 binfile = cs-factoryrush
 #>source code files
-binfiles = Program.cs DllImport.cs FileSystem.cs Terminal.cs Utility.cs Exec.cs
+binfiles = Program.cs DllImport.cs FileSystem.cs Terminal.cs Utility.cs Exec.cs Key.cs linux_keyboard.cs apple_event.cs windows_vkcodes.cs
 # *******************************
 
 #***** application config ****
@@ -88,8 +88,21 @@ symsysbin = /c/Windows
  
 #*********************************
 
+# chmod 666 /usr/bin/../temp/initialized.dat
+# (linux only)
+
+ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
+static-libc = -static-libgcc -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic
+static-libc++ = -static-libstdc++
+else
+ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
+static-libc = -static-libgcc -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic
+static-libc++ = -static-libstdc++
+else
 static-libc = -static-libgcc
 static-libc++ = -static-libstdc++
+endif
+endif
 
 ifeq ($(sudo),1)
 copylibs = 1
@@ -130,17 +143,17 @@ else
 ldarg = -fuse-ld=$(linker)
 endif
 
+ifeq ($(msvc),1)
+defcompcxx = cl
+defcompc = cl
+endif
+
 ifeq ($(cpp-compiler),$(empty))
 cpp-compiler = $(defcompcxx)
 endif
 
 ifeq ($(c-compiler),$(empty))
 c-compiler = $(defcompc)
-endif
-
-ifeq ($(msvc),1)
-cpp-compiler = cl
-c-compiler = cl
 endif
 
 ifeq ($(shell uname -s),Darwin)
@@ -167,8 +180,8 @@ ldb = /DEBUG /PDB:bin/$(name).pdb
 bldb = /DEBUG /PDB:bin/$(binname).pdb
 bpdb = /MTd /Z7
 else
-cdb = -g -D_DEBUG
-bpdb = -g -D_DEBUG
+cdb = -g -Og
+bpdb = -g -Og
 endif
 else
 configuration = Release
@@ -227,17 +240,19 @@ endif
 
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 #windows
-nulldir = nul-Wdollar-in-identifier-extension
+nulldir = nul
 binflags = 
-admin = sudo
+admin = sudo$(space)
+adminend =
 staticgen = lib /OUT:
-prefix = .\
+run = .\
 os_name = win-$(arch)
 binary = exe
 static = lib
 dynamic = dll
-dllname = "$(name).$(dynamic)"
-libname = "$(filename).$(dynamic)"
+prefix = $(empty)
+dllname = '$(name).$(dynamic)'
+libname = '$(filename).$(dynamic)'
 libdir = $(winlib)
 bindir = $(winbin)
 #
@@ -246,15 +261,17 @@ ifeq ($(shell uname -s),WINDOWS_NT)
 #windows i think
 nulldir = nul
 binflags = 
-admin = sudo
+admin = sudo$(space)
+adminend =
 staticgen = lib /OUT:
-prefix = .\
+run = .\
 os_name = win-$(arch)
 binary = exe
 static = lib
+prefix = $(empty)
 dynamic = dll
-dllname = "$(name).$(dynamic)"
-libname = "$(filename).$(dynamic)"
+dllname = '$(name).$(dynamic)'
+libname = '$(filename).$(dynamic)'
 libdir = $(winlib)
 bindir = $(winbin)
 #
@@ -265,15 +282,17 @@ ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin only
 binary = exe
 static = a
+prefix = $(empty)
 dynamic = dll
 binflags = 
 libdir = $(cygwinlib)
 bindir = $(cygwinbin)
-admin = sudo
+admin = sudo$(space)
+adminend =
 #
 else
 # msys mingw and others
-binflags = -municode
+binflags =
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys
 exec = $(shell cygpath -w /msys2.exe)
@@ -299,31 +318,35 @@ endif
 #non-cygwin 'NT'
 binary = exe
 static = lib
+prefix = $(empty)
 dynamic = dll
 libdir = $(msyslib)
 bindir = $(msysbin)
-admin = sudo
+admin = sudo$(space)
+adminend =
 #
 endif
 #all unix emulators on windows
-prefix = ./
+run = ./
 nulldir = nul
-staticgen = ar
+staticgen = ar -rcs$(space)
 os_name = win-$(arch)
-dllname = "$(name).$(dynamic)"
-libname = "$(filename).$(dynamic)"
+dllname = '$(name).$(dynamic)'
+libname = '$(filename).$(dynamic)'
 #
 else
 ifeq ($(shell uname -s),Darwin)
 #macos
 nulldir =  /dev/null
-binflags = 
-admin = sudo
+binflags = -lcuchar
+admin = sudo$(space)
+adminend =
 staticgen = ar -rcs$(space)
-prefix = ./
+run = ./
 os_name = osx-$(arch)
 binary = app
 static = a
+prefix = lib
 dynamic = dylib
 libdir = $(macoslib)
 bindir = $(macosbin)
@@ -332,14 +355,30 @@ else
 #linux and similar[other]
 nulldir = /dev/null
 binflags = 
-admin = sudo
+ifneq ($(shell which doas),$(empty))
+	admin = doas$(space)
+	adminend =
+else
+ifneq ($(shell which sudo),$(empty))
+	admin = sudo$(space)
+	adminend =
+else
+ifneq ($(shell which su),$(empty))
+	admin = su -c "
+	adminend = "
+else
+	$(error "neither sudo, doas or su not found")
+endif
+endif
+endif
 staticgen = ar rcs$(space)
-prefix = ./
+run = ./
 os_name = linux-$(arch)
-libname = "lib$(filename).so"
-dllname = "lib$(name).so"
+libname = 'lib$(filename).so'
+dllname = 'lib$(name).so'
 binary = bin
 static = a
+prefix = lib
 dynamic = so
 libdir = $(linuxlib)
 bindir = $(linuxbin)
@@ -442,50 +481,74 @@ endif
 all: dll cppbin csbin
 	@echo "Version file. Remove to enable recompile" > $@
 
-dll: resources cs cpp
+dll: cs cpp
 	@echo "Version file. Remove to enable recompile" > $@
 
-refresh:
+clean: cppclean csclean
+
+csclean:
 ifeq ($(shell echo "check quotes"),"check quotes")
 	@del /f cs
 	@del /f csbin
+else
+	@rm -f cs
+	@rm -f csbin
+endif
+
+cppclean:
+ifeq ($(shell echo "check quotes"),"check quotes")
 	@del /f cppbin
 	@del /f cpp
 	@del /f resources
 	@del /f cplusplus\obj\*
+	@del /f binaryplus\obj\*
 else
-	@rm -f cs
-	@rm -f csbin
 	@rm -f cppbin
 	@rm -f cpp
 	@rm -f resources
 	@rm -f cplusplus/obj/*
+	@rm -f binaryplus/obj/*
 endif
 
-resources: source/getfd.h source/setkbdmode.c source/getfd.c source/getkeystate.h source/getkeystate.m source/globals.c assets/a.tux
+resources: source/setkbdmode.c source/getfd.c source/getfd.h source/getkeystate.h source/getkeystate.m source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h
 
 	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
-	$(staticgen)assets/globals.$(static) objects/globals.o
+	$(staticgen)assets/$(prefix)globals.$(static) objects/globals.o
+
+#	echo $(c-compiler) -v -o $(prefix)std.$(dynamic) -pedantic -Wextra -shared -fPIC -lm -static-libgcc 2>&1 | grep ld | sed s/-lc/'$$(find -O3 /usr/lib -name libc.a 2>&1 | grep $$(uname -m) | sed 1q)' | sed s/-lm/'$$(find -O3 /usr/lib -name libm.a 2>&1 | grep $$(uname -m) | sed 1q)'/g | sed s/-o/-Bsymbolic\ -o/g > temp.sh
+#	@chmod +x temp.sh
+#	./temp.sh
+#	@rm temp.sh
 
 ifeq ($(shell uname -s),Linux)
 	-@rm *.o 2> $(nulldir)
-	$(c-compiler) -c source/setkbdmode.c source/getfd.c -pedantic -Wextra $(cflags) $(cdb) -Isource -std=c2x && mv *.o objects/
-	ar rcs assets/getfd.$(static) objects/getfd.o
-	$(c-compiler) -o assets/setkbdmode.$(binary) objects/setkbdmode.o assets/getfd.a $(static-libc)
+	$(c-compiler) -c source/setkbdmode.c source/getfd.c source/ledctrl.c source/mousefd.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
+	ar rcs assets/$(prefix)linuxctrl.$(static) objects/getfd.o objects/ledctrl.o objects/mousefd.o objects/setkbdmode.o
+	$(c-compiler) -o assets/setkbdmode.$(binary) objects/setkbdmode.o -Lassets -llinuxctrl $(static-libc)
+	git submodule update --init --recursive
 ifeq ($(copylibs),1)
 	@echo "$(linuxroot)/share/factoryrush/bin"
-	$(admin) mkdir -p $(linuxroot)/share/factoryrush/bin
-	$(admin) cp assets/setkbdmode.$(binary) $(linuxroot)/share/factoryrush/bin
+	$(admin)mkdir -p $(linuxroot)/share/factoryrush/bin$(adminend)
+	$(admin)cp assets/setkbdmode.$(binary) $(linuxroot)/share/factoryrush/bin$(adminend)
+	$(admin)cp utilities/doas-keepenv/doas-keepenv $(linuxroot)/share/factoryrush/bin$(adminend)
+
+	$(admin)mkdir -p $(linuxroot)/share/factoryrush/assets$(adminend)
+	$(admin)cp README.md $(linuxroot)/share/factoryrush/assets$(adminend)
 else
 	@mkdir -p binaryplus/bin/../share/factoryrush/bin
 	@cp assets/setkbdmode.$(binary) binaryplus/share/factoryrush/bin
-endif
+	@cp utilities/doas-keepenv/doas-keepenv binaryplus/share/factoryrush/bin
 
+	@mkdir -p binaryplus/bin/../share/factoryrush/assets
+	@cp README.md binaryplus/share/factoryrush/assets
 endif
-
+else
 ifeq ($(shell uname -s),Darwin)
+	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wextra -Wno-unused-parameter $(cflags) $(cdb) -Isource -std=c++2b && mv *.o objects/
+	$(staticgen)assets/$(prefix)applecuchar.$(static) objects/cuchar.o
 	$(c-compiler) -c source/getkeystate.m -framework CoreGraphics -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
-	ar rcs assets/getkeystate.$(static) objects/getkeystate.o
+	ar rcs assets/applectrl.$(static) objects/getkeystate.o
+endif
 endif
 
 ifeq ($(shell echo "check quotes"),"check quotes")
@@ -497,23 +560,26 @@ endif
 
 cpprun:
 ifeq ($(binary),exe)
-	-wt -f "$(dir)\binaryplus\bin\$(binname).$(binary)"
+	-$(run)binaryplus\bin\$(binname).$(binary)
 else
-	-cd binaryplus/bin && $(prefix)$(binname).$(binary)
+ifeq ($(sudo),1)
+	$(bindir)/$(binname).$(binary)
+else
+	-cd binaryplus/bin && $(run)$(binname).$(binary)
+endif
 endif
 
 csrun:
-	-cd binarysharp/bin/exe && $(prefix)$(binfile).$(binary)
+	-cd binarysharp/bin/exe && $(run)$(binfile).$(binary)
 
-cpp: $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
+cpp: resources $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
 
 
 ifneq ($(wildcard cs),cs)
 	$(MAKE) cs sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)
 endif
-
 ifeq ($(msvc),1)
-	echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(flib) $(objects) ../assets/globals.$(static) USER32.lib Gdi32.lib" > run.bat
+	echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(flib) $(objects) ../assets/globals USER32.lib Gdi32.lib" > run.bat
 	@run.bat
 	@rm run.bat
 ifeq ($(debug),1)
@@ -523,7 +589,7 @@ ifeq ($(debug),1)
 endif
 
 ifeq ($(copylibs),1)
-	$(admin) cp cplusplus/bin/$(dllname) $(libdir)
+	$(admin)cp cplusplus/bin/$(dllname) $(libdir)$(adminend)
 else
 	@cp cplusplus/bin/$(dllname) binaryplus/bin
 	@cp cplusplus/bin/$(dllname) binarysharp/bin/exe
@@ -534,16 +600,25 @@ else
 #
 ifeq ($(binary),exe)
 #windows
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) ../assets/globals.$(static) -L$(flibdir) $(flib) $(static-libc++) $(static-libc) $(ldarg)
+ifeq ($(shell uname -s),Windows_NT)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals -ldbghelp -lshlwapi -lshell32 $(flib) $(static-libc++) $(static-libc) $(ldarg)
+else
+ifeq ($(shell uname -s),windows32)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals -ldbghelp -lshlwapi -lshell32 $(flib) $(static-libc++) $(static-libc) $(ldarg)
+else
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals -ldbghelp -lshlwapi -lshell32 $(flib) $(static-libc++) $(static-libc) $(ldarg)
+endif
+endif
 #
 else
 ifeq ($(shell uname -s),Darwin)
 #macos
-	cd cplusplus && $(cpp-compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) ../assets/globals.$(static) -L$(flibdir) $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) -L../assets -L$(flibdir) -lcuchar -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
 #
 else
 #linux and similar
-	cd cplusplus && $(cpp-compiler) -shared -o bin/lib$(name).so $(objects) ../assets/globals.$(static) ../assets/getfd.$(static) -L$(flibdir) $(flib) -static-libstdc++ -static-libgcc $(ldarg)
+#	cd cplusplus && $(cpp-compiler) -v -shared -o bin/lib$(name).so $(objects) -L../assets -L$(flibdir) -lglobals -llinuxctrl $(flib) $(static-libc++) $(static-libc) $(ldarg) 2>&1 | grep ld | sed 's/-lc/$$(find -O3 \/usr\/lib -name libc.a 2>&1 | grep $$(uname -m) | sed 1q)'/g | sed 's/-lm/$$(find -O3 \/usr\/lib -name libm.a 2>&1 | grep $$(uname -m) | sed 1q)'/g | sed s/-o/-Bsymbolic\ -o/g > temp.sh && chmod +x temp.sh && ./temp.sh && rm temp.sh
+	cd cplusplus && $(cpp-compiler) -shared -o bin/lib$(name).so $(objects) -L../assets -L$(flibdir) -lglobals -llinuxctrl $(flib) $(static-libc++) $(static-libc) $(ldarg)
 endif
 endif
 #
@@ -551,7 +626,7 @@ endif
 ifeq ($(shell echo "check quotes"),"check quotes")
 #windows
 ifeq ($(copylibs),1)
-	$(admin) copy cplusplus\bin\$(dllname) $(libdir)
+	$(admin)copy cplusplus\bin\$(dllname) $(libdir)$(adminend)
 else
 	@copy cplusplus\bin\$(dllname) binaryplus\bin
 	@copy cplusplus\bin\$(dllname) binarysharp\bin\exe
@@ -560,7 +635,7 @@ endif
 else
 #other
 ifeq ($(copylibs),1)
-	$(admin) cp cplusplus/bin/$(dllname) $(libdir)
+	$(admin)cp cplusplus/bin/$(dllname) $(libdir)$(adminend)
 else
 	@cp cplusplus/bin/$(dllname) binaryplus/bin
 	@cp cplusplus/bin/$(dllname) binarysharp/bin/exe
@@ -587,7 +662,7 @@ ifeq ($(debug),1)
 	@cp csharp/bin/lib/$(filename).pdb cplusplus/bin
 endif
 ifeq ($(copylibs),1)
-	$(admin) cp csharp/bin/lib/$(libname) $(libdir)
+	$(admin)cp csharp/bin/lib/$(libname) $(libdir)$(adminend)
 else
 	@cp csharp/bin/lib/$(libname) binarysharp/bin/exe
 	@cp csharp/bin/lib/$(libname) binaryplus/bin
@@ -598,7 +673,7 @@ ifeq ($(shell echo "check quotes"),"check quotes")
 	@cd csharp/bin/$(configuration)/net9.0/$(os_name)/native/ && @echo . > null.exp && @echo . > null.lib && @echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(libname)
 	@move csharp\bin\$(configuration)\net9.0\$(os_name)\native\$(libname) csharp\bin\lib
 ifeq ($(copylibs),1)
-	$(admin) copy csharp\bin\lib\$(libname) $(libdir)
+	$(admin)copy csharp\bin\lib\$(libname) $(libdir)$(adminend)
 else
 	@copy csharp\bin\lib\$(libname) binarysharp\bin\exe
 	@copy csharp\bin\lib\$(libname) binaryplus\bin
@@ -608,7 +683,7 @@ else
 	@cd csharp/bin/$(configuration)/net9.0/$(os_name)/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
 	@mv -f csharp/bin/$(configuration)/net9.0/$(os_name)/native/* csharp/bin/lib/$(libname)
 ifeq ($(copylibs),1)
-	$(admin) cp csharp/bin/lib/$(libname) $(libdir)
+	$(admin)cp csharp/bin/lib/$(libname) $(libdir)$(adminend)
 else
 	@cp csharp/bin/lib/$(libname) binarysharp/bin/exe
 	@cp csharp/bin/lib/$(libname) binaryplus/bin
@@ -644,21 +719,24 @@ ifeq ($(shell uname -s),Darwin)
 	cd binaryplus/bin && install_name_tool -change $$(otool -l $(binname).$(binary) | grep $(filename).dylib | sed 's/ (offset 24)//' | sed 's/         name //') loader_path/$(libname) $(binname).$(binary)
 #
 endif
+ifeq ($(shell uname -s),Linux)
+#linux
+	cd binaryplus/bin && $(admin)chown root $(binname).$(binary) && $(admin)chmod u+s $(binname).$(binary)$(adminend)
+#
 endif
 
 ifeq ($(shell echo "check quotes"),"check quotes")
 #windows
 ifeq ($(copylibs),1)
-	$(admin) copy binaryplus\bin\$(binname).$(binary) $(bindir)
+	$(admin)copy binaryplus\bin\$(binname).$(binary) $(bindir)$(adminend)
 else
 	cd binaryplus\bin && dir
 endif
 else
 #other
 ifeq ($(copylibs),1)
-	$(admin) cp binaryplus/bin/$(binname).$(binary) $(bindir)
-else
-	cd binaryplus/bin && ls
+	$(admin)cp binaryplus/bin/$(binname).$(binary) $(bindir)$(adminend)
+endif
 endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
@@ -669,7 +747,7 @@ ifeq ($(msvc),1)
 	@cd binarysharp/bin/$(arch)/$(configuration)/net9.0/$(os_name)/native/ && for i in *.$(binary); do if [ ! "$$i" = '$(binname).$(binary)' ]; then mv $$i $(binname).$(binary); fi; done 
 	@mv binarysharp/bin/$(arch)/$(configuration)/net9.0/$(os_name)/native/* binarysharp/bin/exe
 ifeq ($(copylibs),1)
-	$(admin) cp binarysharp/bin/exe/$(binfile).$(binary) $(bindir)
+	$(admin)cp binarysharp/bin/exe/$(binfile).$(binary) $(bindir)$(adminend)
 else
 endif
 else
@@ -687,14 +765,14 @@ endif
 ifeq ($(shell echo "check quotes"),"check quotes")
 #windows
 ifeq ($(copylibs),1)
-	$(admin) copy binarysharp\bin\exe\$(binfile).$(binary) $(bindir)
+	$(admin)copy binarysharp\bin\exe\$(binfile).$(binary) $(bindir)$(adminend)
 else
 	@cd binarysharp\bin\exe && dir
 endif
 else
 #other
 ifeq ($(copylibs),1)
-	$(admin) cp binarysharp/bin/exe/$(binfile).$(binary) $(bindir)
+	$(admin)cp binarysharp/bin/exe/$(binfile).$(binary) $(bindir)$(adminend)
 else
 	@cd binarysharp/bin/exe && ls
 endif

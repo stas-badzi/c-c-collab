@@ -1,6 +1,6 @@
 #pragma once
 
-#include "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/Carbon.framework/Frameworks/HIToolbox.framework/Headers/Events.h"
+#include <linux/keyboard.h>
 #include <limits>
 
 template<typename EnumType, EnumType UNDEFINED, EnumType... Values>

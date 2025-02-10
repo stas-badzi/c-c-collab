@@ -17,11 +17,12 @@ Console::MouseStatus::MouseStatus(void) {
     this->middle = false;
     this->secondary = false;
     this->scroll = pair<bool,bool>(false,false);
-    this->x = -1;
-    this->y = -1;
+    this->x = 0;
+    this->y = 0;
 }
 
 void Console::Init(void) {
+    Console_sub$define(Console_sub);
     Console_Init();
 }
 
@@ -105,12 +106,21 @@ wchar_t** Console::GetArgV(void) {
     int32_t length = Console_GetArgC();
     wchar_t** out = (wchar_t**)malloc(sizeof(wchar_t*)*length); // i think it doesn't mean anything anymore -> // 4 is max utf bytes in one char
     for (int i = 0; i < length; i++) {
-        wstring arg = NativeToWString(UnicodeToUtf8String(ret[i]));
-        out[i] = (wchar_t*)System::AllocateMemory(sizeof(wchar_t)*arg.size());
+        wstring arg = NativeToWString(UnicodeToUtf8String(ret[i]).c_str());
+        out[i] = (wchar_t*)System::AllocateMemory(sizeof(wchar_t)*arg.size()+1);
         for (size_t j = 0; j < arg.size(); j++) out[i][j] = arg[j];
+        out[i][arg.size()] = L'\0';
     }
     System::FreeMemory(ret);
     return out;
+}
+
+int Console::PopupWindow(int type, int argc, wchar_t* argv[]) {
+    unichar** args = (unichar**)System::AllocateMemory(sizeof(unichar*)*argc);
+    for (int i = 0; i < argc; i++) {
+        args[i] = Utf8StringToUnicode(WStringToNative(argv[i]).c_str());
+    }
+    return Console_PopupWindow(type, argc, args);
 }
 
 void Console::Sleep(double seconds){
@@ -238,6 +248,10 @@ uint8_t Console::Symbol::background(void) {
 
 void Console::Symbol::background(uint8_t val) {
     return Console_Symbol_background$set(symbol, val);
+}
+
+void Console::Symbol::ReverseColors(void) {
+    return Console_Symbol_ReverseColors(symbol);
 }
 
 void* Console::Symbol::Get() {

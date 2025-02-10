@@ -1,9 +1,15 @@
 #pragma once
 
-#include <utility>
 #include <vector>
 #include <array>
 #include <bitset>
+#include <utility>
+#include <clang_constexpr.h>
+#include <sstream>
+#include <fstream>
+#include <filesystem>
+#include "System.hpp"
+
 #ifdef __APPLE__
 #ifndef _GLIBCXX_HAVE_AT_QUICK_EXIT
     #define _GLIBCXX_HAVE_QUICK_EXIT
@@ -20,11 +26,14 @@
 
 #ifdef _WIN32
     #include <windows.h>
+    #include <tlhelp32.h>
+    #include <psapi.h>
+    #include <dbghelp.h>
     #include <windows/key.hpp>
+    #include <iostream>
 #ifndef _MSVC
     #include <windows/quick_exit.h>
 #endif
-    #define KEYBOARD_MAX 256
 #else
     #include <signal.h>
     #include <stdio.h>
@@ -38,9 +47,28 @@
     #include <string.h>
 #ifdef __linux__
     #include <linux/getfd.h>
+    #include <linux/mousefd.h>
+    #include <linux/input.h>
+    #include <linux/fb.h>
     #include <linux/kd.h>
+    #include <linux/keyboard.h>
     #include <linux/key.hpp>
-    #define KEYBOARD_MAX NR_KEYS
+    #include <linux/ledctrl.h>
+    #include <sys/types.h>
+    #include <sys/stat.h>
+    #include <fcntl.h>
+#elif __APPLE__
+    #include <apple/key.hpp>
+#elif __CYGWIN__
+    #include <windows.h>
+    #include <windows/key.hpp>
+#else
+#endif
+#endif
+#ifdef __APPLE__
+    #include <apple/key.hpp>
+    #include <apple/args.h>
+    #define KEYBOARD_MAX 0x80
 #else
     #define KEYBOARD_MAX 256
 #ifdef __APPLE__
@@ -48,6 +76,7 @@
 #else
     #include <apple/key.hpp>
     #include <apple/args.h>
+#endif
 #endif
 #endif
 #endif
@@ -73,6 +102,10 @@
 #define MOUSE_MODIFIER_CONTROL 0b1000000 // 2^6
 #define MOUSE_MODIFIER_ALT MOUSE_MODIFIER_META // 2^6
 
+int sub(int);
+
+void SysSleep(int microseconds);
+
 namespace cpp {
     class Console {
     public:
@@ -80,11 +113,39 @@ namespace cpp {
             bool primary; // is down
             bool secondary; // is down
             bool middle; // is down
-            std::pair<bool,bool> scroll; 
+            std::pair<bool,bool> scroll; // (is scrolling),(up or down)[windows/linux/freebsd - scroll up == move scroll whell (fingers on touchbad) down; down == move up | macos scroll like tablet/phone]
             unsigned int x; // in console chracters
             unsigned int y; // in console chracters
             MouseStatus(void);
         };
+
+        struct ClientInfo {
+            enum class OS {
+                WINDOWS,
+                MSYS2,
+                CYGWIN,
+                LINUX,
+                MACOS,
+                BSD
+            } operating_system;
+
+            enum class Arch {
+                X64,
+                ARM64,
+                ARM,
+                X86
+            } architecture;
+
+            enum class Term {
+                conhost,
+                mintty,
+                //windows_terminal, // terminal emulator
+                terminal_emulator,
+                linux_console,
+                windows_server,
+                macos_recovery_treminal
+            } terminal;
+        } client_info;
         
     private:
         static bool initialised;
@@ -104,7 +165,14 @@ namespace cpp {
         static int argc;
         static uniconv::utfcstr* argv;
         static struct ToggledKeys keys_toggled;
+        static bool emulator;
+        static int pid;
+        static bool sub_proc;
+        static int ret;
+        static std::array<bool,UINT16_MAX> used_pids;
+        static uint16_t next_pid;
         #ifdef _WIN32
+            static const wchar_t* subdir;
             //static std::vector<std::vector<COLORREF>> SaveScreen(void);
             //static std::pair<std::pair<uint16_t,uint16_t>,std::pair<uint16_t,uint16_t>> GetOffsetSymSize(int color1 = 3, int color2 = 9, int color3 = 1);
             
@@ -122,16 +190,28 @@ namespace cpp {
             static HDC device;
             static DWORD old_console;
             static HANDLE old_buffer;
-            static inline uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2);
+            static inline constexpr uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2);
             //static std::pair<uint16_t,uint16_t> xyoffset;
             //static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
+            static uniconv::utfstr GetTerminalExecutableName();
         #else
+            static const char* subdir;
             static struct termios old_termios;
             static struct winsize window_size;
+            static char buf[127]; static int8_t buf_it;
         #ifdef __linux__
+            static inline char GetChar(void);
             static struct termios old_fdterm;
             static int old_kbdmode;
             static int fd;
+            static int fb_fd;
+            static std::pair<uint32_t,uint32_t> pixelpos; 
+            static input_event events[255]; static uint8_t evnts_siz;
+            static int mouse_fd;
+            static bool discard_mouse;
+            static bool no_gpm;
+            static bool parent;
+            static uint8_t root_type;
             static Key::Enum key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX];
         #endif
         #endif
@@ -153,6 +233,8 @@ namespace cpp {
             Symbol(uint8_t attribute);
 
             ~Symbol(void);
+
+            void ReverseColors(void);
 
             Symbol & operator=(const Symbol &src);
 
@@ -187,7 +269,21 @@ namespace cpp {
 
         static void SetDoubleClickMaxWait(unsigned short milliseconds);
         static unsigned short GetDoubleClickMaxWait(void);
-    };
-} // namespace cpp
 
-void SysSleep(int microseconds);
+        static int PopupWindow(int type, int argc, uniconv::utfcstr argv[]);
+#ifdef _WIN32
+        static std::wistringstream in;
+        static std::wofstream out;
+#else
+        static std::istringstream in;
+        static std::ofstream out;
+#endif
+    };
+#ifdef _WIN32
+    extern __declspec(dllexport) std::wistream& gin;
+    extern __declspec(dllexport) std::wostream& gout;
+#else
+    extern __attribute__((visibility("default"))) std::istream& gin;
+    extern __attribute__((visibility("default"))) std::ostream& gout;
+#endif
+} // namespace cpp

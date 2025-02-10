@@ -1,6 +1,6 @@
 #ifdef _WIN32
 #ifndef _MSVC
-    #include "../cplusplus/windows/quick_exit/defines.h"
+    #include <windows/quick_exit/defines.h>
 
     void null(void) { return; }
 

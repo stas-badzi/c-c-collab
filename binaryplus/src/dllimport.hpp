@@ -16,6 +16,7 @@
 #include "defines.h"
 
 namespace cppimp {
+
     libimport void Console_Init(void);
 
     libimport void Console_Fin(void);
@@ -52,6 +53,15 @@ namespace cppimp {
 
     libimport uniconv::unichar** Console_GetArgV(void);
 
+    libimport int Console_PopupWindow(int type, int argc, uniconv::unichar* argv[]);
+    
+#ifdef __cplusplus
+    extern "C"
+#endif
+    int Console_sub(int);
+
+    libimport void Console_sub$define(int (*arg1)(int));
+
     libimport void* Console_Symbol_Construct$smb(void* smb);
 
     libimport void* Console_Symbol_Construct$cfb(uniconv::unichar character, uint8_t foreground, uint8_t background);
@@ -84,7 +94,9 @@ namespace cppimp {
 
 // System
 
-    libimport uniconv::unichar* System_GetRootPath(void);
+    libimport uniconv::unichar* System_GetRootDir(void);
+
+    libimport uniconv::unichar* System_GetSelfPath(void);
     
     libimport uniconv::unichar* System_ToNativePath(uniconv::unichar* arg1);
     
@@ -180,6 +192,10 @@ namespace cppimp {
         libimport void System_WritePointer$bool$ofs(nint arg1, int32_t arg3, bool arg2);
 
         libimport void System_WritePointer$nint$ofs(nint arg1, int32_t arg3, nint arg2);
+
+    // actually from c# but who cares
+        libimport void Console_Symbol_ReverseColors(nint sym);
+    //
 
 } // namespace CppImp
 

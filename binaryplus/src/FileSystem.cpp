@@ -144,5 +144,5 @@ wstring cs::FileSystem::DoSomeThings(vector<bool> taki, wstring s) {
     for (int32_t i = 0; i < size; i++) {
         System::WritePointer(vecptr, int32_size + i * bool_size, (bool)taki[i]);
     }
-    return NativeToWString(UnicodeToUtf8String(csimp::FileSystem_DoSomeThings(vecptr, str)));
+    return NativeToWString(UnicodeToUtf8String(csimp::FileSystem_DoSomeThings(vecptr, str)).c_str());
 }

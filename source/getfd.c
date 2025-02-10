@@ -43,10 +43,6 @@ open_a_console(const char *fnam)
 	 */
 	fd = open(fnam, O_RDWR);
 	if (fd < 0)
-		fd = open(fnam, O_WRONLY);
-	if (fd < 0)
-		fd = open(fnam, O_RDONLY);
-	if (fd < 0)
 		return -1;
 	return fd;
 }

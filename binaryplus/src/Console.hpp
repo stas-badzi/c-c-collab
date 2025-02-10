@@ -4,9 +4,11 @@
 #include <vector>
 #include <cstdint>
 #include <unicode_conversion.hpp>
+#include <sstream>
 #ifdef _WIN32
     #include <windows.h>
     #include <windows/key.hpp>
+    #include <iostream>
 #elif __linux__
     #include <linux/key.hpp>
 #else
@@ -32,6 +34,8 @@
 #define MOUSE_MODIFIER_META 0b100000 //2^5
 #define MOUSE_MODIFIER_CONTROL 0b1000000 // 2^6
 #define MOUSE_MODIFIER_ALT MOUSE_MODIFIER_META // 2^6
+
+int sub(int);
 
 namespace cpp {
     class Console {
@@ -69,6 +73,8 @@ namespace cpp {
             uint8_t background(void);
             void background(uint8_t val);
 
+            void ReverseColors(void);
+
             Symbol(void);
             Symbol(const Symbol &cp);
             Symbol(void* ptr, bool direct = false);
@@ -76,6 +82,7 @@ namespace cpp {
             ~Symbol();
 
             Symbol operator=(const Symbol &src);
+
 
             void* Get();
 
@@ -99,6 +106,7 @@ namespace cpp {
         static int16_t GetWindowHeight(void);
         static int32_t GetArgC(void);
         static wchar_t** GetArgV(void);
+        static int PopupWindow(int type, int argc, wchar_t* argv[]);
         static void Sleep(double seconds = 1.0);
         static void FillScreen(std::vector<std::vector<Symbol> > symbols);
         static void HandleMouseAndFocus(void);
@@ -107,4 +115,11 @@ namespace cpp {
         static std::pair<uint8_t,uint8_t> MouseButtonClicked(void); // returns button ID and whitch consecutive click was it
         static uint8_t MouseButtonReleased(void); // returns button ID
     };
+#if defined(_WIN32) || defined(__CYGWIN__)
+    extern __declspec(dllimport) std::wistream& gin;
+    extern __declspec(dllimport) std::wostream& gout;
+#else
+    extern std::istream& gin;
+    extern std::ostream& gout;
+#endif
 }

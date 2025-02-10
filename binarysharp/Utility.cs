@@ -1,11 +1,22 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Cpp;
+using CppImp;
 
 #pragma warning disable CS8500
 
 namespace Utility
 {
+    [StructLayout(LayoutKind.Sequential)]  
+    public struct Pair<T1,T2> {
+        public T1 first;
+        public T2 second;
+        public Pair(T1 first, T2 second) {
+            this.first = first;
+            this.second = second;
+        }
+    }
+
     public class DllHandle
     {
 
@@ -274,16 +285,16 @@ namespace Utility
             return ret;
         }
 
-        public static char UnicodeToUtf8(Int32 uni) {
+        public static char UnicodeToUtf8(UInt32 uni) {
             return Convert.ToChar(uni);
         }
 
-        public static Int32 Utf8ToUnicode(char utf) {
-            return Convert.ToInt32(utf);
+        public static UInt32 Utf8ToUnicode(char utf) {
+            return Convert.ToUInt32(utf);
         }
         public static String PtrToString(IntPtr ptr)
         {
-        #if WIN32
+        #if WIN32 // it's suppose to not be used even on windows
             string? output = Marshal.PtrToStringUni(ptr);
             Exec.FreeMemory(ptr);
             if (output == null) { throw new Exception("Parsed data is null"); }
@@ -292,7 +303,7 @@ namespace Utility
             int int32_size = sizeof(Int32);
 
             String str = "";
-            UInt32 intg = Exec.ReadPointer<UInt32>(ptr);
+            UInt32 intg = new UInt32();
             for (int i = 0; true; i++) {
                 intg = Exec.ReadPointer<UInt32>(ptr,i*int32_size);
                 if (intg == 0) {
@@ -356,7 +367,7 @@ namespace Utility
 
             return list;
         }
-        public static List<List<Terminal.Symbol>> PtrToTexture(nint ptr)
+        public static List<List<Terminal.Symbol>> PtrToTexture(nint ptr, bool direct = false)
         {
             const int int32_size = sizeof(int);
             int intptr_size = nint.Size;
@@ -377,7 +388,8 @@ namespace Utility
                 {
                     nint ni = Exec.ReadPointer<IntPtr>(ptr, (i + 2) * int32_size + count * intptr_size);
                     // bro what the fuvk -----------under here----------- (I knew it from the begginig but I couldn't find it)
-                    texture[i].Add(new Terminal.Symbol(ni));
+                    CppImp.Console.Symbol.Inspect(ni);
+                    texture[i].Add(new Terminal.Symbol(ni,direct));
                     count++;
                 }
             }
@@ -391,7 +403,7 @@ namespace Utility
             return texture;
         }
 
-        public static nint TextureToPtr(List<List<Terminal.Symbol>> texture)
+        public static nint TextureToPtr(List<List<Terminal.Symbol>> texture, bool direct = false)
         {
             const int int32_size = sizeof(int);
             int intptr_size = nint.Size;
@@ -412,6 +424,7 @@ namespace Utility
                 Exec.WritePointer<Int32>(texturePtr, (i + 1) * int32_size + count * intptr_size, texture[i].Count);
                 for (int j = 0; j < texture[i].Count; j++)
                 {
+                    if (direct) texture[i][j].UnarmPointer();
                     Exec.WritePointer<IntPtr>(texturePtr, (i + 2) * int32_size + count * intptr_size, texture[i][j].Get());
                     count++;
                 }
