@@ -1803,6 +1803,10 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
         return Console::key_chart[0][Console::key_released];
     }
 
+    utfstr Console::GetTerminalExecutableName() {
+        return FindTerminalEmulator();
+    }
+
     struct termios Console::old_fdterm = termios();
     int Console::old_kbdmode = int();
     int Console::fd = int();
