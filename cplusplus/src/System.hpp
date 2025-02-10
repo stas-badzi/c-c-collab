@@ -14,8 +14,13 @@
 #else
     #include <unistd.h>
     #include <pthread.h>
+    #include <sys/stat.h>
 #ifndef _LINUX_WAIT_H
     #include <sys/wait.h>
+#endif
+#ifdef __APPLE__
+    #include <signal.h>
+    typedef void (*sighandler_t)(int);
 #endif
 #endif
 
@@ -27,7 +32,7 @@ namespace cpp {
         static uniconv::utfstr GetRoot(void);
         static uniconv::utfstr root;
         static uniconv::utfstr self;
-#ifdef __unix__
+#if !defined(_WIN32) && !defined(__CYGWIN__)
         static pid_t tpid;
         static void SendSignal(int signal);
 #endif

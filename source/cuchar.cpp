@@ -51,7 +51,7 @@ namespace std {
     size_t c32rtomb(char *__restrict__ __s, char32_t __c32, mbstate_t *__restrict__ __ps) noexcept(true) {
         if (__s == nullptr)
             return 1;
-        size_t amount = 0;
+        int amount = 0;
         char utf8[4];
         if (__c32 <= 0x7f) {
             amount = 1;
@@ -80,7 +80,7 @@ namespace std {
         }
 
         if (amount > MB_CUR_MAX) amount = MB_CUR_MAX;
-        for (size_t i = 0; i < amount; i++)
+        for (int i = 0; i < amount; i++)
             __s[i] = __c32;
         return amount;
     }

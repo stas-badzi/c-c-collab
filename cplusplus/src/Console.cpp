@@ -956,7 +956,6 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
     DWORD Console::old_console = DWORD();
     uint8_t Console::default_fcol = uint8_t();
     uint8_t Console::default_bcol = uint8_t();
-    utfcstr* Console::argv = (utfcstr*)malloc(sizeof(utfcstr));
     const wchar_t* Console::subdir = nullptr;
     wistringstream Console::in = wistringstream(std::ios_base::ate|std::ios_base::in);
     wofstream Console::out = wofstream();
@@ -1813,8 +1812,11 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
     bool Console::no_gpm = bool(true);
     bool Console::parent = bool(false);
     uint8_t Console::root_type = uint8_t(0);
-    utfcstr* Console::argv = (const char**)malloc(0); 
     Key::Enum Console::key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX] = { { Key::Enum::NONE } };
+
+    pair<uint32_t,uint32_t> Console::pixelpos = pair<uint32_t,uint32_t>(0,0);
+    input_event Console::events[255] = {input_event()};
+    uint8_t Console::evnts_siz = 0;
 
 #elif __APPLE__
 // macOS
@@ -1871,7 +1873,35 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
             initialised = false;
         }
     }
+
+    void Console::HandleKeyboard(void) {
+        return;
+    }
+
+    utfstr Console::GetTerminalExecutableName() {
+        return "Unknown";
+    }
+
+    void Console::HandleMouseAndFocus(void) {
+        return;
+    }
+
+    Key::Enum Console::KeyPressed(void) {
+        if (Console::key_hit < 0) return Key::Enum::NONE;
+        return static_cast<Key::Enum>(Console::key_hit);
+    }
+
+    Key::Enum Console::KeyReleased(void) {
+        if (Console::key_released < 0) return Key::Enum::NONE;
+        return static_cast<Key::Enum>(Console::key_released);
+    }
+
+    bool Console::IsKeyDown(Key::Enum key) {
+        return Console::key_states[static_cast<unsigned short>(key)];
+    }
 #else
+// NO APPLE NO LINUX
+#error "Not implemented... yet"
     void Console::Init(void) {
         if (!initialised) {
 
@@ -1990,15 +2020,13 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
     winsize Console::window_size = winsize();
     char Console::buf[127] = "\0";
     int8_t Console::buf_it = -1;
-    pair<uint32_t,uint32_t> Console::pixelpos = pair<uint32_t,uint32_t>(0,0);
-    input_event Console::events[255] = {input_event()};
-    uint8_t Console::evnts_siz = 0;
     const char* Console::subdir = nullptr;
     istringstream Console::in = istringstream(std::ios_base::ate|std::ios_base::in);
     ofstream Console::out = ofstream();
 #endif
 
 int Console::argc = 0;
+utfcstr* Console::argv = (utfcstr*)malloc(sizeof(utfcstr));
 
 bool Console::emulator = false;
 bool Console::initialised = false;
@@ -2147,7 +2175,7 @@ newpidgen:
 #if defined(_WIN32) || defined(__CYGWIN__)
     #define sep L'\\'
 #else
-    #define sep u8'/'
+    #define sep '/'
 #endif
     utfstr procdir = utfstr(N("proc")) + sep  + to_nstring(npid) + sep;
     System::MakeDirectory((filesystem::temp_directory_path().native() + subdir + procdir).c_str());
@@ -2174,15 +2202,16 @@ newpidgen:
         goto console;
 #elif __CYGWIN__
     if (!term.size()) {
-        term.append(L"C:\\cygwin64\\bin\\mintty.exe");
+        term.append(L"C:\\cygwin64\\bin\\mintty.exe"); // todo - if mintty doesn't exists the use default 
+        if (false) goto console;
     }
 #elif __APPLE__
     if (!term.size()) {
-        term.append(u8"/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal"); // idk if this is the actual path
+        term.append("/Applications/Utilities/Terminal.app"); // idk if this is the actual path
     }
 #elif __linux__
     if (!term.size()) {
-        term.append(u8"/usr/bin/gnome-terminal"); // todo - find default terminal emulator
+        term.append("/usr/bin/gnome-terminal"); // todo - find default terminal emulator
     }
 #else
     return -1;

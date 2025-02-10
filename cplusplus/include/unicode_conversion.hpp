@@ -51,7 +51,7 @@ namespace uniconv {
     }
 #else
     #define to_nstring(val) to_string(val)
-    #define N(val) u8##val
+    #define N(val) val
     typedef std::string utfchar;
     typedef std::string utfstr;
     typedef const char* utfcstr;

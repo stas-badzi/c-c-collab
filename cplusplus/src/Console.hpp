@@ -71,14 +71,6 @@
     #define KEYBOARD_MAX 0x80
 #else
     #define KEYBOARD_MAX 256
-#ifdef __APPLE__
-
-#else
-    #include <apple/key.hpp>
-    #include <apple/args.h>
-#endif
-#endif
-#endif
 #endif
 
 #define MOUSE_BUTTON_1  1
@@ -126,6 +118,9 @@ namespace cpp {
                 CYGWIN,
                 LINUX,
                 MACOS,
+            #ifdef BSD
+            #undef BSD
+            #endif
                 BSD
             } operating_system;
 
@@ -193,7 +188,6 @@ namespace cpp {
             static inline constexpr uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2);
             //static std::pair<uint16_t,uint16_t> xyoffset;
             //static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
-            static uniconv::utfstr GetTerminalExecutableName();
         #else
             static const char* subdir;
             static struct termios old_termios;
@@ -215,6 +209,7 @@ namespace cpp {
             static Key::Enum key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX];
         #endif
         #endif
+            static uniconv::utfstr GetTerminalExecutableName();
     public:
         static void Init(void);
         static void Fin(void);

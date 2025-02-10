@@ -36,7 +36,7 @@ namespace windows {
 
         public const ushort VK_SHIFT         = 0x10;
         public const ushort VK_CONTROL       = 0x11;
-        public const ushort VK_MENU          = 0x12;
+        public const ushort VK_MENU,          = 0x12;
         public const ushort VK_PAUSE         = 0x13;
         public const ushort VK_CAPITAL       = 0x14;
 
@@ -137,7 +137,7 @@ namespace windows {
         */
 
         public const ushort VK_NAVIGATION_VIEW    = 0x88;
-        public const ushort VK_NAVIGATION_MENU    = 0x89;
+        public const ushort VK_NAVIGATION_MENU,    = 0x89;
         public const ushort VK_NAVIGATION_UP      = 0x8A;
         public const ushort VK_NAVIGATION_DOWN    = 0x8B;
         public const ushort VK_NAVIGATION_LEFT    = 0x8C;
@@ -176,8 +176,8 @@ namespace windows {
         public const ushort VK_RSHIFT        = 0xA1;
         public const ushort VK_LCONTROL      = 0xA2;
         public const ushort VK_RCONTROL      = 0xA3;
-        public const ushort VK_LMENU         = 0xA4;
-        public const ushort VK_RMENU         = 0xA5;
+        public const ushort VK_LMENU,         = 0xA4;
+        public const ushort VK_RMENU,         = 0xA5;
 
         public const ushort VK_BROWSER_BACK       = 0xA6;
         public const ushort VK_BROWSER_FORWARD    = 0xA7;
@@ -231,7 +231,7 @@ namespace windows {
         public const ushort VK_GAMEPAD_DPAD_DOWN                = 0xCC;
         public const ushort VK_GAMEPAD_DPAD_LEFT                = 0xCD;
         public const ushort VK_GAMEPAD_DPAD_RIGHT               = 0xCE;
-        public const ushort VK_GAMEPAD_MENU                     = 0xCF;
+        public const ushort VK_GAMEPAD_MENU,                     = 0xCF;
         public const ushort VK_GAMEPAD_VIEW                     = 0xD0;
         public const ushort VK_GAMEPAD_LEFT_THUMBSTICK_BUTTON   = 0xD1;
         public const ushort VK_GAMEPAD_RIGHT_THUMBSTICK_BUTTON  = 0xD2;

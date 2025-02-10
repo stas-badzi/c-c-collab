@@ -47,7 +47,7 @@ namespace Utility {
             CTRL_BACKSLASH , /* Ctrl + \ */
             CTRL_BRACKETRIGHT , /* Ctrl + [ */
             CTRL_ASCIICIRCUM , /* Ctrl + ^ */
-            CTRL_UNEDERSCORE , /* Ctrl + _ */
+            CTRL_UNDERSCORE , /* Ctrl + _ */
             SPACE = VK_SPACE, /* ⎵ */
             ESCLAM , /* ! */
             DBLQUOTE , /* " */
@@ -61,7 +61,7 @@ namespace Utility {
             ASTERISK , /* * */
             PLUS = VK_OEM_PLUS, /* + */
             COMMA = VK_OEM_COMMA, /* , */
-            MINUS = VK_OEM_MINUS, /* -- */
+            MINUS = VK_OEM_MINUS, /* - */
             PERIOD = VK_OEM_PERIOD, /* . */
             SLASH = VK_OEM_2, /* / (on us keybards) */
             /*$0*/ZERO = '0', /* 0 */
@@ -111,8 +111,8 @@ namespace Utility {
             BACKSLASH = VK_OEM_5, /* \ (on us keybards) */
             BRACKETRIGHT = VK_OEM_6, /* ] (on us keybards) */
             ASCIICIRCUM , /* ^  */
-            UNEDERSCORE , /* _ */
-            GRAVE , /* `*/
+            UNDERSCORE , /* _ */
+            GRAVE , /* ` */
             a = 'A', /* a */
             b = 'B', /* b */
             c = 'C', /* c */
@@ -712,7 +712,7 @@ namespace Utility {
             CONSOLE63 , /* Console_63 */
 
             CANCEL = VK_CANCEL, /* Cancel */
-            CLEAR = VK_CLEAR, /* Clear */
+            KPCLEAR = VK_CLEAR, /* Empty Keypad Key */
             KANA = VK_KANA, /* IME Kana mode */
             HANGUL = VK_HANGUL, /* IME Hangul mode */
             IME_ON = VK_IME_ON, /* IME On */
@@ -728,9 +728,9 @@ namespace Utility {
             PRINT = VK_PRINT, /* Print Key */
             EXECUTE = VK_EXECUTE, /* Execute Key */
             SNAPSHOT = VK_SNAPSHOT, /* Print Screen Key */
-            SUPERL = VK_LWIN, /* Left Super[Windows] key */
-            SUPERR = VK_RWIN, /* Right Super[Windows] key */
-            APPS = VK_APPS, /* Applications Key */
+            SUPERL = VK_LWIN, /* Left Super[Windows/Command] key */
+            SUPERR = VK_RWIN, /* Right Super[Windows/Command] key */
+            MENU = VK_APPS, /* Applications Key */
             SLEEP = VK_SLEEP, /* Computer Sleep Key */
             AALT = VK_MENU, /* Any Alt */
             BROWSER_BACK = VK_BROWSER_BACK, /* Browser Back */
@@ -760,7 +760,7 @@ namespace Utility {
             PLAY = VK_PLAY, /* Play key */
             ZOOM = VK_ZOOM, /* Zoom key */
             PA1 = VK_PA1, /* PA1 key */
-            CLEAR2 = VK_OEM_CLEAR, /* OEM Clear */
+            CLEAR = VK_OEM_CLEAR, /* OEM Clear */
 
             // Other (Not documented)
 
@@ -776,7 +776,7 @@ namespace Utility {
             MISC2 = VK_OEM_102,  /*  "<>" or "\|" on RT 102-key kbd. */
             HELP_ICO = VK_ICO_HELP, /* Help key on ICO */
             _00_ICO = VK_ICO_00, /* 00 key on ICO */
-            CLEAR_ICO = VK_ICO_CLEAR, /* Clear key on ICO (i think) */
+            CLEAR_ICO = VK_ICO_CLEAR, /* Empty key on ICO (i think) */
             PACKET = VK_PACKET,
 
             // Nokia/Ericsson definitions
@@ -827,7 +827,7 @@ namespace Utility {
             CTRL_BACKSLASH = 28, /* Ctrl + \ */
             CTRL_BRACKETRIGHT = 29, /* Ctrl + [ */
             CTRL_ASCIICIRCUM = 30, /* Ctrl + ^ */
-            CTRL_UNEDERSCORE = 31, /* Ctrl + _ */
+            CTRL_UNDERSCORE = 31, /* Ctrl + _ */
             SPACE = 32, /* ⎵ */
             ESCLAM = 33, /* ! */
             DBLQUOTE = 34, /* " */
@@ -891,8 +891,8 @@ namespace Utility {
             BACKSLASH = 92, /* \ */
             BRACKETRIGHT = 93, /* ] */
             ASCIICIRCUM = 94, /* ^ */
-            UNEDERSCORE = 95, /* _ */
-            GRAVE = 96, /* ` */
+            UNDERSCORE = 95, /* _ */
+            GRAVE = 96, /* `  */
             a = 97, /* a */
             b = 98, /* b */
             c = 99, /* c */
@@ -1492,7 +1492,7 @@ namespace Utility {
 
             SELECT, /* Select [End] */
             CANCEL , /* Cancel */
-            CLEAR , /* Clear */
+            KPCLEAR , /* Empty Keypad Key */
             KANA , /* IME Kana mode */
             HANGUL , /* IME Hangul mode */
             IME_ON , /* IME On */
@@ -1508,9 +1508,9 @@ namespace Utility {
             PRINT , /* Print Key */
             EXECUTE , /* Execute Key */
             SNAPSHOT , /* Print Screen Key */
-            SUPERL , /* Left Super[Windows] key */
-            SUPERR , /* Right Super[Windows] key */
-            APPS , /* Applications Key */
+            SUPERL , /* Left Super[Windows/Command] key */
+            SUPERR , /* Right Super[Windows/Command] key */
+            MENU , /* Applications Key */
             SLEEP , /* Computer Sleep Key */
             AALT , /* Any Alt */
             BROWSER_BACK , /* Browser Back */
@@ -1540,7 +1540,7 @@ namespace Utility {
             PLAY , /* Play key */
             ZOOM , /* Zoom key */
             PA1 , /* PA1 key */
-            CLEAR2 , /* OEM Clear */
+            CLEAR , /* OEM Clear */
 
             // Other (Not documented)
 
@@ -1556,7 +1556,7 @@ namespace Utility {
             MISC2 , //  "<>" or "\|" on RT 102-key kbd.
             HELP_ICO , /* Help key on ICO */
             _00_ICO , /* 00 key on ICO */
-            CLEAR_ICO , /* Clear key on ICO (i think) */
+            CLEAR_ICO , /* Empty key on ICO (i think) */
 
             // Nokia/Ericsson definitions
 

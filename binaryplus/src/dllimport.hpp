@@ -9,7 +9,8 @@
 #include <windows/key.hpp>
 #elif __linux__
 #include <linux/key.hpp>
-#elif _APPLE_
+#elif __APPLE__
+#include <apple/key.hpp>
 #else
 #endif
 

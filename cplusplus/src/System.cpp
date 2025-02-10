@@ -378,8 +378,8 @@ int cpp::System::Shell(uniconv::utfcstr command) {
     return System::RunProgram("/bin/sh", "-c", command, nullptr); 
 }
 
-void cpp::System::ShellAsync(uniconv::utfcstr command) {
-    System::RunProgramAsync("/bin/sh", is_running, "-c", command, nullptr);
+bool cpp::System::ShellAsync(uniconv::utfcstr command) {
+    return System::RunProgramAsync("/bin/sh", "-c", command, nullptr);
 }
 
 #define CALL_RETRY(retvar, expression) do { \
@@ -392,41 +392,12 @@ void cpp::System::SendSignal(int signal) {
     kill(tpid, signal);
 }
 
-struct thread_inout {
-    void* args;
-    void* ret;
-};
-
-struct __pid_bool {
-    pid_t pid;
-    bool& is_running;
-};
-
-void* WaitForProgram(void* pid_running_ret) {
-    thread_inout inout = *(thread_inout*)pid_running_ret;
-    int wexit, status;
-    __pid_bool args = (__pid_bool*)inout.args;
-    pid_t pid = args.pid;
-    bool& is_running = args.is_running;
-    is_running = true;
-    pid_t ret; CALL_RETRY(ret,waitpid((pid_t)pid, &wexit, 0))
-    is_running = false;
-    if (ret != (pid_t)pid)
-        return -1;
-    if (!WIFEXITED(wexit))
-        return -1;
-    status = WEXITSTATUS(wexit);
-    *(int*)inout.ret = status;
-    return 0;
-}
-
-int cpp::System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
-    is_running = true;
+bool cpp::System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
     int status;
     System::tpid = fork();
     sighandler_t old_handler[32];
     if (tpid < 0)
-        status = -1;
+        return false;
     if (tpid == 0) {
         signal(SIGINT, SIG_DFL);
         signal(SIGQUIT, SIG_DFL);
@@ -466,7 +437,8 @@ int cpp::System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr arg, ..
         va_end(args);
         execv(path, args_c);
         exit(127);
-    } else return;
+    }
+    return true;
 }
 
 
@@ -865,6 +837,48 @@ int cpp::System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]
     signal(SIGTTOU, old_handler[SIGTTOU]);
     return status;
 }
+
+bool cpp::System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
+    int status;
+    System::tpid = fork();
+    sighandler_t old_handler[32];
+    if (tpid < 0)
+        return false;
+    if (tpid == 0) {
+        signal(SIGINT, SIG_DFL);
+        signal(SIGQUIT, SIG_DFL);
+        signal(SIGILL, SIG_DFL);
+        signal(SIGTRAP, SIG_DFL);
+        signal(SIGABRT, SIG_DFL);
+        signal(SIGIOT, SIG_DFL);
+        signal(SIGFPE, SIG_DFL);
+        signal(SIGKILL, SIG_DFL);
+        signal(SIGUSR1, SIG_DFL);
+        signal(SIGSEGV, SIG_DFL);
+        signal(SIGUSR2, SIG_DFL);
+        signal(SIGPIPE, SIG_DFL);
+        signal(SIGTERM, SIG_DFL);
+#ifdef SIGSTKFLT
+        signal(SIGSTKFLT, SIG_DFL);
+#endif
+        signal(SIGCHLD, SIG_DFL);
+        signal(SIGCONT, SIG_DFL);
+        signal(SIGSTOP, SIG_DFL);
+        signal(SIGTSTP, SIG_DFL);
+        signal(SIGTTIN, SIG_DFL);
+        signal(SIGTTOU, SIG_DFL);
+        
+        char* args_c[256]{nullptr};
+        args_c[0] = (char*)path;
+        for (int i = 1; i < 256; i++)
+            if (args[i-1] == nullptr) break;
+            else args_c[i] = (char*)args[i-1];
+        execvp(path, args_c);
+        exit(127);
+    }
+    return true;
+}
+
 
 utfstr System::GetRoot(void) {
     char buf[255] = {'\0'};

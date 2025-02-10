@@ -338,7 +338,7 @@ else
 ifeq ($(shell uname -s),Darwin)
 #macos
 nulldir =  /dev/null
-binflags = -lcuchar
+binflags = -lapplecuchar -L../assets
 admin = sudo$(space)
 adminend =
 staticgen = ar -rcs$(space)
@@ -544,10 +544,10 @@ else
 endif
 else
 ifeq ($(shell uname -s),Darwin)
-	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wextra -Wno-unused-parameter $(cflags) $(cdb) -Isource -std=c++2b && mv *.o objects/
+	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wextra -Wno-constant-conversion -Wno-unused-parameter $(cflags) $(cdb) -Isource -std=c++2b && mv *.o objects/
 	$(staticgen)assets/$(prefix)applecuchar.$(static) objects/cuchar.o
 	$(c-compiler) -c source/getkeystate.m -framework CoreGraphics -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
-	ar rcs assets/applectrl.$(static) objects/getkeystate.o
+	ar rcs assets/libapplectrl.$(static) objects/getkeystate.o
 endif
 endif
 
@@ -613,7 +613,7 @@ endif
 else
 ifeq ($(shell uname -s),Darwin)
 #macos
-	cd cplusplus && $(cpp-compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) -L../assets -L$(flibdir) -lcuchar -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) -L../assets -L$(flibdir) -lapplecuchar -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
 #
 else
 #linux and similar
