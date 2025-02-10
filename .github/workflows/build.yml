@@ -52,12 +52,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: CSharpWinDll
-          path: csharp/bin/lib/factoryshsharp.dll
+          path: csharp/bin/lib
       - name: Import C# compiled executable
         uses: actions/download-artifact@v4
         with:
           name: CSharpWinExe
-          path: binarysharp/bin/exe/cs-factoryrush.exe
+          path: binarysharp/bin/exe
       - name: Copy C# where it's needed
         run: |
           touch cs
@@ -93,12 +93,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: CSharpWinDll
-          path: csharp/bin/lib/factoryshsharp.dll
+          path: csharp/bin/lib
       - name: Import C# compiled executable
         uses: actions/download-artifact@v4
         with:
           name: CSharpWinExe
-          path: binarysharp/bin/exe/cs-factoryrush.exe
+          path: binarysharp/bin/exe
       - name: Set up Cygwin
         uses: egor-tensin/setup-cygwin@v4
         with:
