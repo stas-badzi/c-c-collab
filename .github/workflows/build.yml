@@ -62,8 +62,8 @@ jobs:
         run: |
           touch cs
           touch csbin
-          cp csharp/bin/lib/factoryshsharp.dll cplusplus/bin/factoryrush.dll
-          cp csharp/bin/lib/factoryshsharp.dll binaryplus/bin/factoryrush.dll
+          cp csharp/bin/lib/factoryshsharp.dll cplusplus/bin/factoryrushsharp.dll
+          cp csharp/bin/lib/factoryshsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Compile code
         shell: msys2 {0}
         env:
