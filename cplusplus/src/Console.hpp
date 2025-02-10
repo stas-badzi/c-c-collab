@@ -29,6 +29,7 @@
     #include <tlhelp32.h>
     #include <psapi.h>
     #include <dbghelp.h>
+    #include <process.h>
     #include <windows/key.hpp>
     #include <iostream>
 #ifndef _MSVC
