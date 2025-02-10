@@ -44,10 +44,6 @@ jobs:
         with:
           update: true
           install: make git zip tree mingw-w64-clang-x86_64-toolchain
-      - name: clone-repository
-        shell: msys2 {0}
-        run: |
-          git clone https://github.com/stas-badzi/c-c-collab.git .
       - name: Import C# compiled dynamic library
         uses: actions/download-artifact@v4
         with:
@@ -60,6 +56,8 @@ jobs:
           path: binarysharp/bin/exe
       - name: Copy C# where it's needed
         run: |
+          cd $(cygpath -m "${{ github.workspace }}" | tr ':' '')
+          tree
           touch cs
           touch csbin
           cp csharp/bin/lib/factoryshsharp.dll cplusplus/bin/factoryrushsharp.dll
