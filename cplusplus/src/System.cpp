@@ -14,8 +14,8 @@ utfstr System::self = utfstr();
 
 #ifdef _WIN32
     utfstr System::GetRoot(void) {
-        wchar_t buf[255];
-        DWORD size = GetModuleFileName(NULL, buf, 255);
+        wchar_t buf[PATH_MAX];
+        DWORD size = GetModuleFileName(NULL, buf, PATH_MAX);
         wchar_t* edit = buf;
         System::self = edit;
         while (edit[--size] != '\\') buf[size] = '\0';
@@ -879,24 +879,43 @@ bool cpp::System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const 
     return true;
 }
 
+utfstr System::ToNativePath(utfstr path) {
+    return path;
+}
 
-utfstr System::GetRoot(void) {
-    char buf[255] = {'\0'};
-    ssize_t size = readlink("/proc/self/exe", buf, 255);
-    char *edit = buf;
-    System::self = edit;
-    while (edit[--size] != '/')
-        buf[size] = '\0';
-    edit[size + 1] = '.';
-    edit[size + 2] = '.';
-    edit[size + 3] = '\0';
-    utfstr out = (utfstr)(edit);
-    return out;
+#ifdef __APPLE__
+    utfstr System::GetRoot(void) {
+        char buf[PATH_MAX] = {'\0'};
+        uint32_t bufsize = PATH_MAX;
+        ssize_t size = _NSGetExecutablePath(buf, &bufsize);
+        if (size < 0) exit(0xC3);
+        else size = strlen(buf);
+        char *edit = buf;
+        System::self = edit;
+        while (edit[--size] != '/')
+            buf[size] = '\0';
+        edit[size + 1] = '.';
+        edit[size + 2] = '.';
+        edit[size + 3] = '\0';
+        utfstr out = (utfstr)(edit);
+        return out;
     }
-
-    utfstr System::ToNativePath(utfstr path) {
-        return path;
+#else
+    utfstr System::GetRoot(void) {
+        char buf[PATH_MAX] = {'\0'};
+        ssize_t size = readlink("/proc/self/exe", buf, PATH_MAX);
+        if (size < 0) exit(0xC3);
+        char *edit = buf;
+        System::self = edit;
+        while (edit[--size] != '/')
+            buf[size] = '\0';
+        edit[size + 1] = '.';
+        edit[size + 2] = '.';
+        edit[size + 3] = '\0';
+        utfstr out = (utfstr)(edit);
+        return out;
     }
+#endif
 #endif
 
 utfstr System::GetRootDir(void) {

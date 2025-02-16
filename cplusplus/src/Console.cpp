@@ -3,7 +3,7 @@
 
 namespace cpp {
 #if defined(_WIN32) || defined(__CYGWIN__)
-    __declspec(dllexport) std::wistream& gin = std::wcin;
+    __declspec(dllexport) std::wistream& gin = *((std::wostream*)&Console::in);
     __declspec(dllexport) std::wostream& gout = *((std::wostream*)&Console::out);
 #else
     __attribute__((visibility("default"))) std::istream& gin = *((std::istream*)&Console::in);
@@ -15,6 +15,165 @@ using namespace cpp;
 using namespace uniconv;
 using namespace std;
 using namespace std::chrono;
+
+char_t Console::GetChar(void) {
+    if (Console::buf_it >= 0 && Console::buf[Console::buf_it]) { ++buf_it; return Console::buf[buf_it-1]; }
+    Console::buf[buf_it] = getc(stdin); if (buf_it < 127) Console::buf[++buf_it] = '\0'; else exit(0x1A);
+    return Console::buf[buf_it-1];
+};
+
+void Console::XtermInitTracking(void) {
+    fwrite("\033[?1049h", sizeof(char), 8, stderr);
+
+    fwrite("\033[?1004h", sizeof(char), 8, stderr);
+    fwrite("\033[?1003h", sizeof(char), 8, stderr);
+    fwrite("\033[?1015h", sizeof(char), 8, stderr);
+    fwrite("\033[?1006h", sizeof(char), 8, stderr);
+}
+
+void Console::XtermFinishTracking(void) {
+    fwrite("\033[?1004l", sizeof(char), 8, stderr);
+    fwrite("\033[?1003l", sizeof(char), 8, stderr);
+    fwrite("\033[?1015l", sizeof(char), 8, stderr);
+    fwrite("\033[?1006l", sizeof(char), 8, stderr);
+    Console::XtermMouseAndFocus(); // read all input so it doesn't get pushed to the terminal
+
+    fwrite("\033[?1049l", sizeof(char), 8, stderr);
+}
+
+void Console::XtermMouseAndFocus(void) {
+    Console::this_mouse_button = -1;
+    Console::this_mouse_down = false;
+    Console::this_mouse_combo = 0;
+    Console::mouse_buttons_down[3] = false;
+    Console::mouse_buttons_down[4] = false;
+    Console::mouse_status.scroll = {false,false};
+    bool mousedown = false;
+    int bytes;
+
+#ifdef _WIN32
+    // todo: implement getting the amount of bytes available to read
+    throw(std::exception("not implemented (Console::XtermMouseAndFocus), cplusplus/src/Console.cpp:37"));
+#else
+    ioctl(STDIN_FILENO, FIONREAD, &bytes);
+#endif
+    
+    if (!bytes) return;
+
+    bytes += strlen(Console::buf);
+
+    while (bytes > 0) {
+        buf_it = 0;
+        char c = GetChar(); --bytes;
+        if (c != '\033') {
+            in.clear();
+            Console::in.str(Console::in.str()+c);
+            buf[0] = '\0';
+            continue;
+        } else if (bytes == 0) break;
+        c = GetChar(); --bytes;
+        if (c != '[') {
+            in.clear();
+            Console::in.str(Console::in.str()+'\033'+c);
+            buf[0] = '\0';
+            continue;
+        } else if (bytes == 0) break;
+        c = GetChar(); --bytes;
+        switch (c) {
+        case 'I':
+            //fprintf(stderr, "gained focus\n");
+            Console::focused = true;
+            buf[0] = '\0';
+            continue;
+        case 'O':
+            //fprintf(stderr, "lost focus\n");
+            Console::focused = false;
+            buf[0] = '\0';
+            continue;
+        case '<':
+            int pos = 0;
+            int val[3] = {0};
+            int it = 2;
+            while (++it) {
+                if (bytes == 0) return;
+                char byte = GetChar(); --bytes;
+
+                if (byte == ';') { ++pos; continue; }
+                
+                if (byte == 'M') { mousedown = true; break; }
+                if (byte == 'm') { mousedown = false; break; }
+
+                int num = byte - '0';
+                if (num < 0 || num > 9) exit(31);
+
+                val[pos] *= 10;
+                val[pos] += num;
+            };
+            //fprintf(stdout, "%c", '\n');
+
+            Console::mouse_status.x = --val[1];
+            Console::mouse_status.y = --val[2];
+            //fprintf(stderr, "mouse: %d %d\n", Console::mouse_status.x, Console::mouse_status.y);
+            bitset<8> event(val[0]);
+
+            if (event[5]) { ++bytes; break; } // move event
+            
+            uint8_t button = 0b0;
+            
+            button += 0b1 * event[0];
+            button += 0b10 * event[1];
+            button += 0b100 * event[6];
+            button += 0b1000 * event[7];
+            if (button < 3 /*Button 1-3*/) ++button; // are encoded as 0-2 and there is no button 3 encoded so we add one to make it BUTTON(X) = x
+
+            chrono::time_point<chrono::high_resolution_clock> now = chrono::high_resolution_clock::now();
+            uint8_t fullbutton = 0b000000;
+            fullbutton |= 0b0000001 * button; // BBBB
+            fullbutton |= 0b0010000 * event[2]; // Shift
+            fullbutton |= 0b0100000 * event[3]; // Meta
+            fullbutton |= 0b1000000 * event[4]; // Ctrl
+            // fullbutton == 0bCMSBBBB
+
+            if (mousedown) {
+                if (Console::last_mouse_button == fullbutton && now - Console::last_click_time <= chrono::milliseconds(Console::double_click_max)) {
+                    if (Console::last_mouse_combo < UINT8_MAX) ++Console::last_mouse_combo;
+                } else {
+                    Console::last_mouse_button = (button < 3 || button > 5) ? fullbutton : -1;
+                    Console::last_mouse_combo = 1;
+                }
+                Console::last_click_time = now;
+            }
+
+            Console::this_mouse_combo = ( Console::last_click_time == now ) ? Console::last_mouse_combo : 1;
+            Console::this_mouse_down = mousedown;
+            Console::mouse_buttons_down[fullbutton] = this_mouse_down;
+            Console::this_mouse_button = fullbutton;
+            
+            switch (button) {
+            case 1:
+                Console::mouse_status.primary = mousedown;
+                break;
+            case 2:
+                Console::mouse_status.middle = mousedown;
+                break;
+            case 3:
+                Console::mouse_status.secondary = mousedown;
+                break;
+            case 4:
+                Console::mouse_status.scroll = {1,true};
+                break;
+            case 5:
+                Console::mouse_status.scroll = {1,false};
+                break;
+            }
+            buf[0] = '\0';
+            continue;
+        }
+        in.clear();
+        Console::in.str(Console::in.str()+'\033'+'['+c);
+        buf[0] = '\0';
+    }
+}
 
 #ifdef _WIN32
     static bool mintty = false;
@@ -621,7 +780,7 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
                             Console::argv[i] = arg;
                             break;
                     }
-                }
+                } else Console::argv[i] = arg;
             }
 
             auto _temp = realloc(Console::argv, sizeof(wchar_t*) * Console::argc);
@@ -988,12 +1147,6 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
         return out;
     };
 
-    char Console::GetChar(void) {
-        if (Console::buf_it >= 0 && Console::buf[Console::buf_it]) { ++buf_it; return Console::buf[buf_it-1]; }
-        Console::buf[buf_it] = getc(stdin); if (buf_it < 127) Console::buf[++buf_it] = '\0'; else exit(0x1A);
-        return Console::buf[buf_it-1];
-    };
-
     int getparent(int pid) {
         int ppid;
         char buf[BUFSIZ*2];
@@ -1025,7 +1178,7 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
             Console::emulator = !(getenv("DISPLAY") == nullptr);
 
             char path[256];
-            readlink( "/proc/self/exe" , path, 256);
+            readlink( "/proc/self/exe", path, 256);
             
             if (Console::emulator) {
                 fwrite("\033[?1049h", sizeof(char), 8, stderr);
@@ -1138,13 +1291,17 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
 
             fd = getfd(0);
             if (!Console::emulator) {
-                if (stat("/tmp/.factoryrush/", &st) == -1) Console::no_gpm = true;
+                if (stat("/etc/init.d/gpm", &st) == -1) Console::no_gpm = true;
                 else {
                     Console::no_gpm = System::Shell("/etc/init.d/gpm status | grep '(running)' > /dev/null");
                     if (!Console::no_gpm) System::RunProgram("/etc/init.d/gpm", "stop", nullptr);
                 }
 
                 fb_fd = open("/dev/fb0", O_RDONLY);
+                if (fb_fd < 0) {
+                    perror("Error opening /dev/fb0");
+                    exit(0x71);
+                }
 
                 // initially in the middle of the screen
                 fb_var_screeninfo vinfo;
@@ -1169,6 +1326,9 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
                 //exit(0x17);
 
                 string args_c;
+                string doas_keepenv = path;
+                while (doas_keepenv.back() != '/') doas_keepenv.pop_back();
+                doas_keepenv.append("doas-keepenv.sh");
                 args_c.append(System::Shell("sudo --help 2>&1 >/dev/null") == 127 ? System::Shell("doas 2>&1 >/dev/null") == 127 ? "su -c \"" : "doas-keepenv" : "sudo -E ");
                 bool issu = args_c.size() == 2 && args_c[0] == 's' && args_c[1] == 'u';
                 bool isdoas = args_c[0] == 'd' && args_c[1] == 'o';
@@ -1265,11 +1425,7 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
             tcsetattr(fd, TCSANOW, &term_ios);
 
             if (Console::emulator) {
-                fwrite("\033[?1004h", sizeof(char), 8, stderr);
-
-                fwrite("\033[?1003h", sizeof(char), 8, stderr);
-                fwrite("\033[?1015h", sizeof(char), 8, stderr);
-                fwrite("\033[?1006h", sizeof(char), 8, stderr);
+                Console::XtermInitTracking();
             }
 
             for (auto t = 0; t < MAX_NR_KEYMAPS; t++) {
@@ -1395,11 +1551,7 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
             delete[] Console::subdir;
 
             if (Console::emulator) {
-                fwrite("\033[?1004l", sizeof(char), 8, stderr);
-
-                fwrite("\033[?1003l", sizeof(char), 8, stderr);
-                fwrite("\033[?1015l", sizeof(char), 8, stderr);
-                fwrite("\033[?1006l", sizeof(char), 8, stderr);
+                Console::XtermFinishTracking();
             } else {
                 close(fb_fd);
                 close(mouse_fd);
@@ -1428,10 +1580,8 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
             Console::argv = (const char**)realloc(Console::argv,0);
             Console::argc = 0;
 
-            if (Console::emulator) {
-                fwrite("\033[?1049l", sizeof(char), 8, stderr);
-            } else {
-                fwrite("\033[H", sizeof(char), 3, stderr);
+            if (!Console::emulator) {
+                fwrite("\033[H", sizeof(char), 3, stderr); // clear screen because we don't have an alternate buffer
                 fwrite("\033[J", sizeof(char), 3, stderr);
             }
 
@@ -1828,12 +1978,59 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
     void Console::Init(void) {
         if (!initialised) {
 
-            fwrite("\033[?1049h",sizeof(char), 8, stderr);
+            int sub_process = 0;
+            auto& appargv = *_NSGetArgv();
+            Console::argc = *_NSGetArgc();
+            Console::argv = (const char**)malloc(sizeof(char*) * Console::argc);
+
+            int j = 0;
+            for (int i = 0; i < Console::argc; i++) {
+                auto&& arg = appargv[i+j];
+                if (strlen(arg) > 1 && arg[0] == '\033') {
+                    string sdir; const char* narg;
+                    switch (arg[1]) {
+                        case '&':
+                            // launched as popup
+                            Console::sub_proc = true;
+                            if (strlen(arg) < 3) exit(0x31);
+                            sub_process = 0;
+                            narg = arg + 2;
+                            while (narg[0] != '~') {
+                                if (narg[0] < '0' || narg[0] > '9') exit(0x32);
+                                sub_process *= 10;
+                                sub_process += narg[0] - '0';
+                                ++narg;
+                            }
+                            for (size_t i = 1; narg[i] != '~'; i++){
+                                if (narg[i] == '\0') exit(0x33);
+                                sdir.push_back(narg[i]);
+                            }
+                            Console::subdir = new const char[strlen(sdir.c_str())+1]{0};
+                            strcpy((char*)Console::subdir, sdir.c_str());
+                            ++j; --i; --Console::argc;
+                            break;
+                        case '\\':
+                            exit(0xE4);
+                        default:
+                            Console::argv[i] = arg;
+                            break;
+                    }
+                } else
+                    Console::argv[i] = arg;
+            }
+
+            auto _temp = realloc(Console::argv, sizeof(char*) * Console::argc);
+            if (_temp) Console::argv = (const char**)_temp;
+            else exit(0x73);
+
+            Console::XtermInitTracking();
 
             tcgetattr(STDIN_FILENO,&old_termios);
             termios term_ios = old_termios;
             term_ios.c_lflag &= ~(ICANON | ECHO);
             tcsetattr(STDIN_FILENO, TCSANOW, &term_ios);
+
+            
             
             initialised = true;
 
@@ -1872,22 +2069,34 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
 
             tcsetattr(STDIN_FILENO,TCSANOW,&old_termios);
             
-            fwrite("\033[?1049l",sizeof(char), 8, stderr);
+            XtermFinishTracking();
 
             initialised = false;
         }
     }
 
     void Console::HandleKeyboard(void) {
-        return;
-    }
+        // toggles
+        Console::keys_toggled.CapsLock = capslocktoggled();
 
-    utfstr Console::GetTerminalExecutableName() {
-        return "Unknown";
+        // press - release
+        key_hit = -1;
+        key_released = -1;
+        for (int i = 0; i < KEYBOARD_MAX; i++) {
+            bool keyState = getkeystate(i);
+            if (!key_states[i] && keyState) key_hit = i;
+            if (key_states[i] && !keyState) key_released = i;
+            
+            key_states[i] = keyState;
+        }
     }
 
     void Console::HandleMouseAndFocus(void) {
-        return;
+        Console::XtermMouseAndFocus();
+    }
+
+    utfstr Console::GetTerminalExecutableName() {
+        return "";
     }
 
     Key::Enum Console::KeyPressed(void) {
@@ -2022,7 +2231,6 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
 
     struct termios Console::old_termios = termios();
     winsize Console::window_size = winsize();
-    char Console::buf[127] = "\0";
     int8_t Console::buf_it = -1;
     const char* Console::subdir = nullptr;
     istringstream Console::in = istringstream(std::ios_base::ate|std::ios_base::in);
@@ -2052,6 +2260,7 @@ unsigned short Console::double_click_max = (unsigned short)(500);
 int Console::pid = int(-1); 
 int Console::ret = int(-1);
 bool Console::sub_proc = bool(false);
+char Console::buf[127] = N("\0");
 
 uint16_t Console::next_pid = uint16_t(1000);
 array<bool,UINT16_MAX> Console::used_pids = array<bool,UINT16_MAX>{0};
@@ -2211,7 +2420,7 @@ newpidgen:
     }
 #elif __APPLE__
     if (!term.size()) {
-        term.append("/Applications/Utilities/Terminal.app"); // idk if this is the actual path
+        term.append("/System/Applications/Utilities/Terminal.app"); // idk if this is the actual path
     }
 #elif __linux__
     if (!term.size()) {
@@ -2224,7 +2433,15 @@ newpidgen:
     args[1] = info.c_str();
     for (int i = 1; i <= argc; i++) args[i+1] = argv[i-1];
     args[argc+2] = nullptr;
+#ifndef __APPLE__
     if (!System::RunProgramAsync(term.c_str(), args)) return -1;
+#else
+    auto file = fopen("/tmp/.factoryrush/run.sh", "w");
+    for (int i = 0; args[i]; i++)
+        { fwrite(args[i], sizeof(char), strlen(args[i]), file); fwrite(" ", sizeof(char), 1, file); }
+    fclose(file);
+    if (!System::RunProgramAsync("/usr/bin/open", "-a", term.c_str(), "/tmp/.factoryrush/run.sh")) return -1;
+#endif
 #ifdef _WIN32
     goto contcons;
 console:

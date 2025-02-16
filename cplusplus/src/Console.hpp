@@ -8,6 +8,7 @@
 #include <sstream>
 #include <fstream>
 #include <filesystem>
+    #include <stdio.h>
 #include "System.hpp"
 
 #ifdef __APPLE__
@@ -35,9 +36,9 @@
 #ifndef _MSVC
     #include <windows/quick_exit.h>
 #endif
+    typedef wchar_t char_t;
 #else
     #include <signal.h>
-    #include <stdio.h>
     #include <limits>
     #include <climits>
     #include <sys/ioctl.h>
@@ -60,15 +61,16 @@
     #include <fcntl.h>
 #elif __APPLE__
     #include <apple/key.hpp>
+    #include <apple/keyboard.h>
+    #include <crt_externs.h>
 #elif __CYGWIN__
     #include <windows.h>
     #include <windows/key.hpp>
 #else
 #endif
+    typedef char char_t;
 #endif
 #ifdef __APPLE__
-    #include <apple/key.hpp>
-    #include <apple/args.h>
     #define KEYBOARD_MAX 0x80
 #else
     #define KEYBOARD_MAX 256
@@ -167,50 +169,53 @@ namespace cpp {
         static int ret;
         static std::array<bool,UINT16_MAX> used_pids;
         static uint16_t next_pid;
-        #ifdef _WIN32
-            static const wchar_t* subdir;
-            //static std::vector<std::vector<COLORREF>> SaveScreen(void);
-            //static std::pair<std::pair<uint16_t,uint16_t>,std::pair<uint16_t,uint16_t>> GetOffsetSymSize(int color1 = 3, int color2 = 9, int color3 = 1);
-            
-            //static std::pair<uint16_t,uint16_t> scr_offs;
-            //static std::pair<uint16_t,uint16_t> sym_size;
-            //static bool auto_size_updates;
-            //static int16_t old_width;
-            //static int16_t old_height;
-            //static RECT old_rect;
-            static uint8_t default_fcol;
-            static uint8_t default_bcol;
-            static HANDLE screen;
-            static HANDLE fd;
-            static HWND window;
-            static HDC device;
-            static DWORD old_console;
-            static HANDLE old_buffer;
-            static inline constexpr uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2);
-            //static std::pair<uint16_t,uint16_t> xyoffset;
-            //static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
-        #else
-            static const char* subdir;
-            static struct termios old_termios;
-            static struct winsize window_size;
-            static char buf[127]; static int8_t buf_it;
-        #ifdef __linux__
-            static inline char GetChar(void);
-            static struct termios old_fdterm;
-            static int old_kbdmode;
-            static int fd;
-            static int fb_fd;
-            static std::pair<uint32_t,uint32_t> pixelpos; 
-            static input_event events[255]; static uint8_t evnts_siz;
-            static int mouse_fd;
-            static bool discard_mouse;
-            static bool no_gpm;
-            static bool parent;
-            static uint8_t root_type;
-            static Key::Enum key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX];
-        #endif
-        #endif
-            static uniconv::utfstr GetTerminalExecutableName();
+        static char_t buf[127]; static int8_t buf_it;
+    #ifdef _WIN32
+        static const wchar_t* subdir;
+        //static std::vector<std::vector<COLORREF>> SaveScreen(void);
+        //static std::pair<std::pair<uint16_t,uint16_t>,std::pair<uint16_t,uint16_t>> GetOffsetSymSize(int color1 = 3, int color2 = 9, int color3 = 1);
+        
+        //static std::pair<uint16_t,uint16_t> scr_offs;
+        //static std::pair<uint16_t,uint16_t> sym_size;
+        //static bool auto_size_updates;
+        //static int16_t old_width;
+        //static int16_t old_height;
+        //static RECT old_rect;
+        static uint8_t default_fcol;
+        static uint8_t default_bcol;
+        static HANDLE screen;
+        static HANDLE fd;
+        static HWND window;
+        static HDC device;
+        static DWORD old_console;
+        static HANDLE old_buffer;
+        static inline constexpr uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2);
+        //static std::pair<uint16_t,uint16_t> xyoffset;
+        //static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
+    #else
+        static const char* subdir;
+        static struct termios old_termios;
+        static struct winsize window_size;
+    #ifdef __linux__
+        static struct termios old_fdterm;
+        static int old_kbdmode;
+        static int fd;
+        static int fb_fd;
+        static std::pair<uint32_t,uint32_t> pixelpos; 
+        static input_event events[255]; static uint8_t evnts_siz;
+        static int mouse_fd;
+        static bool discard_mouse;
+        static bool no_gpm;
+        static bool parent;
+        static uint8_t root_type;
+        static Key::Enum key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX];
+    #endif
+    #endif
+        static uniconv::utfstr GetTerminalExecutableName();
+        static inline char_t GetChar(void);
+        static void XtermMouseAndFocus(void);
+        static void XtermInitTracking(void);
+        static void XtermFinishTracking(void);
     public:
         static void Init(void);
         static void Fin(void);

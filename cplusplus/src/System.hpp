@@ -20,6 +20,7 @@
 #endif
 #ifdef __APPLE__
     #include <signal.h>
+    #include <mach-o/dyld.h>
     typedef void (*sighandler_t)(int);
 #endif
 #endif

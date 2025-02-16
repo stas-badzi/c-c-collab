@@ -24,7 +24,7 @@ sources = Console.cpp FileSystem.cpp System.cpp dllexport.cpp
 #> header files
 headers = Console.hpp FileSystem.hpp FileSystem.ipp dllimport.hpp System.hpp System.ipp smart_ref.hpp smart_ref.ipp
 #> include files
-includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp linux/ledctrl.h linux/mousefd.h
+includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp apple/keyboard.h linux/ledctrl.h linux/mousefd.h
 #> name the dynamic library
 name = factoryrushplus
 # *******************************
@@ -35,7 +35,7 @@ binsources = main.cpp Console.cpp FileSystem.cpp System.cpp Control.cpp dllexpor
 #> header files
 binheaders = dllimport.hpp Console.hpp FileSystem.hpp System.hpp defines.h Control.hpp
 #> include files
-binincludes = dynamic_library.h unicode_conversion.hpp control_heap.h utils/cextern.h control_heap.h utils/dllalloc.h linux/key.hpp windows/key.hpp
+binincludes = dynamic_library.h unicode_conversion.hpp control_heap.h utils/cextern.h control_heap.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp
 #> name the binary file
 binname = cpp-factoryrush
 #********************************
@@ -61,6 +61,8 @@ linuxroot = /usr
 linuxlib = /usr/lib
 #> linux binary file path
 linuxbin = /usr/bin
+#> macos root of application path
+macosroot = /usr/local
 #> macos shared library path
 macoslib = /usr/local/lib
 #> macos binary file path
@@ -510,7 +512,7 @@ else
 	@rm -f binaryplus/obj/*
 endif
 
-resources: source/setkbdmode.c source/getfd.c source/getfd.h source/getkeystate.h source/getkeystate.m source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h
+resources: source/setkbdmode.c source/getfd.c source/getfd.h source/keyboard.h source/keyboard.m source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h
 
 	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(staticgen)assets/$(prefix)globals.$(static) objects/globals.o
@@ -525,19 +527,21 @@ ifeq ($(shell uname -s),Linux)
 	$(c-compiler) -c source/setkbdmode.c source/getfd.c source/ledctrl.c source/mousefd.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	ar rcs assets/$(prefix)linuxctrl.$(static) objects/getfd.o objects/ledctrl.o objects/mousefd.o objects/setkbdmode.o
 	$(c-compiler) -o assets/setkbdmode.$(binary) objects/setkbdmode.o -Lassets -llinuxctrl $(static-libc)
-	git submodule update --init --recursive
+	git submodule update --init --recursive --remote utilities/doas-keepenv
 ifeq ($(copylibs),1)
 	@echo "$(linuxroot)/share/factoryrush/bin"
 	$(admin)mkdir -p $(linuxroot)/share/factoryrush/bin$(adminend)
 	$(admin)cp assets/setkbdmode.$(binary) $(linuxroot)/share/factoryrush/bin$(adminend)
-	$(admin)cp utilities/doas-keepenv/doas-keepenv $(linuxroot)/share/factoryrush/bin$(adminend)
+	$(admin)cp utilities/doas-keepenv/doas-keepenv $(linuxroot)/share/factoryrush/bin/doas-keepenv.sh$(adminend)
+	$(admin)cp utilities/doas-keepenv/doas-keepenv $(linuxbin)/doas-keepenv.sh$(adminend)
 
 	$(admin)mkdir -p $(linuxroot)/share/factoryrush/assets$(adminend)
 	$(admin)cp README.md $(linuxroot)/share/factoryrush/assets$(adminend)
 else
 	@mkdir -p binaryplus/bin/../share/factoryrush/bin
 	@cp assets/setkbdmode.$(binary) binaryplus/share/factoryrush/bin
-	@cp utilities/doas-keepenv/doas-keepenv binaryplus/share/factoryrush/bin
+	@cp utilities/doas-keepenv/doas-keepenv binaryplus/share/factoryrush/bin/doas-keepenv.sh
+	@cp utilities/doas-keepenv/doas-keepenv binaryplus/bin/doas-keepenv.sh
 
 	@mkdir -p binaryplus/bin/../share/factoryrush/assets
 	@cp README.md binaryplus/share/factoryrush/assets
@@ -545,9 +549,19 @@ endif
 else
 ifeq ($(shell uname -s),Darwin)
 	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wextra -Wno-constant-conversion -Wno-unused-parameter $(cflags) $(cdb) -Isource -std=c++2b && mv *.o objects/
-	$(staticgen)assets/$(prefix)applecuchar.$(static) objects/cuchar.o
-	$(c-compiler) -c source/getkeystate.m -framework CoreGraphics -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
-	ar rcs assets/libapplectrl.$(static) objects/getkeystate.o
+	ar rcs assets/libapplecuchar.a objects/cuchar.o
+	$(c-compiler) -c source/keyboard.m -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
+	$(c-compiler) -dynamiclib -o assets/libapplectrl.dylib objects/keyboard.o -framework CoreGraphics
+	git submodule update --init --recursive --remote utilities/give-control
+ifeq ($(copylibs),1)
+	$(admin)mkdir -p $(macosroot)/share/factoryrush/lib$(adminend)
+	$(admin)cp assets/libapplectrl.dylib $(macosroot)/share/factoryrush/lib$(adminend)
+	$(admin)cp assets/libapplectrl.dylib $(macoslib)$(adminend)
+else
+	@mkdir -p binaryplus/share/factoryrush/lib
+	@cp assets/libapplectrl.dylib binaryplus/share/factoryrush/lib
+	@cp assets/libapplectrl.dylib binaryplus/bin
+endif
 endif
 endif
 
@@ -613,7 +627,8 @@ endif
 else
 ifeq ($(shell uname -s),Darwin)
 #macos
-	cd cplusplus && $(cpp-compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) -L../assets -L$(flibdir) -lapplecuchar -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) -L../assets -L$(flibdir) -lapplecuchar -lapplectrl -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	utilities/custom/dylib-fix.sh "cplusplus/bin/lib$(name).dylib" "applectrl"
 #
 else
 #linux and similar
@@ -715,8 +730,9 @@ else
 
 ifeq ($(shell uname -s),Darwin)
 #macos
-	cd binaryplus/bin && install_name_tool -change $$(otool -l $(binname).$(binary) | grep $(dllname) | sed 's/ (offset 24)//' | sed 's/         name //') loader_path/$(dllname) $(binname).$(binary)
-	cd binaryplus/bin && install_name_tool -change $$(otool -l $(binname).$(binary) | grep $(filename).dylib | sed 's/ (offset 24)//' | sed 's/         name //') loader_path/$(libname) $(binname).$(binary)
+	utilities/custom/dylib-fix.sh "binaryplus/bin/$(binname).$(binary)" "$(name)"
+	utilities/custom/dylib-fix.sh "binaryplus/bin/$(binname).$(binary)" "$(filename)"
+	utilities/give-control/give-control "binaryplus/bin/$(binname).$(binary)"
 #
 endif
 ifeq ($(shell uname -s),Linux)

@@ -84,3 +84,6 @@ resources
 
 # test dir
 test/*
+
+# test files
+file.tux
