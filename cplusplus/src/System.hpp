@@ -22,6 +22,8 @@
     #include <signal.h>
     #include <mach-o/dyld.h>
     typedef void (*sighandler_t)(int);
+#elif __linux__
+    #include <linux/limits.h>
 #endif
 #endif
 
