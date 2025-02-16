@@ -182,8 +182,8 @@ ldb = /DEBUG /PDB:bin/$(name).pdb
 bldb = /DEBUG /PDB:bin/$(binname).pdb
 bpdb = /MTd /Z7
 else
-cdb = -g -Og
-bpdb = -g -Og
+cdb = -g -O0
+bpdb = -g -O0
 endif
 else
 configuration = Release
@@ -548,7 +548,7 @@ else
 endif
 else
 ifeq ($(shell uname -s),Darwin)
-	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wextra -Wno-constant-conversion -Wno-unused-parameter $(cflags) $(cdb) -Isource -std=c++2b && mv *.o objects/
+	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wextra $(cflags) $(cdb) -Isource -std=c++2b && mv *.o objects/
 	ar rcs assets/libapplecuchar.a objects/cuchar.o
 	$(c-compiler) -c source/keyboard.m -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(c-compiler) -dynamiclib -o assets/libapplectrl.dylib objects/keyboard.o -framework CoreGraphics
@@ -708,7 +708,7 @@ endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
 
-cppbin: $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc))
+cppbin: resources $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc))
 	
 ifneq ($(wildcard cpp),cpp)
 	$(MAKE) cpp sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)

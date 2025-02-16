@@ -1424,6 +1424,8 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
             term_ios.c_cc[VTIME] = 1;
             tcsetattr(fd, TCSANOW, &term_ios);
 
+            setlocale(LC_CTYPE, "UTF-8");
+
             if (Console::emulator) {
                 Console::XtermInitTracking();
             }
@@ -2022,6 +2024,8 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
             auto _temp = realloc(Console::argv, sizeof(char*) * Console::argc);
             if (_temp) Console::argv = (const char**)_temp;
             else exit(0x73);
+
+            setlocale(LC_CTYPE, "UTF-8");
 
             Console::XtermInitTracking();
 
