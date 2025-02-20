@@ -24,10 +24,13 @@ namespace BinarySharp {
 
                 Terminal.HandleMouseAndFocus();
                 var mouse = Terminal.GetMouseStatus();
-
-                var Camera = new Camera(20, 20, new Terminal.Symbol('C',14,14));
+                try {
+                var camera = new Camera(19, 19, new Terminal.Symbol('C',14,14));
                 
-                
+                    TextureSystem.DrawTextureToScreen(3, 3, camera.buffer, screen);
+                } catch (Exception e) {
+                    return 1;
+                }
                 Terminal.FillScreen(screen);
 
                 if (Terminal.IsFocused()) Terminal.HandleKeyboard();
@@ -50,8 +53,8 @@ namespace BinarySharp {
             }
             return 0;
         }
-    private static string GetSoundPath(string filename) {
-        return Path.Combine([AppContext.BaseDirectory,"..","sounds",filename]);
-    }
+        private static string GetSoundPath(string filename) {
+            return Path.Combine([AppContext.BaseDirectory,"..","sounds",filename]);
+        }
     }
 }
