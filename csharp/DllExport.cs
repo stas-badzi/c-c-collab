@@ -118,7 +118,7 @@ namespace CsExp {
 
     public class Camera {
         [UnmanagedCallersOnly(EntryPoint = "Camera_Construct")]
-        public static IntPtr Construct(int width, int height, nint symbolPtr) {
+        public static nint Construct(int width, int height, nint symbolPtr) {
             if (symbolPtr == IntPtr.Zero)
                 throw new Exception("Intptr $symbolPtr Empty");
 
@@ -127,7 +127,7 @@ namespace CsExp {
             return camera.Get();
         }
         [UnmanagedCallersOnly(EntryPoint = "Camera_FromTexture")]
-        public static IntPtr FromTexture(nint texturePtr) {
+        public static nint FromTexture(nint texturePtr) {
             if (texturePtr == IntPtr.Zero)
                 throw new Exception("Intptr $texturePtr Empty");
 

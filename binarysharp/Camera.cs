@@ -15,8 +15,10 @@ namespace Cs {
         public Tuple<int, int> viewportCenter { get; }
 
         public Camera(int width, int height, Terminal.Symbol symbol) {
-            var ret = new Camera(CsImp.Camera.Construct(width, height, symbol.Get()));
-            (this.buffer, this.viewportCenter) = (ret.buffer, ret.viewportCenter);
+            nint ptr = CsImp.Camera.Construct(width, height, symbol.Get());
+            Camera ret = new Camera(ptr);
+            this.buffer = ret.buffer;
+            this.viewportCenter = ret.viewportCenter;
         }
 
         public static Camera FromTexture(Texture texture) {

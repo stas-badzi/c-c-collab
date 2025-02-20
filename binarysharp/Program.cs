@@ -21,16 +21,12 @@ namespace BinarySharp {
                         screen[h].Add(sym);
                     }
                 }
-
+                
                 Terminal.HandleMouseAndFocus();
                 var mouse = Terminal.GetMouseStatus();
-                try {
-                var camera = new Camera(19, 19, new Terminal.Symbol('C',14,14));
                 
-                    TextureSystem.DrawTextureToScreen(3, 3, camera.buffer, screen);
-                } catch (Exception e) {
-                    return 1;
-                }
+                var camera = new Camera(19, 19, new Terminal.Symbol('C',14,14));
+                TextureSystem.DrawTextureToScreen(3, 3, camera.buffer, screen);
                 Terminal.FillScreen(screen);
 
                 if (Terminal.IsFocused()) Terminal.HandleKeyboard();
