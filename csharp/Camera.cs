@@ -111,12 +111,6 @@ namespace Cs { // DO NOT USE
             if (height % 2f == 0 || width % 2f == 0)
                 throw new ArgumentException("Texture does not have a middle point because either height or width is even");
 
-            for (int i = 0; i < this.buffer.Count; i++) {
-                for (int j = 0; j < this.buffer[i].Count; j++) {
-                    this.buffer[i][j] = new Terminal.Symbol(' ', 16, 16);
-                }
-            }
-
             int startX = Math.Max(0, center.Item1 - (int)Math.Floor(height / 2f));
             int startY = Math.Max(0, center.Item2 - (int)Math.Floor(width / 2f));
             int endX = Math.Min(this.buffer.Count, startX + texture.Count);
