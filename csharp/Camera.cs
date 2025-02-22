@@ -6,7 +6,7 @@ using Cs;
 using Cpp;
 using Texture = System.Collections.Generic.List<System.Collections.Generic.List<Cpp.Terminal.Symbol>>;
 
-namespace Cs {
+namespace Cs { // DO NOT USE
     public class Camera {
         public Texture buffer { get; }
         public Tuple<int, int> viewportCenter { get; } // <height index, width index>
