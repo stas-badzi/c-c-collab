@@ -492,6 +492,9 @@ using namespace uniconv;
 
 // ~System
 
+// Camera
+
+
 #ifdef _DEBUG
 // control_heap
     libexport void ControlHeap__save$ALLOCATIONS(void* arg1, unsigned long arg2) {

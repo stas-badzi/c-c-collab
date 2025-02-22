@@ -9,10 +9,11 @@
 using namespace cpp;
 using std::vector;
 
-// public
+// public:
 
 Camera::Camera(int height, int width, Console::Symbol sym) {
-    ValidateViewport(height, width);
+    MartixPosition ret_viewportCenter(floor(height/2), floor(width/2));
+    ValidateViewport(ret_viewportCenter);
 
     this->viewportCenter(floor(height/2), floor(width/2));
 	this->buffer = vector<vector<Console::Symbol>>(height, vector<Console::Symbol>(width, sym));
@@ -45,6 +46,7 @@ Camera::Camera(void* cameraPtr) { // work in progress
     }
 
     ret_viewportCenter = MartixPosition(&(int*)(cameraPtr+offset), &(int*)(cameraPtr+offset+int32_size));
+    ValidateViewport(ret_viewportCenter);
 
     this->buffer = ret_buffer;
     this->viewportCenter = ret_viewportCenter;
@@ -93,7 +95,7 @@ void Camera::DrawTextureToCamera(vector<vector<Console::Symbol>> texture, Martix
     float height = (float)texture.size();
     float width = (float)texture[0].size();
 
-    ValidateViewport((int)height, (int)width);
+    ValidateViewport(center);
 
     int startX = max(0, center.jIndex - (int)Math.Floor(height / 2.0));
     int startY = max(0, center.iIndex - (int)Math.Floor(width / 2.0));
@@ -107,15 +109,15 @@ void Camera::DrawTextureToCamera(vector<vector<Console::Symbol>> texture, Martix
     }
 }
 
-// private
+// private:
 
 Camera::Camera(vector<vector<Console::Symbol>> buffer, MartixPosition viewportCenter) {
 	this->buffer = buffer;
     this->viewportCenter = viewportCenter;
 }
 
-static void ValidateViewport(int height, int width) {
-    if (width % 2 == 0 || height % 2 == 0) {
+static void ValidateViewport(MartixPosition vpc) {
+    if (vpc.iIndex % 2 == 0 || vpc.jIndex % 2 == 0) {
 		throw std::invalid_argument("Width and height must be odd numbers.");
 	}
 }
