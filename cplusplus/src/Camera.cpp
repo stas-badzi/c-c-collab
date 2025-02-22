@@ -18,13 +18,75 @@ Camera::Camera(int height, int width, Console::Symbol sym) {
 	this->buffer = vector<vector<Console::Symbol>>(height, vector<Console::Symbol>(width, sym));
 }
 
-Camera::Camera(void* cameraPtr) {
-	// Constructor implementation
+Camera::Camera(void* cameraPtr) { // work in progress
+	return;
+
+    int offset = 0;
+    auto int32_size = sizeof(int);
+    auto symptr_size = sizeof(void*); // <---
+
+    vector<vector<Console::Symbol>> ret_buffer;
+    MartixPosition ret_viewportCenter;
+
+    int height = &(int*)(cameraPtr+offset);
+    offset += int32_size;
+
+    buffer.resize(height);
+
+    for (int i = 0; i < height; i++) {
+        int width = &(int*)(cameraPtr+offset);
+        offset += int32_size;
+
+        buffer[i].resize(width);
+        for (int j = 0; j < width; j++) {
+            // buffer[i][j] = Console::Symbol(&(void*)(cameraPtr+offset)) <---
+            offset += symptr_size;
+        }
+    }
+
+    ret_viewportCenter = MartixPosition(&(int*)(cameraPtr+offset), &(int*)(cameraPtr+offset+int32_size));
+
+    this->buffer = ret_buffer;
+    this->viewportCenter = ret_viewportCenter;
+
+    free(cameraPtr);
 }
 
-void* Camera::Get() {
-	// Method implementation
+void* Camera::Get() { // work in progress
 	return nullptr;
+
+	int alloc = 0;
+    auto int32_size = sizeof(int);
+    auto symptr_size = sizeof(void*); // <---
+
+    alloc += 3 * int32_size; // buffer.Count + viewportCenter
+    for (i = 0; i < this->buffer.size(); i++) {
+        alloc += int32_size + buffer[i].size() * symptr_size; // buffer[i].size() + buffer[i]
+    }
+
+    int offset = 0;
+    void* ret = malloc(alloc);
+
+    *(ret+offset) = this->buffer.size();
+    offset += int32_size;
+    
+    for (int i = 0; i < this->buffer.size(); i++) {
+        auto row = buffer[i];
+        *(ret+offset) = row.size();
+        offset += int32_size;
+        for (int j = 0; j < row.size(); j++) {
+            // *(ret+offset) = row[j].Get(); <---
+            offset += symptr_size;
+        }
+    }
+
+    *(ret+offset) = this->viewportCenter.iIndex;
+    offset += int32_size;
+
+    *(ret+offset) = this->viewportCenter.jIndex;
+    offset += int32_size;
+
+    return ret;
 }
 
 void Camera::DrawTextureToCamera(vector<vector<Console::Symbol>> texture, MartixPosition center) {
