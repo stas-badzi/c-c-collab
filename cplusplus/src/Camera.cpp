@@ -15,7 +15,7 @@ Camera::Camera(int height, int width, Console::Symbol sym) {
     MartixPosition ret_viewportCenter(floor(height/2), floor(width/2));
     ValidateViewport(ret_viewportCenter);
 
-    this->viewportCenter(floor(height/2), floor(width/2));
+    this->viewportCenter = ret_viewportCenter;
 	this->buffer = vector<vector<Console::Symbol>>(height, vector<Console::Symbol>(width, sym));
 }
 
