@@ -8,6 +8,7 @@
 #include <sstream>
 #include <fstream>
 #include <filesystem>
+#include <cwchar>
     #include <stdio.h>
 #include "System.hpp"
 
@@ -62,7 +63,9 @@
 #elif __APPLE__
     #include <apple/key.hpp>
     #include <apple/keyboard.h>
+    #include <apple/openfile.h>
     #include <crt_externs.h>
+    #include <libproc.h>
 #elif __CYGWIN__
     #include <windows.h>
     #include <windows/key.hpp>
@@ -196,6 +199,7 @@ namespace cpp {
         static const char* subdir;
         static struct termios old_termios;
         static struct winsize window_size;
+        static mbstate_t streammbs;
     #ifdef __linux__
         static struct termios old_fdterm;
         static int old_kbdmode;
@@ -210,9 +214,13 @@ namespace cpp {
         static uint8_t root_type;
         static Key::Enum key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX];
     #endif
+    #ifdef __APPLE__
+        static pid_t ppid;
+    #endif
     #endif
         static uniconv::utfstr GetTerminalExecutableName();
         static inline char_t GetChar(void);
+        static void PushChar(char_t c);
         static void XtermMouseAndFocus(void);
         static void XtermInitTracking(void);
         static void XtermFinishTracking(void);
@@ -276,7 +284,7 @@ namespace cpp {
         static std::wistringstream in;
         static std::wofstream out;
 #else
-        static std::istringstream in;
+        static std::wistringstream in;
         static std::ofstream out;
 #endif
     };
@@ -284,7 +292,7 @@ namespace cpp {
     extern __declspec(dllexport) std::wistream& gin;
     extern __declspec(dllexport) std::wostream& gout;
 #else
-    extern __attribute__((visibility("default"))) std::istream& gin;
+    extern __attribute__((visibility("default"))) std::wistream& gin;
     extern __attribute__((visibility("default"))) std::ostream& gout;
 #endif
 } // namespace cpp

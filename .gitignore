@@ -60,6 +60,8 @@ binarysharp/obj/*
 csharp/obj/*
 binarysharp/bin/Release/*
 csharp/bin/Release/*
+assets/killterm
+assets/setkbdmode
 
 #make
 cs
@@ -87,3 +89,4 @@ test/*
 
 # test files
 file.tux
+a.*

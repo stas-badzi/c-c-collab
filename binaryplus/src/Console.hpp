@@ -121,7 +121,7 @@ namespace cpp {
     extern __declspec(dllimport) std::wistream& gin;
     extern __declspec(dllimport) std::wostream& gout;
 #else
-    extern std::istream& gin;
+    extern std::wistream& gin;
     extern std::ostream& gout;
 #endif
 }

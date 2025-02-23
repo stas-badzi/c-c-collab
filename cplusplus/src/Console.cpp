@@ -6,7 +6,7 @@ namespace cpp {
     __declspec(dllexport) std::wistream& gin = *((std::wostream*)&Console::in);
     __declspec(dllexport) std::wostream& gout = *((std::wostream*)&Console::out);
 #else
-    __attribute__((visibility("default"))) std::istream& gin = *((std::istream*)&Console::in);
+    __attribute__((visibility("default"))) std::wistream& gin = *((std::wistream*)&Console::in);
     __attribute__((visibility("default"))) std::ostream& gout = *((std::ostream*)&Console::out);
 #endif
 }
@@ -19,7 +19,28 @@ using namespace std::chrono;
 char_t Console::GetChar(void) {
     if (Console::buf_it >= 0 && Console::buf[Console::buf_it]) { ++buf_it; return Console::buf[buf_it-1]; }
     Console::buf[buf_it] = getc(stdin); if (buf_it < 127) Console::buf[++buf_it] = '\0'; else exit(0x1A);
+    //write(fileno(stdout), Console::buf + buf_it-1, 1);
     return Console::buf[buf_it-1];
+};
+
+void Console::PushChar(char_t c) {
+    Console::in.clear();
+    auto pos = Console::in.tellg();
+#ifdef _WIN32
+    Console::in.str(Console::in.str()+c);
+#else
+    //write(fileno(stdout), &c, 1);
+    wchar_t wc = 0;
+    size_t siz = mbrtowc(&wc, &c, 1, &Console::streammbs);
+    switch (siz) {
+    case static_cast<size_t>(-1):
+        exit(0x10F);
+    case static_cast<size_t>(-2):
+        return;
+    }
+    Console::in.str(Console::in.str()+wc);
+#endif
+    Console::in.seekg(pos);
 };
 
 void Console::XtermInitTracking(void) {
@@ -64,33 +85,32 @@ void Console::XtermMouseAndFocus(void) {
 
     while (bytes > 0) {
         buf_it = 0;
-        char c = GetChar(); --bytes;
-        if (c != '\033') {
-            in.clear();
-            Console::in.str(Console::in.str()+c);
-            buf[0] = '\0';
+        char_t c = GetChar(); --bytes;
+        if (c != N('\033')) {
+            Console::PushChar(c);
+            buf[0] = N('\0');
             continue;
         } else if (bytes == 0) break;
         c = GetChar(); --bytes;
-        if (c != '[') {
-            in.clear();
-            Console::in.str(Console::in.str()+'\033'+c);
-            buf[0] = '\0';
+        if (c != N('[')) {
+            Console::PushChar('\033');
+            Console::PushChar(c);
+            buf[0] = N('\0');
             continue;
         } else if (bytes == 0) break;
         c = GetChar(); --bytes;
         switch (c) {
-        case 'I':
+        case N('I'):
             //fprintf(stderr, "gained focus\n");
             Console::focused = true;
-            buf[0] = '\0';
+            buf[0] = N('\0');
             continue;
-        case 'O':
+        case N('O'):
             //fprintf(stderr, "lost focus\n");
             Console::focused = false;
-            buf[0] = '\0';
+            buf[0] = N('\0');
             continue;
-        case '<':
+        case N('<'):
             int pos = 0;
             int val[3] = {0};
             int it = 2;
@@ -98,12 +118,12 @@ void Console::XtermMouseAndFocus(void) {
                 if (bytes == 0) return;
                 char byte = GetChar(); --bytes;
 
-                if (byte == ';') { ++pos; continue; }
+                if (byte == N(';')) { ++pos; continue; }
                 
-                if (byte == 'M') { mousedown = true; break; }
-                if (byte == 'm') { mousedown = false; break; }
+                if (byte == N('M')) { mousedown = true; break; }
+                if (byte == N('m')) { mousedown = false; break; }
 
-                int num = byte - '0';
+                int num = byte - N('0');
                 if (num < 0 || num > 9) exit(31);
 
                 val[pos] *= 10;
@@ -116,7 +136,7 @@ void Console::XtermMouseAndFocus(void) {
             //fprintf(stderr, "mouse: %d %d\n", Console::mouse_status.x, Console::mouse_status.y);
             bitset<8> event(val[0]);
 
-            if (event[5]) { ++bytes; break; } // move event
+            if (event[5]) { ++bytes; buf[0] = N('\0'); continue; } // move event
             
             uint8_t button = 0b0;
             
@@ -166,12 +186,13 @@ void Console::XtermMouseAndFocus(void) {
                 Console::mouse_status.scroll = {1,false};
                 break;
             }
-            buf[0] = '\0';
+            buf[0] = N('\0');
             continue;
         }
-        in.clear();
-        Console::in.str(Console::in.str()+'\033'+'['+c);
-        buf[0] = '\0';
+        Console::PushChar('\033');
+        Console::PushChar('[');
+        Console::PushChar(c);
+        buf[0] = N('\0');
     }
 }
 
@@ -1122,7 +1143,7 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
 
 #else
 // Not linux (Probably Posix and Unix)
-
+mbstate_t Console::streammbs = mbstate_t();
 
 #ifdef __linux__
 // linux
@@ -1396,13 +1417,13 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
 
             string command = path;
             while (command.back() != '/') command.pop_back();
-            command.append("../share/factoryrush/bin/setkbdmode.bin");
+            command.append("../share/factoryrush/bin/setkbdmode");
             char val[2] = { ('0' + K_MEDIUMRAW),'\0' };
 
             auto ret2 = System::RunProgram(command.c_str(),val,nullptr);
             auto old_kbdmode2 = ret2;
             if (ret2 < 0) {
-                throw("setkbdmode.bin error");
+                throw("setkbdmode error");
             }
 
             fd = getfd(0);
@@ -1570,12 +1591,12 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
             auto length = readlink( "/proc/self/exe" , path, 256);
             string command = path;
             while (command.back() != '/') command.pop_back();
-            command.append("../share/factoryrush/bin/setkbdmode.bin");
+            command.append("../share/factoryrush/bin/setkbdmode");
             char val[2] = "0"; val[0] += old_kbdmode;
             auto ret2 = System::RunProgram(command.c_str(),val,nullptr);
             old_kbdmode = ret2;
             if (ret2 < 0) {
-                throw("setkbdmode.bin error");
+                throw("setkbdmode error");
             }
 
             for (int i = 0; i < argc; i++) free((void*)Console::argv[i]);
@@ -1988,11 +2009,12 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
             int j = 0;
             for (int i = 0; i < Console::argc; i++) {
                 auto&& arg = appargv[i+j];
-                if (strlen(arg) > 1 && arg[0] == '\033') {
+                if (strlen(arg) > 1 && arg[0] == '@') {
                     string sdir; const char* narg;
                     switch (arg[1]) {
                         case '&':
                             // launched as popup
+                            cerr << "launched as popup" << endl;
                             Console::sub_proc = true;
                             if (strlen(arg) < 3) exit(0x31);
                             sub_process = 0;
@@ -2024,6 +2046,40 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
             auto _temp = realloc(Console::argv, sizeof(char*) * Console::argc);
             if (_temp) Console::argv = (const char**)_temp;
             else exit(0x73);
+
+
+            struct stat st;
+            Console::ppid = getppid();
+            Console::pid = getpid();
+            if (!Console::sub_proc) {
+                if (stat("/tmp/.factoryrush/", &st) == -1)
+                    mkdir("/tmp/.factoryrush/", 0777);
+                
+                Console::subdir = new const char[to_string(Console::pid).size() + 2]{0};
+                strcpy((char*)Console::subdir, to_string(Console::pid).c_str());
+                ((char*)Console::subdir)[to_string(Console::pid).size()] = '/';
+                
+                if (stat((string("/tmp/.factoryrush/") + subdir).c_str(), &st) == -1)
+                    mkdir((string("/tmp/.factoryrush/") + subdir).c_str(), 0777);
+            }
+            
+            string appdata = getenv("HOME");
+            appdata.append("/.factoryrush/");
+
+            if (stat(appdata.c_str(), &st) == -1)
+                mkdir(appdata.c_str(), 0777);
+
+            if (stat((string("/tmp/.factoryrush/") + subdir + "proc").c_str(), &st) == -1)
+                mkdir((string("/tmp/.factoryrush/") + subdir + "proc").c_str(), 0777);
+
+            if (stat((appdata + subdir).c_str(), &st) == -1)
+                mkdir((appdata + subdir).c_str(), 0777);
+
+            string initpth = (string("/tmp/.factoryrush/") + subdir + "initialized.dat");
+            FILE *initfl = fopen(initpth.c_str(), "w");
+            fprintf(initfl, "%d", 1);
+            fclose(initfl);
+
 
             setlocale(LC_CTYPE, "UTF-8");
 
@@ -2099,9 +2155,51 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
         Console::XtermMouseAndFocus();
     }
 
-    utfstr Console::GetTerminalExecutableName() {
-        return "";
+    static string getProcessName(pid_t pid) {
+        char pathbuf[PROC_PIDPATHINFO_MAXSIZE];
+        int ret = proc_pidpath(pid, pathbuf, sizeof(pathbuf));
+        if (ret <= 0) {
+            fprintf(stderr, "proc_pidpath() failed: %s\n", strerror(errno));
+            exit(0x90);
+        }
+        return string(pathbuf);
     }
+    
+    static pid_t getParentPid(pid_t pid) {
+        proc_bsdshortinfo pinfo = proc_bsdshortinfo();
+        int ret = proc_pidinfo(pid, PROC_PIDT_SHORTBSDINFO, 0, &pinfo, sizeof(pinfo));
+        if (ret <= 0) {
+            fprintf(stderr, "proc_pidpath() failed: %s, pid: %d\n", strerror(errno), pid);
+            exit(0x90);
+        }
+        return pinfo.pbsi_ppid;
+    }
+    
+    static bool isApp(pid_t pid) {
+        string name = getProcessName(pid);
+        return name.find(".app") != string::npos;
+    }
+
+    static string GetTerminalName(pid_t pid) {
+        while (!isApp(pid))
+            if (pid) pid = getParentPid(pid);
+            else return string();
+        string name = getProcessName(pid);
+    search:
+        while (name[name.size()-1] != 'p' || name[name.size()-2] != 'p' || name[name.size()-3] != 'a' || name[name.size()-4] != '.')
+            name.pop_back();
+        if (name.substr(0, name.size()-5).find(".app") != string::npos) {
+            name = name.substr(0, name.size()-5);
+            goto search;
+        }
+        return name;
+    }
+
+    utfstr Console::GetTerminalExecutableName() {
+        auto&& name = GetTerminalName(Console::ppid);
+        return name;
+    }
+
 
     Key::Enum Console::KeyPressed(void) {
         if (Console::key_hit < 0) return Key::Enum::NONE;
@@ -2116,6 +2214,8 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
     bool Console::IsKeyDown(Key::Enum key) {
         return Console::key_states[static_cast<unsigned short>(key)];
     }
+
+    pid_t Console::ppid = 0;
 #else
 // NO APPLE NO LINUX
 #error "Not implemented... yet"
@@ -2237,7 +2337,7 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
     winsize Console::window_size = winsize();
     int8_t Console::buf_it = -1;
     const char* Console::subdir = nullptr;
-    istringstream Console::in = istringstream(std::ios_base::ate|std::ios_base::in);
+    wistringstream Console::in = wistringstream(std::ios_base::ate|std::ios_base::in);
     ofstream Console::out = ofstream();
 #endif
 
@@ -2264,9 +2364,8 @@ unsigned short Console::double_click_max = (unsigned short)(500);
 int Console::pid = int(-1); 
 int Console::ret = int(-1);
 bool Console::sub_proc = bool(false);
-char Console::buf[127] = N("\0");
-
-uint16_t Console::next_pid = uint16_t(1000);
+char_t Console::buf[127] = N("\0");
+uint16_t Console::next_pid = uint16_t(10000);
 array<bool,UINT16_MAX> Console::used_pids = array<bool,UINT16_MAX>{0};
 
 struct ToggledKeys Console::KeysToggled(void) {
@@ -2384,27 +2483,31 @@ int cpp::Console::PopupWindow(int type, int argc, uniconv::utfcstr argv[]) {
 newpidgen:
     if (++pc > UINT16_MAX) exit(0xF1); // no pid left
     if (Console::next_pid == UINT16_MAX) Console::next_pid = 0;
-    short npid = ++Console::next_pid;
+    auto& npid = ++Console::next_pid;
     if (Console::used_pids[npid]) goto newpidgen;
     Console::used_pids[npid] = true;
 
     utfcstr* args = (utfcstr*)System::AllocateMemory(sizeof(void*) * (argc+3));
 #if defined(_WIN32) || defined(__CYGWIN__)
     #define sep L'\\'
+    #define topen _wfopen
+    wchar_t* appdata = _wgetenv(L"APPDATA");
+    wchar_t* tmppath = _wgetenv(L"TMP");
 #else
     #define sep '/'
-#endif
-    utfstr procdir = utfstr(N("proc")) + sep  + to_nstring(npid) + sep;
-    System::MakeDirectory((filesystem::temp_directory_path().native() + subdir + procdir).c_str());
-#if defined(_WIN32) || defined(__CYGWIN__)
-    wchar_t* appdata = _wgetenv(L"APPDATA");
-#else
+    #define topen fopen
     char* appdata = getenv("HOME");
+    const char* tmppath = "/tmp";
 #endif
+    utfstr procdir = utfstr(N("proc")) + sep + to_nstring(npid) + sep;
+    System::MakeDirectory((utfstr(tmppath) + sep + N(".factoryrush") + sep + subdir + procdir).c_str());
     System::MakeDirectory((utfstr(appdata) + sep + N(".factoryrush") + sep + N("logs") + sep + to_nstring(type) + sep).c_str());
-    utfstr info = N("\033&");
+    auto initfl = topen((utfstr(tmppath) + sep + N(".factoryrush") + sep + subdir + procdir + N("initialized.dat")).c_str(), "w");
+    fwrite("0", sizeof(char), 1, initfl);
+    fclose(initfl);
+    utfstr info = N("@&");
     info.append(to_nstring(type)).push_back(N('~'));
-    info.append(procdir).push_back(N('~'));
+    info.append(subdir).append(procdir).push_back(N('~'));
     utfstr root_pth = System::GetSelfPath();
 
 #ifdef _WIN32
@@ -2440,11 +2543,19 @@ newpidgen:
 #ifndef __APPLE__
     if (!System::RunProgramAsync(term.c_str(), args)) return -1;
 #else
-    auto file = fopen("/tmp/.factoryrush/run.sh", "w");
+    string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".command";
+    auto file = fopen(runpth.c_str(), "w");
+    fwrite("#!/bin/sh\nrm -f $0\n", sizeof(char), 19, file);
     for (int i = 0; args[i]; i++)
-        { fwrite(args[i], sizeof(char), strlen(args[i]), file); fwrite(" ", sizeof(char), 1, file); }
+        { fwrite("\"",sizeof(char),1,file); fwrite(args[i], sizeof(char), strlen(args[i]), file); fwrite("\" ", sizeof(char), 2, file); }
+    fwrite("\n", sizeof(char), 1, file);
+    string killtrmpth = root_pth; while (killtrmpth.back() != '/') killtrmpth.pop_back();
+    killtrmpth += "../share/factoryrush/bin/killterm";
+    fwrite(killtrmpth.c_str(), sizeof(char), killtrmpth.size(), file);
+    fwrite("\n", sizeof(char), 1, file);
+    fchmod(fileno(file), 0755);
     fclose(file);
-    if (!System::RunProgramAsync("/usr/bin/open", "-a", term.c_str(), "/tmp/.factoryrush/run.sh")) return -1;
+    if (openFileInApp(runpth.c_str(), term.c_str()) != 0) return -1;
 #endif
 #ifdef _WIN32
     goto contcons;
@@ -2456,6 +2567,6 @@ console:
 contcons:
 #endif
     System::FreeMemory(args);
-    csimp::FileSystem_PlaySound(uniconv::Utf8StringToUnicode(N("C:\\Users\\sssba\\Documents\\c-c-collab\\assets\\illegal-operation.mp3")), 0); 
+    //csimp::FileSystem_PlaySound(uniconv::Utf8StringToUnicode(N("C:\\Users\\sssba\\Documents\\c-c-collab\\assets\\illegal-operation.mp3")), 0); 
     return 0;
 }

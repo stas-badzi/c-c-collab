@@ -1,8 +1,9 @@
 # >>>> Arguments <<<<<<<<
-# sudo = [0] -> do copy libs and biraries (requiers sudo permissions)
+# sudo = [0] -> do copy libs and biraries (requiers [sudo/doas/su] permissions)
 # forcewin = [1] -> use windows emulator like windows
 # debug = [0] -> compile program for debbuging
-# msvc = [0] -> force msvc++ compilation
+# msvc = [0] -> force msvc++ compilation (windows only, must be run in VS developer command prompt)
+# give-ctrl = [1] -> give control over the keyboard to the binary (macOS only, requires sudo permissions)
 # c-compiler = [$defcompc] -> set compiler loacation
 # cpp-compiler = [$defcompcxx] -> set compiler loacation
 
@@ -24,7 +25,7 @@ sources = Console.cpp FileSystem.cpp System.cpp dllexport.cpp
 #> header files
 headers = Console.hpp FileSystem.hpp FileSystem.ipp dllimport.hpp System.hpp System.ipp smart_ref.hpp smart_ref.ipp
 #> include files
-includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp apple/keyboard.h linux/ledctrl.h linux/mousefd.h
+includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp apple/keyboard.h apple/openfile.h linux/ledctrl.h linux/mousefd.h
 #> name the dynamic library
 name = factoryrushplus
 # *******************************
@@ -512,7 +513,7 @@ else
 	@rm -f binaryplus/obj/*
 endif
 
-resources: source/setkbdmode.c source/getfd.c source/getfd.h source/keyboard.h source/keyboard.m source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h
+resources: source/setkbdmode.c source/killterm.c source/getfd.c source/getfd.h source/keyboard.h source/keyboard.m source/openfile.h source/openfile.m source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h
 
 	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(staticgen)assets/$(prefix)globals.$(static) objects/globals.o
@@ -526,12 +527,12 @@ ifeq ($(shell uname -s),Linux)
 	-@rm *.o 2> $(nulldir)
 	$(c-compiler) -c source/setkbdmode.c source/getfd.c source/ledctrl.c source/mousefd.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	ar rcs assets/$(prefix)linuxctrl.$(static) objects/getfd.o objects/ledctrl.o objects/mousefd.o objects/setkbdmode.o
-	$(c-compiler) -o assets/setkbdmode.$(binary) objects/setkbdmode.o -Lassets -llinuxctrl $(static-libc)
+	$(c-compiler) -o assets/setkbdmode objects/setkbdmode.o -Lassets -llinuxctrl $(static-libc)
 	git submodule update --init --recursive --remote utilities/doas-keepenv
 ifeq ($(copylibs),1)
 	@echo "$(linuxroot)/share/factoryrush/bin"
 	$(admin)mkdir -p $(linuxroot)/share/factoryrush/bin$(adminend)
-	$(admin)cp assets/setkbdmode.$(binary) $(linuxroot)/share/factoryrush/bin$(adminend)
+	$(admin)cp assets/setkbdmode $(linuxroot)/share/factoryrush/bin$(adminend)
 	$(admin)cp utilities/doas-keepenv/doas-keepenv $(linuxroot)/share/factoryrush/bin/doas-keepenv.sh$(adminend)
 	$(admin)cp utilities/doas-keepenv/doas-keepenv $(linuxbin)/doas-keepenv.sh$(adminend)
 
@@ -548,15 +549,17 @@ else
 endif
 else
 ifeq ($(shell uname -s),Darwin)
-	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wextra $(cflags) $(cdb) -Isource -std=c++2b && mv *.o objects/
+	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wextra $(cxxflags) $(cdb) -Isource -std=c++2b && mv *.o objects/
 	ar rcs assets/libapplecuchar.a objects/cuchar.o
-	$(c-compiler) -c source/keyboard.m -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
-	$(c-compiler) -dynamiclib -o assets/libapplectrl.dylib objects/keyboard.o -framework CoreGraphics
+	$(c-compiler) -c source/keyboard.m source/openfile.m source/killterm.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
+	$(c-compiler) -dynamiclib -o assets/libapplectrl.dylib objects/keyboard.o objects/openfile.o -framework CoreGraphics -framework CoreServices
+	$(c-compiler) -o assets/killterm objects/killterm.o
 	git submodule update --init --recursive --remote utilities/give-control
 ifeq ($(copylibs),1)
-	$(admin)mkdir -p $(macosroot)/share/factoryrush/lib$(adminend)
+	$(admin)mkdir -p $(macosroot)/share/factoryrush/lib $(macosroot)/share/factoryrush/bin$(adminend)
 	$(admin)cp assets/libapplectrl.dylib $(macosroot)/share/factoryrush/lib$(adminend)
 	$(admin)cp assets/libapplectrl.dylib $(macoslib)$(adminend)
+	$(admin)cp assets/killterm $(macosroot)/share/factoryrush/bin$(adminend)
 else
 	@mkdir -p binaryplus/share/factoryrush/lib
 	@cp assets/libapplectrl.dylib binaryplus/share/factoryrush/lib
@@ -590,7 +593,7 @@ cpp: resources $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(heade
 
 
 ifneq ($(wildcard cs),cs)
-	$(MAKE) cs sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)
+	$(MAKE) cs sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) give-ctrl=$(give-ctrl) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)
 endif
 ifeq ($(msvc),1)
 	echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(flib) $(objects) ../assets/globals USER32.lib Gdi32.lib" > run.bat
@@ -664,7 +667,7 @@ endif
 cs: $(foreach fl,$(files),csharp/$(fl))
 
 ifneq ($(wildcard resources),resources)
-	$(MAKE) resources sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)
+	$(MAKE) resources sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) give-ctrl=$(give-ctrl) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)
 endif
 	cd csharp && dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r $(os_name) -c $(configuration)
 
@@ -711,7 +714,7 @@ endif
 cppbin: resources $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc))
 	
 ifneq ($(wildcard cpp),cpp)
-	$(MAKE) cpp sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)
+	$(MAKE) cpp sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) give-ctrl=$(give-ctrl) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)
 endif
 
 ifeq ($(msvc),1)
@@ -732,7 +735,9 @@ ifeq ($(shell uname -s),Darwin)
 #macos
 	utilities/custom/dylib-fix.sh "binaryplus/bin/$(binname).$(binary)" "$(name)"
 	utilities/custom/dylib-fix.sh "binaryplus/bin/$(binname).$(binary)" "$(filename)"
+ifneq ($(give-ctrl),0)
 	utilities/give-control/give-control "binaryplus/bin/$(binname).$(binary)"
+endif
 #
 endif
 ifeq ($(shell uname -s),Linux)
@@ -745,13 +750,18 @@ ifeq ($(shell echo "check quotes"),"check quotes")
 #windows
 ifeq ($(copylibs),1)
 	$(admin)copy binaryplus\bin\$(binname).$(binary) $(bindir)$(adminend)
-else
 	cd binaryplus\bin && dir
 endif
 else
 #other
 ifeq ($(copylibs),1)
 	$(admin)cp binaryplus/bin/$(binname).$(binary) $(bindir)$(adminend)
+ifeq ($(shell uname -s), Darwin)
+ifneq ($(give-ctrl),0)
+	$(admin)utilities/give-control/give-control '$(bindir)/$(binname).$(binary)'$(adminend)
+endif
+endif
+else
 endif
 endif
 endif

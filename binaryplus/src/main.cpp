@@ -60,7 +60,31 @@ wstring getPath(wstring current) {
 
 int main(void) {
     Console::Init();
-    
+    std::wstring buf;
+    while (1) {
+        Console::HandleMouseAndFocus();
+        wchar_t x;
+        Console::Symbol sym = Console::Symbol(L'~',16,16);
+        while ((x = gin.get()) && gin.good())
+            if (isalnum(x)) buf.push_back(x);
+            else if (x == L'\177') {if (buf.size()) buf.pop_back();}
+            else wcout << x << endl;
+        auto focsym = Console::IsFocused() ? Console::Symbol(L'✓',16,16) : Console::Symbol(L'X',16,16);
+        auto sym1 = Console::Symbol::CreateTexture(to_wstring(Console::GetMouseStatus().x));
+        auto sym2 = Console::Symbol::CreateTexture(to_wstring(Console::GetMouseStatus().y));
+        
+        vector<vector<Console::Symbol>> screen = Console::Symbol::CreateTexture(buf);
+        screen.push_back(sym1[0]);
+        screen.push_back(sym2[0]);
+        screen.push_back(vector<Console::Symbol>());
+        screen.back().push_back(focsym);
+        screen.push_back(vector<Console::Symbol>());
+        screen.back().push_back(sym);
+        Console::FillScreen(screen);
+        Console::Sleep(0.03);
+    }
+    return 0;
+
     bool edit = false, bop = true, a3 = true;
 
     chrono::time_point<chrono::high_resolution_clock> start = chrono::high_resolution_clock::now();
@@ -264,21 +288,27 @@ endminput:
 
         FileSystem::DrawTextureToScreen(2,15,pos,screen);
 
-        if (mouse.x < screen[0].size() && mouse.y < screen.size()) screen[mouse.y][mouse.x].character(Console::KeysToggled().CapsLock ? L'*' : L'⮙');
+        // first check y 'cause if screen.size() is 0 than screen[0].size() will crash
+        if (mouse.y < screen.size() && mouse.x < screen[0].size()) screen[mouse.y][mouse.x].character(Console::KeysToggled().CapsLock ? L'*' : screen[mouse.y][mouse.x].character());
+        if ((!(Console::IsKeyDown(Key::Enum::SUPERL) || Console::IsKeyDown(Key::Enum::SUPERR))) && mouse.y < screen.size() && mouse.x < screen[0].size()) {
+            if (screen[mouse.y][mouse.x].background() == 16) screen[mouse.y][mouse.x].background(0);
+            if (screen[mouse.y][mouse.x].foreground() == 16) screen[mouse.y][mouse.x].foreground(7);
+            screen[mouse.y][mouse.x].ReverseColors();
+        }
         Console::FillScreen(screen);
-
-        Control::CleanMemory();
 
         if (Console::IsFocused()) Console::HandleKeyboard();
         //string x;
         //gin >> x;
         //if (!gin.eof()) cout << 'a' << x << '\n' << flush;
-       if (Console::KeyPressed() == Key::Enum::q && IsCtrlDown()) return EXIT_SUCCESS;
+        if (Console::KeyPressed() == Key::Enum::q && IsCtrlDown()) return EXIT_SUCCESS;
         if (Console::KeyPressed() == Key::Enum::s && IsCtrlDown()) symchar = getChar(symchar);
         if (Console::KeyPressed() == Key::Enum::f && IsCtrlDown()) symfore = symfore;
         if (Console::KeyPressed() == Key::Enum::THREE && Console::IsKeyDown(Key::Enum::a) && a3) { Console::PopupWindow(0,0,nullptr); a3 = false; }
         if (!Console::IsKeyDown(Key::Enum::THREE)) a3 = true;
         //FileSystem::DrawTextureToScreen(20,2,pos,screen);
+
+        Control::CleanMemory();
     }
     return EXIT_FAILURE;
 }

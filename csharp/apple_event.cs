@@ -8,7 +8,7 @@ namespace apple {
         /*
         *  Virtual keycodes
         *  
-        *  dependant: example-> kVK_ANSI_A is 'A' on a QWERTY keyboard (EN-US layout)
+        *  layout dependant: example-> kVK_ANSI_A is 'A' on a QWERTY keyboard (EN-US layout)
         */
         public enum dependent {
             kVK_ANSI_A = 0x00,
@@ -78,7 +78,7 @@ namespace apple {
             kVK_ANSI_Keypad9 = 0x5C
             };
 
-        /* keys independent of keyboard layout*/
+        /* keys independent of keyboard layout */
         public enum independent {
             kVK_Return = 0x24,
             kVK_Tab = 0x30,
@@ -90,6 +90,7 @@ namespace apple {
             kVK_CapsLock = 0x39,
             kVK_Option = 0x3A,
             kVK_Control = 0x3B,
+            kVK_RightCommand = 0x36,
             kVK_RightShift = 0x3C,
             kVK_RightOption = 0x3D,
             kVK_RightControl = 0x3E,
@@ -112,6 +113,7 @@ namespace apple {
             kVK_F16 = 0x6A,
             kVK_F14 = 0x6B,
             kVK_F10 = 0x6D,
+            kVK_ContextualMenu = 0x6E,
             kVK_F12 = 0x6F,
             kVK_F15 = 0x71,
             kVK_Help = 0x72,
@@ -126,10 +128,16 @@ namespace apple {
             kVK_LeftArrow = 0x7B,
             kVK_RightArrow = 0x7C,
             kVK_DownArrow = 0x7D,
-            kVK_UpArrow = 0x7E
+            kVK_UpArrow = 0x7E,
+            kVK_ISO_Section = 0x0A,
+            kVK_JIS_Yen = 0x5D,
+            kVK_JIS_Underscore = 0x5E,
+            kVK_JIS_KeypadComma = 0x5F,
+            kVK_JIS_Eisu = 0x66,
+            kVK_JIS_Kana = 0x68,
         };
 
     }
-#pragma warning disable CS8981
+#pragma warning restore CS8981
 }
 #endif
