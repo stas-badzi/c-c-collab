@@ -56,8 +56,7 @@ jobs:
           path: binarysharp/bin/exe
       - name: Copy C# where it's needed
         run: |
-          echo ${{ github.workspace }} | sed 's/://g' | sed 's/\\/\//g'
-          cd $(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
+          cd /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
           tree
           touch cs
           touch csbin
