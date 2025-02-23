@@ -20,11 +20,9 @@ Camera::Camera(int height, int width, Console::Symbol sym) {
 }
 
 Camera::Camera(void* cameraPtr) { // work in progress
-	return;
-
     int offset = 0;
     auto int32_size = sizeof(int);
-    auto symptr_size = sizeof(void*); // <---
+    auto symptr_size = sizeof(Console::Symbol*);
 
     vector<vector<Console::Symbol>> ret_buffer;
     MartixPosition ret_viewportCenter;
@@ -40,7 +38,7 @@ Camera::Camera(void* cameraPtr) { // work in progress
 
         buffer[i].resize(width);
         for (int j = 0; j < width; j++) {
-            // buffer[i][j] = Console::Symbol(&(void*)(cameraPtr+offset)) <---
+            buffer[i][j] = Console::Symbol(&(void*)(cameraPtr+offset))
             offset += symptr_size;
         }
     }
@@ -55,11 +53,9 @@ Camera::Camera(void* cameraPtr) { // work in progress
 }
 
 void* Camera::Get() { // work in progress
-	return nullptr;
-
 	int alloc = 0;
     auto int32_size = sizeof(int);
-    auto symptr_size = sizeof(void*); // <---
+    auto symptr_size = sizeof(Console::Symbol*);
 
     alloc += 3 * int32_size; // buffer.Count + viewportCenter
     for (i = 0; i < this->buffer.size(); i++) {
@@ -77,7 +73,7 @@ void* Camera::Get() { // work in progress
         *(ret+offset) = row.size();
         offset += int32_size;
         for (int j = 0; j < row.size(); j++) {
-            // *(ret+offset) = row[j].Get(); <---
+            *(ret+offset) = (void*)&row[j].Get();
             offset += symptr_size;
         }
     }
