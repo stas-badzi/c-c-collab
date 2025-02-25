@@ -540,7 +540,7 @@ ifeq ($(copylibs),1)
 	$(admin)cp README.md $(linuxroot)/share/factoryrush/assets$(adminend)
 else
 	@mkdir -p binaryplus/bin/../share/factoryrush/bin
-	@cp assets/setkbdmode.$(binary) binaryplus/share/factoryrush/bin
+	@cp assets/setkbdmode binaryplus/share/factoryrush/bin
 	@cp utilities/doas-keepenv/doas-keepenv binaryplus/share/factoryrush/bin/doas-keepenv.sh
 	@cp utilities/doas-keepenv/doas-keepenv binaryplus/bin/doas-keepenv.sh
 
