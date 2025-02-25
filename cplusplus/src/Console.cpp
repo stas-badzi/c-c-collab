@@ -74,14 +74,16 @@ void Console::XtermMouseAndFocus(void) {
 
 #ifdef _WIN32
     // todo: implement getting the amount of bytes available to read
-    throw(std::exception("not implemented (Console::XtermMouseAndFocus), cplusplus/src/Console.cpp:37"));
+    throw(std::runtime_error("not implemented (Console::XtermMouseAndFocus), cplusplus/src/Console.cpp:37"));
+#define nstrlen wcslen
 #else
+#define nstrlen strlen
     ioctl(STDIN_FILENO, FIONREAD, &bytes);
 #endif
     
     if (!bytes) return;
 
-    bytes += strlen(Console::buf);
+    bytes += nstrlen(Console::buf);
 
     while (bytes > 0) {
         buf_it = 0;
@@ -2502,7 +2504,7 @@ newpidgen:
     utfstr procdir = utfstr(N("proc")) + sep + to_nstring(npid) + sep;
     System::MakeDirectory((utfstr(tmppath) + sep + N(".factoryrush") + sep + subdir + procdir).c_str());
     System::MakeDirectory((utfstr(appdata) + sep + N(".factoryrush") + sep + N("logs") + sep + to_nstring(type) + sep).c_str());
-    auto initfl = topen((utfstr(tmppath) + sep + N(".factoryrush") + sep + subdir + procdir + N("initialized.dat")).c_str(), "w");
+    auto initfl = topen((utfstr(tmppath) + sep + N(".factoryrush") + sep + subdir + procdir + N("initialized.dat")).c_str(), N("w"));
     fwrite("0", sizeof(char), 1, initfl);
     fclose(initfl);
     utfstr info = N("@&");
