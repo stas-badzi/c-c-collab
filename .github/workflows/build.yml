@@ -55,6 +55,7 @@ jobs:
           name: CSharpWinExe
           path: binarysharp/bin/exe
       - name: Copy C# where it's needed
+        shell: msys2 {0}
         run: |
           echo /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
           cd /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
@@ -69,6 +70,7 @@ jobs:
           CC: gcc
           CXX: g++
         run: |
+          cd /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
           tree
           export PATH="/clang64/bin:$PATH"
           make sudo=0 c-compiler=clang cpp-compiler=clang++

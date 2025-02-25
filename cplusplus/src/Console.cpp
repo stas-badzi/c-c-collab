@@ -3,7 +3,7 @@
 
 namespace cpp {
 #if defined(_WIN32) || defined(__CYGWIN__)
-    __declspec(dllexport) std::wistream& gin = *((std::wostream*)&Console::in);
+    __declspec(dllexport) std::wistream& gin = *((std::wistream*)&Console::in);
     __declspec(dllexport) std::wostream& gout = *((std::wostream*)&Console::out);
 #else
     __attribute__((visibility("default"))) std::wistream& gin = *((std::wistream*)&Console::in);
