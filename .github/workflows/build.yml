@@ -47,7 +47,6 @@ jobs:
       - name: Clone repository
         shell: msys2 {0}
         run: |
-          rm -rf /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
           git clone https://github.com/TheAssassin/build-native.git /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
       - name: Import C# compiled dynamic library
         uses: actions/download-artifact@v4

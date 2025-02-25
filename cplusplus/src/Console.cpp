@@ -5,7 +5,9 @@ namespace cpp {
 #if defined(_WIN32) || defined(__CYGWIN__)
     __declspec(dllexport) std::wistream& gin = *((std::wistream*)&Console::in);
     __declspec(dllexport) std::wostream& gout = *((std::wostream*)&Console::out);
+#define getnc getwc
 #else
+#define getnc getc
     __attribute__((visibility("default"))) std::wistream& gin = *((std::wistream*)&Console::in);
     __attribute__((visibility("default"))) std::ostream& gout = *((std::ostream*)&Console::out);
 #endif
@@ -18,7 +20,7 @@ using namespace std::chrono;
 
 char_t Console::GetChar(void) {
     if (Console::buf_it >= 0 && Console::buf[Console::buf_it]) { ++buf_it; return Console::buf[buf_it-1]; }
-    Console::buf[buf_it] = getc(stdin); if (buf_it < 127) Console::buf[++buf_it] = '\0'; else exit(0x1A);
+    Console::buf[buf_it] = getnc(stdin); if (buf_it < 127) Console::buf[++buf_it] = '\0'; else exit(0x1A);
     //write(fileno(stdout), Console::buf + buf_it-1, 1);
     return Console::buf[buf_it-1];
 };
@@ -940,6 +942,7 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
         try {
         Symbol empty_sym = Symbol(L' ', 16, 16);
         const size_t win_width = GetWindowWidth(), win_height = GetWindowHeight(), height = symbols.size();
+        if (win_width == 0 || win_height == 0) return;
 
         wchar_t* screen = new wchar_t[win_height*win_width];
         WORD* attributes = new WORD[win_height*win_width];
@@ -1092,6 +1095,9 @@ uniconv::utfstr Console::GetTerminalExecutableName() {
         Console::mouse_status.y = mouse.y;
         Console::mouse_status.y = mouse.y;
 */
+        wchar_t c;
+        while (c = getwc(stdin))
+            Console::PushChar(c);
         return;
     }
 
