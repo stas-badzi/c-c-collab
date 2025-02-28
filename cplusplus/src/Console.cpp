@@ -169,8 +169,8 @@ void Console::XtermMouseAndFocus(void) {
 
             Console::this_mouse_combo = ( Console::last_click_time == now ) ? Console::last_mouse_combo : 1;
             Console::this_mouse_down = mousedown;
-            Console::mouse_buttons_down[fullbutton] = this_mouse_down;
-            Console::this_mouse_button = fullbutton;
+            Console::mouse_buttons_down[button] = this_mouse_down;
+            Console::this_mouse_button = button;
             
             switch (button) {
             case 1:
@@ -1186,6 +1186,8 @@ void Console::XtermMouseAndFocus(void) {
                 Console::mouse_buttons_down[2] = mouse_status.secondary;
                 Console::mouse_buttons_down[3] = flags[2] && ((mouse.dwButtonState & 0b11111111100000000000000000000000) != 0b11111111100000000000000000000000);
                 Console::mouse_buttons_down[4] = flags[2] && ((mouse.dwButtonState & 0b11111111100000000000000000000000) == 0b11111111100000000000000000000000);
+                if (mouse.dwButtonState & 0b11111)
+                    cerr << '0' << 'x' << std::hex << mouse.dwButtonState << '\n';
                 Console::mouse_buttons_down[5] = GetKeyState(VK_XBUTTON1) & 0x8000;
                 Console::mouse_buttons_down[6] = GetKeyState(VK_XBUTTON2) & 0x8000;
                 Console::this_mouse_combo = (flags[1] ? this_mouse_combo : 0) + 1; 
@@ -2447,7 +2449,7 @@ bool Console::emulator = false;
 bool Console::initialised = false;
 bitset<KEYBOARD_MAX> Console::key_states = bitset<KEYBOARD_MAX>(0);
 struct ToggledKeys Console::keys_toggled = ToggledKeys();
-bitset<5> Console::mouse_buttons_down = bitset<5>(0);
+bitset<16> Console::mouse_buttons_down = bitset<16>(0);
 struct Console::MouseStatus Console::mouse_status = Console::MouseStatus();
 std::chrono::time_point<std::chrono::high_resolution_clock> Console::last_click_time = std::chrono::high_resolution_clock::now();
 

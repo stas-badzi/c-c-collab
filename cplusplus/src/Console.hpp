@@ -161,7 +161,7 @@ namespace cpp {
         static int key_hit;
         static int key_released;
         static unsigned short double_click_max; // = 500;
-        static std::bitset<5> mouse_buttons_down;
+        static std::bitset<16> mouse_buttons_down;
         static bool focused;
         static struct MouseStatus mouse_status;
         static uint8_t this_mouse_button;

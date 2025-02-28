@@ -74,7 +74,8 @@ int main(void) {
             if (isalnum(x)) buf.push_back(x);
             else if (x == L'\177') {if (buf.size()) buf.pop_back();}
             else wcout << x << endl;
-        auto focsym = Console::IsFocused() ? Console::Symbol(L'✓',16,16) : Console::Symbol(L'X',16,16);
+        bool focs = Console::IsFocused();
+        auto focsym = focs ? Console::Symbol(L'✓',16,16) : Console::Symbol(L'X',16,16);
         auto sym1 = Console::Symbol::CreateTexture(to_wstring(Console::GetMouseStatus().x));
         auto sym2 = Console::Symbol::CreateTexture(to_wstring(Console::GetMouseStatus().y));
         if (Console::GetMouseStatus().x == 0 && Console::GetMouseStatus().y == 4) {
