@@ -13,6 +13,9 @@ utfstr System::root = System::GetRoot();
 utfstr System::self = utfstr();
 
 #ifdef _WIN32
+#ifdef _MSC_VER
+    #define PATH_MAX MAX_PATH
+#endif
     utfstr System::GetRoot(void) {
         wchar_t buf[PATH_MAX];
         DWORD size = GetModuleFileName(NULL, buf, PATH_MAX);

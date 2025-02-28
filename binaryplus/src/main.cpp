@@ -10,6 +10,7 @@
 #include <vector>
 #include <chrono>
 #include <cassert>  
+#include <random>
 
 #define IsCtrlDown() (Console::IsKeyDown(Key::Enum::CTRL) || Console::IsKeyDown(Key::Enum::CTRLL) || Console::IsKeyDown(Key::Enum::CTRLR))
 
@@ -60,7 +61,11 @@ wstring getPath(wstring current) {
 
 int main(void) {
     Console::Init();
+    Console::SetTitle(L"FactoryRush");
+    Console::SetCursorSize(0);
     std::wstring buf;
+    Console::MouseStatus lastmouse = Console::GetMouseStatus();
+    int siz = 0;
     while (1) {
         Console::HandleMouseAndFocus();
         wchar_t x;
@@ -72,6 +77,21 @@ int main(void) {
         auto focsym = Console::IsFocused() ? Console::Symbol(L'✓',16,16) : Console::Symbol(L'X',16,16);
         auto sym1 = Console::Symbol::CreateTexture(to_wstring(Console::GetMouseStatus().x));
         auto sym2 = Console::Symbol::CreateTexture(to_wstring(Console::GetMouseStatus().y));
+        if (Console::GetMouseStatus().x == 0 && Console::GetMouseStatus().y == 4) {
+            if (Console::GetMouseStatus().primary && !lastmouse.primary) return EXIT_SUCCESS; 
+            if (Console::GetMouseStatus().secondary && !lastmouse.secondary) Console::PopupWindow(0,0,nullptr);
+            if (Console::GetMouseStatus().middle && !lastmouse.middle) Console::PopupWindow(1,0,nullptr);
+            sym = Console::Symbol(L'@',16,16);
+        }
+        Console::MoveCursor(Console::GetMouseStatus().x,Console::GetMouseStatus().y);
+        if (Console::GetMouseStatus().secondary) Console::HideCursor();
+        if (Console::GetMouseStatus().scroll.first) {
+            sym = Console::GetMouseStatus().scroll.second ? Console::Symbol(L'▲',16,16) : Console::Symbol(L'▼',16,16);
+            siz += 10*Console::GetMouseStatus().scroll.second-5;
+            siz %= 100;
+            Console::SetCursorSize(siz);
+        }
+        lastmouse = Console::GetMouseStatus();
         
         vector<vector<Console::Symbol>> screen = Console::Symbol::CreateTexture(buf);
         screen.push_back(sym1[0]);

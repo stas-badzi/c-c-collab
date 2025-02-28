@@ -34,6 +34,9 @@
     #include <process.h>
     #include <windows/key.hpp>
     #include <iostream>
+    #include <conio.h>
+    #include <windows/thread_safe/queue>
+    #include <windows/thread_safe/vector>
 #ifndef _MSVC
     #include <windows/quick_exit.h>
 #endif
@@ -78,6 +81,10 @@
 #else
     #define KEYBOARD_MAX 256
 #endif
+
+// change to 1 for less cpu usage but less responsiveness (windows keyboard input)
+#define SLEEP_THREAD_INPUT false
+// todo: make it into an cmdline trigger
 
 #define MOUSE_BUTTON_1  1
 #define MOUSE_BUTTON_2  2
@@ -173,6 +180,9 @@ namespace cpp {
         static std::array<bool,UINT16_MAX> used_pids;
         static uint16_t next_pid;
         static char_t buf[127]; static int8_t buf_it;
+        static std::pair<int16_t,int16_t> cursorpos;
+        static bool cursor_visible;
+        static uint8_t cursor_size;
     #ifdef _WIN32
         static const wchar_t* subdir;
         //static std::vector<std::vector<COLORREF>> SaveScreen(void);
@@ -192,7 +202,18 @@ namespace cpp {
         static HDC device;
         static DWORD old_console;
         static HANDLE old_buffer;
+        static CONSOLE_CURSOR_INFO old_curinf;
+        static tsqueue<wchar_t>* input_buf;
+        static HANDLE input_thread;
+        static void* input_thread_arg;
+        static HANDLE super_thread;
+        static bool* super_thread_run;
+        static void* super_thread_arg;
+        static bool* is_setting_cursor;
+        static tsvector<HANDLE>* thread_handles;
         static inline constexpr uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2);
+        static DWORD WINAPI MoveCursorThread(LPVOID lpParam);
+        static DWORD WINAPI SuperThread(LPVOID lpParam);
         //static std::pair<uint16_t,uint16_t> xyoffset;
         //static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
     #else
@@ -274,12 +295,19 @@ namespace cpp {
         static std::pair<uint8_t,uint8_t> MouseButtonClicked(void); // returns button ID and whitch consecutive click was it
         static uint8_t MouseButtonReleased(void); // returns button ID
 
-        static void Sleep(double seconds = 1);
+        static void Update(void);
+
+        static void Sleep(double seconds = 1.0);
 
         static void SetDoubleClickMaxWait(unsigned short milliseconds);
         static unsigned short GetDoubleClickMaxWait(void);
 
-        static int PopupWindow(int type, int argc, uniconv::utfcstr argv[]);
+        static int PopupWindow(int type, int argc, const char_t* argv[]);
+        static void MoveCursor(int x, int y);
+        static void ShowCursor(void);
+        static void HideCursor(void);
+        static void SetCursorSize(uint8_t size);
+        static void SetTitle(const char_t* title);
 #ifdef _WIN32
         static std::wistringstream in;
         static std::wofstream out;
