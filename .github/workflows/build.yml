@@ -51,7 +51,7 @@ jobs:
       - name: Copy repository inside of MSYS2
         shell: msys2 {0}
         run: |
-          cp -rf /d/temp/c-c-collab/* ${{ github.workspace }}
+          cp -rf D:\temp\c-c-collab\* ${{ github.workspace }}
       - name: Import C# compiled dynamic library
         uses: actions/download-artifact@v4
         with:
