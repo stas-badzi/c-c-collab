@@ -12,15 +12,6 @@ using namespace std;
 using namespace cpp;
 using namespace cs;
 
-Console::MouseStatus::MouseStatus(void) {
-    this->primary = false;
-    this->middle = false;
-    this->secondary = false;
-    this->scroll = pair<bool,bool>(false,false);
-    this->x = 0;
-    this->y = 0;
-}
-
 void Console::Init(void) {
     Console_sub$define(Console_sub);
     Console_Init();

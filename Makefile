@@ -113,6 +113,12 @@ else
 copylibs = 0
 endif
 
+ifeq ($(shell echo "check quotes"),"check quotes")
+copy = copy
+else
+copy = cp
+endif
+
 empty =
 space = $(empty) $(empty)
 
@@ -149,6 +155,9 @@ endif
 ifeq ($(msvc),1)
 defcompcxx = cl
 defcompc = cl
+objsuf = obj
+else
+objsuf = o
 endif
 
 ifeq ($(cpp-compiler),$(empty))
@@ -183,8 +192,8 @@ ldb = /DEBUG /PDB:bin/$(name).pdb
 bldb = /DEBUG /PDB:bin/$(binname).pdb
 bpdb = /MTd /Z7
 else
-cdb = -g -O0
-bpdb = -g -O0
+cdb = -g -Og
+bpdb = -g -Og
 endif
 else
 configuration = Release
@@ -514,9 +523,16 @@ else
 endif
 
 resources: source/setkbdmode.c source/killterm.c source/getfd.c source/getfd.h source/keyboard.h source/keyboard.m source/openfile.h source/openfile.m source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h
-
+ifneq ($(msvc),1)
 	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(staticgen)assets/$(prefix)globals.$(static) objects/globals.o
+else
+	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) source/globals.c /Icplusplus\include /std:clatest" > run.bat
+	@cmd.exe /c run.bat && mv *.obj objects/
+	@echo "lib /OUT:assets/globals.lib objects/globals.obj" > run.bat
+	@cmd.exe /c run.bat
+	@rm run.bat
+endif
 
 #	echo $(c-compiler) -v -o $(prefix)std.$(dynamic) -pedantic -Wextra -shared -fPIC -lm -static-libgcc 2>&1 | grep ld | sed s/-lc/'$$(find -O3 /usr/lib -name libc.a 2>&1 | grep $$(uname -m) | sed 1q)' | sed s/-lm/'$$(find -O3 /usr/lib -name libm.a 2>&1 | grep $$(uname -m) | sed 1q)'/g | sed s/-o/-Bsymbolic\ -o/g > temp.sh
 #	@chmod +x temp.sh
@@ -565,6 +581,7 @@ else
 	@cp assets/libapplectrl.dylib binaryplus/share/factoryrush/lib
 	@cp assets/libapplectrl.dylib binaryplus/bin
 endif
+else
 endif
 endif
 
@@ -597,7 +614,7 @@ ifneq ($(wildcard cs),cs)
 endif
 ifeq ($(msvc),1)
 	echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(flib) $(objects) ../assets/globals USER32.lib Gdi32.lib" > run.bat
-	@run.bat
+	@cmd.exe /c run.bat
 	@rm run.bat
 ifeq ($(debug),1)
 	@cp cplusplus/bin/$(filename).pdb binarysharp/bin/exe
@@ -719,10 +736,10 @@ endif
 
 ifeq ($(msvc),1)
 	echo "$(cpp-compiler) /EHsc /c $(bpdb) $(fbsrc) /Ibinaryplus\include /std:c++latest" > run.bat
-	@run.bat
+	@cmd.exe /c run.bat
 	@$(movefl) -f $(subst obj/,$(empty),$(fbobj)) binaryplus/obj
 	echo "cd binaryplus && link /OUT:bin/$(binname).$(binary) $(bldb) $(flib) ../cplusplus/bin/$(name).lib ../csharp/bin/lib/$(filename).lib $(fbobj) USER32.lib" > run.bat
-	@run.bat
+	@cmd.exe /c run.bat
 	@rm run.bat
 else
 #all
@@ -807,15 +824,14 @@ endif
 	@echo "Version file. Remove to enable recompile" > $@
 
 # .cpp
-cplusplus/obj/%.o: cplusplus/src/%.cpp $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
+cplusplus/obj/%.$(objsuf): cplusplus/src/%.cpp $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
 ifeq ($(findstring $(subst cplusplus/src/,$(empty),$<),$(sources)),$(subst cplusplus/src/,$(empty),$<))
 
 ifeq ($(msvc),1)
 #msvc
-	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) $< /Icplusplus\include /std:clatest" > run.bat
+	@echo "$(cpp-compiler) /EHsc /c /DUNICODE /D_MSVC $(cdb) $< /Icplusplus\include /std:c++latest" > run.bat
 ####@type run.bat
-	@cat run.bat
-	@run.bat
+	@cmd.exe /c run.bat
 	@rm run.bat
 #
 else
@@ -860,15 +876,14 @@ endif
 endif
 
 # .c
-cplusplus/obj/%.o: cplusplus/src/%.c $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
+cplusplus/obj/%.$(objsuf): cplusplus/src/%.c $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
 ifeq ($(findstring $(subst cplusplus/src/,$(empty),$<),$(sources)),$(subst cplusplus/src/,$(empty),$<))
 
 ifeq ($(msvc),1)
 #msvc
 	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) $< /Icplusplus\include /std:clatest" > run.bat
 ####@type run.bat
-	@cat run.bat
-	@run.bat
+	@cmd.exe /c run.bat
 	@rm run.bat
 #
 else

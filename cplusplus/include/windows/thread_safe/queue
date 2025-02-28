@@ -1,0 +1,47 @@
+#include <queue>
+#include <windows.h>
+namespace cpp {
+    template<typename T>
+    struct tsqueue {
+        tsqueue() {
+            m = CreateMutex(NULL,FALSE,NULL);
+            if (!m) {
+                printf("CreateMutex error: %d\n", GetLastError());
+                exit(1);
+            }
+        }
+        ~tsqueue() {	
+            if (!CloseHandle(m)) {
+                printf("CloseHandle error: %d\n", GetLastError());
+                exit(1);
+            }
+        }
+        void push(T val) {
+            if (WaitForSingleObject(m,INFINITE) != WAIT_OBJECT_0) { printf("WaitForSingleObject error: %d\n", GetLastError()); exit(1); }
+            q.push(val);
+            if (!ReleaseMutex(m)) { printf("ReleaseMutex error: %d\n", GetLastError()); exit(1); }
+        }
+        T pop(void) {
+            if (WaitForSingleObject(m,INFINITE) != WAIT_OBJECT_0) { printf("WaitForSingleObject error: %d\n", GetLastError()); exit(1); }
+            T val = q.front();
+            q.pop();
+            if (!ReleaseMutex(m)) { printf("ReleaseMutex error: %d\n", GetLastError()); exit(1); }
+            return val;
+        }
+        bool empty(void) {
+            if (WaitForSingleObject(m,INFINITE) != WAIT_OBJECT_0) { printf("WaitForSingleObject error: %d\n", GetLastError()); exit(1); }
+            bool e = q.empty();
+            if (!ReleaseMutex(m)) { printf("ReleaseMutex error: %d\n", GetLastError()); exit(1); }
+            return e;
+        }
+        size_t size(void) {
+            if (WaitForSingleObject(m,INFINITE) != WAIT_OBJECT_0) { printf("WaitForSingleObject error: %d\n", GetLastError()); exit(1); }
+            size_t s = q.size();
+            if (!ReleaseMutex(m)) { printf("ReleaseMutex error: %d\n", GetLastError()); exit(1); }
+            return s;
+        }
+    protected:
+        std::queue<T> q;
+        HANDLE m;
+    };
+}

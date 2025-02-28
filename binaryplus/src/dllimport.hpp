@@ -50,6 +50,18 @@ namespace cppimp {
 
     libimport int16_t Console_GetWindowHeight(void);
 
+    libimport void Console_Update(void);
+
+    libimport void Console_MoveCursor(int x, int y);
+
+    libimport void Console_ShowCursor(void);
+
+    libimport void Console_HideCursor(void);
+
+    libimport void Console_SetCursorSize(uint8_t size);
+
+    libimport void Console_SetTitle(uniconv::unichar* title);
+
     libimport int32_t Console_GetArgC(void);
 
     libimport uniconv::unichar** Console_GetArgV(void);

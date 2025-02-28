@@ -9,6 +9,7 @@
 #include <control_heap.h>
 
 // don't ask (compiler optimazations forced me to do this)
+// now I know the problem but I don;t want to fix it now
 namespace cs {
     inline std::vector<std::vector<smart_ref<cpp::Console::Symbol> > > PtrToTexture(void* ptr, bool direct = false) {
         using namespace std;
@@ -153,6 +154,30 @@ using namespace uniconv;
 
     libexport int16_t Console_GetWindowHeight(void) {
         return cpp::Console::GetWindowHeight();
+    }
+
+    libexport void Console_Update(void) {
+        return cpp::Console::Update();
+    }
+
+    libexport void Console_MoveCursor(int x, int y) {
+        return cpp::Console::MoveCursor(x,y);
+    }
+
+    libexport void Console_ShowCursor(void) {
+        return cpp::Console::ShowCursor();
+    }
+
+    libexport void Console_HideCursor(void) {
+        return cpp::Console::HideCursor();
+    }
+
+    libexport void Console_SetCursorSize(uint8_t size) {
+        return cpp::Console::SetCursorSize(size);
+    }
+
+    libexport void Console_SetTitle(uniconv::unichar* title) {
+        return cpp::Console::SetTitle(uniconv::UnicodeToUtf8String(title).c_str());
     }
 
     libexport int32_t Console_GetArgC(void) {
