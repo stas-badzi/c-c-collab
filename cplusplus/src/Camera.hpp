@@ -17,6 +17,6 @@ namespace cpp {
             std::vector<std::vector<Console::Symbol>> buffer;
             MartixPosition viewportCenter;
             Camera(std::vector<std::vector<Console::Symbol>> buffer, MartixPosition viewportCenter);
-            static void ValidateViewport(int height, int width);
-        };
+            static void ValidateViewport(MartixPosition vpc);
+    };
 }
