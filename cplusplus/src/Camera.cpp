@@ -52,7 +52,7 @@ Camera::Camera(void* cameraPtr) {
     free(cameraPtr);
 }
 
-void* Camera::Get() { // work in progress
+void* Camera::Get() {
 	int alloc = 0;
     auto int32_size = sizeof(int);
     auto symptr_size = sizeof(Console::Symbol*);
