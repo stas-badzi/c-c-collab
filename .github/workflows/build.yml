@@ -39,19 +39,13 @@ jobs:
     needs: compile-cs-windows
     runs-on: windows-latest
     steps:
-      - name: Copy repository outside of MSYS2
-        run: |
-          mkdir -p D:\temp
-          copy ${{ github.workspace }} D:\temp
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
         with:
           update: true
           install: make git zip tree mingw-w64-clang-x86_64-toolchain
-      - name: Copy repository inside of MSYS2
-        shell: msys2 {0}
-        run: |
-          cp -rf D:/temp/c-c-collab/* ${{ github.workspace }}
+      - name: Checkout source code
+        uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
         uses: actions/download-artifact@v4
         with:

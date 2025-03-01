@@ -1846,7 +1846,7 @@ mbstate_t Console::streammbs = mbstate_t();
         ioctl(STDIN_FILENO, FIONREAD, &bytes);
         while (bytes > 0) {
             char c = getc(stdin);
-            Console::in.str(Console::in.str()+c);
+            Console::PushChar(c);
             --bytes;
         }
 
@@ -2647,7 +2647,6 @@ newpidgen:
     args[1] = info.c_str();
     for (int i = 1; i <= argc; i++) args[i+1] = argv[i-1];
     args[argc+2] = nullptr;
-    fprintf(stderr, "Term: %ls\n", term.c_str());
 #ifndef __APPLE__
     if (!System::RunProgramAsync(term.c_str(), args)) return -1;
 #else
@@ -2671,7 +2670,6 @@ console:
     for (int i = 0; i < argc; i++) args[i] = argv[i];
     args[argc] = info.c_str();
     args[argc+1] = nullptr;
-    fprintf(stderr, "Console\n");
     if (!System::RunProgramAsyncC(root_pth.c_str(), args)) return -1;
 contcons:
 #endif
