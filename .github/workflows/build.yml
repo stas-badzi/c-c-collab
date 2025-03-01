@@ -44,10 +44,8 @@ jobs:
         with:
           update: true
           install: make git zip tree mingw-w64-clang-x86_64-toolchain
-      - name: Clone repository
-        shell: msys2 {0}
-        run: |
-          git clone https://github.com/TheAssassin/build-native.git /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
+      - name: Checkout source code
+        uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
         uses: actions/download-artifact@v4
         with:

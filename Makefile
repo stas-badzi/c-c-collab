@@ -191,6 +191,13 @@ cdb = /MDd /Z7
 ldb = /DEBUG /PDB:bin/$(name).pdb
 bldb = /DEBUG /PDB:bin/$(binname).pdb
 bpdb = /MTd /Z7
+ifeq ($(findstring clang, $(c-compiler)),clang)
+	clstd = /std:c17
+	clstdpp = /std:c++latest
+else
+	clstd = /std:clatest
+	clstdpp = /std:c++latest
+endif
 else
 cdb = -g -Og
 bpdb = -g -Og
@@ -527,9 +534,13 @@ ifneq ($(msvc),1)
 	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(staticgen)assets/$(prefix)globals.$(static) objects/globals.o
 else
-	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) source/globals.c /Icplusplus\include /std:clatest" > run.bat
+	@echo "@echo off" > run.bat
+	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) source/globals.c /Icplusplus\include $(clstd)" >> run.bat
+	@echo "@echo on" >> run.bat
 	@cmd.exe /c run.bat && mv *.obj objects/
-	@echo "lib /OUT:assets/globals.lib objects/globals.obj" > run.bat
+	@echo "@echo off" > run.bat
+	@echo "lib /OUT:assets/globals.lib objects/globals.obj" >> run.bat
+	@echo "@echo on" >> run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
 endif
@@ -613,7 +624,7 @@ ifneq ($(wildcard cs),cs)
 	$(MAKE) cs sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) give-ctrl=$(give-ctrl) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)
 endif
 ifeq ($(msvc),1)
-	echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(flib) $(objects) ../assets/globals USER32.lib Gdi32.lib" > run.bat
+	echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(flib) $(objects) ../assets/globals.lib USER32.lib Gdi32.lib Shell32.lib Shlwapi.lib Dbghelp.lib" > run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
 ifeq ($(debug),1)
@@ -735,7 +746,7 @@ ifneq ($(wildcard cpp),cpp)
 endif
 
 ifeq ($(msvc),1)
-	echo "$(cpp-compiler) /EHsc /c $(bpdb) $(fbsrc) /Ibinaryplus\include /std:c++latest" > run.bat
+	echo "$(cpp-compiler) /EHsc /c $(bpdb) $(fbsrc) /Ibinaryplus\include $(clstdpp)" > run.bat
 	@cmd.exe /c run.bat
 	@$(movefl) -f $(subst obj/,$(empty),$(fbobj)) binaryplus/obj
 	echo "cd binaryplus && link /OUT:bin/$(binname).$(binary) $(bldb) $(flib) ../cplusplus/bin/$(name).lib ../csharp/bin/lib/$(filename).lib $(fbobj) USER32.lib" > run.bat
@@ -829,7 +840,9 @@ ifeq ($(findstring $(subst cplusplus/src/,$(empty),$<),$(sources)),$(subst cplus
 
 ifeq ($(msvc),1)
 #msvc
-	@echo "$(cpp-compiler) /EHsc /c /DUNICODE /D_MSVC $(cdb) $< /Icplusplus\include /std:c++latest" > run.bat
+	@echo "@echo off" > run.bat
+	@echo "$(cpp-compiler) /EHsc /c /DUNICODE /D_CRT_SECURE_NO_DEPRECATE /D_MSVC $(cdb) $< /Icplusplus\include $(clstdpp)" >> run.bat
+	@echo "@echo on" >> run.bat
 ####@type run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
@@ -881,7 +894,9 @@ ifeq ($(findstring $(subst cplusplus/src/,$(empty),$<),$(sources)),$(subst cplus
 
 ifeq ($(msvc),1)
 #msvc
-	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) $< /Icplusplus\include /std:clatest" > run.bat
+	@echo "@echo off" > run.bat
+	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) $< /Icplusplus\include $(clstd)" >> run.bat
+	@echo "@echo on" >> run.bat
 ####@type run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
