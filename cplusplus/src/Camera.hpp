@@ -7,7 +7,7 @@ namespace cpp {
         int iIndex;
         int jIndex;
     };
-    class Camera {
+    struct Camera {
         public:
             Camera(int height, int width, Console::Symbol sym);
             Camera(void* cameraPtr);
