@@ -115,39 +115,4 @@ namespace CsExp {
             Cs.SoundSystem.PlaySound(TypeConvert.PtrToString(filepathPtr),wait);
         }
     }
-
-    public class Camera {
-        [UnmanagedCallersOnly(EntryPoint = "Camera_Construct")]
-        public static nint Construct(int width, int height, nint symbolPtr) {
-            if (symbolPtr == IntPtr.Zero)
-                throw new Exception("Intptr $symbolPtr Empty");
-
-            Cs.Camera camera = new Cs.Camera(width, height, new Terminal.Symbol(symbolPtr, true));
-            Marshal.FreeHGlobal(symbolPtr);
-            return camera.Get();
-        }
-        [UnmanagedCallersOnly(EntryPoint = "Camera_FromTexture")]
-        public static nint FromTexture(nint texturePtr) {
-            if (texturePtr == IntPtr.Zero)
-                throw new Exception("Intptr $texturePtr Empty");
-
-            var texture = TypeConvert.PtrToTexture(texturePtr);
-            Cs.Camera camera = Cs.Camera.FromTexture(texture);
-            Marshal.FreeHGlobal(texturePtr);
-            return camera.Get();
-        }
-        [UnmanagedCallersOnly(EntryPoint = "Camera_DrawTextureToCamera")]
-        public static void DrawTextureToCamera(nint texturePtr, int centerY, int centerX, nint cameraPtr) {
-            if (texturePtr == IntPtr.Zero)
-                throw new Exception("Intptr $texturePtr Empty");
-            if (cameraPtr == IntPtr.Zero)
-                throw new Exception("Intptr $cameraPtr Empty");
-
-            var texture = TypeConvert.PtrToTexture(texturePtr);
-            var camera = new Cs.Camera(cameraPtr);
-            Marshal.FreeHGlobal(texturePtr);
-            Marshal.FreeHGlobal(cameraPtr);          
-            camera.DrawTextureToCamera(texture, new Tuple<int, int>(centerY, centerX));
-        }
-    }
 }

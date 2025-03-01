@@ -493,7 +493,9 @@ using namespace uniconv;
 // ~System
 
 // Camera
-
+    libexport Camera_Construct(int height, int width, void* symptr) {
+        return Camera(height, width, *symptr).Get();
+    }
 
 #ifdef _DEBUG
 // control_heap

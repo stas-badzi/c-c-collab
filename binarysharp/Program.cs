@@ -24,9 +24,6 @@ namespace BinarySharp {
                 
                 Terminal.HandleMouseAndFocus();
                 var mouse = Terminal.GetMouseStatus();
-                
-                var camera = new Camera(19, 19, new Terminal.Symbol('C',14,14));
-                TextureSystem.DrawTextureToScreen(3, 3, camera.buffer, screen);
                 Terminal.FillScreen(screen);
 
                 if (Terminal.IsFocused()) Terminal.HandleKeyboard();

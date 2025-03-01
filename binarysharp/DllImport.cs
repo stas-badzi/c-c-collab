@@ -33,19 +33,6 @@ namespace CsImp {
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SoundSystem_PlaySound", CharSet = CharSet.Unicode)]
         public static extern void PlaySound(nint filepathPtr, bool wait = false);
     }
-
-    public class Camera {
-        private const string DllSource =  @"" + DllHandle.Prefix + "factoryrushsharp" + DllHandle.Suffix;
-
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Camera_Construct", CharSet = CharSet.Unicode)]
-        public static extern nint Construct(int width, int height, nint symbolPtr);
-        
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Camera_FromTexture", CharSet = CharSet.Unicode)]
-        public static extern nint FromTexture(nint texturePtr);
-        
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Camera_DrawTextureToCamera", CharSet = CharSet.Unicode)]
-        public static extern void DrawTextureToCamera(nint texturePtr, int centerY, int centerX, nint cameraPtr);
-    }
 }
 
 namespace CppImp {
