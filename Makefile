@@ -183,6 +183,19 @@ genwin = 1
 endif
 endif
 
+ifeq ($(msvc),1)
+ifeq ($(findstring clang, $(c-compiler)),clang)
+	clstd = /std:c17
+	clstdpp = /std:c++latest
+else
+	clstd = /std:clatest
+	clstdpp = /std:c++latest
+endif
+ifneq ($(tgarch),$(empty))
+	arch = $(tgarch)
+endif
+endif
+
 ifeq ($(debug),1)
 configuration = Debug
 binconfig = Debug
@@ -191,13 +204,6 @@ cdb = /MDd /Z7
 ldb = /DEBUG /PDB:bin/$(name).pdb
 bldb = /DEBUG /PDB:bin/$(binname).pdb
 bpdb = /MTd /Z7
-ifeq ($(findstring clang, $(c-compiler)),clang)
-	clstd = /std:c17
-	clstdpp = /std:c++latest
-else
-	clstd = /std:clatest
-	clstdpp = /std:c++latest
-endif
 else
 cdb = -g -Og
 bpdb = -g -Og
@@ -521,12 +527,14 @@ ifeq ($(shell echo "check quotes"),"check quotes")
 	@del /f resources
 	@del /f cplusplus\obj\*
 	@del /f binaryplus\obj\*
+	@del /f objects\*
 else
 	@rm -f cppbin
 	@rm -f cpp
 	@rm -f resources
 	@rm -f cplusplus/obj/*
 	@rm -f binaryplus/obj/*
+	@rm -f objects/*
 endif
 
 resources: source/setkbdmode.c source/killterm.c source/getfd.c source/getfd.h source/keyboard.h source/keyboard.m source/openfile.h source/openfile.m source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h
@@ -534,11 +542,11 @@ ifneq ($(msvc),1)
 	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(staticgen)assets/$(prefix)globals.$(static) objects/globals.o
 else
-	@echo "@echo off" > run.bat
+	@echo "@echo on" > run.bat
 	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) source/globals.c /Icplusplus\include $(clstd)" >> run.bat
 	@echo "@echo on" >> run.bat
 	@cmd.exe /c run.bat && mv *.obj objects/
-	@echo "@echo off" > run.bat
+	@echo "@echo on" > run.bat
 	@echo "lib /OUT:assets/globals.lib objects/globals.obj" >> run.bat
 	@echo "@echo on" >> run.bat
 	@cmd.exe /c run.bat
@@ -621,7 +629,7 @@ cpp: resources $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(heade
 
 
 ifneq ($(wildcard cs),cs)
-	$(MAKE) cs sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) give-ctrl=$(give-ctrl) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)
+	$(MAKE) cs sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) tgarch=$(tgarch) give-ctrl=$(give-ctrl) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)
 endif
 ifeq ($(msvc),1)
 	echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(flib) $(objects) ../assets/globals.lib USER32.lib Gdi32.lib Shell32.lib Shlwapi.lib Dbghelp.lib" > run.bat
@@ -695,7 +703,7 @@ endif
 cs: $(foreach fl,$(files),csharp/$(fl))
 
 ifneq ($(wildcard resources),resources)
-	$(MAKE) resources sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) give-ctrl=$(give-ctrl) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)
+	$(MAKE) resources sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) tgarch=$(tgarch) give-ctrl=$(give-ctrl) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)
 endif
 	cd csharp && dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r $(os_name) -c $(configuration)
 
@@ -742,7 +750,7 @@ endif
 cppbin: resources $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc))
 	
 ifneq ($(wildcard cpp),cpp)
-	$(MAKE) cpp sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) give-ctrl=$(give-ctrl) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)
+	$(MAKE) cpp sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) tgarch=$(tgarch) give-ctrl=$(give-ctrl) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)
 endif
 
 ifeq ($(msvc),1)
@@ -840,7 +848,7 @@ ifeq ($(findstring $(subst cplusplus/src/,$(empty),$<),$(sources)),$(subst cplus
 
 ifeq ($(msvc),1)
 #msvc
-	@echo "@echo off" > run.bat
+	@echo "@echo on" > run.bat
 	@echo "$(cpp-compiler) /EHsc /c /DUNICODE /D_CRT_SECURE_NO_DEPRECATE /D_MSVC $(cdb) $< /Icplusplus\include $(clstdpp)" >> run.bat
 	@echo "@echo on" >> run.bat
 ####@type run.bat
@@ -894,7 +902,7 @@ ifeq ($(findstring $(subst cplusplus/src/,$(empty),$<),$(sources)),$(subst cplus
 
 ifeq ($(msvc),1)
 #msvc
-	@echo "@echo off" > run.bat
+	@echo "@echo on" > run.bat
 	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) $< /Icplusplus\include $(clstd)" >> run.bat
 	@echo "@echo on" >> run.bat
 ####@type run.bat
