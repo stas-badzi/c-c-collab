@@ -184,8 +184,7 @@ jobs:
       - name: Compile code
         shell: cmd
         run:
-          start /b cmd /c utilities\custom\vsdevcmd-x64.bat
-          timeout 10
+          utilities\custom\vsdevscript-x64.bat
           .\make.exe resources sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
           .\make.exe cpp sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
           .\make.exe cppbin sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
