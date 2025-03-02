@@ -93,7 +93,7 @@ jobs:
       - name: Set up Cygwin
         uses: egor-tensin/setup-cygwin@v4
         with:
-          packages: gcc-g++ zip grep gawk binutils
+          packages: gcc-g++ zip grep gawk binutils tree
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
@@ -111,6 +111,7 @@ jobs:
         run: |
           touch cs
           touch csbin
+          tree
           cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
           cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Install Programs
