@@ -537,7 +537,9 @@ else
 	@echo "@echo off" > run.bat
 	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) source/globals.c /Icplusplus\include $(clstd)" >> run.bat
 	@echo "@echo on" >> run.bat
-	@cmd.exe /c run.bat && mv *.obj objects/
+	@cmd.exe /c run.bat
+	@dir
+	@mv *.obj objects/
 	@echo "@echo off" > run.bat
 	@echo "lib /OUT:assets/globals.lib objects/globals.obj" >> run.bat
 	@echo "@echo on" >> run.bat
