@@ -6,7 +6,7 @@
 #include "Console.hpp"
 #include "System.hpp"
 #include "TextureSystem.hpp"
-#include "Camera.hpp"
+#include "Game.hpp"
 #include <control_heap.h>
 
 // don't ask (compiler optimazations forced me to do this)

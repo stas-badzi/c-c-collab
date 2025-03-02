@@ -20,9 +20,9 @@ defcompc = cc
 cflags = -Wno-dollar-in-identifier-extension -Wno-unused-command-line-argument
 cxxflags = -Wno-dollar-in-identifier-extension -Wno-unused-command-line-argument
 #> source files
-sources = Console.cpp TextureSystem.cpp System.cpp Camera.cpp dllexport.cpp
+sources = Console.cpp TextureSystem.cpp System.cpp Game.cpp dllexport.cpp
 #> header files
-headers = Console.hpp TextureSystem.hpp TextureSystem.ipp Camera.hpp dllimport.hpp System.hpp System.ipp smart_ref.hpp smart_ref.ipp
+headers = Console.hpp TextureSystem.hpp TextureSystem.ipp Game.hpp dllimport.hpp System.hpp System.ipp smart_ref.hpp smart_ref.ipp
 #> include files
 includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp linux/ledctrl.h linux/mousefd.h
 #> name the dynamic library
