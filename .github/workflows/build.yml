@@ -186,8 +186,9 @@ jobs:
           ren gnuwin32.mirror-master gnuwin32
           copy gnuwin32\bin\* .
       - name: Compile code
-        shell: cmd /k "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64 {0}
+        shell: cmd
         run: |
+          "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
           .\make.exe resources sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
           .\make.exe cpp sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
           .\make.exe cppbin sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
