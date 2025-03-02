@@ -542,7 +542,7 @@ ifneq ($(msvc),1)
 	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(staticgen)assets/$(prefix)globals.$(static) objects/globals.o
 else
-	@echo "@echo on" > run.bat
+	@echo "@echo off" > run.bat
 	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) source/globals.c /Icplusplus\include $(clstd)" >> run.bat
 	@echo "@echo on" >> run.bat
 	@cmd.exe /c run.bat && mv *.obj objects/
@@ -848,7 +848,7 @@ ifeq ($(findstring $(subst cplusplus/src/,$(empty),$<),$(sources)),$(subst cplus
 
 ifeq ($(msvc),1)
 #msvc
-	@echo "@echo on" > run.bat
+	@echo "@echo off" > run.bat
 	@echo "$(cpp-compiler) /EHsc /c /DUNICODE /D_CRT_SECURE_NO_DEPRECATE /D_MSVC $(cdb) $< /Icplusplus\include $(clstdpp)" >> run.bat
 	@echo "@echo on" >> run.bat
 ####@type run.bat
@@ -902,7 +902,7 @@ ifeq ($(findstring $(subst cplusplus/src/,$(empty),$<),$(sources)),$(subst cplus
 
 ifeq ($(msvc),1)
 #msvc
-	@echo "@echo on" > run.bat
+	@echo "@echo off" > run.bat
 	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) $< /Icplusplus\include $(clstd)" >> run.bat
 	@echo "@echo on" >> run.bat
 ####@type run.bat

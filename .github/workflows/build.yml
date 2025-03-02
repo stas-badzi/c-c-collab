@@ -59,13 +59,11 @@ jobs:
       - name: Copy C# where it's needed
         shell: msys2 {0}
         run: |
-          echo /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
-          cd /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
-          tree
           touch cs
           touch csbin
-          cp csharp/bin/lib/factoryshsharp.dll cplusplus/bin/factoryrushsharp.dll
-          cp csharp/bin/lib/factoryshsharp.dll binaryplus/bin/factoryrushsharp.dll
+          tree
+          cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
+          cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Compile code
         shell: msys2 {0}
         env:
@@ -92,6 +90,12 @@ jobs:
     needs: compile-cs-windows
     runs-on: windows-latest
     steps:
+      - name: Set up Cygwin
+        uses: egor-tensin/setup-cygwin@v4
+        with:
+          packages: gcc-g++ zip grep gawk binutils tree
+      - name: Checkout source code
+        uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
         uses: actions/download-artifact@v4
         with:
@@ -102,18 +106,23 @@ jobs:
         with:
           name: CSharpWinExe
           path: binarysharp/bin/exe
-      - name: Set up Cygwin
-        uses: egor-tensin/setup-cygwin@v4
-        with:
-          packages: gcc-g++ zip grep gawk binutils
+      - name: testrea;
+        shell: cmd
+        run: |
+          dir
+      - name: Copy C# where it's needed
+        shell: C:\tools\cygwin\bin\bash.exe --login -o igncr '{0}'
+        run: |
+          cd $(cygpath -u "${{ github.workspace }}")
+          touch cs
+          touch csbin
+          pwd
+          tree
+          cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
+          cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Install Programs
         shell: pwsh
         run: |
-          echo $null >> cs
-          echo $null >> csbin
-          cp csharp\bin\lib\factoryshsharp.dll cplusplus\bin\factoryrushsharp.dll
-          cp csharp\bin\lib\factoryshsharp.dll binaryplus\bin\factoryrushsharp.dll
-
           Invoke-WebRequest -Uri "https://github.com/maweil/MakeForWindows/releases/download/v4.4.1/make-bin-win64.zip" -OutFile "make-bin.zip" -Verbose
           Expand-Archive -Force make-bin.zip .
           del make-bin.zip
@@ -137,48 +146,63 @@ jobs:
           name: CygwinCsBin
           path: bin/Cs.*.zip
   
-#  build-windows:
-#    name: Build using windows clang-cl
-#    needs: compile-cs-windows
-#    runs-on: windows-latest
-#    steps:
-#      - name: Import C# compiled source code
-#        uses: actions/download-artifact@v4
-#        with:
-#          name: DotNetBinaries
-#          path: .
-#      - name: Set up Clang
-#        uses: egor-tensin/setup-clang@v1
-#      - name: Install Programs
-#        shell: pwsh
-#        run: |
-#          echo $null >> cs
-#          echo $null >> csbin
-#          Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/archive/refs/heads/master.zip" -OutFile "gnuwin32.zip" -Verbose
-#          Expand-Archive -Force gnuwin32.zip .
-#          del gnuwin32.zip
-#          ren gnuwin32.mirror-master gnuwin32
-#          copy gnuwin32\bin\* .
-#      - name: Compile code
-#        shell: cmd
-#        env:
-#          CC: clang
-#          CXX: clang++
-#        run: |
-#          .\make.exe cpp sudo=0 compiler=clang++
-#          .\make.exe cppbin sudo=0 compiler=g++
-#          .\make.exe release sudo=0
+  build-windows:
+    name: Build program using MSVC
+    needs: compile-cs-windows
+    runs-on: windows-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+      - name: Import C# compiled dynamic library
+        uses: actions/download-artifact@v4
+        with:
+          name: CSharpWinDll
+          path: csharp/bin/lib
+      - name: Import C# compiled executable
+        uses: actions/download-artifact@v4
+        with:
+          name: CSharpWinExe
+          path: binarysharp/bin/exe
+      - name: Copy C# where it's needed
+        run: |
+          touch cs
+          touch csbin
+          copy csharp\bin\lib\factoryrushsharp.dll cplusplus\bin\factoryrushsharp.dll
+          copy csharp\bin\lib\factoryrushsharp.dll binaryplus\bin\factoryrushsharp.dll
+      - name: Set up Clang
+        uses: egor-tensin/setup-clang@v1
+      - name: Install Programs
+        shell: pwsh
+        run: |
+          echo $null >> cs
+          echo $null >> csbin
+          Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/archive/refs/heads/master.zip" -OutFile "gnuwin32.zip" -Verbose
+          Expand-Archive -Force gnuwin32.zip .
+          del gnuwin32.zip
+          ren gnuwin32.mirror-master gnuwin32
+          copy gnuwin32\bin\* .
+      - name: set up VS
+        shell: cmd
+        run: |
+          utilities\custom\vsdevcmd-x64.bat
+      - name: Compile code
+        shell: cmd
+        run:
+          .\make.exe resources sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
+          .\make.exe cpp sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
+          .\make.exe cppbin sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
+          .\make.exe release sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
           
-#      - name: Upload C++ binaries
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: WindowsCppBin
-#          path: bin/Cpp.*.zip
-#      - name: Upload C# binaries
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: WindowsCsBin
-#          path: bin/Cs.*.zip
+      - name: Upload C++ binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: WindowsCppBin
+          path: bin/Cpp.*.zip
+      - name: Upload C binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: WindowsCsBin
+          path: bin/Cs.*.zip
 
   build-ubuntu:
     name: Build program using Ubuntu
