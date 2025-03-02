@@ -181,9 +181,13 @@ jobs:
           del gnuwin32.zip
           ren gnuwin32.mirror-master gnuwin32
           copy gnuwin32\bin\* .
-      - name: Compile code
-        shell: cmd /k utilities\custom\vsdevcmd-x64.bat '{0}'
+      - name: set up VS
+        shell: cmd
         run: |
+          utilities\custom\vsdevcmd-x64.bat
+      - name: Compile code
+        shell: cmd
+        run:
           .\make.exe resources sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
           .\make.exe cpp sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
           .\make.exe cppbin sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
