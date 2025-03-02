@@ -106,11 +106,16 @@ jobs:
         with:
           name: CSharpWinExe
           path: binarysharp/bin/exe
+      - name: testrea;
+        shell: cmd
+        run: |
+          dir
       - name: Copy C# where it's needed
         shell: C:\tools\cygwin\bin\bash.exe --login -o igncr '{0}'
         run: |
           touch cs
           touch csbin
+          pwd
           tree
           cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
           cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
