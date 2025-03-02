@@ -84,6 +84,7 @@ resources
 
 #keep
 !*/.gitkeep
+!utilities/custom/vsdevcmd-x64.bat
 
 # test dir
 test/*
