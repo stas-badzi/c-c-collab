@@ -534,15 +534,11 @@ ifneq ($(msvc),1)
 	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(staticgen)assets/$(prefix)globals.$(static) objects/globals.o
 else
-	@echo "@echo off" > run.bat
-	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) source/globals.c /Icplusplus\include $(clstd)" >> run.bat
-	@echo "@echo on" >> run.bat
+	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) source/globals.c /Icplusplus\include $(clstd)" > run.bat
 	@cmd.exe /c run.bat
 	@dir
 	@mv *.obj objects/
-	@echo "@echo off" > run.bat
-	@echo "lib /OUT:assets/globals.lib objects/globals.obj" >> run.bat
-	@echo "@echo on" >> run.bat
+	@echo "lib /OUT:assets/globals.lib objects/globals.obj" > run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
 endif
@@ -842,9 +838,7 @@ ifeq ($(findstring $(subst cplusplus/src/,$(empty),$<),$(sources)),$(subst cplus
 
 ifeq ($(msvc),1)
 #msvc
-	@echo "@echo off" > run.bat
-	@echo "$(cpp-compiler) /EHsc /c /DUNICODE /D_CRT_SECURE_NO_DEPRECATE /D_MSVC $(cdb) $< /Icplusplus\include $(clstdpp)" >> run.bat
-	@echo "@echo on" >> run.bat
+	@echo "$(cpp-compiler) /EHsc /c /DUNICODE /D_CRT_SECURE_NO_DEPRECATE /D_MSVC $(cdb) $< /Icplusplus\include $(clstdpp)" > run.bat
 ####@type run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
@@ -896,9 +890,7 @@ ifeq ($(findstring $(subst cplusplus/src/,$(empty),$<),$(sources)),$(subst cplus
 
 ifeq ($(msvc),1)
 #msvc
-	@echo "@echo off" > run.bat
-	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) $< /Icplusplus\include $(clstd)" >> run.bat
-	@echo "@echo on" >> run.bat
+	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) $< /Icplusplus\include $(clstd)" > run.bat
 ####@type run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
