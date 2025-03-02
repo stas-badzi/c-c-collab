@@ -118,7 +118,7 @@ jobs:
           echo $null >> cs
           echo $null >> csbin
           cp csharp\bin\lib\factoryrushsharp.dll cplusplus\bin\factoryrushsharp.dll
-          cp csharp\bin\lib\factoryeushsharp.dll binaryplus\bin\factoryrushsharp.dll
+          cp csharp\bin\lib\factoryrushsharp.dll binaryplus\bin\factoryrushsharp.dll
 
           Invoke-WebRequest -Uri "https://github.com/maweil/MakeForWindows/releases/download/v4.4.1/make-bin-win64.zip" -OutFile "make-bin.zip" -Verbose
           Expand-Archive -Force make-bin.zip .
