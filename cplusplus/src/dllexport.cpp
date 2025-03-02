@@ -6,6 +6,7 @@
 #include "Console.hpp"
 #include "System.hpp"
 #include "TextureSystem.hpp"
+#include "Camera.hpp"
 #include <control_heap.h>
 
 // don't ask (compiler optimazations forced me to do this)
@@ -493,8 +494,8 @@ using namespace uniconv;
 // ~System
 
 // Camera
-    libexport Camera_Construct(int height, int width, void* symptr) {
-        return Camera(height, width, *symptr).Get();
+    libexport void* Camera_Construct(int height, int width, void* symptr) {
+        return cpp::Game::Camera(height, width, *(cpp::Console::Symbol*)symptr).Get();
     }
 
 #ifdef _DEBUG

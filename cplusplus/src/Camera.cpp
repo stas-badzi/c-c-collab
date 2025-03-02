@@ -11,21 +11,16 @@ using std::vector;
 
 // public:
 
-Camera::Camera(int height, int width, Console::Symbol sym) {
-    MartixPosition ret_viewportCenter(floor(height/2), floor(width/2));
-    ValidateViewport(ret_viewportCenter);
-
-    this->viewportCenter = ret_viewportCenter;
+Game::Camera::Camera(int height, int width, Console::Symbol sym) {
 	this->buffer = vector<vector<Console::Symbol>>(height, vector<Console::Symbol>(width, sym));
 }
 
-Camera::Camera(void* cameraPtr) {
+Game::Camera::Camera(void* cameraPtr) {
     int offset = 0;
-    auto int32_size = sizeof(int);
-    auto symptr_size = sizeof(Console::Symbol*);
+    const size_t int32_size = sizeof(int);
+    const size_t symptr_size = sizeof(Console::Symbol*);
 
     vector<vector<Console::Symbol>> ret_buffer;
-    MartixPosition ret_viewportCenter;
 
     int height = *((int*)cameraPtr+offset);
     offset += int32_size;
@@ -43,21 +38,17 @@ Camera::Camera(void* cameraPtr) {
         }
     }
 
-    ret_viewportCenter = MartixPosition(*((int*)cameraPtr+offset), *((int*)cameraPtr+offset+int32_size));
-    ValidateViewport(ret_viewportCenter);
-
     this->buffer = ret_buffer;
-    this->viewportCenter = ret_viewportCenter;
 
     free(cameraPtr);
 }
 
-void* Camera::Get() {
+void* Game::Camera::Get() {
 	int alloc = 0;
-    auto int32_size = sizeof(int);
-    auto symptr_size = sizeof(Console::Symbol*);
+    const size_t int32_size = sizeof(int);
+    const size_t symptr_size = sizeof(Console::Symbol*);
 
-    alloc += 3 * int32_size; // buffer.Count + viewportCenter
+    alloc += int32_size; // buffer.Count
     for (size_t i = 0; i < this->buffer.size(); i++) {
         alloc += int32_size + buffer[i].size() * symptr_size; // buffer[i].size() + buffer[i]
     }
@@ -78,16 +69,10 @@ void* Camera::Get() {
         }
     }
 
-    *((int*)ret+offset) = this->viewportCenter.iIndex;
-    offset += int32_size;
-
-    *((int*)ret+offset) = this->viewportCenter.jIndex;
-    offset += int32_size;
-
     return ret;
 }
 
-void Camera::DrawTextureToCamera(vector<vector<Console::Symbol>> texture, MartixPosition center) {
+void Game::Camera::DrawTextureToCamera(vector<vector<Console::Symbol>> texture, MartixPosition center) {
     float height = (float)texture.size();
     float width = (float)texture[0].size();
 
@@ -106,13 +91,7 @@ void Camera::DrawTextureToCamera(vector<vector<Console::Symbol>> texture, Martix
 }
 
 // private:
-
-Camera::Camera(vector<vector<Console::Symbol>> buffer, MartixPosition viewportCenter) {
-	this->buffer = buffer;
-    this->viewportCenter = viewportCenter;
-}
-
-void Camera::ValidateViewport(MartixPosition vpc) {
+void Game::ValidateViewport(MartixPosition vpc) {
     if (vpc.iIndex % 2 == 0 || vpc.jIndex % 2 == 0) {
 		throw std::invalid_argument("Width and height must be odd numbers.");
 	}
