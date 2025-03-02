@@ -113,6 +113,7 @@ jobs:
       - name: Copy C# where it's needed
         shell: C:\tools\cygwin\bin\bash.exe --login -o igncr '{0}'
         run: |
+          cd $(cygpath -u "${{ github.workspace }}")
           touch cs
           touch csbin
           pwd
@@ -122,11 +123,6 @@ jobs:
       - name: Install Programs
         shell: pwsh
         run: |
-          echo $null >> cs
-          echo $null >> csbin
-          cp csharp\bin\lib\factoryrushsharp.dll cplusplus\bin\factoryrushsharp.dll
-          cp csharp\bin\lib\factoryrushsharp.dll binaryplus\bin\factoryrushsharp.dll
-
           Invoke-WebRequest -Uri "https://github.com/maweil/MakeForWindows/releases/download/v4.4.1/make-bin-win64.zip" -OutFile "make-bin.zip" -Verbose
           Expand-Archive -Force make-bin.zip .
           del make-bin.zip
