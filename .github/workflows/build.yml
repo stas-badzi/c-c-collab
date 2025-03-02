@@ -61,6 +61,7 @@ jobs:
         run: |
           touch cs
           touch csbin
+          tree
           cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
           cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Compile code
