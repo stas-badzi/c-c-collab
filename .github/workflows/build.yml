@@ -185,9 +185,6 @@ jobs:
         shell: cmd
         run:
           utilities\custom\vsdevscript-x64.bat
-          .\make.exe resources sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
-          .\make.exe cpp sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
-          .\make.exe cppbin sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
           .\make.exe release sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
           
       - name: Upload C++ binaries
