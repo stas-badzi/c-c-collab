@@ -1,0 +1,1 @@
+cd cplusplus && link /OUT:bin/factoryrushplus.dll /CGTHREADS:8 /DLL ../csharp/bin/lib/factoryrushsharp.lib obj/Console.obj obj/FileSystem.obj obj/System.obj obj/dllexport.obj ../assets/globals.lib USER32.lib Gdi32.lib Shell32.lib Shlwapi.lib Dbghelp.lib

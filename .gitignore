@@ -73,6 +73,8 @@ all
 dll
 release
 resources
+check-arch
+__arch.dat
 
 #logs
 *.log

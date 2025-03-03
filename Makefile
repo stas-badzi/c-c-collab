@@ -2,6 +2,7 @@
 # sudo = [0] -> do copy libs and biraries (requiers [sudo/doas/su] permissions)
 # forcewin = [1] -> use windows emulator like windows
 # debug = [0] -> compile program for debbuging
+# tgarch = [host arch] -> set target architecture (for dotnet publish)
 # msvc = [0] -> force msvc++ compilation (windows only, must be run in VS developer command prompt)
 # give-ctrl = [1] -> give control over the keyboard to the binary (macOS only, requires sudo permissions)
 # c-compiler = [$defcompc] -> set compiler loacation
@@ -183,16 +184,22 @@ genwin = 1
 endif
 endif
 
+ifneq ($(tgarch),$(empty))
+	arch = $(tgarch)
+endif
+
 ifeq ($(msvc),1)
 ifeq ($(findstring clang, $(c-compiler)),clang)
-	clstd = /std:c17
-	clstdpp = /std:c++latest
+ifeq ($(arch),x86)
+	archarg = -m32
+	archarg = -m32
+endif
+	clstd = /std:c17 $(archarg)
+	clstdpp = /std:c++latest $(archarg)
+
 else
 	clstd = /std:clatest
 	clstdpp = /std:c++latest
-endif
-ifneq ($(tgarch),$(empty))
-	arch = $(tgarch)
 endif
 endif
 
@@ -431,6 +438,17 @@ ifeq ($(copylibs),1)
 flibdir = $(libdir)
 endif
 
+old_arch = $(shell cat __arch.dat 2> /dev/null || echo)
+ifneq ($(old_arch),$(arch))
+archfile = $(shell echo $(old_arch) > __oldarch.dat && echo $(arch) > __arch.dat && echo __arch.dat)
+endif
+
+check-arch: $(archfile)
+	@echo "Architecture changed from $(shell cat __oldarch.dat) to $(arch) - Cleaning"
+	@rm __oldarch.dat
+	@$(MAKE) clean
+	@echo "Version file. Remove to enable recompile" > $@
+
 package: release
 
 release: all
@@ -537,7 +555,7 @@ else
 	@rm -f objects/*
 endif
 
-resources: source/setkbdmode.c source/killterm.c source/getfd.c source/getfd.h source/keyboard.h source/keyboard.m source/openfile.h source/openfile.m source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h
+resources: check-arch source/setkbdmode.c source/killterm.c source/getfd.c source/getfd.h source/keyboard.h source/keyboard.m source/openfile.h source/openfile.m source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h
 ifneq ($(msvc),1)
 	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(staticgen)assets/$(prefix)globals.$(static) objects/globals.o
@@ -623,12 +641,8 @@ endif
 csrun:
 	-cd binarysharp/bin/exe && $(run)$(binfile).$(binary)
 
-cpp: resources $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
+cpp: cs  $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
 
-
-ifneq ($(wildcard cs),cs)
-	$(MAKE) cs sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) tgarch=$(tgarch) give-ctrl=$(give-ctrl) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)
-endif
 ifeq ($(msvc),1)
 	echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(flib) $(objects) ../assets/globals.lib USER32.lib Gdi32.lib Shell32.lib Shlwapi.lib Dbghelp.lib" > run.bat
 	@cmd.exe /c run.bat
@@ -698,13 +712,12 @@ endif
 	@echo "Version file. Remove to enable recompile" > $@
 
 
-cs: $(foreach fl,$(files),csharp/$(fl))
+cs: resources $(foreach fl,$(files),csharp/$(fl))
 
-ifneq ($(wildcard resources),resources)
-	$(MAKE) resources sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) tgarch=$(tgarch) give-ctrl=$(give-ctrl) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)
-endif
 	cd csharp && dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r $(os_name) -c $(configuration)
 
+	-@mkdir -p csharp/bin/$(configuration)/net9.0/$(os_name)/native/
+	-@mv csharp/bin/$(arch)/$(configuration)/net9.0/$(os_name)/native/* csharp/bin/$(configuration)/net9.0/$(os_name)/native/
 ifeq ($(msvc),1)
 	@cd csharp/bin/$(configuration)/net9.0/$(os_name)/native/ && for i in *.exp; do if [ ! "$$i" = '$(filename).exp' ]; then mv $$i $(filename).exp; fi; done && for i in *.lib; do if [ ! "$$i" = '$(filename).lib' ]; then mv $$i $(filename).lib; fi; done && for i in *.pdb; do if [ ! "$$i" = '$(filename).pdb' ]; then mv $$i $(filename).pdb; fi; done && for i in *.dll; do if [ ! "$$i" = '$(filename).dll' ]; then mv $$i $(filename).dll; fi; done 
 	@mv csharp/bin/$(configuration)/net9.0/$(os_name)/native/* csharp/bin/lib
@@ -745,11 +758,7 @@ endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
 
-cppbin: resources $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc))
-	
-ifneq ($(wildcard cpp),cpp)
-	$(MAKE) cpp sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) tgarch=$(tgarch) give-ctrl=$(give-ctrl) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)
-endif
+cppbin: cpp $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc))
 
 ifeq ($(msvc),1)
 	echo "$(cpp-compiler) /EHsc /c $(bpdb) $(fbsrc) /Ibinaryplus\include $(clstdpp)" > run.bat
@@ -801,8 +810,11 @@ endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
 
-csbin: $(foreach bfl,$(binfiles),binarysharp/$(bfl))
+csbin: cpp $(foreach bfl,$(binfiles),binarysharp/$(bfl))
 	cd binarysharp && dotnet publish -p:SelfContained=true -r $(os_name) -c $(binconfig)
+
+	-@mkdir -p binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/
+	-@mv binarysharp/bin/$(arch)/$(configuration)/net9.0/$(os_name)/native/* binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/
 ifeq ($(msvc),1)
 	@cd binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/ && for i in *.$(binary); do if [ ! "$$i" = '$(binname).$(binary)' ]; then mv $$i $(binname).$(binary); fi; done 
 	@mv binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/* binarysharp/bin/exe
