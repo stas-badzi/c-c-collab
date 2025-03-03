@@ -136,7 +136,7 @@ jobs:
         run: |
           cd $(cygpath -u "${{ github.workspace }}")
           ./make resources cpp cppbin sudo=0 archchk=0 nodep=1
-          touch cs csbin
+          touch cs cpp cppbin csbin
           ./make archchk=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
@@ -265,17 +265,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
-      - name: Compile c# Dynamic Library
-        shell: bash
-        env:
-          CC: gcc
-          CXX: g++
-        run: |
-          #export PATH="$(brew --prefix llvm@18)/bin:$PATH"
-          cd cplusplus/obj && touch Console.o FileSystem.o System.o dllexport.o && cd ../..
-          touch resources cpp
-          make cs archchk=0 sudo=0
-      - name: Compile c++ code
+      - name: Compile code
         shell: bash
         env:
           CC: gcc
@@ -284,16 +274,7 @@ jobs:
           rm cpp resources
           cd cplusplus/obj && rm Console.o FileSystem.o System.o dllexport.o && cd ../..
           export CPLUS_INCLUDE_PATH="${CPLUS_INCLUDE_PATH:+${CPLUS_INCLUDE_PATH}:}/Library/Developer/CommandLineTools/SDKs/MacOSX15.sdk/usr/include/c++/v1"
-          make resources cpp cppbin sudo=0 cpp-compiler=clang++ c-compiler=clang
-      - name: Compile c# Executable
-        shell: bash
-        env:
-          CC: gcc
-          CXX: g++
-        run: |
-          #export PATH="$(brew --prefix llvm@18)/bin:$PATH"
-          cd cplusplus/obj && touch Console.o FileSystem.o System.o dllexport.o && cd ../..
-          make archchk=0 sudo=0
+          make sudo=0 cpp-compiler=clang++ c-compiler=clang archchk=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
