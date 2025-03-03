@@ -170,7 +170,7 @@ jobs:
       - name: Compile code
         shell: cmd
         run:
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+          utilities\custom\vsdevcmd-x64.bat
           .\make.exe archchk=0 sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
