@@ -1377,7 +1377,7 @@ void cpp::Console::MoveCursor(int x, int y) {
         Console::cursor_size = size;
     }
 
-    void cpp::Console::SetTitle(const wchar_t* title) {
+    void cpp::Console::SetTitle(const char_t* title) {
       
     }
 // Not linux (Probably Posix and Unix)
