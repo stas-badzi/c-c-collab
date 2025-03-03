@@ -8,6 +8,10 @@
 
 namespace cs {
 
+ vector<vector<smart_ref<Console::Symbol> > > PtrToTexture(void* ptr, bool direct = false);
+
+    void* TextureToPtr(vector<vector<Console::Symbol> > &texture);
+
     template<typename Tout, typename Tin>
     std::vector<Tout> ConvertVector(const std::vector<Tin>& vec);
     
