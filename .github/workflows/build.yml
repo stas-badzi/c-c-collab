@@ -155,6 +155,8 @@ jobs:
     steps:
       - name: Set up Clang
         uses: egor-tensin/setup-clang@v1
+      - name: Checkout source code
+        uses: actions/checkout@v4
       - name: Install Programs
         shell: pwsh
         run: |
@@ -165,8 +167,6 @@ jobs:
           del gnuwin32.zip
           ren gnuwin32.mirror-master gnuwin32
           copy gnuwin32\bin\* .
-      - name: Checkout source code
-        uses: actions/checkout@v4
       - name: Compile code
         shell: cmd /c {0}
         run:
