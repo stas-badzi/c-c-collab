@@ -1362,7 +1362,7 @@ void Console::XtermMouseAndFocus(void) {
 #else
 void cpp::Console::MoveCursor(int x, int y) {
         Console::cursorpos.first = x;
-        Console::cursorpos.second = y
+        Console::cursorpos.second = y;
     }
 
     void cpp::Console::ShowCursor(void) {
