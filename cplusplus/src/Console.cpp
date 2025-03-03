@@ -1360,6 +1360,26 @@ void Console::XtermMouseAndFocus(void) {
     //pair<uint16_t,uint16_t> Console::xyoffset = pair<uint16_t,uint16_t>();
 
 #else
+void cpp::Console::MoveCursor(int x, int y) {
+        Console::cursorpos.first = x;
+        Console::cursorpos.second = y
+    }
+
+    void cpp::Console::ShowCursor(void) {
+        Console::cursor_visible = true;
+    }
+
+    void cpp::Console::HideCursor(void) {
+        Console::cursor_visible = false;
+    }
+
+    void cpp::Console::SetCursorSize(uint8_t size) {
+        Console::cursor_size = size;
+    }
+
+    void cpp::Console::SetTitle(const wchar_t* title) {
+      
+    }
 // Not linux (Probably Posix and Unix)
 mbstate_t Console::streammbs = mbstate_t();
 
