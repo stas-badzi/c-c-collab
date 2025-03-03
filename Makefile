@@ -438,9 +438,13 @@ ifeq ($(copylibs),1)
 flibdir = $(libdir)
 endif
 
-old_arch = $(shell cat __arch.dat 2> /dev/null || echo)
+old_arch = $(shell cat __arch.dat 2> /dev/null)
 ifneq ($(old_arch),$(arch))
+ifneq ($(old_arch),$(empty))
 archfile = $(shell echo $(old_arch) > __oldarch.dat && echo $(arch) > __arch.dat && echo __arch.dat)
+else
+archfile = $(shell echo $(arch) > __arch.dat)
+endif
 endif
 
 check-arch: $(archfile)
