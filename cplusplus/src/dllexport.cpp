@@ -428,10 +428,11 @@ using namespace uniconv;
         return cpp::Game::Camera(height, width, *(cpp::Console::Symbol*)symptr).Get();
     }
 
-    libexport void Game_Camera_DrawTexture(void* textureptr, void* centerptr, cpp::Game::Camera* cameraptr) {
-        auto texture = cs::PtrToTexture(textureptr, true);
-        cpp::Game::MatrixPosition center = *(cpp::Game::MatrixPosition*)centerptr;
-        (*cameraptr).DrawTexture(texture);
+    libexport void Game_Camera_DrawTexture(void* textureptr, cpp::Game::MatrixPosition* centerptr, cpp::Game::Camera* cameraptr) {
+        const auto& texture = cs::PtrToTexture(textureptr, true);
+        cpp::Game::MatrixPosition center = *centerptr;
+        const auto& real_texture = cs::Convert2dVector<Console::Symbol>(texture);
+        cameraptr->DrawTexture(real_texture,center);
     }
 #ifdef _DEBUG
 // control_heap

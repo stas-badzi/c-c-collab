@@ -8,7 +8,7 @@
 
 namespace cs {
 
-   std::vector<std::vector<smart_ref<Console::Symbol> > > PtrToTexture(void* ptr, bool direct = false);
+    std::vector<std::vector<smart_ref<Console::Symbol> > > PtrToTexture(void* ptr, bool direct = false);
 
     void* TextureToPtr(std::vector<std::vector<Console::Symbol> > &texture);
 

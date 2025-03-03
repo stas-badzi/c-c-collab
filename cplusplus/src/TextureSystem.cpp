@@ -7,9 +7,7 @@ using namespace uniconv;
 using namespace std;
 using namespace cpp;
 
-using namespace cs;
-
-   vector<vector<smart_ref<Console::Symbol> > > cs::PtrToTexture(void* ptr, bool direct) {
+    vector<vector<smart_ref<Console::Symbol> > > cs::PtrToTexture(void* ptr, bool direct) {
         auto sym = vector<vector<smart_ref<Console::Symbol> > >();
 
         const int int32_size = sizeof(int32_t);
@@ -70,6 +68,7 @@ using namespace cs;
         return ret;
     }
 
+    using namespace cs;
 vector<wstring> TextureSystem::ImportText(wstring filename) {
     unichar** textptr = TextureSystem_ImportText(Utf8StringToUnicode(WStringToNative(filename).c_str()));
 

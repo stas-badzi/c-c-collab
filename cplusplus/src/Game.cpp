@@ -6,6 +6,13 @@
 #include <algorithm>
 #include "Console.hpp"
 
+#ifdef max
+#undef max
+#endif
+#ifdef min
+#undef min
+#endif
+
 using namespace cpp;
 using std::vector;
 
