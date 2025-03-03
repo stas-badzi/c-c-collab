@@ -254,8 +254,6 @@ jobs:
           CC: gcc
           CXX: g++
         run: |
-          rm cpp resources
-          cd cplusplus/obj && rm Console.o FileSystem.o System.o dllexport.o && cd ../..
           export CPLUS_INCLUDE_PATH="${CPLUS_INCLUDE_PATH:+${CPLUS_INCLUDE_PATH}:}/Library/Developer/CommandLineTools/SDKs/MacOSX15.sdk/usr/include/c++/v1"
           make sudo=0 cpp-compiler=clang++ c-compiler=clang archchk=0
       - name: Upload C++ binaries
