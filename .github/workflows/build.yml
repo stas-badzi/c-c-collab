@@ -19,14 +19,14 @@ jobs:
       - name: Compile c#
         shell: cmd
         run: |
-          echo $null > resources
-          echo $null > cpp
           cd cplusplus/obj
           echo $null > Console.o
           echo $null > FileSystem.o
           echo $null > System.o
           echo $null > dllexport.o
           cd ../..
+          echo $null > resources
+          echo $null > cpp
 
           make cs sudo=0 archchk=0
           make csbin sudo=0 archchk=0
@@ -67,8 +67,7 @@ jobs:
       - name: Copy C# where it's needed
         shell: msys2 {0}
         run: |
-          touch cs
-          touch csbin
+          touch cs csbin
           cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
           cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Compile code
@@ -275,8 +274,8 @@ jobs:
           CXX: g++
         run: |
           #export PATH="$(brew --prefix llvm@18)/bin:$PATH"
-          touch resources cpp
           cd cplusplus/obj && touch Console.o FileSystem.o System.o dllexport.o && cd ../..
+          touch resources cpp
           make cs csbin archchk=0 sudo=0
       - name: Compile c++ code
         shell: bash
