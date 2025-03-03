@@ -445,13 +445,17 @@ else
 archfile =
 endif
 
+package: release
+
 check-arch: $(archfile)
 	@echo "Architecture changed from $(shell cat __oldarch.dat) to $(arch) - Cleaning"
 	@rm __oldarch.dat
 	@$(MAKE) clean
 	@echo "Version file. Remove to enable recompile" > $@
 
-package: release
+set-arch:
+	@echo "Architecture changed to $(arch)"
+	@echo $(arch) > __arch.dat
 
 release: all
 ifeq ($(shell echo "check quotes"),"check quotes")

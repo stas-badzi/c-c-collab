@@ -21,7 +21,7 @@ jobs:
         run: |
           echo $null >> resources
           echo $null >> cpp
-          echo x64 > __arch.dat
+          make set-arch
           make cs sudo=0
           make csbin sudo=0
           cd csharp/bin/lib
@@ -75,7 +75,7 @@ jobs:
           cd /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
           tree
           export PATH="/clang64/bin:$PATH"
-          echo x64 > __arch.dat
+          make set-arch
           make sudo=0 c-compiler=clang cpp-compiler=clang++
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
@@ -137,7 +137,7 @@ jobs:
           CXX: g++
         run: |
           cd $(cygpath -u "${{ github.workspace }}")
-          echo x64 > __arch.dat
+          ./make set-arch
           ./make sudo=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
@@ -188,7 +188,7 @@ jobs:
       - name: Compile code
         shell: cmd
         run:
-          echo x64 > __arch.dat
+          .\make set-arch
           utilities\custom\vsdevrun-x64.bat .\make.exe release sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
           
       - name: Upload C++ binaries
@@ -223,7 +223,7 @@ jobs:
           CC: gcc
           CXX: g++
         run: |
-          echo x64 > __arch.dat
+          make set-arch
           make sudo=0 c-compiler=clang cpp-compiler=clang++
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
@@ -274,8 +274,7 @@ jobs:
           CXX: g++
         run: |
           #export PATH="$(brew --prefix llvm@18)/bin:$PATH"
-          echo arm64 > __arch.dat
-          echo arm64 > __oldarch.dat
+          make set-arch
           make cs csbin sudo=0 cpp-compiler=clang++ c-compiler=clang
       - name: Compile c++ code
         shell: bash
