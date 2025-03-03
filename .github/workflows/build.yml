@@ -19,17 +19,10 @@ jobs:
       - name: Compile c#
         shell: cmd
         run: |
-          cd cplusplus/obj
-          echo $null > Console.o
-          echo $null > FileSystem.o
-          echo $null > System.o
-          echo $null > dllexport.o
-          cd ../..
-          echo $null > resources
-          echo $null > cpp
+    
 
-          make cs sudo=0 archchk=0
-          make csbin sudo=0 archchk=0
+          make cs sudo=0 archchk=0 nodep=1
+          make csbin sudo=0 archchk=0 nodep=1
           cd csharp/bin/lib
       - name: Export dynamic library
         uses: actions/upload-artifact@v4
@@ -79,7 +72,9 @@ jobs:
           cd /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
           tree
           export PATH="/clang64/bin:$PATH"
-          make sudo=0 c-compiler=clang cpp-compiler=clang++ archchk=0 archchk=0
+          make resources cpp cppbin sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0
+          touch cs csbin
+          make archchk=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -140,7 +135,9 @@ jobs:
           CXX: g++
         run: |
           cd $(cygpath -u "${{ github.workspace }}")
-          ./make sudo=0 archchk=0 archchk=0
+          ./make resources cpp cppbin sudo=0 archchk=0 nodep=1
+          touch cs csbin
+          ./make archchk=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -190,7 +187,8 @@ jobs:
       - name: Compile code
         shell: cmd
         run:
-          utilities\custom\vsdevrun-x64.bat .\make.exe release archchk=0 sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
+          utilities\custom\vsdevrun-x64.bat .\make.exe archchk=0 sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
+          
           
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
