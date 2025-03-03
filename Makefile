@@ -450,13 +450,10 @@ package: release
 check-arch: $(archfile)
 	@echo "Architecture changed from $(shell cat __oldarch.dat) to $(arch) - Cleaning"
 	@rm __oldarch.dat
+ifneq ($(archchk),0)
 	@$(MAKE) clean
+endif
 	@echo "Version file. Remove to enable recompile" > $@
-
-set-arch:
-	@echo "Architecture changed to $(arch)"
-	@echo $(arch) > __arch.dat
-	@touch check-arch
 
 release: all
 ifeq ($(shell echo "check quotes"),"check quotes")

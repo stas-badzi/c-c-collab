@@ -21,9 +21,8 @@ jobs:
         run: |
           echo $null >> resources
           echo $null >> cpp
-          make set-arch
-          make cs sudo=0
-          make csbin sudo=0
+          make cs sudo=0 archchk=0
+          make csbin sudo=0 archchk=0
           cd csharp/bin/lib
       - name: Export dynamic library
         uses: actions/upload-artifact@v4
@@ -75,8 +74,7 @@ jobs:
           cd /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
           tree
           export PATH="/clang64/bin:$PATH"
-          make set-arch
-          make sudo=0 c-compiler=clang cpp-compiler=clang++
+          make sudo=0 c-compiler=clang cpp-compiler=clang++ archchk=0 archchk=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -137,8 +135,7 @@ jobs:
           CXX: g++
         run: |
           cd $(cygpath -u "${{ github.workspace }}")
-          ./make set-arch
-          ./make sudo=0
+          ./make sudo=0 archchk=0 archchk=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -188,8 +185,7 @@ jobs:
       - name: Compile code
         shell: cmd
         run:
-          .\make set-arch
-          utilities\custom\vsdevrun-x64.bat .\make.exe release sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
+          utilities\custom\vsdevrun-x64.bat .\make.exe release archchk=0 sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
           
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
@@ -223,8 +219,7 @@ jobs:
           CC: gcc
           CXX: g++
         run: |
-          make set-arch
-          make sudo=0 c-compiler=clang cpp-compiler=clang++
+          make sudo=0 archchk=0 c-compiler=clang cpp-compiler=clang++
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -274,14 +269,17 @@ jobs:
           CXX: g++
         run: |
           #export PATH="$(brew --prefix llvm@18)/bin:$PATH"
-          make set-arch
-          make cs csbin sudo=0 cpp-compiler=clang++ c-compiler=clang
+          touch resources
+          touch cpp
+          make cs csbin archchk=0 sudo=0 cpp-compiler=clang++ c-compiler=clang
       - name: Compile c++ code
         shell: bash
         env:
           CC: gcc
           CXX: g++
         run: |
+          rm cpp
+          rm resources
           export CPLUS_INCLUDE_PATH="${CPLUS_INCLUDE_PATH:+${CPLUS_INCLUDE_PATH}:}/Library/Developer/CommandLineTools/SDKs/MacOSX15.sdk/usr/include/c++/v1"
           make sudo=0 cpp-compiler=clang++ c-compiler=clang
       - name: Upload C++ binaries
