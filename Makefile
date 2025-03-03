@@ -442,7 +442,7 @@ old_arch = $(shell echo >> __arch.dat && cat __arch.dat 2> /dev/null)
 ifneq ($(old_arch),$(arch))
 archfile = $(shell echo $(old_arch) > __oldarch.dat && echo $(arch) > __arch.dat && echo __arch.dat)
 else
-archfile =
+archfile = __arch.dat
 endif
 
 package: release
@@ -456,6 +456,7 @@ check-arch: $(archfile)
 set-arch:
 	@echo "Architecture changed to $(arch)"
 	@echo $(arch) > __arch.dat
+	@touch check-arch
 
 release: all
 ifeq ($(shell echo "check quotes"),"check quotes")
