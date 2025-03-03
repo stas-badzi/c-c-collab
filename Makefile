@@ -448,11 +448,14 @@ endif
 package: release
 
 check-arch: $(archfile)
-	@echo "Architecture changed from $(shell cat __oldarch.dat) to $(arch) - Cleaning"
-	@rm __oldarch.dat
 ifneq ($(archchk),0)
+	@echo "Architecture changed from $(shell cat __oldarch.dat) to $(arch) - Cleaning"
 	@$(MAKE) clean
+else
+	@echo "Architecture changed from $(shell cat __oldarch.dat) to $(arch) - Not cleaning"
 endif
+	@rm __oldarch.dat
+
 	@echo "Version file. Remove to enable recompile" > $@
 
 release: all
