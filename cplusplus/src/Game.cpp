@@ -72,7 +72,7 @@ void* Game::Camera::Get() {
     return ret;
 }
 
-void Game::Camera::DrawTextureToCamera(vector<vector<Console::Symbol>> texture, MartixPosition center) {
+void Game::Camera::DrawTexture(vector<vector<Console::Symbol>> texture, MatrixPosition center) {
     float height = (float)texture.size();
     float width = (float)texture[0].size();
 
@@ -91,7 +91,7 @@ void Game::Camera::DrawTextureToCamera(vector<vector<Console::Symbol>> texture, 
 }
 
 // private:
-void Game::ValidateViewport(MartixPosition vpc) {
+void Game::ValidateViewport(MatrixPosition vpc) {
     if (vpc.iIndex % 2 == 0 || vpc.jIndex % 2 == 0) {
 		throw std::invalid_argument("Width and height must be odd numbers.");
 	}

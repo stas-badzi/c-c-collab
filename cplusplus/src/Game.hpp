@@ -5,7 +5,7 @@
 namespace cpp {
     class Game {
         public: 
-            struct MartixPosition {
+            struct MatrixPosition {
                 int iIndex;
                 int jIndex;
             };
@@ -14,12 +14,12 @@ namespace cpp {
                     Camera(int height, int width, cpp::Console::Symbol sym);
                     Camera(void* cameraPtr); // don't know if it is useful at all
                     void* Get(); //
-                    void DrawTextureToCamera(std::vector<std::vector<Console::Symbol>> texture, MartixPosition center);
+                    void DrawTexture(std::vector<std::vector<Console::Symbol>> texture, MatrixPosition center);
                 private:
                     std::vector<std::vector<cpp::Console::Symbol>> buffer;
-                    //Camera(std::vector<std::vector<Console::Symbol>> buffer, MartixPosition viewportCenter);
+                    //Camera(std::vector<std::vector<Console::Symbol>> buffer, MatrixPosition viewportCenter);
             };
         private:
-            static void ValidateViewport(MartixPosition vpc);
+            static void ValidateViewport(MatrixPosition vpc);
     };
 }
