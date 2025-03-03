@@ -274,7 +274,8 @@ jobs:
           CXX: g++
         run: |
           #export PATH="$(brew --prefix llvm@18)/bin:$PATH"
-          echo arm > __arch.dat
+          echo arm64 > __arch.dat
+          echo arm64 > __oldarch.dat
           make cs csbin sudo=0 cpp-compiler=clang++ c-compiler=clang
       - name: Compile c++ code
         shell: bash

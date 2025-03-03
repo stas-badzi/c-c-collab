@@ -441,6 +441,8 @@ endif
 old_arch = $(shell echo >> __arch.dat && cat __arch.dat 2> /dev/null)
 ifneq ($(old_arch),$(arch))
 archfile = $(shell echo $(old_arch) > __oldarch.dat && echo $(arch) > __arch.dat && echo __arch.dat)
+else
+archfile =
 endif
 
 check-arch: $(archfile)
