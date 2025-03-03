@@ -564,6 +564,8 @@ else
 endif
 
 resources: $(check_arch) source/setkbdmode.c source/killterm.c source/getfd.c source/getfd.h source/keyboard.h source/keyboard.m source/openfile.h source/openfile.m source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h
+	@echo MAKE RESOURCES
+
 ifneq ($(msvc),1)
 	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(staticgen)assets/$(prefix)globals.$(static) objects/globals.o
@@ -650,6 +652,7 @@ csrun:
 	-cd binarysharp/bin/exe && $(run)$(binfile).$(binary)
 
 cpp: cs  $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
+	@echo MAKE CPP
 
 ifeq ($(msvc),1)
 	echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(flib) $(objects) ../assets/globals.lib USER32.lib Gdi32.lib Shell32.lib Shlwapi.lib Dbghelp.lib" > run.bat
@@ -721,7 +724,7 @@ endif
 
 
 cs: resources $(foreach fl,$(files),csharp/$(fl))
-
+	@echo MAKE CS
 	cd csharp && dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r $(os_name) -c $(configuration)
 
 	-@mkdir -p csharp/bin/$(configuration)/net9.0/$(os_name)/native/
@@ -767,6 +770,7 @@ endif
 	@echo "Version file. Remove to enable recompile" > $@
 
 cppbin: cpp $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc))
+	@echo MAKE CPPBIN
 
 ifeq ($(msvc),1)
 	echo "$(cpp-compiler) /EHsc /c $(bpdb) $(fbsrc) /Ibinaryplus\include $(clstdpp)" > run.bat
@@ -819,6 +823,7 @@ endif
 	@echo "Version file. Remove to enable recompile" > $@
 
 csbin: cpp $(foreach bfl,$(binfiles),binarysharp/$(bfl))
+	@echo MAKE CSBIN
 	cd binarysharp && dotnet publish -p:SelfContained=true -r $(os_name) -c $(binconfig)
 
 	-@mkdir -p binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/

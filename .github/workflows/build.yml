@@ -271,7 +271,7 @@ jobs:
           #export PATH="$(brew --prefix llvm@18)/bin:$PATH"
           touch resources
           touch cpp
-          make cs csbin archchk=0 sudo=0 cpp-compiler=clang++ c-compiler=clang
+          make cs csbin archchk=0 sudo=0
       - name: Compile c++ code
         shell: bash
         env:
