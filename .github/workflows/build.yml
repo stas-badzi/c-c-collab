@@ -73,7 +73,7 @@ jobs:
           tree
           export PATH="/clang64/bin:$PATH"
           make resources cpp cppbin sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0
-          touch cs csbin
+          touch cs cpp cppbin csbin
           make archchk=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
