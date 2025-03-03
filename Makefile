@@ -1,8 +1,10 @@
 # >>>> Arguments <<<<<<<<
-# sudo = [0] -> do copy libs and biraries (requiers sudo permissions)
+# sudo = [0] -> do copy libs and biraries (requiers [sudo/doas/su] permissions)
 # forcewin = [1] -> use windows emulator like windows
 # debug = [0] -> compile program for debbuging
-# msvc = [0] -> force msvc++ compilation
+# tgarch = [host arch] -> set target architecture (for dotnet publish)
+# msvc = [0] -> force msvc++ compilation (windows only, must be run in VS developer command prompt)
+# give-ctrl = [1] -> give control over the keyboard to the binary (macOS only, requires sudo permissions)
 # c-compiler = [$defcompc] -> set compiler loacation
 # cpp-compiler = [$defcompcxx] -> set compiler loacation
 
@@ -24,7 +26,7 @@ sources = Console.cpp TextureSystem.cpp System.cpp Game.cpp dllexport.cpp
 #> header files
 headers = Console.hpp TextureSystem.hpp TextureSystem.ipp Game.hpp dllimport.hpp System.hpp System.ipp smart_ref.hpp smart_ref.ipp
 #> include files
-includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp linux/ledctrl.h linux/mousefd.h
+includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp apple/keyboard.h apple/openfile.h linux/ledctrl.h linux/mousefd.h
 #> name the dynamic library
 name = factoryrushplus
 # *******************************
@@ -35,7 +37,7 @@ binsources = main.cpp Console.cpp TextureSystem.cpp System.cpp Control.cpp dllex
 #> header files
 binheaders = dllimport.hpp Console.hpp TextureSystem.hpp System.hpp defines.h Control.hpp
 #> include files
-binincludes = dynamic_library.h unicode_conversion.hpp control_heap.h utils/cextern.h control_heap.h utils/dllalloc.h linux/key.hpp windows/key.hpp
+binincludes = dynamic_library.h unicode_conversion.hpp control_heap.h utils/cextern.h control_heap.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp
 #> name the binary file
 binname = cpp-factoryrush
 #********************************
@@ -61,6 +63,8 @@ linuxroot = /usr
 linuxlib = /usr/lib
 #> linux binary file path
 linuxbin = /usr/bin
+#> macos root of application path
+macosroot = /usr/local
 #> macos shared library path
 macoslib = /usr/local/lib
 #> macos binary file path
@@ -110,6 +114,12 @@ else
 copylibs = 0
 endif
 
+ifeq ($(shell echo "check quotes"),"check quotes")
+copy = copy
+else
+copy = cp
+endif
+
 empty =
 space = $(empty) $(empty)
 
@@ -146,6 +156,9 @@ endif
 ifeq ($(msvc),1)
 defcompcxx = cl
 defcompc = cl
+objsuf = obj
+else
+objsuf = o
 endif
 
 ifeq ($(cpp-compiler),$(empty))
@@ -168,6 +181,33 @@ ifeq ($(force-win),$(empty))
 genwin = 0
 else
 genwin = 1
+endif
+endif
+
+ifeq ($(nodep),1)
+cppdep =
+resdep =
+else
+cppdep = cpp
+resdep = resources
+endif
+
+ifneq ($(tgarch),$(empty))
+	arch = $(tgarch)
+endif
+
+ifeq ($(msvc),1)
+ifeq ($(findstring clang, $(c-compiler)),clang)
+ifeq ($(arch),x86)
+	archarg = -m32
+	archarg = -m32
+endif
+	clstd = /std:c17 $(archarg)
+	clstdpp = /std:c++latest $(archarg)
+
+else
+	clstd = /std:clatest
+	clstdpp = /std:c++latest
 endif
 endif
 
@@ -338,7 +378,7 @@ else
 ifeq ($(shell uname -s),Darwin)
 #macos
 nulldir =  /dev/null
-binflags = -lcuchar
+binflags = -lapplecuchar -L../assets
 admin = sudo$(space)
 adminend =
 staticgen = ar -rcs$(space)
@@ -406,7 +446,26 @@ ifeq ($(copylibs),1)
 flibdir = $(libdir)
 endif
 
+ifeq ($(archchk),0)
+check_arch =
+else
+check_arch = check-arch
+endif
+
+old_arch = $(shell cat __arch.dat 2> /dev/null || echo > __arch.dat)
+ifneq ($(old_arch),$(arch))
+archfile = $(shell echo $(old_arch) > __oldarch.dat && echo $(arch) > __arch.dat && echo __arch.dat)
+else
+archfile = __arch.dat
+endif
+
 package: release
+
+check-arch: $(archfile)
+	@echo "Architecture changed from $(shell cat __oldarch.dat) to $(arch) - Cleaning"
+	@rm __oldarch.dat
+	@$(MAKE) clean
+	@echo "Version file. Remove to enable recompile" > $@
 
 release: all
 ifeq ($(shell echo "check quotes"),"check quotes")
@@ -502,18 +561,31 @@ ifeq ($(shell echo "check quotes"),"check quotes")
 	@del /f resources
 	@del /f cplusplus\obj\*
 	@del /f binaryplus\obj\*
+	@del /f objects\*
 else
 	@rm -f cppbin
 	@rm -f cpp
 	@rm -f resources
 	@rm -f cplusplus/obj/*
 	@rm -f binaryplus/obj/*
+	@rm -f objects/*
 endif
 
-resources: source/setkbdmode.c source/getfd.c source/getfd.h source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h
+resources: $(check_arch) source/setkbdmode.c source/killterm.c source/getfd.c source/getfd.h source/keyboard.h source/keyboard.m source/openfile.h source/openfile.m source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h
+	@echo MAKE RESOURCES
 
+ifneq ($(msvc),1)
 	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(staticgen)assets/$(prefix)globals.$(static) objects/globals.o
+else
+	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) source/globals.c /Icplusplus\include $(clstd)" > run.bat
+	@cmd.exe /c run.bat
+	@dir
+	@mv *.obj objects/
+	@echo "lib /OUT:assets/globals.lib objects/globals.obj" > run.bat
+	@cmd.exe /c run.bat
+	@rm run.bat
+endif
 
 #	echo $(c-compiler) -v -o $(prefix)std.$(dynamic) -pedantic -Wextra -shared -fPIC -lm -static-libgcc 2>&1 | grep ld | sed s/-lc/'$$(find -O3 /usr/lib -name libc.a 2>&1 | grep $$(uname -m) | sed 1q)' | sed s/-lm/'$$(find -O3 /usr/lib -name libm.a 2>&1 | grep $$(uname -m) | sed 1q)'/g | sed s/-o/-Bsymbolic\ -o/g > temp.sh
 #	@chmod +x temp.sh
@@ -524,28 +596,45 @@ ifeq ($(shell uname -s),Linux)
 	-@rm *.o 2> $(nulldir)
 	$(c-compiler) -c source/setkbdmode.c source/getfd.c source/ledctrl.c source/mousefd.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	ar rcs assets/$(prefix)linuxctrl.$(static) objects/getfd.o objects/ledctrl.o objects/mousefd.o objects/setkbdmode.o
-	$(c-compiler) -o assets/setkbdmode.$(binary) objects/setkbdmode.o -Lassets -llinuxctrl $(static-libc)
-	git submodule update --init --recursive
+	$(c-compiler) -o assets/setkbdmode objects/setkbdmode.o -Lassets -llinuxctrl $(static-libc)
+	git submodule update --init --recursive --remote utilities/doas-keepenv
 ifeq ($(copylibs),1)
 	@echo "$(linuxroot)/share/factoryrush/bin"
 	$(admin)mkdir -p $(linuxroot)/share/factoryrush/bin$(adminend)
-	$(admin)cp assets/setkbdmode.$(binary) $(linuxroot)/share/factoryrush/bin$(adminend)
-	$(admin)cp utilities/doas-keepenv/doas-keepenv $(linuxroot)/share/factoryrush/bin$(adminend)
+	$(admin)cp assets/setkbdmode $(linuxroot)/share/factoryrush/bin$(adminend)
+	$(admin)cp utilities/doas-keepenv/doas-keepenv $(linuxroot)/share/factoryrush/bin/doas-keepenv.sh$(adminend)
+	$(admin)cp utilities/doas-keepenv/doas-keepenv $(linuxbin)/doas-keepenv.sh$(adminend)
 
 	$(admin)mkdir -p $(linuxroot)/share/factoryrush/assets$(adminend)
 	$(admin)cp README.md $(linuxroot)/share/factoryrush/assets$(adminend)
 else
 	@mkdir -p binaryplus/bin/../share/factoryrush/bin
-	@cp assets/setkbdmode.$(binary) binaryplus/share/factoryrush/bin
-	@cp utilities/doas-keepenv/doas-keepenv binaryplus/share/factoryrush/bin
+	@cp assets/setkbdmode binaryplus/share/factoryrush/bin
+	@cp utilities/doas-keepenv/doas-keepenv binaryplus/share/factoryrush/bin/doas-keepenv.sh
+	@cp utilities/doas-keepenv/doas-keepenv binaryplus/bin/doas-keepenv.sh
 
 	@mkdir -p binaryplus/bin/../share/factoryrush/assets
 	@cp README.md binaryplus/share/factoryrush/assets
 endif
 else
 ifeq ($(shell uname -s),Darwin)
-	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wextra -Wno-unused-parameter $(cflags) $(cdb) -Isource -std=c++2b && mv *.o objects/
-	$(staticgen)assets/$(prefix)applecuchar.$(static) objects/cuchar.o
+	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wextra $(cxxflags) $(cdb) -Isource -std=c++2b && mv *.o objects/
+	ar rcs assets/libapplecuchar.a objects/cuchar.o
+	$(c-compiler) -c source/keyboard.m source/openfile.m source/killterm.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
+	$(c-compiler) -dynamiclib -o assets/libapplectrl.dylib objects/keyboard.o objects/openfile.o -framework CoreGraphics -framework CoreServices
+	$(c-compiler) -o assets/killterm objects/killterm.o
+	git submodule update --init --recursive --remote utilities/give-control
+ifeq ($(copylibs),1)
+	$(admin)mkdir -p $(macosroot)/share/factoryrush/lib $(macosroot)/share/factoryrush/bin$(adminend)
+	$(admin)cp assets/libapplectrl.dylib $(macosroot)/share/factoryrush/lib$(adminend)
+	$(admin)cp assets/libapplectrl.dylib $(macoslib)$(adminend)
+	$(admin)cp assets/killterm $(macosroot)/share/factoryrush/bin$(adminend)
+else
+	@mkdir -p binaryplus/share/factoryrush/lib
+	@cp assets/libapplectrl.dylib binaryplus/share/factoryrush/lib
+	@cp assets/libapplectrl.dylib binaryplus/bin
+endif
+else
 endif
 endif
 
@@ -570,15 +659,12 @@ endif
 csrun:
 	-cd binarysharp/bin/exe && $(run)$(binfile).$(binary)
 
-cpp: resources $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
+cpp: cs  $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
+	@echo MAKE CPP
 
-
-ifneq ($(wildcard cs),cs)
-	$(MAKE) cs sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)
-endif
 ifeq ($(msvc),1)
-	echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(flib) $(objects) ../assets/globals USER32.lib Gdi32.lib" > run.bat
-	@run.bat
+	echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(flib) $(objects) ../assets/globals.lib USER32.lib Gdi32.lib Shell32.lib Shlwapi.lib Dbghelp.lib" > run.bat
+	@cmd.exe /c run.bat
 	@rm run.bat
 ifeq ($(debug),1)
 	@cp cplusplus/bin/$(filename).pdb binarysharp/bin/exe
@@ -599,19 +685,20 @@ else
 ifeq ($(binary),exe)
 #windows
 ifeq ($(shell uname -s),Windows_NT)
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals -ldbghelp $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals -ldbghelp -lshlwapi -lshell32 $(flib) $(static-libc++) $(static-libc) $(ldarg)
 else
 ifeq ($(shell uname -s),windows32)
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals -ldbghelp $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals -ldbghelp -lshlwapi -lshell32 $(flib) $(static-libc++) $(static-libc) $(ldarg)
 else
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals -ldbghelp $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals -ldbghelp -lshlwapi -lshell32 $(flib) $(static-libc++) $(static-libc) $(ldarg)
 endif
 endif
 #
 else
 ifeq ($(shell uname -s),Darwin)
 #macos
-	cd cplusplus && $(cpp-compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) -L../assets -L$(flibdir) -lcuchar -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) -L../assets -L$(flibdir) -lapplecuchar -lapplectrl -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	utilities/custom/dylib-fix.sh "cplusplus/bin/lib$(name).dylib" "applectrl"
 #
 else
 #linux and similar
@@ -644,16 +731,15 @@ endif
 	@echo "Version file. Remove to enable recompile" > $@
 
 
-cs: $(foreach fl,$(files),csharp/$(fl))
-
-ifneq ($(wildcard resources),resources)
-	$(MAKE) resources sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)
-endif
+cs: $(resdep) $(foreach fl,$(files),csharp/$(fl))
+	@echo MAKE CS
 	cd csharp && dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r $(os_name) -c $(configuration)
 
+	-@mkdir -p csharp/bin/$(configuration)/net9.0/$(os_name)/native/
+	-@mv csharp/bin/$(arch)/$(configuration)/net9.0/$(os_name)/native/* csharp/bin/$(configuration)/net9.0/$(os_name)/native/
 ifeq ($(msvc),1)
-	cd csharp/bin/$(arch)/$(configuration)/net9.0/$(os_name)/native/ && for i in *.exp; do if [ ! "$$i" = '$(filename).exp' ]; then mv $$i $(filename).exp; fi; done && for i in *.lib; do if [ ! "$$i" = '$(filename).lib' ]; then mv $$i $(filename).lib; fi; done && for i in *.pdb; do if [ ! "$$i" = '$(filename).pdb' ]; then mv $$i $(filename).pdb; fi; done && for i in *.dll; do if [ ! "$$i" = '$(filename).dll' ]; then mv $$i $(filename).dll; fi; done 
-	@mv csharp/bin/$(arch)/$(configuration)/net9.0/$(os_name)/native/* csharp/bin/lib
+	@cd csharp/bin/$(configuration)/net9.0/$(os_name)/native/ && for i in *.exp; do if [ ! "$$i" = '$(filename).exp' ]; then mv $$i $(filename).exp; fi; done && for i in *.lib; do if [ ! "$$i" = '$(filename).lib' ]; then mv $$i $(filename).lib; fi; done && for i in *.pdb; do if [ ! "$$i" = '$(filename).pdb' ]; then mv $$i $(filename).pdb; fi; done && for i in *.dll; do if [ ! "$$i" = '$(filename).dll' ]; then mv $$i $(filename).dll; fi; done 
+	@mv csharp/bin/$(configuration)/net9.0/$(os_name)/native/* csharp/bin/lib
 ifeq ($(debug),1)
 	@cp csharp/bin/lib/$(filename).pdb binarysharp/bin/exe
 	@cp csharp/bin/lib/$(filename).pdb binaryplus/bin
@@ -691,18 +777,15 @@ endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
 
-cppbin: $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc))
-	
-ifneq ($(wildcard cpp),cpp)
-	$(MAKE) cpp sudo=$(sudo) forcewin=$(forcewin) debug=$(debug) msvc=$(msvc) cpp-compiler=$(cpp-compiler) c-compiler=$(c-compiler)
-endif
+cppbin: cpp $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc))
+	@echo MAKE CPPBIN
 
 ifeq ($(msvc),1)
-	echo "$(cpp-compiler) /EHsc /c $(bpdb) $(fbsrc) /Ibinaryplus\include /std:c++latest" > run.bat
-	@run.bat
+	echo "$(cpp-compiler) /EHsc /c $(bpdb) $(fbsrc) /Ibinaryplus\include $(clstdpp)" > run.bat
+	@cmd.exe /c run.bat
 	@$(movefl) -f $(subst obj/,$(empty),$(fbobj)) binaryplus/obj
 	echo "cd binaryplus && link /OUT:bin/$(binname).$(binary) $(bldb) $(flib) ../cplusplus/bin/$(name).lib ../csharp/bin/lib/$(filename).lib $(fbobj) USER32.lib" > run.bat
-	@run.bat
+	@cmd.exe /c run.bat
 	@rm run.bat
 else
 #all
@@ -713,8 +796,11 @@ else
 
 ifeq ($(shell uname -s),Darwin)
 #macos
-	cd binaryplus/bin && install_name_tool -change $$(otool -l $(binname).$(binary) | grep $(dllname) | sed 's/ (offset 24)//' | sed 's/         name //') loader_path/$(dllname) $(binname).$(binary)
-	cd binaryplus/bin && install_name_tool -change $$(otool -l $(binname).$(binary) | grep $(filename).dylib | sed 's/ (offset 24)//' | sed 's/         name //') loader_path/$(libname) $(binname).$(binary)
+	utilities/custom/dylib-fix.sh "binaryplus/bin/$(binname).$(binary)" "$(name)"
+	utilities/custom/dylib-fix.sh "binaryplus/bin/$(binname).$(binary)" "$(filename)"
+ifneq ($(give-ctrl),0)
+	utilities/give-control/give-control "binaryplus/bin/$(binname).$(binary)"
+endif
 #
 endif
 ifeq ($(shell uname -s),Linux)
@@ -727,23 +813,32 @@ ifeq ($(shell echo "check quotes"),"check quotes")
 #windows
 ifeq ($(copylibs),1)
 	$(admin)copy binaryplus\bin\$(binname).$(binary) $(bindir)$(adminend)
-else
 	cd binaryplus\bin && dir
 endif
 else
 #other
 ifeq ($(copylibs),1)
 	$(admin)cp binaryplus/bin/$(binname).$(binary) $(bindir)$(adminend)
+ifeq ($(shell uname -s), Darwin)
+ifneq ($(give-ctrl),0)
+	$(admin)utilities/give-control/give-control '$(bindir)/$(binname).$(binary)'$(adminend)
+endif
+endif
+else
 endif
 endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
 
-csbin: $(foreach bfl,$(binfiles),binarysharp/$(bfl))
+csbin: $(cppdep) $(foreach bfl,$(binfiles),binarysharp/$(bfl))
+	@echo MAKE CSBIN
 	cd binarysharp && dotnet publish -p:SelfContained=true -r $(os_name) -c $(binconfig)
+
+	-@mkdir -p binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/
+	-@mv binarysharp/bin/$(arch)/$(configuration)/net9.0/$(os_name)/native/* binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/
 ifeq ($(msvc),1)
-	@cd binarysharp/bin/$(arch)/$(configuration)/net9.0/$(os_name)/native/ && for i in *.$(binary); do if [ ! "$$i" = '$(binname).$(binary)' ]; then mv $$i $(binname).$(binary); fi; done 
-	@mv binarysharp/bin/$(arch)/$(configuration)/net9.0/$(os_name)/native/* binarysharp/bin/exe
+	@cd binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/ && for i in *.$(binary); do if [ ! "$$i" = '$(binname).$(binary)' ]; then mv $$i $(binname).$(binary); fi; done 
+	@mv binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/* binarysharp/bin/exe
 ifeq ($(copylibs),1)
 	$(admin)cp binarysharp/bin/exe/$(binfile).$(binary) $(bindir)$(adminend)
 else
@@ -779,15 +874,14 @@ endif
 	@echo "Version file. Remove to enable recompile" > $@
 
 # .cpp
-cplusplus/obj/%.o: cplusplus/src/%.cpp $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
+cplusplus/obj/%.$(objsuf): cplusplus/src/%.cpp $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
 ifeq ($(findstring $(subst cplusplus/src/,$(empty),$<),$(sources)),$(subst cplusplus/src/,$(empty),$<))
 
 ifeq ($(msvc),1)
 #msvc
-	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) $< /Icplusplus\include /std:clatest" > run.bat
+	@echo "$(cpp-compiler) /EHsc /c /DUNICODE /D_CRT_SECURE_NO_DEPRECATE /D_MSVC $(cdb) $< /Icplusplus\include $(clstdpp)" > run.bat
 ####@type run.bat
-	@cat run.bat
-	@run.bat
+	@cmd.exe /c run.bat
 	@rm run.bat
 #
 else
@@ -832,15 +926,14 @@ endif
 endif
 
 # .c
-cplusplus/obj/%.o: cplusplus/src/%.c $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
+cplusplus/obj/%.$(objsuf): cplusplus/src/%.c $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
 ifeq ($(findstring $(subst cplusplus/src/,$(empty),$<),$(sources)),$(subst cplusplus/src/,$(empty),$<))
 
 ifeq ($(msvc),1)
 #msvc
-	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) $< /Icplusplus\include /std:clatest" > run.bat
+	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) $< /Icplusplus\include $(clstd)" > run.bat
 ####@type run.bat
-	@cat run.bat
-	@run.bat
+	@cmd.exe /c run.bat
 	@rm run.bat
 #
 else

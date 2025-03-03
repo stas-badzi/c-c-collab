@@ -47,10 +47,12 @@
 *.sln
 *.xml
 *.DS_Store
+*.dSYM/*
 
 
 #generated code
 binaryplus/bin/*.tux
+binaryplus/bin/*.bat
 *.pdb
 *.dbg
 *.json
@@ -59,6 +61,8 @@ binarysharp/obj/*
 csharp/obj/*
 binarysharp/bin/Release/*
 csharp/bin/Release/*
+assets/killterm
+assets/setkbdmode
 
 #make
 cs
@@ -69,6 +73,8 @@ all
 dll
 release
 resources
+check-arch
+__arch.dat
 
 #logs
 *.log
@@ -80,6 +86,13 @@ resources
 
 #keep
 !*/.gitkeep
+!utilities/custom/vsdevcmd-x64.bat
+!utilities/custom/vsdevrun-x64.bat
+!utilities/custom/vsdevscript-x64.bat
 
 # test dir
 test/*
+
+# test files
+file.tux
+a.*

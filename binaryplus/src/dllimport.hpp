@@ -9,8 +9,8 @@
 #include <windows/key.hpp>
 #elif __linux__
 #include <linux/key.hpp>
-#elif _APPLE_
-// #include <kastracja.hpp>
+#elif __APPLE__
+#include <apple/key.hpp>
 #else
 #endif
 
@@ -50,9 +50,23 @@ namespace cppimp {
 
     libimport int16_t Console_GetWindowHeight(void);
 
+    libimport void Console_Update(void);
+
+    libimport void Console_MoveCursor(int x, int y);
+
+    libimport void Console_ShowCursor(void);
+
+    libimport void Console_HideCursor(void);
+
+    libimport void Console_SetCursorSize(uint8_t size);
+
+    libimport void Console_SetTitle(uniconv::unichar* title);
+
     libimport int32_t Console_GetArgC(void);
 
     libimport uniconv::unichar** Console_GetArgV(void);
+
+    libimport int Console_PopupWindow(int type, int argc, uniconv::unichar* argv[]);
     
 #ifdef __cplusplus
     extern "C"
@@ -93,7 +107,9 @@ namespace cppimp {
 
 // System
 
-    libimport uniconv::unichar* System_GetRootPath(void);
+    libimport uniconv::unichar* System_GetRootDir(void);
+
+    libimport uniconv::unichar* System_GetSelfPath(void);
     
     libimport uniconv::unichar* System_ToNativePath(uniconv::unichar* arg1);
     

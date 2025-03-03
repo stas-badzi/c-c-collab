@@ -7,7 +7,7 @@ using Cpp;
 namespace Cpp
 {
     public class Exec {
-        public static string GetRootPath() { return TypeConvert.PtrToString(CppImp.System.GetRootPath()); }
+        public static string GetRootDir() { return TypeConvert.PtrToString(CppImp.System.GetRootDir()); }
 
         public static string ToNativePath(string path) { return TypeConvert.PtrToString(CppImp.System.ToNativePath(TypeConvert.StringToPtr(path))); }
 

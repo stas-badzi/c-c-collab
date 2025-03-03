@@ -86,6 +86,30 @@ using namespace uniconv;
         return cpp::Console::GetWindowHeight();
     }
 
+    libexport void Console_Update(void) {
+        return cpp::Console::Update();
+    }
+
+    libexport void Console_MoveCursor(int x, int y) {
+        return cpp::Console::MoveCursor(x,y);
+    }
+
+    libexport void Console_ShowCursor(void) {
+        return cpp::Console::ShowCursor();
+    }
+
+    libexport void Console_HideCursor(void) {
+        return cpp::Console::HideCursor();
+    }
+
+    libexport void Console_SetCursorSize(uint8_t size) {
+        return cpp::Console::SetCursorSize(size);
+    }
+
+    libexport void Console_SetTitle(uniconv::unichar* title) {
+        return cpp::Console::SetTitle(uniconv::UnicodeToUtf8String(title).c_str());
+    }
+
     libexport int32_t Console_GetArgC(void) {
         return cpp::Console::GetArgC();
     }
@@ -109,6 +133,24 @@ using namespace uniconv;
             out[i] = Utf8StringToUnicode(_argv[i]);;
         }
         return out;
+    }
+
+    libexport int Console_PopupWindow(int type, int argc, uniconv::unichar* argv[]) {
+        uniconv::utfcstr* args = (uniconv::utfcstr*)System::AllocateMemory(sizeof(uniconv::utfcstr)*argc);
+        for (int i = 0; i < argc; i++) {
+            uniconv::utfstr arg = UnicodeToUtf8String(argv[i]).c_str();
+            args[i] = (uniconv::utfcstr)System::AllocateMemory(sizeof(wchar_t)*arg.size());
+        #ifdef _WIN32
+            wchar_t* loc = (wchar_t*)args[i];
+        #else
+            char* loc = (char*)args[i];
+        #endif
+            for (size_t j = 0; j < arg.size(); j++) loc[j] = arg[j];
+        }
+        System::FreeMemory(argv);
+        int ret = Console::PopupWindow(type, argc, args);
+        System::FreeMemory(args);
+        return ret;
     }
 
     int (*Console_sub)(int);
@@ -232,8 +274,12 @@ using namespace uniconv;
 // ~Console
 
 // System
-    libexport uniconv::unichar* System_GetRootPath(void) {
-        return uniconv::Utf8StringToUnicode(cpp::System::GetRootPath().c_str());
+    libexport uniconv::unichar* System_GetRootDir(void) {
+        return uniconv::Utf8StringToUnicode(cpp::System::GetRootDir().c_str());
+    }
+
+    libexport uniconv::unichar* System_GetSelfPath(void) {
+        return uniconv::Utf8StringToUnicode(cpp::System::GetSelfPath().c_str());
     }
     
     libexport uniconv::unichar* System_ToNativePath(uniconv::unichar* arg1) {

@@ -9,6 +9,8 @@
 #include <sstream>
 #include <vector>
 #include <chrono>
+#include <cassert>  
+#include <random>
 
 #define IsCtrlDown() (Console::IsKeyDown(Key::Enum::CTRL) || Console::IsKeyDown(Key::Enum::CTRLL) || Console::IsKeyDown(Key::Enum::CTRLR))
 
@@ -157,7 +159,7 @@ int main(void) {
     int argc = Console::GetArgC();
     wchar_t** argv = Console::GetArgV();
 
-    wstring a = System::GetRootPath();
+    wstring a = System::GetRootDir();
     a.append(L"/assets/a.tux");
     wstring file = (argc < 2) ? System::ToNativePath(getPath(System::GetRootPath() + L"/assets/a.tux")) : System::ToNativePath(wstring(argv[1]));
     auto texture = TextureSystem::TextureFromFile(file); // Load the texture to edit
@@ -236,11 +238,12 @@ int main(void) {
         } else if (mouse.x > 34 && mouse.y == 0 && mouse.x < 41 ) {
             for (int i = 35; i < 41; ++i) menu[0][i].ReverseColors();
             if (mouse.primary && bop) {
-                wstring fl = System::GetRootPath();
-                string fls = "gnome-terminal -- less ";
-                for (auto i = 0ul; i < fl.size(); ++i) fls.push_back(fl[i]);
-                fls.append("/share/factoryrush/assets/README.md");
-                system(fls.c_str());
+                Console::PopupWindow(1,0,nullptr);
+                //wstring fl = System::GetRootDir();
+                //string fls = "gnome-terminal -- less ";
+                //for (auto i = 0ul; i < fl.size(); ++i) fls.push_back(fl[i]);
+                //fls.append("/share/factoryrush/assets/README.md");
+                //system(fls.c_str());
                 /*
                 const char* arg1 = "/bin/su";
                 const char* arg2 = "stas";
@@ -295,18 +298,21 @@ endminput:
 
         TextureSystem::DrawTextureToScreen(2,15,pos,screen);
 
-        if (mouse.x < screen[0].size() && mouse.y < screen.size()) screen[mouse.y][mouse.x].character(Console::KeysToggled().CapsLock ? L'*' : L'⮙');
+        // first check y 'cause if screen.size() is 0 than screen[0].size() will crash
+        if (mouse.y < screen.size() && mouse.x < screen[0].size()) screen[mouse.y][mouse.x].character(Console::KeysToggled().CapsLock ? L'*' : screen[mouse.y][mouse.x].character());
+        if ((!(Console::IsKeyDown(Key::Enum::SUPERL) || Console::IsKeyDown(Key::Enum::SUPERR))) && mouse.y < screen.size() && mouse.x < screen[0].size()) {
+            if (screen[mouse.y][mouse.x].background() == 16) screen[mouse.y][mouse.x].background(0);
+            if (screen[mouse.y][mouse.x].foreground() == 16) screen[mouse.y][mouse.x].foreground(7);
+            screen[mouse.y][mouse.x].ReverseColors();
+        }
         Console::FillScreen(screen);
-
-        Control::CleanMemory();
 
         if (Console::IsFocused()) Console::HandleKeyboard();
         //string x;
         //gin >> x;
         //if (!gin.eof()) cout << 'a' << x << '\n' << flush;
-       if (Console::KeyPressed() == Key::Enum::q && IsCtrlDown()) return EXIT_SUCCESS;
+        if (Console::KeyPressed() == Key::Enum::q && IsCtrlDown()) return EXIT_SUCCESS;
         if (Console::KeyPressed() == Key::Enum::s && IsCtrlDown()) symchar = getChar(symchar);
-        if (Console::KeyPressed() == Key::Enum::d && IsCtrlDown()) symback = symback;
         if (Console::KeyPressed() == Key::Enum::f && IsCtrlDown()) symfore = symfore;
         //TextureSystem::DrawTextureToScreen(20,2,pos,screen);
     }
@@ -315,5 +321,9 @@ endminput:
 }
 
 int sub(int type) {
+    assert(type != 0);
+    auto&& sym = Console::Symbol::CreateTexture(L"▒frfjyyjyjt\n");
+    Console::FillScreen(sym);
+    Console::Sleep(10);
     return type;
 }

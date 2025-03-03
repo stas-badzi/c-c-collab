@@ -39,6 +39,8 @@ namespace uniconv {
     }
 
 #ifdef _WIN32
+    #define to_nstring(val) to_wstring(val)
+    #define N(val) L##val
     typedef wchar_t utfchar;
     typedef std::wstring utfstr;
     typedef const wchar_t* utfcstr;
@@ -48,6 +50,8 @@ namespace uniconv {
         return out;
     }
 #else
+    #define to_nstring(val) to_string(val)
+    #define N(val) val
     typedef std::string utfchar;
     typedef std::string utfstr;
     typedef const char* utfcstr;

@@ -5,12 +5,15 @@
 #include <cstdint>
 #include <unicode_conversion.hpp>
 #include <sstream>
+#include "dllimport.hpp"
 #ifdef _WIN32
-    #include <windows.h>
+    //#include <windows.h>
     #include <windows/key.hpp>
-    #include <iostream>
+    //#include <iostream>
 #elif __linux__
     #include <linux/key.hpp>
+#elif __APPLE__
+    #include <apple/key.hpp>
 #else
 #endif
 
@@ -37,6 +40,8 @@
 
 int sub(int);
 
+// todo: move all Console.cpp into here
+
 namespace cpp {
     class Console {
 
@@ -45,10 +50,17 @@ namespace cpp {
             bool primary;
             bool secondary;
             bool middle;
-            std::pair<bool,bool> scroll;
+            std::pair<bool,bool> scroll; // (is scrolling),(up or down)[windows/linux/freebsd - scroll up == move scroll whell (fingers on touchbad) down; down == move up | macos scroll like tablet/phone]
             unsigned int x;
             unsigned int y; 
-            MouseStatus(void);
+            inline MouseStatus(void) {
+                this->primary = false;
+                this->middle = false;
+                this->secondary = false;
+                this->scroll = std::pair<bool,bool>(false,false);
+                this->x = 0;
+                this->y = 0;
+            }
         };
         struct Symbol {
             // pass the size
@@ -83,7 +95,6 @@ namespace cpp {
 
             Symbol operator=(const Symbol &src);
 
-
             void* Get();
 
             #ifdef _WIN32
@@ -106,6 +117,7 @@ namespace cpp {
         static int16_t GetWindowHeight(void);
         static int32_t GetArgC(void);
         static wchar_t** GetArgV(void);
+        static int PopupWindow(int type, int argc, wchar_t* argv[]);
         static void Sleep(double seconds = 1.0);
         static void FillScreen(std::vector<std::vector<Symbol> > symbols);
         static void HandleMouseAndFocus(void);
@@ -113,6 +125,18 @@ namespace cpp {
         static struct MouseStatus GetMouseStatus(void);
         static std::pair<uint8_t,uint8_t> MouseButtonClicked(void); // returns button ID and whitch consecutive click was it
         static uint8_t MouseButtonReleased(void); // returns button ID
+        static inline void Update(void) { return cppimp::Console_Update(); }
+        static inline void MoveCursor(int x, int y) { return cppimp::Console_MoveCursor(x,y); }
+        static inline void ShowCursor(void) { return cppimp::Console_ShowCursor(); }
+        static inline void HideCursor(void) { return cppimp::Console_HideCursor(); }
+        static inline void SetCursorSize(uint8_t size) { return cppimp::Console_SetCursorSize(size); }
+        static inline void SetTitle(std::wstring title) { return cppimp::Console_SetTitle(uniconv::Utf8StringToUnicode(uniconv::WStringToNative(title).c_str())); }
     };
-    extern std::istream& gin;
+#if defined(_WIN32) || defined(__CYGWIN__)
+    extern __declspec(dllimport) std::wistream& gin;
+    extern __declspec(dllimport) std::wostream& gout;
+#else
+    extern std::wistream& gin;
+    extern std::ostream& gout;
+#endif
 }

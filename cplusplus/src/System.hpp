@@ -10,11 +10,20 @@
 
 #ifdef _WIN32
     #include <windows.h>
+    #include <shlwapi.h>
 #else
     #include <unistd.h>
     #include <pthread.h>
+    #include <sys/stat.h>
 #ifndef _LINUX_WAIT_H
     #include <sys/wait.h>
+#endif
+#ifdef __APPLE__
+    #include <signal.h>
+    #include <mach-o/dyld.h>
+    typedef void (*sighandler_t)(int);
+#elif __linux__
+    #include <linux/limits.h>
 #endif
 #endif
 
@@ -25,18 +34,22 @@ namespace cpp {
     private:
         static uniconv::utfstr GetRoot(void);
         static uniconv::utfstr root;
-#ifdef __unix__
+        static uniconv::utfstr self;
+#if !defined(_WIN32) && !defined(__CYGWIN__)
         static pid_t tpid;
         static void SendSignal(int signal);
 #endif
     public:
-        static uniconv::utfstr GetRootPath(void);
+        static uniconv::utfstr GetRootDir(void);
+        static uniconv::utfstr GetSelfPath(void);
         static uniconv::utfstr ToNativePath(uniconv::utfstr path);
 
         static nint AllocateMemory(size_t bytes);
         static void FreeMemory(nint pointer);
 
         static nint MovePointer(nint pointer, signed int bytes);
+
+        static int MakeDirectory(uniconv::utfcstr path);
 
         template<typename T> static T ReadPointer(nint pointer);
         template<typename T> static T ReadPointer(nint pointer, int offset);
@@ -49,12 +62,24 @@ namespace cpp {
         static int RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]);
         static int RunProgramS(uniconv::utfcstr file, uniconv::utfcstr const args[]);
         
-        static int ShellAsync(uniconv::utfcstr arg, bool& is_running);  
-        static int RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr args, ...);
-        static int RunProgramAsyncS(uniconv::utfcstr file, uniconv::utfcstr args, ...);
-        static int RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[]);
-        static int RunProgramAsyncS(uniconv::utfcstr file, uniconv::utfcstr const args[]);
+        static bool ShellAsync(uniconv::utfcstr arg);  
+        static bool RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr args, ...);
+        static bool RunProgramAsyncS(uniconv::utfcstr file, uniconv::utfcstr args, ...);
+        static bool RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[]);
+        static bool RunProgramAsyncS(uniconv::utfcstr file, uniconv::utfcstr const args[]);
+    #ifdef _WIN32
+        static int ShellC(uniconv::utfcstr arg);
+        static int RunProgramC(uniconv::utfcstr path, uniconv::utfcstr args, ...);
+        static int RunProgramSC(uniconv::utfcstr file, uniconv::utfcstr args, ...);
+        static int RunProgramC(uniconv::utfcstr path, uniconv::utfcstr const args[]);
+        static int RunProgramSC(uniconv::utfcstr file, uniconv::utfcstr const args[]);
         
+        static bool ShellAsyncC(uniconv::utfcstr arg);  
+        static bool RunProgramAsyncC(uniconv::utfcstr path, uniconv::utfcstr args, ...);
+        static bool RunProgramAsyncSC(uniconv::utfcstr file, uniconv::utfcstr args, ...);
+        static bool RunProgramAsyncC(uniconv::utfcstr path, uniconv::utfcstr const args[]);
+        static bool RunProgramAsyncSC(uniconv::utfcstr file, uniconv::utfcstr const args[]);
+    #endif
     };
 }
 
