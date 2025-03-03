@@ -184,6 +184,14 @@ genwin = 1
 endif
 endif
 
+ifeq ($(nodep),1)
+cppdep =
+resdep =
+else
+cppdep = cpp
+resdep = resources
+endif
+
 ifneq ($(tgarch),$(empty))
 	arch = $(tgarch)
 endif
@@ -723,7 +731,7 @@ endif
 	@echo "Version file. Remove to enable recompile" > $@
 
 
-cs: resources $(foreach fl,$(files),csharp/$(fl))
+cs: $(resdep) $(foreach fl,$(files),csharp/$(fl))
 	@echo MAKE CS
 	cd csharp && dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r $(os_name) -c $(configuration)
 
@@ -822,7 +830,7 @@ endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
 
-csbin: cpp $(foreach bfl,$(binfiles),binarysharp/$(bfl))
+csbin: $(cppdep) $(foreach bfl,$(binfiles),binarysharp/$(bfl))
 	@echo MAKE CSBIN
 	cd binarysharp && dotnet publish -p:SelfContained=true -r $(os_name) -c $(binconfig)
 
