@@ -438,7 +438,13 @@ ifeq ($(copylibs),1)
 flibdir = $(libdir)
 endif
 
-old_arch = $(shell echo >> __arch.dat && cat __arch.dat 2> /dev/null)
+ifeq ($(archchk),0)
+check_arch =
+else
+check_arch = check-arch
+endif
+
+old_arch = $(shell cat __arch.dat 2> /dev/null || echo > __arch.dat)
 ifneq ($(old_arch),$(arch))
 archfile = $(shell echo $(old_arch) > __oldarch.dat && echo $(arch) > __arch.dat && echo __arch.dat)
 else
@@ -448,14 +454,9 @@ endif
 package: release
 
 check-arch: $(archfile)
-ifneq ($(archchk),0)
 	@echo "Architecture changed from $(shell cat __oldarch.dat) to $(arch) - Cleaning"
-	@$(MAKE) clean
-else
-	@echo "Architecture changed from $(shell cat __oldarch.dat) to $(arch) - Not cleaning"
-endif
 	@rm __oldarch.dat
-
+	@$(MAKE) clean
 	@echo "Version file. Remove to enable recompile" > $@
 
 release: all
@@ -562,7 +563,7 @@ else
 	@rm -f objects/*
 endif
 
-resources: check-arch source/setkbdmode.c source/killterm.c source/getfd.c source/getfd.h source/keyboard.h source/keyboard.m source/openfile.h source/openfile.m source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h
+resources: $(check_arch) source/setkbdmode.c source/killterm.c source/getfd.c source/getfd.h source/keyboard.h source/keyboard.m source/openfile.h source/openfile.m source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h
 ifneq ($(msvc),1)
 	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(staticgen)assets/$(prefix)globals.$(static) objects/globals.o
