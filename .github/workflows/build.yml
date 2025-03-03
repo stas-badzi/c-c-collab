@@ -151,27 +151,10 @@ jobs:
   
   build-windows:
     name: Build program using MSVC
-    needs: compile-cs-windows
     runs-on: windows-latest
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-      - name: Import C# compiled dynamic library
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinDll
-          path: csharp/bin/lib
-      - name: Import C# compiled executable
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinExe
-          path: binarysharp/bin/exe
-      - name: Copy C# where it's needed
-        run: |
-          touch cs
-          touch csbin
-          copy csharp\bin\lib\factoryrushsharp.dll cplusplus\bin\factoryrushsharp.dll
-          copy csharp\bin\lib\factoryrushsharp.dll binaryplus\bin\factoryrushsharp.dll
       - name: Set up Clang
         uses: egor-tensin/setup-clang@v1
       - name: Install Programs
