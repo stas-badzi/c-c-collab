@@ -9,8 +9,7 @@ using namespace cpp;
 
 using namespace cs;
 
-namespace cs {
- vector<vector<smart_ref<Console::Symbol> > > PtrToTexture(void* ptr, bool direct = false) {
+   cs::vector<vector<smart_ref<Console::Symbol> > > PtrToTexture(void* ptr, bool direct = false) {
         auto sym = vector<vector<smart_ref<Console::Symbol> > >();
 
         const int int32_size = sizeof(int32_t);
@@ -42,7 +41,7 @@ namespace cs {
         return sym;
     }
 
-    void* TextureToPtr(vector<vector<Console::Symbol> > &texture) {
+    void* cs::TextureToPtr(vector<vector<Console::Symbol> > &texture) {
         const int int32_size = sizeof(int32_t);
         const int intptr_size = sizeof(void*);
         int32_t size, count;
@@ -70,7 +69,6 @@ namespace cs {
 
         return ret;
     }
-}
 
 vector<wstring> TextureSystem::ImportText(wstring filename) {
     unichar** textptr = TextureSystem_ImportText(Utf8StringToUnicode(WStringToNative(filename).c_str()));
