@@ -87,6 +87,7 @@ __arch.dat
 #keep
 !*/.gitkeep
 !utilities/custom/vsdevcmd-x64.bat
+!utilities/custom/vsdevrun-x64.bat
 !utilities/custom/vsdevscript-x64.bat
 
 # test dir

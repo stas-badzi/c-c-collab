@@ -153,8 +153,6 @@ jobs:
     name: Build program using MSVC
     runs-on: windows-latest
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
       - name: Set up Clang
         uses: egor-tensin/setup-clang@v1
       - name: Install Programs
@@ -167,12 +165,13 @@ jobs:
           del gnuwin32.zip
           ren gnuwin32.mirror-master gnuwin32
           copy gnuwin32\bin\* .
+      - name: Checkout source code
+        uses: actions/checkout@v4
       - name: Compile code
         shell: cmd
         run:
-          utilities\custom\vsdevrun-x64.bat .\make.exe archchk=0 sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
-          
-          
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+          .\make.exe archchk=0 sudo=0 msvc=1 c-compiler=clang-cl cpp-compiler=clang-cl
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
