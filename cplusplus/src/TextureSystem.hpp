@@ -8,15 +8,14 @@
 
 namespace cs {
 
-    std::vector<std::vector<smart_ref<Console::Symbol> > > PtrToTexture(void* ptr, bool direct = false);
-
-    void* TextureToPtr(std::vector<std::vector<Console::Symbol> > &texture);
-
     template<typename Tout, typename Tin>
     std::vector<Tout> ConvertVector(const std::vector<Tin>& vec);
     
     template<typename Tout, typename Tin>
     std::vector<std::vector<Tout>> Convert2dVector(const std::vector<std::vector<Tin>>& vec2d);
+
+    inline std::vector<std::vector<smart_ref<Console::Symbol> > > PtrToTexture(void* ptr, bool direct = false);
+    inline void* TextureToPtr(std::vector<std::vector<Console::Symbol> > &texture);
 
     class TextureSystem {
     public:
