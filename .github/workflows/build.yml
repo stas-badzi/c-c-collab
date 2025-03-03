@@ -19,8 +19,15 @@ jobs:
       - name: Compile c#
         shell: cmd
         run: |
-          echo $null >> resources
-          echo $null >> cpp
+          echo $null > resources
+          echo $null > cpp
+          cd cplusplus/obj
+          echo $null > Console.o
+          echo $null > FileSystem.o
+          echo $null > System.o
+          echo $null > dllexport.o
+          cd ../..
+
           make cs sudo=0 archchk=0
           make csbin sudo=0 archchk=0
           cd csharp/bin/lib
@@ -62,7 +69,6 @@ jobs:
         run: |
           touch cs
           touch csbin
-          tree
           cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
           cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Compile code
@@ -269,8 +275,8 @@ jobs:
           CXX: g++
         run: |
           #export PATH="$(brew --prefix llvm@18)/bin:$PATH"
-          touch resources
-          touch cpp
+          touch resources cpp
+          cd cplusplus/obj && touch Console.o FileSystem.o System.o dllexport.o && cd ../..
           make cs csbin archchk=0 sudo=0
       - name: Compile c++ code
         shell: bash
@@ -278,8 +284,8 @@ jobs:
           CC: gcc
           CXX: g++
         run: |
-          rm cpp
-          rm resources
+          rm cpp resources
+          cd cplusplus/obj && rm Console.o FileSystem.o System.o dllexport.o && cd ../..
           export CPLUS_INCLUDE_PATH="${CPLUS_INCLUDE_PATH:+${CPLUS_INCLUDE_PATH}:}/Library/Developer/CommandLineTools/SDKs/MacOSX15.sdk/usr/include/c++/v1"
           make sudo=0 cpp-compiler=clang++ c-compiler=clang
       - name: Upload C++ binaries
