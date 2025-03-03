@@ -9,7 +9,7 @@ using namespace cpp;
 
 using namespace cs;
 
-   cs::vector<vector<smart_ref<Console::Symbol> > > PtrToTexture(void* ptr, bool direct = false) {
+   vector<vector<smart_ref<Console::Symbol> > > cs::PtrToTexture(void* ptr, bool direct) {
         auto sym = vector<vector<smart_ref<Console::Symbol> > >();
 
         const int int32_size = sizeof(int32_t);
