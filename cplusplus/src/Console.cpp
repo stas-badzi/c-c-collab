@@ -381,7 +381,7 @@ void Console::XtermMouseAndFocus(void) {
 
     void cpp::Console::SetTitle(const wchar_t* title) {
         if (!SetConsoleTitle(title)) {
-            cerr << "SetConsoleTitle failed: " << GetLastError() << endl;
+            Console::out << L"SetConsoleTitle failed: " << GetLastError() << endl;
             exit(0x49);
         }
     }
@@ -418,19 +418,19 @@ void Console::XtermMouseAndFocus(void) {
     }
 
     std::wstring GetProcessExecutableName(DWORD processId, bool ischild = false, bool isparent = false) {
-        cerr << "Process: " << processId << endl << '\t';
+        Console::out << L"Process: " << processId << endl << L'\t';
         HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
         if (processHandle) {
             wchar_t exePath[MAX_PATH];
             if (GetModuleFileNameEx(processHandle, NULL, exePath, MAX_PATH)) {
-                wcerr << L"Found name: " << exePath << endl << L'\t';
+                Console::out << L"Found name: " << exePath << endl << L'\t';
                 CloseHandle(processHandle);
                 HMODULE moduleHandle = LoadLibrary(exePath);
                 if (!moduleHandle) {
                     int err = GetLastError();
-                    cerr << "Failed to load module: " << err << endl;
+                    Console::out << L"Failed to load module: " << err << endl;
                     if (err == ERROR_ACCESS_DENIED) {
-                        cerr << "Access denied" << endl << '\t';
+                        Console::out << L"Access denied" << endl << '\t';
                         return exePath;
                     }
                     return std::wstring();
@@ -440,7 +440,7 @@ void Console::XtermMouseAndFocus(void) {
                 if (!nth) return std::wstring();
                 //cerr << "Image NT Header: " << nth << endl << '\t';
                 if (nth->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || nth->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_OS2_CUI || nth->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_POSIX_CUI) {  
-                    cerr << "Subsystem: Console" << endl << '\t';
+                    Console::out << "Subsystem: Console" << endl << '\t';
                     // Check child processes
                     auto childProcessIds = GetChildProcessIds(processId);
                     if (!isparent)
@@ -456,10 +456,10 @@ void Console::XtermMouseAndFocus(void) {
                         if (!parentExeName.empty())
                             return parentExeName;
                     }
-                    cerr << "None Found" << endl;
+                    Console::out << "None Found" << endl;
                     return (ischild || isparent) ? std::wstring() : exePath;
                 }
-                cerr << "Subsystem: GUI" << endl << '\t';
+                Console::out << "Subsystem: GUI" << endl << '\t';
                 return std::wstring(exePath);
             }
             CloseHandle(processHandle);
@@ -468,7 +468,7 @@ void Console::XtermMouseAndFocus(void) {
     }
 
     std::wstring GetWindowExecutableName(HWND hwnd) {
-        cerr << "Window: " << hwnd << endl;
+        Console::out << "Window: " << hwnd << endl;
         DWORD processId;
         GetWindowThreadProcessId(hwnd, &processId);
         return GetProcessExecutableName(processId);
@@ -1186,7 +1186,7 @@ void Console::XtermMouseAndFocus(void) {
                 Console::mouse_buttons_down[2] = mouse_status.secondary;
                 Console::mouse_buttons_down[3] = flags[2] && ((mouse.dwButtonState & 0b11111111100000000000000000000000) != 0b11111111100000000000000000000000);
                 Console::mouse_buttons_down[4] = flags[2] && ((mouse.dwButtonState & 0b11111111100000000000000000000000) == 0b11111111100000000000000000000000);
-                //if (mouse.dwButtonState & 0b11111) cerr << '0' << 'x' << std::hex << mouse.dwButtonState << '\n';
+                if (mouse.dwButtonState & 0b11111) Console::out << L'0' << L'x' << std::hex << mouse.dwButtonState << L'\n';
                 Console::mouse_buttons_down[5] = GetKeyState(VK_XBUTTON1) & 0x8000;
                 Console::mouse_buttons_down[6] = GetKeyState(VK_XBUTTON2) & 0x8000;
                 Console::this_mouse_combo = (flags[1] ? this_mouse_combo : 0) + 1; 
@@ -2133,7 +2133,7 @@ mbstate_t Console::streammbs = mbstate_t();
                     switch (arg[1]) {
                         case '&':
                             // launched as popup
-                            cerr << "launched as popup" << endl;
+                            Console::out << "launched as popup" << endl;
                             Console::sub_proc = true;
                             if (strlen(arg) < 3) exit(0x31);
                             sub_process = 0;

@@ -19,9 +19,6 @@ public:
         static_assert(std::is_enum_v<EnumType>);
         return UNDEFINED;
     }
-    static void constexpr Printall(void) {
-        std::cerr << static_cast<std::underlying_type_t<EnumType>>(UNDEFINED) << '\n';
-    }
 };
 
 template<typename EnumType, EnumType UNDEFINED, EnumType V, EnumType... Next>
@@ -35,10 +32,6 @@ public:
     static EnumType constexpr ToEnum(std::underlying_type_t<EnumType> v) {
         static_assert(std::is_enum_v<EnumType>);
         return (v == static_cast<std::underlying_type_t<EnumType>>(V)) ? static_cast<EnumType>(v) : super::ToEnum(v);
-    }
-    static void constexpr Printall(void) {
-        std::cerr << static_cast<std::underlying_type_t<EnumType>>(V) << ' ';
-        super::Printall();
     }
 };
 
