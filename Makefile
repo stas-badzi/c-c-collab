@@ -463,7 +463,7 @@ package: release
 
 check-arch: $(archfile)
 	@echo "Architecture changed from $(shell cat __oldarch.dat) to $(arch) - Cleaning"
-	@rm __oldarch.dat
+	-@rm __oldarch.dat
 	@$(MAKE) clean
 	@echo "Version file. Remove to enable recompile" > $@
 
@@ -513,7 +513,8 @@ endif
 	@cd bin && mv cs Cs.$(release)
 
 ifeq ($(msvc),1)
- @cd bin && powershell Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/raw/master/bin/zip.exe" -OutFile "zip.exe" -Verbose
+	-@copy ../zip.exe . 2> nul
+	-@rm nul
 endif
 
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
