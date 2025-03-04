@@ -44,6 +44,39 @@ void Console::PushChar(char_t c) {
     Console::in.seekg(pos);
 };
 
+void Console::EscSeqSetTitle(const char_t* title) {
+    utfstr str;
+    str.append(N("\033]30;")).append(title).append(N("\a\033]0;")).append(title).push_back(N('a'));
+    fwrite(str.c_str(), sizeof(char_t), str.size(), stderr);
+}
+
+void Console::EscSeqMoveCursor(void) {
+    utfstr str;
+    // move cursor
+    str.append(N("\033[")).append(to_nstring(Console::cursorpos.first)).append(N(";")).append(to_nstring(Console::cursorpos.second)).push_back(N('H'));
+    fwrite(str.c_str(), sizeof(char_t), str.size(), stderr);
+}
+
+void Console::EscSeqSetCursor(void) {
+    utfstr str = N("\033[?25");
+    if (Console::cursor_visible) str.push_back(N('h'));
+    else str.push_back(N('l'));
+    fwrite(str.c_str(), sizeof(char_t), str.size(), stderr);
+}
+
+void Console::EscSeqSetCursorSize(void) {
+    short val;
+    if (Console::cursor_size > 60) val = 2;
+    else if (Console::cursor_size > 30) val = 6;
+    else val = 4;
+    val -= Console::cursor_blink_opposite;
+    utfstr str = N("\033[");
+    str.append(to_nstring(val));
+    str.push_back(N(' '));
+    str.push_back(N('q'));
+    fwrite(str.c_str(), sizeof(char_t), str.size(), stderr);
+}
+
 void Console::XtermInitTracking(void) {
     fwrite("\033[?1049h", sizeof(char), 8, stderr);
 
