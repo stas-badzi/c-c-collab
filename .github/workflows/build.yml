@@ -19,15 +19,21 @@ jobs:
       - name: Compile c#
         shell: cmd
         run: |
-          echo $null >> resources
-          make cs sudo=0
-          make csbin sudo=0
+    
+
+          make cs sudo=0 archchk=0 nodep=1 msvc=1
+          make csbin sudo=0 archchk=0 nodep=1
           cd csharp/bin/lib
       - name: Export dynamic library
         uses: actions/upload-artifact@v4
         with:
           name: CSharpWinDll
-          path: binarysharp/bin/exe/factoryrushsharp.dll
+          path: csharp/bin/lib/factoryrushsharp.dll
+      - name: Export dynamic library linkage 
+        uses: actions/upload-artifact@v4
+        with:
+          name: CSharpWinDllLib
+          path: csharp/bin/lib/factoryrushsharp.lib
       - name: Export executable
         uses: actions/upload-artifact@v4
         with:
@@ -59,13 +65,9 @@ jobs:
       - name: Copy C# where it's needed
         shell: msys2 {0}
         run: |
-          echo /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
-          cd /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
-          tree
-          touch cs
-          touch csbin
-          cp csharp/bin/lib/factoryshsharp.dll cplusplus/bin/factoryrushsharp.dll
-          cp csharp/bin/lib/factoryshsharp.dll binaryplus/bin/factoryrushsharp.dll
+          touch cs csbin
+          cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
+          cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Compile code
         shell: msys2 {0}
         env:
@@ -75,7 +77,9 @@ jobs:
           cd /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
           tree
           export PATH="/clang64/bin:$PATH"
-          make sudo=0 c-compiler=clang cpp-compiler=clang++
+          make resources cpp cppbin sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0
+          touch cs cpp cppbin csbin
+          make archchk=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -92,6 +96,12 @@ jobs:
     needs: compile-cs-windows
     runs-on: windows-latest
     steps:
+      - name: Set up Cygwin
+        uses: egor-tensin/setup-cygwin@v4
+        with:
+          packages: gcc-g++ zip grep gawk binutils tree
+      - name: Checkout source code
+        uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
         uses: actions/download-artifact@v4
         with:
@@ -102,18 +112,23 @@ jobs:
         with:
           name: CSharpWinExe
           path: binarysharp/bin/exe
-      - name: Set up Cygwin
-        uses: egor-tensin/setup-cygwin@v4
-        with:
-          packages: gcc-g++ zip grep gawk binutils
+      - name: testrea;
+        shell: cmd
+        run: |
+          dir
+      - name: Copy C# where it's needed
+        shell: C:\tools\cygwin\bin\bash.exe --login -o igncr '{0}'
+        run: |
+          cd $(cygpath -u "${{ github.workspace }}")
+          touch cs
+          touch csbin
+          pwd
+          tree
+          cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
+          cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Install Programs
         shell: pwsh
         run: |
-          echo $null >> cs
-          echo $null >> csbin
-          cp csharp\bin\lib\factoryshsharp.dll cplusplus\bin\factoryrushsharp.dll
-          cp csharp\bin\lib\factoryshsharp.dll binaryplus\bin\factoryrushsharp.dll
-
           Invoke-WebRequest -Uri "https://github.com/maweil/MakeForWindows/releases/download/v4.4.1/make-bin-win64.zip" -OutFile "make-bin.zip" -Verbose
           Expand-Archive -Force make-bin.zip .
           del make-bin.zip
@@ -125,7 +140,9 @@ jobs:
           CXX: g++
         run: |
           cd $(cygpath -u "${{ github.workspace }}")
-          ./make sudo=0
+          ./make resources cpp cppbin sudo=0 archchk=0 nodep=1
+          touch cs cpp cppbin csbin
+          ./make archchk=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -137,48 +154,59 @@ jobs:
           name: CygwinCsBin
           path: bin/Cs.*.zip
   
-#  build-windows:
-#    name: Build using windows clang-cl
-#    needs: compile-cs-windows
-#    runs-on: windows-latest
-#    steps:
-#      - name: Import C# compiled source code
-#        uses: actions/download-artifact@v4
-#        with:
-#          name: DotNetBinaries
-#          path: .
-#      - name: Set up Clang
-#        uses: egor-tensin/setup-clang@v1
-#      - name: Install Programs
-#        shell: pwsh
-#        run: |
-#          echo $null >> cs
-#          echo $null >> csbin
-#          Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/archive/refs/heads/master.zip" -OutFile "gnuwin32.zip" -Verbose
-#          Expand-Archive -Force gnuwin32.zip .
-#          del gnuwin32.zip
-#          ren gnuwin32.mirror-master gnuwin32
-#          copy gnuwin32\bin\* .
-#      - name: Compile code
-#        shell: cmd
-#        env:
-#          CC: clang
-#          CXX: clang++
-#        run: |
-#          .\make.exe cpp sudo=0 compiler=clang++
-#          .\make.exe cppbin sudo=0 compiler=g++
-#          .\make.exe release sudo=0
-          
-#      - name: Upload C++ binaries
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: WindowsCppBin
-#          path: bin/Cpp.*.zip
-#      - name: Upload C# binaries
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: WindowsCsBin
-#          path: bin/Cs.*.zip
+  build-windows:
+    name: Build program using MSVC
+    runs-on: windows-latest
+    needs: compile-cs-windows
+    steps:
+      - name: Set up Clang
+        uses: egor-tensin/setup-clang@v1
+      - name: Checkout source code
+        uses: actions/checkout@v4
+      - name: Import C# compiled dynamic library
+        uses: actions/download-artifact@v4
+        with:
+          name: CSharpWinDll
+          path: csharp/bin/lib
+      - name: Import C# compiled dynamic linkage
+        uses: actions/download-artifact@v4
+        with:
+          name: CSharpWinDllLib
+          path: csharp/bin/lib
+      - name: Import C# compiled executable
+        uses: actions/download-artifact@v4
+        with:
+          name: CSharpWinExe
+          path: binarysharp/bin/exe
+      - name: Copy C# where it's needed
+        shell: cmd
+        run: |
+          echo $null >> cs
+          echo $null >> csbin
+          copy csharp\bin\lib\factoryrushsharp.dll cplusplus\bin\factoryrushsharp.dll
+          copy csharp\bin\lib\factoryrushsharp.dll binaryplus\bin\factoryrushsharp.dll
+      - name: Install Programs
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/archive/refs/heads/master.zip" -OutFile "gnuwin32.zip" -Verbose
+          Expand-Archive -Force gnuwin32.zip .
+          del gnuwin32.zip
+          ren gnuwin32.mirror-master gnuwin32
+          copy gnuwin32\bin\* .
+      - name: Compile code
+        shell: cmd /c {0}
+        run: |
+          utilities\custom\vsdevcmd-x64.bat .\make.exe resources cpp cppbin release package archchk=0 sudo=0 msvc=1 nodep=1 c-compiler=clang-cl cpp-compiler=clang-cl
+      - name: Upload C++ binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: WindowsCppBin
+          path: bin/Cpp.*.zip
+      - name: Upload C# binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: WindowsCsBin
+          path: bin/Cs.*.zip
 
   build-ubuntu:
     name: Build program using Ubuntu
@@ -201,7 +229,7 @@ jobs:
           CC: gcc
           CXX: g++
         run: |
-          make sudo=0 c-compiler=clang cpp-compiler=clang++
+          make sudo=0 archchk=0 c-compiler=clang cpp-compiler=clang++
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -244,22 +272,14 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
-      - name: Compile c# code
-        shell: bash
-        env:
-          CC: gcc
-          CXX: g++
-        run: |
-          #export PATH="$(brew --prefix llvm@18)/bin:$PATH"
-          make cs csbin sudo=0 cpp-compiler=clang++ c-compiler=clang
-      - name: Compile c++ code
+      - name: Compile code
         shell: bash
         env:
           CC: gcc
           CXX: g++
         run: |
           export CPLUS_INCLUDE_PATH="${CPLUS_INCLUDE_PATH:+${CPLUS_INCLUDE_PATH}:}/Library/Developer/CommandLineTools/SDKs/MacOSX15.sdk/usr/include/c++/v1"
-          make sudo=0 cpp-compiler=clang++ c-compiler=clang
+          make sudo=0 cpp-compiler=clang++ c-compiler=clang archchk=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
