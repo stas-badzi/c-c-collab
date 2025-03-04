@@ -62,7 +62,7 @@ wstring getPath(wstring current) {
 int main(void) {
     Console::Init();
     Console::SetTitle(L"FactoryRush");
-    /*Console::SetCursorSize(0);
+    Console::SetCursorSize(0);
     std::wstring buf;
     Console::MouseStatus lastmouse = Console::GetMouseStatus();
     int siz = 0;
@@ -104,7 +104,7 @@ int main(void) {
         Console::FillScreen(screen);
         Console::Sleep(0.03);
     }
-    return 0;*/
+    return 0;
 
     bool edit = false, bop = true, a3 = true;
 
