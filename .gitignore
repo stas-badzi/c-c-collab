@@ -64,7 +64,7 @@ csharp/bin/Release/*
 assets/killterm
 assets/setkbdmode
 
-#make
+#makefile assets
 cs
 cpp
 csbin
@@ -75,6 +75,7 @@ release
 resources
 check-arch
 __arch.dat
+run.bat
 
 #logs
 *.log

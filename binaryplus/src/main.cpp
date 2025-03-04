@@ -71,7 +71,7 @@ wstring getPath(wstring current) {
         Console::IsKeyDown(Key::Enum::ESC)));
 
     // Parsing the key pressed into a path
-    wstring a = System::GetRootPath();
+    wstring a = System::GetRootDir();
     if (Console::IsKeyDown(Key::Enum::ONE)) return a.append(L"/assets/one.tux");
     if (Console::IsKeyDown(Key::Enum::TWO)) return a.append(L"/assets/two.tux");
     if (Console::IsKeyDown(Key::Enum::THREE)) return a.append(L"/assets/three.tux");
@@ -161,7 +161,7 @@ int main(void) {
 
     wstring a = System::GetRootDir();
     a.append(L"/assets/a.tux");
-    wstring file = (argc < 2) ? System::ToNativePath(getPath(System::GetRootPath() + L"/assets/a.tux")) : System::ToNativePath(wstring(argv[1]));
+    wstring file = (argc < 2) ? System::ToNativePath(getPath(System::GetRootDir() + L"/assets/a.tux")) : System::ToNativePath(wstring(argv[1])); // Load the texture to edit
     auto texture = TextureSystem::TextureFromFile(file); // Load the texture to edit
     wchar_t symchar = getChar(L'~');
     uint8_t symback = 16;
