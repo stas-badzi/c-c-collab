@@ -131,6 +131,8 @@ namespace cpp {
         static inline void HideCursor(void) { return cppimp::Console_HideCursor(); }
         static inline void SetCursorSize(uint8_t size) { return cppimp::Console_SetCursorSize(size); }
         static inline void SetTitle(std::wstring title) { return cppimp::Console_SetTitle(uniconv::Utf8StringToUnicode(uniconv::WStringToNative(title).c_str())); }
+        // run if cursor is blinking when using ascii escape sequences to set the cursor shape
+        static inline void ReverseCursorBlink(void) { return cppimp::Console_ReverseCursorBlink(); }
     };
 #if defined(_WIN32) || defined(__CYGWIN__)
     extern __declspec(dllimport) std::wistream& gin;

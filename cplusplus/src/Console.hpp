@@ -250,6 +250,7 @@ namespace cpp {
         static void EscSeqMoveCursor(void);
         static void EscSeqSetCursor(void);
         static void EscSeqSetCursorSize(void);
+        static void EscSeqRestoreCursor(void);
     public:
         static void Init(void);
         static void Fin(void);
@@ -279,6 +280,21 @@ namespace cpp {
             #endif
 
         };
+        enum class conf : bool {
+            Native = true,
+            Terminal = false
+        };
+        static struct config_t {
+            conf focus;
+            conf mouse;
+            conf title;
+            conf cursor;
+            conf cursor_size;
+            conf cursor_visibility;
+        } config;
+
+        static struct config_t& GetConfigRef(void);
+
         static int16_t GetWindowWidth(void);
         static int16_t GetWindowHeight(void);
 
@@ -313,6 +329,7 @@ namespace cpp {
         static void HideCursor(void);
         static void SetCursorSize(uint8_t size);
         static void SetTitle(const char_t* title);
+        static void ReverseCursorBlink(void);
 #ifdef _WIN32
         static std::wistringstream in;
         static std::wofstream out;

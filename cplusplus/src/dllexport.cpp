@@ -180,6 +180,10 @@ using namespace uniconv;
         return cpp::Console::SetTitle(uniconv::UnicodeToUtf8String(title).c_str());
     }
 
+    libexport void Console_ReverseCursorBlink(void) {
+        return cpp::Console::ReverseCursorBlink();
+    }
+
     libexport int32_t Console_GetArgC(void) {
         return cpp::Console::GetArgC();
     }

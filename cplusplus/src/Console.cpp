@@ -18,6 +18,8 @@ using namespace uniconv;
 using namespace std;
 using namespace std::chrono;
 
+Console::config_t& Console::GetConfigRef(void) { return Console::config; }
+
 char_t Console::GetChar(void) {
     if (Console::buf_it >= 0 && Console::buf[Console::buf_it]) { ++buf_it; return Console::buf[buf_it-1]; }
     Console::buf[buf_it] = getnch(); if (buf_it < 127) Console::buf[++buf_it] = '\0'; else exit(0x1A);
@@ -46,14 +48,13 @@ void Console::PushChar(char_t c) {
 
 void Console::EscSeqSetTitle(const char_t* title) {
     utfstr str;
-    str.append(N("\033]30;")).append(title).append(N("\a\033]0;")).append(title).push_back(N('a'));
+    str.append(N("\033]30;")).append(title).append(N("\a\033]0;")).append(title).push_back(N('\a'));
     fwrite(str.c_str(), sizeof(char_t), str.size(), stderr);
 }
 
 void Console::EscSeqMoveCursor(void) {
     utfstr str;
-    // move cursor
-    str.append(N("\033[")).append(to_nstring(Console::cursorpos.first)).append(N(";")).append(to_nstring(Console::cursorpos.second)).push_back(N('H'));
+    str.append(N("\033[")).append(to_nstring(Console::cursorpos.second+1)).append(N(";")).append(to_nstring(Console::cursorpos.first+1)).push_back(N('H'));
     fwrite(str.c_str(), sizeof(char_t), str.size(), stderr);
 }
 
@@ -77,6 +78,10 @@ void Console::EscSeqSetCursorSize(void) {
     fwrite(str.c_str(), sizeof(char_t), str.size(), stderr);
 }
 
+void Console::EscSeqRestoreCursor(void) {
+    fwrite(N("\033[?25h\033[0 q"), sizeof(char_t), 11, stderr);
+}
+
 void Console::XtermInitTracking(void) {
     fwrite("\033[?1049h", sizeof(char), 8, stderr);
 
@@ -91,6 +96,7 @@ void Console::XtermFinishTracking(void) {
     fwrite("\033[?1003l", sizeof(char), 8, stderr);
     fwrite("\033[?1015l", sizeof(char), 8, stderr);
     fwrite("\033[?1006l", sizeof(char), 8, stderr);
+    Console::Sleep(0.01);
     Console::XtermMouseAndFocus(); // read all input so it doesn't get pushed to the terminal
 
     fwrite("\033[?1049l", sizeof(char), 8, stderr);
@@ -1393,28 +1399,39 @@ void Console::XtermMouseAndFocus(void) {
     //pair<uint16_t,uint16_t> Console::xyoffset = pair<uint16_t,uint16_t>();
 
 #else
-void cpp::Console::MoveCursor(int x, int y) {
+    // Not windows (Probably Posix and/or Unix)
+
+    void cpp::Console::MoveCursor(int x, int y) {
         Console::cursorpos.first = x;
         Console::cursorpos.second = y;
+        Console::EscSeqMoveCursor();
     }
 
     void cpp::Console::ShowCursor(void) {
         Console::cursor_visible = true;
+        Console::EscSeqSetCursor();
     }
 
     void cpp::Console::HideCursor(void) {
         Console::cursor_visible = false;
+        Console::EscSeqSetCursor();
     }
 
     void cpp::Console::SetCursorSize(uint8_t size) {
         Console::cursor_size = size;
+        Console::EscSeqSetCursorSize();
     }
 
     void cpp::Console::SetTitle(const char_t* title) {
-      
+        EscSeqSetTitle(title);
     }
-// Not linux (Probably Posix and Unix)
-mbstate_t Console::streammbs = mbstate_t();
+
+    void cpp::Console::ReverseCursorBlink(void) {
+        Console::cursor_blink_opposite = !Console::cursor_blink_opposite;
+        Console::EscSeqSetCursorSize();
+    }
+
+    mbstate_t Console::streammbs = mbstate_t();
 
 #ifdef __linux__
 // linux
@@ -1465,7 +1482,8 @@ mbstate_t Console::streammbs = mbstate_t();
 
     void Console::Init(void) {
         if (!initialised) {
-            if (setuid(0) == -1) exit(0xf0);
+            if (setuid(0) == -1)
+                exit(0xf0);
             
             Console::emulator = !(getenv("DISPLAY") == nullptr);
 
@@ -1846,6 +1864,7 @@ mbstate_t Console::streammbs = mbstate_t();
 
             if (Console::emulator) {
                 Console::XtermFinishTracking();
+                Console::EscSeqRestoreCursor();
             } else {
                 close(fb_fd);
                 close(mouse_fd);
@@ -2467,18 +2486,25 @@ mbstate_t Console::streammbs = mbstate_t();
             if (i >= symbols.size()) 
                 for (size_t j = 0; j < width; j++)
                     screen.push_back(' ');
-            for (size_t j = 0; j < width; j++) {
-                if (j >= symbols[i].size()) {
-                    screen.append("\033[0m ");
-                    while (++j < width) screen.push_back(' ');
-                    break;
+            else
+                for (size_t j = 0; j < width; j++) {
+                    if (j >= symbols[i].size()) {
+                        screen.append("\033[0m ");
+                        while (++j < width) screen.push_back(' ');
+                        break;
+                    }
+                    screen.append( GenerateEscapeSequence(symbols[i][j].foreground, symbols[i][j].background) );
+                    screen.append(symbols[i][j].character);
                 }
-                screen.append( GenerateEscapeSequence(symbols[i][j].foreground, symbols[i][j].background) );
-                screen.append(symbols[i][j].character);
-            }
         }
         screen.append("\033[0m");
+        bool old_cursor_visible = Console::cursor_visible;
+        Console::cursor_visible = false;
+        Console::EscSeqSetCursor();
         fwrite(screen.c_str(), sizeof(char), screen.size(), stderr);
+        Console::EscSeqMoveCursor();
+        Console::cursor_visible = old_cursor_visible;
+        Console::EscSeqSetCursor();
     }
 
     void SysSleep(int microseconds){
@@ -2525,6 +2551,8 @@ array<bool,UINT16_MAX> Console::used_pids = array<bool,UINT16_MAX>{0};
 pair<int16_t,int16_t> Console::cursorpos = pair<uint16_t,uint16_t>(0,0);
 uint8_t Console::cursor_size = uint8_t(100);
 bool Console::cursor_visible = bool(true);
+bool Console::cursor_blink_opposite = bool(false);
+Console::config_t Console::config = Console::config_t();
 
 struct ToggledKeys Console::KeysToggled(void) {
     return Console::keys_toggled;

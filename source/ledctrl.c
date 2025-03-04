@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <dirent.h>
 
-inline int getledpath(const char *find, int fsize, char* buffer, int size) {
+static int getledpath(const char *find, int fsize, char* buffer, int size) {
     DIR *dir;
     struct dirent *ent;
     if ((dir = opendir("/sys/class/leds")) != NULL) {

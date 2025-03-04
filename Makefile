@@ -395,12 +395,12 @@ else
 #linux and similar[other]
 nulldir = /dev/null
 binflags = 
-ifneq ($(shell which doas),$(empty))
-	admin = doas$(space)
-	adminend =
-else
 ifneq ($(shell which sudo),$(empty))
 	admin = sudo$(space)
+	adminend =
+else
+ifneq ($(shell which doas),$(empty))
+	admin = doas$(space)
 	adminend =
 else
 ifneq ($(shell which su),$(empty))
@@ -659,7 +659,7 @@ endif
 csrun:
 	-cd binarysharp/bin/exe && $(run)$(binfile).$(binary)
 
-cpp: cs  $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
+cpp:  $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
 	@echo MAKE CPP
 
 ifeq ($(msvc),1)
@@ -777,7 +777,7 @@ endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
 
-cppbin: cpp $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc))
+cppbin: $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc))
 	@echo MAKE CPPBIN
 
 ifeq ($(msvc),1)
@@ -830,7 +830,7 @@ endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
 
-csbin: $(cppdep) $(foreach bfl,$(binfiles),binarysharp/$(bfl))
+csbin: $(foreach bfl,$(binfiles),binarysharp/$(bfl))
 	@echo MAKE CSBIN
 	cd binarysharp && dotnet publish -p:SelfContained=true -r $(os_name) -c $(binconfig)
 

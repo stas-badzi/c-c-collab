@@ -62,6 +62,8 @@ namespace cppimp {
 
     libimport void Console_SetTitle(uniconv::unichar* title);
 
+    libimport void Console_ReverseCursorBlink(void);
+
     libimport int32_t Console_GetArgC(void);
 
     libimport uniconv::unichar** Console_GetArgV(void);
