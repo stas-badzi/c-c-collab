@@ -193,8 +193,7 @@ jobs:
           del gnuwin32.zip
           ren gnuwin32.mirror-master gnuwin32
           copy gnuwin32\bin\* .
-          mkdir bin
-          copy utilities\custom\zip.bat bin
+          copy utilities\custom\zip.bat C:\Windows\System32
       - name: Compile code
         shell: cmd /c {0}
         run: |
