@@ -513,7 +513,7 @@ endif
 	@cd bin && mv cs Cs.$(release)
 
 ifeq ($(msvc),1)
-	-@copy ../zip.exe . 2> nul
+	-copy ../*.exe .
 	-@rm nul
 endif
 
