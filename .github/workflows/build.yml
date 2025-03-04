@@ -202,7 +202,7 @@ jobs:
         with:
           name: WindowsCppBin
           path: bin/Cpp.*.zip
-      - name: Upload C binaries
+      - name: Upload C# binaries
         uses: actions/upload-artifact@v4
         with:
           name: WindowsCsBin
