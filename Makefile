@@ -492,8 +492,8 @@ endif
 
 	@cd bin && powershell Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/raw/master/bin/zip.exe" -OutFile "zip.exe" -Verbose
 
-	@cd bin && zip -r Cpp.$(release).$(os).zip Cpp.$(release)
-	@cd bin && zip -r Cs.$(release).$(os).zip Cs.$(release)
+	@zip -r bin/Cpp.$(release).$(os).zip bin/Cpp.$(release)
+	@zip -r bin/Cs.$(release).$(os).zip bin/Cs.$(release)
 
 else
 ifeq ($(wildcard release),release)
@@ -513,21 +513,20 @@ endif
 	@cd bin && mv cs Cs.$(release)
 
 ifeq ($(msvc),1)
-	-copy ../*.exe .
 	-@rm nul
 endif
 
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
-	cd bin && zip -r Cpp.$(release).$(os).zip Cpp.$(release)
-	cd bin && zip -r Cs.$(release).$(os).zip Cs.$(release)
+	zip -r bin/Cpp.$(release).$(os).zip bin/Cpp.$(release)
+	zip -r bin/Cs.$(release).$(os).zip bin/Cs.$(release)
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
-	cd bin && zip -r Cpp.$(release).$(os).zip Cpp.$(release)
-	cd bin && zip -r Cs.$(release).$(os).zip Cs.$(release)
+	zip -r bin/Cpp.$(release).$(os).zip bin/Cpp.$(release)
+	zip -r bin/Cs.$(release).$(os).zip bin/Cs.$(release)
 else
 ifeq ($(findstring NT, $(shell uname -s)),NT)
-	cd bin && zip -r Cpp.$(release).$(os).zip Cpp.$(release)
-	cd bin && zip -r Cs.$(release).$(os).zip Cs.$(release)
+	zip -r bin/Cpp.$(release).$(os).zip bin/Cpp.$(release)
+	zip -r bin/Cs.$(release).$(os).zip bin/Cs.$(release)
 else
 ifeq ($(shell uname -s),Darwin)
 	cd bin && tar -czvf Cpp.$(release).$(os).tgz Cpp.$(release)
