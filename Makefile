@@ -512,6 +512,10 @@ endif
 	@cd bin && mv cpp Cpp.$(release)
 	@cd bin && mv cs Cs.$(release)
 
+ifeq ($(msvc),1)
+ @cd bin && powershell Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/raw/master/bin/zip.exe" -OutFile "zip.exe" -Verbose
+endif
+
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 	cd bin && zip -r Cpp.$(release).$(os).zip Cpp.$(release)
 	cd bin && zip -r Cs.$(release).$(os).zip Cs.$(release)
