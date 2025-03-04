@@ -21,14 +21,19 @@ jobs:
         run: |
     
 
-          make cs sudo=0 archchk=0 nodep=1
+          make cs sudo=0 archchk=0 nodep=1 msvc=1
           make csbin sudo=0 archchk=0 nodep=1
           cd csharp/bin/lib
       - name: Export dynamic library
         uses: actions/upload-artifact@v4
         with:
           name: CSharpWinDll
-          path: binarysharp/bin/exe/factoryrushsharp.dll
+          path: csharp/bin/lib/factoryrushsharp.dll
+      - name: Export dynamic library linkage 
+        uses: actions/upload-artifact@v4
+        with:
+          name: CSharpWinDllLib
+          path: csharp/bin/lib/factoryrushsharp.lib
       - name: Export executable
         uses: actions/upload-artifact@v4
         with:
@@ -162,6 +167,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: CSharpWinDll
+          path: csharp/bin/lib
+      - name: Import C# compiled dynamic linkage
+        uses: actions/download-artifact@v4
+        with:
+          name: CSharpWinDllLib
           path: csharp/bin/lib
       - name: Import C# compiled executable
         uses: actions/download-artifact@v4
