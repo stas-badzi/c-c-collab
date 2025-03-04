@@ -512,10 +512,6 @@ endif
 	@cd bin && mv cpp Cpp.$(release)
 	@cd bin && mv cs Cs.$(release)
 
-ifeq ($(msvc),1)
-	-@rm nul
-endif
-
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 	zip -r bin/Cpp.$(release).$(os).zip bin/Cpp.$(release)
 	zip -r bin/Cs.$(release).$(os).zip bin/Cs.$(release)
