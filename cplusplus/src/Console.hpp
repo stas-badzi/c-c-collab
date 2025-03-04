@@ -183,6 +183,7 @@ namespace cpp {
         static std::pair<int16_t,int16_t> cursorpos;
         static bool cursor_visible;
         static uint8_t cursor_size;
+        static bool cursor_blink_opposite;
     #ifdef _WIN32
         static const wchar_t* subdir;
         //static std::vector<std::vector<COLORREF>> SaveScreen(void);
@@ -245,6 +246,10 @@ namespace cpp {
         static void XtermMouseAndFocus(void);
         static void XtermInitTracking(void);
         static void XtermFinishTracking(void);
+        static void EscSeqSetTitle(const char_t* title);
+        static void EscSeqMoveCursor(void);
+        static void EscSeqSetCursor(void);
+        static void EscSeqSetCursorSize(void);
     public:
         static void Init(void);
         static void Fin(void);
