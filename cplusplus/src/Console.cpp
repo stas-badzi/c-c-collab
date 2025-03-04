@@ -1186,8 +1186,7 @@ void Console::XtermMouseAndFocus(void) {
                 Console::mouse_buttons_down[2] = mouse_status.secondary;
                 Console::mouse_buttons_down[3] = flags[2] && ((mouse.dwButtonState & 0b11111111100000000000000000000000) != 0b11111111100000000000000000000000);
                 Console::mouse_buttons_down[4] = flags[2] && ((mouse.dwButtonState & 0b11111111100000000000000000000000) == 0b11111111100000000000000000000000);
-                if (mouse.dwButtonState & 0b11111)
-                    cerr << '0' << 'x' << std::hex << mouse.dwButtonState << '\n';
+                //if (mouse.dwButtonState & 0b11111) cerr << '0' << 'x' << std::hex << mouse.dwButtonState << '\n';
                 Console::mouse_buttons_down[5] = GetKeyState(VK_XBUTTON1) & 0x8000;
                 Console::mouse_buttons_down[6] = GetKeyState(VK_XBUTTON2) & 0x8000;
                 Console::this_mouse_combo = (flags[1] ? this_mouse_combo : 0) + 1; 
