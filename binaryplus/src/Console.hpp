@@ -43,6 +43,8 @@ int sub(int);
 // todo: move all Console.cpp into here
 
 namespace cpp {
+    inline void ThrowMsg(const wchar_t* msg) { cppimp::ThrowMsg(uniconv::Utf8StringToUnicode(uniconv::WStringToNative(msg).c_str())); }
+
     class Console {
 
     public:

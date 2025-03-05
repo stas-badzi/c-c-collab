@@ -14,6 +14,10 @@ using namespace uniconv;
 
 // Console
 
+    libexport void ThrowMsg(uniconv::unichar* msg) {
+        cpp::Console::ThrowMsg(uniconv::UnicodeToUtf8String(msg).c_str());
+    }
+
     libexport void Console_Init(void) {
         cpp::Console::Init();
     }

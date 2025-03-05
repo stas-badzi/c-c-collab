@@ -18,6 +18,8 @@
 
 namespace cppimp {
 
+    libimport void ThrowMsg(uniconv::unichar* msg);
+
     libimport void Console_Init(void);
 
     libimport void Console_Fin(void);

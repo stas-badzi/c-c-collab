@@ -6,8 +6,10 @@ namespace cpp {
     __declspec(dllexport) std::wistream& gin = *((std::wistream*)&Console::in);
     __declspec(dllexport) std::wostream& gout = *((std::wostream*)&Console::out);
 #define getnch() Console::input_buf->pop()
+#define ncerr wcerr
 #else
 #define getnch() getc(stdin)
+#define ncerr cerr
     __attribute__((visibility("default"))) std::wistream& gin = *((std::wistream*)&Console::in);
     __attribute__((visibility("default"))) std::ostream& gout = *((std::ostream*)&Console::out);
 #endif
@@ -18,9 +20,21 @@ using namespace uniconv;
 using namespace std;
 using namespace std::chrono;
 
+void Console::ThrowMsg(const char* msg) {
+    Console::Fin();
+    ncerr << msg << endl;
+    exit(0x100);
+}
+
+void Console::ThrowMsg(const wchar_t* msg) {
+    Console::Fin();
+    ncerr << msg << endl;
+    exit(0x100);
+}
+
 char_t Console::GetChar(void) {
     if (Console::buf_it >= 0 && Console::buf[Console::buf_it]) { ++buf_it; return Console::buf[buf_it-1]; }
-    Console::buf[buf_it] = getnch(); if (buf_it < 127) Console::buf[++buf_it] = '\0'; else exit(0x1A);
+    Console::buf[buf_it] = getnch(); if (buf_it < 127) Console::buf[++buf_it] = '\0'; else ThrowMsg("No more space in buffer");
     return Console::buf[buf_it-1];
 };
 
@@ -35,7 +49,7 @@ void Console::PushChar(char_t c) {
     size_t siz = mbrtowc(&wc, &c, 1, &Console::streammbs);
     switch (siz) {
     case static_cast<size_t>(-1):
-        exit(0x10F);
+        ThrowMsg("mbrtowc error");
     case static_cast<size_t>(-2):
         return;
     }
@@ -127,7 +141,7 @@ void Console::XtermMouseAndFocus(void) {
                 if (byte == N('m')) { mousedown = false; break; }
 
                 int num = byte - N('0');
-                if (num < 0 || num > 9) exit(31);
+                if (num < 0 || num > 9) ThrowMsg("Invalid mouse status input");
 
                 val[pos] *= 10;
                 val[pos] += num;
@@ -382,7 +396,7 @@ void Console::XtermMouseAndFocus(void) {
     void cpp::Console::SetTitle(const wchar_t* title) {
         if (!SetConsoleTitle(title)) {
             Console::out << L"SetConsoleTitle failed: " << GetLastError() << endl;
-            exit(0x49);
+            ThrowMsg("SetConsoleTitle failed");
         }
     }
 
@@ -887,17 +901,17 @@ void Console::XtermMouseAndFocus(void) {
                         case L'&':
                             // launched as popup
                             Console::sub_proc = true;
-                            if (wcslen(arg) < 3) exit(0x31);
+                            if (wcslen(arg) < 3) ThrowMsg("Invalid argument 1");
                             sub_process = 0;
                             narg = arg + 2;
                             while (narg[0] != L'~') {
-                                if (narg[0] < L'0' || narg[0] > L'9') exit(0x32);
+                                if (narg[0] < L'0' || narg[0] > L'9') ThrowMsg("Invalid argument 2");
                                 sub_process *= 10;
                                 sub_process += narg[0] - L'0';
                                 ++narg;
                             }
                             for (size_t i = 1; narg[i] != L'~'; i++){
-                                if (narg[i] == L'\0') exit(0x33);
+                                if (narg[i] == L'\0') ThrowMsg("Invalid argument 3");
                                 sdir.push_back(narg[i]);
                             }
                             Console::subdir = new const wchar_t[wcslen(sdir.c_str())+1]{0};
@@ -905,7 +919,8 @@ void Console::XtermMouseAndFocus(void) {
                             ++j; --i; --Console::argc;
                             break;
                         case L'\\':
-                            exit(0xE4);
+                            ThrowMsg("IDK Argument");
+                            break;
                         default:
                             Console::argv[i] = arg;
                             break;

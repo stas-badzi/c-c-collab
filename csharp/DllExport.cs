@@ -7,6 +7,7 @@ using Cs;
 using System.Drawing;
 using Cpp;
 using Console = Cs.Console;
+using _ = Cpp._;
 // UTF-8: int
 // UNICODE: char
 
@@ -31,10 +32,10 @@ namespace CsExp {
         [UnmanagedCallersOnly(EntryPoint = "TextureSystem_ExportText")]
         public static void ExportText(IntPtr path, IntPtr content) {
             if (path == IntPtr.Zero) {
-                throw new Exception("Intptr $path Empty");
+                _.ThrowMsg("Intptr $path Empty");
             }
             if (content == IntPtr.Zero) {
-                throw new Exception("Intptr $content Empty");
+                _.ThrowMsg("Intptr $content Empty");
             }
             
             int intptr_size = IntPtr.Size;
@@ -54,7 +55,7 @@ namespace CsExp {
         public static nint TextureFromFile(nint filepathPtr)
         {
             if (filepathPtr == IntPtr.Zero)
-                throw new Exception("Intptr $filepathPtr Empty");
+                _.ThrowMsg("Intptr $filepathPtr Empty");
 
             string filepath = TypeConvert.PtrToString(filepathPtr); // Convert filepath
             List<List<Terminal.Symbol>> func = Cs.TextureSystem.TextureFromFile(filepath); // Original function
@@ -65,9 +66,9 @@ namespace CsExp {
         public static void FileFromTexture(nint filepathPtr, nint texturePtr, bool recycle = false)
         {
             if (filepathPtr == IntPtr.Zero)
-                throw new Exception("Intptr $filepathPtr Empty");
+                _.ThrowMsg("Intptr $filepathPtr Empty");
             if (texturePtr == IntPtr.Zero)
-                throw new Exception("Intptr $texturePtr Empty");
+                _.ThrowMsg("Intptr $texturePtr Empty");
 
             string filepath = TypeConvert.PtrToString(filepathPtr);
 
@@ -79,9 +80,9 @@ namespace CsExp {
         public static void DrawTextureToScreen(int x, int y, nint texturePtr, nint screenPtr)
         {
             if (texturePtr == IntPtr.Zero)
-                throw new Exception("Intptr $texturePtr Empty");
+                _.ThrowMsg("Intptr $texturePtr Empty");
             if (screenPtr == IntPtr.Zero)
-                throw new Exception("Intptr $screenPtr Empty");
+                _.ThrowMsg("Intptr $screenPtr Empty");
             
             var texture = TypeConvert.PtrToTexture(texturePtr);
             var screen = TypeConvert.PtrToTexture(screenPtr,true);
@@ -110,7 +111,7 @@ namespace CsExp {
         [UnmanagedCallersOnly(EntryPoint = "SoundSystem_PlaySound")]
         public static void PlaySound(IntPtr filepathPtr, bool wait = false) {
             if (filepathPtr == IntPtr.Zero)
-                throw new Exception("Intptr $filepathPtr Empty");
+                _.ThrowMsg("Intptr $filepathPtr Empty");
 
             Cs.SoundSystem.PlaySound(TypeConvert.PtrToString(filepathPtr),wait);
         }

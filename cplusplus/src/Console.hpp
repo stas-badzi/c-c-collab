@@ -298,6 +298,8 @@ namespace cpp {
         static void Update(void);
 
         static void Sleep(double seconds = 1.0);
+        static void ThrowMsg(const char* msg);
+        static void ThrowMsg(const wchar_t* msg);
 
         static void SetDoubleClickMaxWait(unsigned short milliseconds);
         static unsigned short GetDoubleClickMaxWait(void);
