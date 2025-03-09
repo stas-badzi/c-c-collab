@@ -516,7 +516,10 @@ using namespace uniconv;
 // Camera
     libexport void* Game_Camera_Construct(int height, int width, void* symptr) {
         cpp::Game::Camera cam(height, width, *(cpp::Console::Symbol*)symptr);
-        return (void*)&cam;
+        // nie mozna zwracac pointera do zmiennej lokalnej, więc:
+        auto ret = (cpp::Game::Camera*)System::AllocateMemory(sizeof(cpp::Game::Camera)); // jak malloc, tylko że z kontrolą pamięci przy `debug=1`
+        *ret = cam;
+        return ret;
     }
 
     libexport void Game_Camera_DrawTexture(void* textureptr, cpp::Game::MatrixPosition* centerptr, cpp::Game::Camera* cameraptr) {
