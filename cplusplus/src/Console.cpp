@@ -3055,13 +3055,7 @@ contcons:
     auto retdir = Console::tmp_data + subdir + procdir;
     thread waitthr = thread([retx, retdir]() mutable {
         bool oldfocus = false;
-        while (!System::IsFile((retdir + N("exit.dat")).c_str())) {
-            SysSleep(1000);
-            Console::HandleMouseAndFocus();
-            if (Console::focused && !oldfocus)
-                csimp::SoundSystem_PlaySound(uniconv::Utf8StringToUnicode((System::GetRootDir() + sep + N("assets") + sep + N("illegal-operation.wav")).c_str()), 0);
-            oldfocus = Console::focused;
-        }
+        while (!System::IsFile((retdir + N("exit.dat")).c_str())) SysSleep(1000);
 
         FILE* fl = topen((retdir + N("exit.dat")).c_str(), L"r");
         if (!fl) ThrowMsg(utfstr(N("Couldn't open file: ")) + retdir + N("exit.dat"));
