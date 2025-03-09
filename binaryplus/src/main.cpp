@@ -9,8 +9,9 @@
 #include <sstream>
 #include <vector>
 #include <chrono>
-#include <cassert>  
+#include <cassert>
 #include <random>
+#include <queue>
 
 #define IsCtrlDown() (Console::IsKeyDown(Key::Enum::CTRL) || Console::IsKeyDown(Key::Enum::CTRLL) || Console::IsKeyDown(Key::Enum::CTRLR))
 
@@ -19,6 +20,7 @@ using namespace cpp;
 using namespace cs;
 
 wchar_t getChar(wchar_t current) {
+    return current;
     wstringstream wstr;
     wstr << "Press 0-9 to change the symbol\nESC to cancel\n...\n";
     auto texture = Console::Symbol::CreateTexture(wstr.str());
@@ -63,6 +65,11 @@ int main(void) {
     Console::Init();
     Console::SetTitle(L"FactoryRush");
     Console::SetCursorSize(0);
+    queue<long double> times;
+    vector<long double> fpses;
+    long double ravg = 0;
+
+    /* <- add second '/' to toggle test-main (or remove if there are "//*")
     std::wstring buf;
     Console::MouseStatus lastmouse = Console::GetMouseStatus();
     int siz = 0;
@@ -104,11 +111,12 @@ int main(void) {
         Console::FillScreen(screen);
         Console::Sleep(0.03);
     }
-    return 0;
+    return 0; //*/
 
     bool edit = false, bop = true, a3 = true;
 
     chrono::time_point<chrono::high_resolution_clock> start = chrono::high_resolution_clock::now();
+    chrono::time_point<chrono::high_resolution_clock> startsecs = chrono::high_resolution_clock::now();
     long double avg = 0;
     long double old_avg = -1;
     unsigned long long counter = 0;
@@ -299,11 +307,25 @@ endminput:
 
         auto enlapsed_time = chrono::duration_cast<std::chrono::duration<long double, std::milli>>(chrono::high_resolution_clock::now() - start).count();
         wstringstream wstr;
-        if (counter == INT64_MAX) counter = 0;
-        avg *= counter;
-        avg += (1000.0/enlapsed_time);
-        avg /= ++counter;
-        wstr << "[  " << avg << "FPS  ]";
+        if (counter < 100) {
+            avg *= counter;
+            avg += (1000.0/enlapsed_time);
+            avg /= ++counter;
+        } else {
+            avg *= 100;
+            avg -= times.front();
+            times.pop();
+            avg += (1000.0/enlapsed_time);
+            avg /= 100;
+        }
+        times.push(1000.0/enlapsed_time);
+
+        auto secstime = chrono::duration_cast<std::chrono::duration<long double, std::milli>>(chrono::high_resolution_clock::now() - startsecs).count();
+        if (secstime > 100) {
+            ravg = avg;
+            startsecs = chrono::high_resolution_clock::now();
+        }
+        wstr << "[  " << ravg << "FPS  ]";
         auto pos = Console::Symbol::CreateTexture(wstr.str());
         start = chrono::high_resolution_clock::now();
 
@@ -318,7 +340,7 @@ endminput:
         }
         Console::FillScreen(screen);
 
-        if (Console::IsFocused()) Console::HandleKeyboard();
+        if (Console::IsFocused() && false) Console::HandleKeyboard();
         //string x;
         //gin >> x;
         //if (!gin.eof()) cout << 'a' << x << '\n' << flush;

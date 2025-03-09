@@ -301,7 +301,7 @@ namespace cpp {
         static int32_t GetArgC(void);
         static uniconv::utfcstr* GetArgV(void);
 
-        static void FillScreen(std::vector<std::vector<Symbol> > symbols);
+        static void FillScreen(const std::vector<std::vector<Symbol> >& symbols);
         
         static void HandleKeyboard(void);
         static bool IsKeyDown(enum Key::Enum key);
@@ -337,6 +337,10 @@ namespace cpp {
         static std::wistringstream in;
         static std::ofstream out;
 #endif
+    private:
+        static std::vector<std::vector<Symbol>> old_symbols;
+        static std::pair<int16_t,int16_t> old_scr_size;
+        
     };
 #ifdef _WIN32
     extern __declspec(dllexport) std::wistream& gin;

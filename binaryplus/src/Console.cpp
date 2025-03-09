@@ -46,9 +46,9 @@ enum Key::Enum Console::KeyReleased(void) {
     return Console_KeyReleased();
 }
 
-void Console::FillScreen(vector<vector<Console::Symbol> > symbols) {
+void Console::FillScreen(const vector<vector<Console::Symbol> >& symbols) {
 
-    void* voidsyms = TextureToPtr(symbols);
+    void* voidsyms = TextureToPtr((vector<vector<Console::Symbol> >&)symbols); // won't be edited so no problemq
 
     Console_FillScreen(voidsyms);
 }

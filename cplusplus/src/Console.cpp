@@ -1106,7 +1106,7 @@ void Console::XtermMouseAndFocus(void) {
         return csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
     }
 
-    void Console::FillScreen(vector<vector<Symbol> > symbols) {
+    void Console::FillScreen(const vector<vector<Symbol> >& symbols) {
         try {
         Symbol empty_sym = Symbol(L' ', 16, 16);
         const size_t win_width = GetWindowWidth(), win_height = GetWindowHeight(), height = symbols.size();
@@ -2478,14 +2478,63 @@ void Console::XtermMouseAndFocus(void) {
         return Console::window_size.ws_row;
     }
 
-    void Console::FillScreen(vector<vector<Console::Symbol> > symbols) {
+    void Console::FillScreen(const vector<vector<Console::Symbol> >& symbols) {
         string screen = "\033[H";
+        bool moved = false;
         size_t width = GetWindowWidth(), height = GetWindowHeight();
+
+        if ((int16_t)width != Console::old_scr_size.first || (int16_t)height != Console::old_scr_size.second) {
+            Console::old_symbols.clear();
+        }
+
+        int icounter = 0;
         for (size_t i = 0; i < height; i++) {
-            screen.append("\033[0m");
-            if (i >= symbols.size()) 
+            if (i < Console::old_symbols.size()) {
+                int jcounter = 0;
+                if (i >= symbols.size()) {
+                    bool reset = false;
+                    for (size_t j = 0; j < width; j++)
+                        if (j < old_symbols[i].size() && (old_symbols[i][j].character[0] != ' ' ||  old_symbols[i][j].foreground != 16 || old_symbols[i][j].background != 16)) {
+                            if (icounter) screen.append(string("\033[") + to_string(icounter) + "E");
+                            if (jcounter) screen.append(string("\033[") + to_string(jcounter) + "C");
+                            if (!reset) screen.append("\033[0m");
+                            screen.push_back(' ');
+                            icounter = jcounter = !(reset = true);
+                        } else ++jcounter;
+                } else {
+                    for (size_t j = 0; j < width; j++) {
+                        if (j >= symbols[i].size()) {
+                            bool reset = false; --j;
+                            while (++j < width)
+                                if (j < old_symbols[i].size() && (old_symbols[i][j].character[0] != ' ' ||  old_symbols[i][j].foreground != 16 || old_symbols[i][j].background != 16)) {
+                                    if (icounter) screen.append(string("\033[") + to_string(icounter) + "E");
+                                    if (jcounter) screen.append(string("\033[") + to_string(jcounter) + "C");
+                                    if (!reset) screen.append("\033[0m");
+                                    screen.push_back(' ');
+                                    icounter = jcounter = !(reset = true);
+                                } else ++jcounter;
+                        }
+                        else if ((j >= old_symbols[i].size() && (symbols[i][j].character[0] != ' ' ||  symbols[i][j].foreground != 16 || symbols[i][j].background != 16)) || (old_symbols[i][j].character != symbols[i][j].character || old_symbols[i][j].foreground != symbols[i][j].foreground || old_symbols[i][j].background != symbols[i][j].background)) {
+                            if (icounter) screen.append(string("\033[") + to_string(icounter) + "E");
+                            if (jcounter) screen.append(string("\033[") + to_string(jcounter) + "C");
+                            screen.append( GenerateEscapeSequence(symbols[i][j].foreground, symbols[i][j].background) );
+                            screen.append(symbols[i][j].character);
+                            icounter = jcounter = 0;
+                        } else ++jcounter;
+                    }
+                }
+                if (jcounter) ++icounter;
+                else screen.append("\033[E");
+                continue;;
+            }
+            if (icounter) screen.append(string("\033[") + to_string(icounter) + "E");
+            else if (i) screen.append("\033[E");
+            icounter = 0;
+            if (i >= symbols.size()) {
+                if (width) screen.append("\033[0m");
                 for (size_t j = 0; j < width; j++)
                     screen.push_back(' ');
+            }
             else
                 for (size_t j = 0; j < width; j++) {
                     if (j >= symbols[i].size()) {
@@ -2497,6 +2546,10 @@ void Console::XtermMouseAndFocus(void) {
                     screen.append(symbols[i][j].character);
                 }
         }
+        if (screen.size() < 4) { 
+            fprintf(stdout, "Terminal chars: ~%d, written none\n", width * height * 10, 0);
+            return;
+        }
         screen.append("\033[0m");
         bool old_cursor_visible = Console::cursor_visible;
         Console::cursor_visible = false;
@@ -2505,6 +2558,12 @@ void Console::XtermMouseAndFocus(void) {
         Console::EscSeqMoveCursor();
         Console::cursor_visible = old_cursor_visible;
         Console::EscSeqSetCursor();
+        fprintf(stdout, "Terminal chars: ~%d, written chars: %d", width * height * 10, screen.size());
+        fwrite(screen.c_str(), sizeof(char), screen.size(), stdout);
+        fputc('\n', stdout);
+        fflush(stdout);
+        old_scr_size = {width,height};
+        old_symbols = symbols;
     }
 
     void SysSleep(int microseconds){
@@ -2553,6 +2612,8 @@ uint8_t Console::cursor_size = uint8_t(100);
 bool Console::cursor_visible = bool(true);
 bool Console::cursor_blink_opposite = bool(false);
 Console::config_t Console::config = Console::config_t();
+vector<vector<Console::Symbol>> Console::old_symbols = vector<vector<Console::Symbol>>();
+pair<int16_t,int16_t> Console::old_scr_size = pair<int16_t,int16_t>(0,0);
 
 struct ToggledKeys Console::KeysToggled(void) {
     return Console::keys_toggled;
@@ -2644,11 +2705,7 @@ Console::Symbol::Symbol(const Symbol& sym) {
     this->background = sym.background;
 }
 
-Console::Symbol::~Symbol(void) {
-    this->character = -1;
-    this->foreground = -1;
-    this->background = -1;
-}
+Console::Symbol::~Symbol(void) {}
 
 void Console::Symbol::ReverseColors(void) {
     cppimp::Console_Symbol_ReverseColors(this);
