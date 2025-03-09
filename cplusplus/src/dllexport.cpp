@@ -515,7 +515,8 @@ using namespace uniconv;
 
 // Camera
     libexport void* Game_Camera_Construct(int height, int width, void* symptr) {
-        return cpp::Game::Camera(height, width, *(cpp::Console::Symbol*)symptr).Get();
+        cpp::Game::Camera cam(height, width, *(cpp::Console::Symbol*)symptr);
+        return (void*)&cam;
     }
 
     libexport void Game_Camera_DrawTexture(void* textureptr, cpp::Game::MatrixPosition* centerptr, cpp::Game::Camera* cameraptr) {

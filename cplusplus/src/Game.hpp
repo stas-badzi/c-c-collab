@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <vector>
 #include "Console.hpp"
@@ -12,12 +14,10 @@ namespace cpp {
             struct Camera {
                 public:
                     Camera(int height, int width, cpp::Console::Symbol sym);
-                    Camera(void* cameraPtr); // don't know if it is useful at all
-                    void* Get(); //
+                    MatrixPosition ViewportCenter();
                     void DrawTexture(std::vector<std::vector<Console::Symbol>> texture, MatrixPosition center);
                 private:
                     std::vector<std::vector<cpp::Console::Symbol>> buffer;
-                    //Camera(std::vector<std::vector<Console::Symbol>> buffer, MatrixPosition viewportCenter);
             };
         private:
             static void ValidateViewport(MatrixPosition vpc);
