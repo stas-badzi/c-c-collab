@@ -1,6 +1,12 @@
 #include "Console.hpp"
 #include "dllimport.hpp"
 
+#ifdef _MSC_VER
+    #define PATH_MAX MAX_PATH
+#endif
+
+extern int Main(void);
+
 namespace cpp {
 #if defined(_WIN32) || defined(__CYGWIN__)
     __declspec(dllexport) std::wistream& gin = *((std::wistream*)&Console::in);
@@ -22,13 +28,25 @@ using namespace std::chrono;
 
 void Console::ThrowMsg(const char* msg) {
     Console::Fin();
-    ncerr << msg << endl;
-    exit(0x100);
+    cerr << msg << endl;
+    exit(1);
 }
 
 void Console::ThrowMsg(const wchar_t* msg) {
     Console::Fin();
-    ncerr << msg << endl;
+    wcerr << msg << endl;
+    exit(0x100);
+}
+
+void Console::ThrowMsg(const string msg) {
+    Console::Fin();
+    cerr << msg << endl;
+    exit(0x100);
+}
+
+void Console::ThrowMsg(const wstring msg) {
+    Console::Fin();
+    wcerr << msg << endl;
     exit(0x100);
 }
 
@@ -88,6 +106,7 @@ void Console::XtermMouseAndFocus(void) {
     int bytes;
 
 #ifdef _WIN32
+    while (_kbhit()) Console::input_buf->push(_getwch());
     bytes = Console::input_buf->size();
 #define nstrlen wcslen
 #define decbytes() --bytes
@@ -933,12 +952,22 @@ void Console::XtermMouseAndFocus(void) {
             else exit(0x73);
 
             wchar_t* tmpappdata = _wgetenv(L"APPDATA");
-            if (!tmpappdata) exit(0x87);
-            wstring appdata = tmpappdata;
-            appdata.append(L"\\.factoryrush\\");
+            Console::out << L"tmpappdata: " << tmpappdata << endl;
+            if (!tmpappdata) ThrowMsg("\"APPDATA\" env variable not set");
+            Console::user_data = tmpappdata;
+            user_data.append(L"\\.factoryrush\\");
 
-            wstring tmp = filesystem::temp_directory_path().native();
-            tmp.append(L"\\.factoryrush\\");
+            wchar_t* tmptmpdata = _wgetenv(L"TEMP");
+            Console::out << L"tmptmpdata: " << tmptmpdata << endl;
+            if (!tmptmpdata) ThrowMsg("\"TEMP\" env variable not set");
+            Console::tmp_data = tmptmpdata;
+            tmp_data.append(L"\\.factoryrush\\");
+
+            wchar_t* tmpdevdata = _wgetenv(L"ProgramData");
+            Console::out << L"tmpdevdata: " << tmpdevdata << endl;
+            if (!tmpdevdata) ThrowMsg("\"ProgramData\" env variable not set");
+            Console::dev_data = tmpdevdata;
+            dev_data.append(L"\\Factoryrush\\");
 
             LPSECURITY_ATTRIBUTES sec_atrs = new SECURITY_ATTRIBUTES();
             sec_atrs->nLength = sizeof(sec_atrs);
@@ -947,49 +976,56 @@ void Console::XtermMouseAndFocus(void) {
 
             Console::pid = _getpid();
 
-            if (Console::sub_proc) goto subdirset;
+            if (Console::sub_proc) {
+                FILE* fl = _wfopen((tmp_data+subdir+L"pid.dat").c_str(), L"w");
+                fprintf(fl, "%d", Console::pid);
+                fclose(fl);
+                goto subdirset;
+            }
             
-            if (!PathIsDirectory(tmp.c_str()))
-                CreateDirectory(tmp.c_str(), sec_atrs);
+            if (System::MakeDirectory(tmp_data.c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + tmp_data + L"\"");
 
-            if (!PathIsDirectory(appdata.c_str()))
-                CreateDirectory(appdata.c_str(), sec_atrs);
+            if (System::MakeDirectory(user_data.c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + user_data + L"\"");
 
-            if (!PathIsDirectory((appdata+L"logs").c_str()))
-                CreateDirectory((appdata+L"logs").c_str(), sec_atrs);
+            if (System::MakeDirectory(dev_data.c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + dev_data + L"\"");
+
+            if (System::MakeDirectory((dev_data+L"logs").c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + (dev_data+L"logs") + L"\"");
 
             Console::subdir = new const wchar_t[to_wstring(Console::pid).size() + 2]{0};
             wcscpy((wchar_t*)Console::subdir, to_wstring(Console::pid).c_str());
-            ((wchar_t*)Console::subdir)[to_wstring(Console::pid).size()] = L'/';
-
-            if (!PathIsDirectory((tmp+subdir).c_str()))
-                CreateDirectory((tmp+subdir).c_str(), sec_atrs);
+            ((wchar_t*)Console::subdir)[to_wstring(Console::pid).size()] = L'\\';
             
         subdirset:
+
+            if (System::MakeDirectory((tmp_data+subdir).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + (tmp_data+subdir) + L"\"");
+
+            if (System::MakeDirectory((tmp_data+subdir+L"proc").c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + (tmp_data+subdir+L"proc") + L"\"");
+            
             delete sec_atrs;
 
             auto t = std::time(nullptr);
             auto tm = *std::localtime(&t);
-            wstringstream ss; ss << L"logs\\";
+            wstringstream ss; ss << dev_data << L"logs\\";
             if (Console::sub_proc) ss << sub_process << L'\\';
             ss << std::put_time(&tm, L"%Y-%m-%d_%H\'%M\'%S");
             unsigned int filenum = 0;
+            auto sstr = ss.str();
         logfile:
-            filesystem::path out_file = filesystem::path(appdata + ss.str() + L".log");
+            filesystem::path out_file = filesystem::path(sstr + L".log");
             HANDLE logfl = CreateFile(out_file.c_str(), GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
             if (logfl == (void*)-1) {
                 auto err = GetLastError();
                 if (err == ERROR_ALREADY_EXISTS) {
-                    ss << L"-" << ++filenum;
+                    sstr = ss.str() + L"-" + to_wstring(++filenum);
                     goto logfile;
                 }
-                wcerr << L"Couldn't create log file: " << out_file.native() << L", with error: " << err << '\n'; 
+                Console::out << L"Couldn't create log file: " << out_file.native() << L", with error: " << err << '\n'; 
                 exit(0xC2);
             }
             CloseHandle(logfl);
             Console::out.open(out_file,ios::out);
             if (!Console::out.is_open()) {
-                wcerr << L"Couldn't open log file: " << out_file.native() << L", with error: " << GetLastError() << '\n'; 
+                Console::out << L"Couldn't open log file: " << out_file.native() << L", with error: " << GetLastError() << '\n'; 
                 exit(0xC1);
             }
 
@@ -1000,8 +1036,8 @@ void Console::XtermMouseAndFocus(void) {
             GetConsoleMode(Console::fd, &Console::old_console);
             SetConsoleMode(Console::fd, ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT | ENABLE_WINDOW_INPUT);
 
-            Console::input_thread_arg = (void*)new __getinput_arg{Console::input_buf, SLEEP_THREAD_INPUT};
-            Console::input_thread = CreateThread(NULL, 0, InputThread, input_thread_arg, 0, NULL);
+            //Console::input_thread_arg = (void*)new __getinput_arg{Console::input_buf, SLEEP_THREAD_INPUT};
+            //Console::input_thread = CreateThread(NULL, 0, InputThread, input_thread_arg, 0, NULL);
             *Console::super_thread_run = true;
             Console::super_thread_arg = (void*)new __superthread_arg{Console::super_thread_run, Console::thread_handles};
             Console::super_thread = CreateThread(NULL, 0, Console::SuperThread, Console::super_thread_arg, 0, NULL);
@@ -1043,22 +1079,39 @@ void Console::XtermMouseAndFocus(void) {
                 Console::ret = sub(sub_process);
                 Console::Fin();
                 exit(Console::ret);
+            } else if (sub_proc) {
+                Console::ret = Main();
+                Console::Fin();
+                exit(Console::ret);
             }
         }
     }
 
     void Console::Fin(void) {
         if (initialised) {
-            delete[] Console::subdir;
-            TerminateThread(Console::input_thread, 0);
-            WaitForSingleObject(Console::input_thread, INFINITE);
-            CloseHandle(Console::input_thread);
-            delete (__getinput_arg*)Console::input_thread_arg;
+            //TerminateThread(Console::input_thread, 0);
+            //WaitForSingleObject(Console::input_thread, INFINITE);
+            //CloseHandle(Console::input_thread);
+            //delete (__getinput_arg*)Console::input_thread_arg;
 
             *Console::super_thread_run = false;
             WaitForSingleObject(Console::super_thread, INFINITE);
             CloseHandle(Console::super_thread);
             delete (__superthread_arg*)Console::super_thread_arg;
+
+            if (!Console::sub_proc) {
+                System::ClearDirectory((Console::tmp_data+Console::subdir).c_str());
+                System::DeleteDirectory((Console::tmp_data+Console::subdir).c_str());
+            } else {
+                FILE* fl;
+                fl = _wfopen((Console::tmp_data+Console::subdir+L"exit.dat").c_str(), L"w");
+                fprintf(fl, "%d", Console::ret);
+                fclose(fl);
+                if (!System::IsFile((Console::tmp_data+Console::subdir+L"result.dat").c_str()))
+                    fclose(_wfopen((Console::tmp_data+Console::subdir+L"result.dat").c_str(), L"w"));
+            }
+
+            delete[] Console::subdir;
 
             SetConsoleCursorInfo(Console::screen, &Console::old_curinf);
 
@@ -1068,6 +1121,12 @@ void Console::XtermMouseAndFocus(void) {
 
             initialised = false;
         }
+    }
+
+    void cpp::Console::SetResult(const wchar_t* result) {
+        FILE* fl = _wfopen((Console::tmp_data+subdir+L"result.dat").c_str(), L"w");
+        fwrite(result, sizeof(wchar_t), wcslen(result), fl);
+        fclose(fl);
     }
 
     int16_t Console::GetWindowWidth(void) {
@@ -1374,7 +1433,14 @@ void Console::XtermMouseAndFocus(void) {
     //pair<uint16_t,uint16_t> Console::xyoffset = pair<uint16_t,uint16_t>();
 
 #else
-void cpp::Console::MoveCursor(int x, int y) {
+
+    void cpp::Console::SetResult(const char* result) {
+        FILE* fl = fopen((Console::tmp_data+subdir+"result.dat").c_str(), "w");
+        fwrite(result, sizeof(char), strlen(result), fl);
+        fclose(fl);
+    }
+
+    void cpp::Console::MoveCursor(int x, int y) {
         Console::cursorpos.first = x;
         Console::cursorpos.second = y;
     }
@@ -1808,7 +1874,7 @@ mbstate_t Console::streammbs = mbstate_t();
             if (Console::sub_proc) {
                 FILE *fl;
 
-                fl = fopen((string("/tmp/.factoryrush/") + Console::subdir + "return.dat").c_str(), "w");
+                fl = fopen((string("/tmp/.factoryrush/") + Console::subdir + "exit.dat").c_str(), "w");
                 string ret_str = to_string(Console::ret);
                 fwrite(ret_str.c_str(), sizeof(char), strlen(ret_str.c_str()), fl);
                 fclose(fl);
@@ -2506,6 +2572,11 @@ array<bool,UINT16_MAX> Console::used_pids = array<bool,UINT16_MAX>{0};
 pair<int16_t,int16_t> Console::cursorpos = pair<uint16_t,uint16_t>(0,0);
 uint8_t Console::cursor_size = uint8_t(100);
 bool Console::cursor_visible = bool(true);
+utfstr Console::tmp_data = utfstr();
+utfstr Console::user_data = utfstr();
+utfstr Console::dev_data = utfstr();
+vector<uint16_t> Console::popup_pids = vector<uint16_t>();
+int Console::max_popup_startup_wait = int(10000);
 
 struct ToggledKeys Console::KeysToggled(void) {
     return Console::keys_toggled;
@@ -2586,7 +2657,7 @@ Console::Symbol::Symbol(utfchar character, uint8_t foreground, uint8_t backgroun
 }
 
 Console::Symbol::Symbol(void) {
-    this->character = WCharToNative(L' ');
+    this->character = N(' ');
     this->foreground = 7;
     this->background = 0;
 }
@@ -2615,8 +2686,19 @@ Console::Symbol & Console::Symbol::operator=(const Console::Symbol & src) {
     return *this;
 }
 
+void Console::Exit(int code) {
+    Console::ret = code;
+    Console::Fin();
+    exit(code);
+}
 
-int cpp::Console::PopupWindow(int type, int argc, const char_t* argv[]) {
+void Console::QuickExit(int code) {
+    Console::ret = code;
+    Console::Fin();
+    quick_exit(code);
+}
+
+optional<pair<int,utfstr>> cpp::Console::PopupWindow(int type, int argc, const char_t* argv[]) {
     auto term = Console::GetTerminalExecutableName();
     int pc = 0;
 newpidgen:
@@ -2630,20 +2712,17 @@ newpidgen:
 #if defined(_WIN32) || defined(__CYGWIN__)
     #define sep L'\\'
     #define topen _wfopen
-    wchar_t* appdata = _wgetenv(L"APPDATA");
-    wchar_t* tmppath = _wgetenv(L"TMP");
+    #define fgetnc fgetwc
 #else
     #define sep '/'
     #define topen fopen
+    #define fgetnc fgetc
     char* appdata = getenv("HOME");
     const char* tmppath = "/tmp";
 #endif
     utfstr procdir = utfstr(N("proc")) + sep + to_nstring(npid) + sep;
-    System::MakeDirectory((utfstr(tmppath) + sep + N(".factoryrush") + sep + subdir + procdir).c_str());
-    System::MakeDirectory((utfstr(appdata) + sep + N(".factoryrush") + sep + N("logs") + sep + to_nstring(type) + sep).c_str());
-    auto initfl = topen((utfstr(tmppath) + sep + N(".factoryrush") + sep + subdir + procdir + N("initialized.dat")).c_str(), N("w"));
-    fwrite("0", sizeof(char), 1, initfl);
-    fclose(initfl);
+    if (System::MakeDirectory((Console::tmp_data + subdir + procdir).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg((utfstr(N("Couldn't create directory: \"")) + Console::tmp_data + sep + subdir + procdir + N("\"")).c_str());
+    if (System::MakeDirectory((Console::dev_data + N("logs") + sep + to_nstring(type) + sep).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg((utfstr(N("Couldn't create directory: \"")) + Console::dev_data + sep + N("logs") + sep + to_nstring(type) + sep + N("\"")).c_str());
     utfstr info = N("\033&");
     info.append(to_nstring(type)).push_back(N('~'));
     info.append(subdir).append(procdir).push_back(N('~'));
@@ -2659,8 +2738,6 @@ newpidgen:
             goto console;
     } else if (!term.size())
         goto console;
-    //else if (term.find(L"conhost.exe") != std::wstring::npos)
-    //    term = System::GetRootDir() + L"\\bin\\conhost.bat";
 #elif __CYGWIN__
     if (!term.size()) {
         term.append(L"C:\\cygwin64\\bin\\mintty.exe"); // todo - if mintty doesn't exists the use default 
@@ -2682,7 +2759,7 @@ newpidgen:
     for (int i = 1; i <= argc; i++) args[i+1] = argv[i-1];
     args[argc+2] = nullptr;
 #ifndef __APPLE__
-    if (!System::RunProgramAsync(term.c_str(), args)) return -1;
+    if (!System::RunProgramAsync(term.c_str(), args)) return nullopt;
 #else
     string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".command";
     auto file = fopen(runpth.c_str(), "w");
@@ -2704,15 +2781,348 @@ console:
     for (int i = 0; i < argc; i++) args[i] = argv[i];
     args[argc] = info.c_str();
     args[argc+1] = nullptr;
-    if (!System::RunProgramAsyncC(root_pth.c_str(), args)) return -1;
+    if (!System::RunProgramAsyncC(root_pth.c_str(), args)) return nullopt;
 contcons:
 #endif
     System::FreeMemory(args);
-    //csimp::FileSystem_PlaySound(uniconv::Utf8StringToUnicode(N("C:\\Users\\sssba\\Documents\\c-c-collab\\assets\\illegal-operation.mp3")), 0); 
-    return 0;
+    int counter = 0;
+
+    // maybe don't wait or do it on a thread [?]
+    while (!System::IsFile((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str()) && ++counter < max_popup_startup_wait)
+        SysSleep(1000);
+    if (counter >= max_popup_startup_wait) return nullopt;
+    bool oldfocus = false;
+    while (!System::IsFile((Console::tmp_data + subdir + procdir + N("exit.dat")).c_str())) {
+        SysSleep(1000);
+        Console::HandleMouseAndFocus();
+        if (Console::focused && !oldfocus)
+            csimp::SoundSystem_PlaySound(uniconv::Utf8StringToUnicode((System::GetRootDir() + sep + N("assets") + sep + N("illegal-operation.wav")).c_str()), 0);
+        oldfocus = Console::focused;
+    }
+
+    FILE* fl = topen((Console::tmp_data + subdir + procdir + N("exit.dat")).c_str(), L"r");
+    if (!fl) ThrowMsg(utfstr(N("Couldn't open file: ")) + Console::tmp_data + subdir + procdir + N("exit.dat"));
+    int pret;
+    fscanf(fl, "%d", &pret);
+    fclose(fl);
+
+    fl = topen((Console::tmp_data + subdir + procdir + N("result.dat")).c_str(), L"r");
+    if (!fl) return nullopt;
+    utfstr result; char_t c;
+    while (!feof(fl))
+        result.push_back(fgetnc(fl));
+    fclose(fl);
+    if (result.back() == '\0') result.pop_back();
+
+    if (pret)
+        Console::out << utfstr(N("Popup exited with code: 0x")) << std::hex << pret << utfstr(N(" and result: \"")) << result << utfstr(N("\"\n"));
+
+    return { {pret,result} };
+}
+
+std::optional<stsb::promise<std::optional<std::pair<int, uniconv::utfstr>>>> cpp::Console::PopupWindowAsync(int type, int argc, const char_t *argv[]) {
+    auto term = Console::GetTerminalExecutableName();
+    int pc = 0;
+newpidgen:
+    if (++pc > UINT16_MAX) exit(0xF1); // no pid left
+    if (Console::next_pid == UINT16_MAX) Console::next_pid = 0;
+    auto& npid = ++Console::next_pid;
+    if (Console::used_pids[npid]) goto newpidgen;
+    Console::used_pids[npid] = true;
+
+    utfcstr* args = (utfcstr*)System::AllocateMemory(sizeof(void*) * (argc+3));
+#if defined(_WIN32) || defined(__CYGWIN__)
+    #define sep L'\\'
+    #define topen _wfopen
+    #define fgetnc fgetwc
+#else
+    #define sep '/'
+    #define topen fopen
+    #define fgetnc fgetc
+    char* appdata = getenv("HOME");
+    const char* tmppath = "/tmp";
+#endif
+    utfstr procdir = utfstr(N("proc")) + sep + to_nstring(npid) + sep;
+    if (System::MakeDirectory((Console::tmp_data + subdir + procdir).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg((utfstr(N("Couldn't create directory: \"")) + Console::tmp_data + sep + subdir + procdir + N("\"")).c_str());
+    if (System::MakeDirectory((Console::dev_data + N("logs") + sep + to_nstring(type) + sep).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg((utfstr(N("Couldn't create directory: \"")) + Console::dev_data + sep + N("logs") + sep + to_nstring(type) + sep + N("\"")).c_str());
+    utfstr info = N("\033&");
+    info.append(to_nstring(type)).push_back(N('~'));
+    info.append(subdir).append(procdir).push_back(N('~'));
+    utfstr root_pth = System::GetSelfPath();
+
+#ifdef _WIN32
+    if (mintty && !good) {
+        if (term.find(L"mintty") == std::wstring::npos) {
+            Console::window = GetForegroundWindow();
+        }
+        term = Console::GetTerminalExecutableName();
+        if (!(good = term.find(L"mintty") != std::wstring::npos))
+            goto console;
+    } else if (!term.size())
+        goto console;
+#elif __CYGWIN__
+    if (!term.size()) {
+        term.append(L"C:\\cygwin64\\bin\\mintty.exe"); // todo - if mintty doesn't exists the use default 
+        if (false) goto console;
+    }
+#elif __APPLE__
+    if (!term.size()) {
+        term.append("/System/Applications/Utilities/Terminal.app"); // idk if this is the actual path
+    }
+#elif __linux__
+    if (!term.size()) {
+        term.append("/usr/bin/gnome-terminal"); // todo - find default terminal emulator
+    }
+#else
+    return -1;
+#endif
+    args[0] = root_pth.c_str();
+    args[1] = info.c_str();
+    for (int i = 1; i <= argc; i++) args[i+1] = argv[i-1];
+    args[argc+2] = nullptr;
+#ifndef __APPLE__
+    if (!System::RunProgramAsync(term.c_str(), args)) return nullopt;
+#else
+    string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".command";
+    auto file = fopen(runpth.c_str(), "w");
+    fwrite("#!/bin/sh\nrm -f $0\n", sizeof(char), 19, file);
+    for (int i = 0; args[i]; i++)
+        { fwrite("\"",sizeof(char),1,file); fwrite(args[i], sizeof(char), strlen(args[i]), file); fwrite("\" ", sizeof(char), 2, file); }
+    fwrite("\n", sizeof(char), 1, file);
+    string killtrmpth = root_pth; while (killtrmpth.back() != '/') killtrmpth.pop_back();
+    killtrmpth += "../share/factoryrush/bin/killterm";
+    fwrite(killtrmpth.c_str(), sizeof(char), killtrmpth.size(), file);
+    fwrite("\n", sizeof(char), 1, file);
+    fchmod(fileno(file), 0755);
+    fclose(file);
+    if (openFileInApp(runpth.c_str(), term.c_str()) != 0) return -1;
+#endif
+#ifdef _WIN32
+    goto contcons;
+console:
+    for (int i = 0; i < argc; i++) args[i] = argv[i];
+    args[argc] = info.c_str();
+    args[argc+1] = nullptr;
+    if (!System::RunProgramAsyncC(root_pth.c_str(), args)) return nullopt;
+contcons:
+#endif
+    System::FreeMemory(args);
+    int counter = 0;
+
+    // maybe don't wait or do it on a thread [?]
+    while (!System::IsFile((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str()) && ++counter < max_popup_startup_wait)
+        SysSleep(1000);
+    if (counter >= max_popup_startup_wait) return nullopt;
+
+    auto retx = stsb::promise<std::optional<std::pair<int, uniconv::utfstr>>>();
+    stsb::promise<int> tstint = stsb::promise<int>();
+    auto retdir = Console::tmp_data + subdir + procdir;
+    thread waitthr = thread([retx, retdir, tstint]() mutable {
+        bool oldfocus = false;
+        while (!System::IsFile((retdir + N("exit.dat")).c_str())) {
+            SysSleep(1000);
+            Console::HandleMouseAndFocus();
+            if (Console::focused && !oldfocus)
+                csimp::SoundSystem_PlaySound(uniconv::Utf8StringToUnicode((System::GetRootDir() + sep + N("assets") + sep + N("illegal-operation.wav")).c_str()), 0);
+            oldfocus = Console::focused;
+        }
+
+        FILE* fl = topen((retdir + N("exit.dat")).c_str(), L"r");
+        if (!fl) ThrowMsg(utfstr(N("Couldn't open file: ")) + retdir + N("exit.dat"));
+        int pret;
+        fscanf(fl, "%d", &pret);
+        fclose(fl);
+
+        fl = topen((retdir + N("result.dat")).c_str(), L"r");
+        if (!fl) return nullopt;
+        utfstr result; char_t c;
+        while (!feof(fl))
+            result.push_back(fgetnc(fl));
+        fclose(fl);
+        if (result.back() == '\0') result.pop_back();
+
+        if (pret)
+            Console::out << utfstr(N("Popup exited with code: 0x")) << std::hex << pret << utfstr(N(" and result: \"")) << result << utfstr(N("\"\n"));
+        
+        tstint = 13;
+        retx = std::optional<std::pair<int, uniconv::utfstr>>({pret,result});
+        return nullopt;
+    });
+    waitthr.detach();
+    return retx;
+}
+
+std::optional<stsb::promise<std::optional<std::pair<int, std::u16string>>>> cpp::Console::PopupWindowAsync(int type, int argc, const char16_t *arg16v[]) {
+    vector<utfstr> argv;
+    argv.reserve(argc);
+    for (int i = 0; i < argc; i++)
+        argv.push_back(UnicodeToUtf8String(U16StringToUnicode(arg16v[i])));
+    
+    auto term = Console::GetTerminalExecutableName();
+    int pc = 0;
+newpidgen:
+    if (++pc > UINT16_MAX) exit(0xF1); // no pid left
+    if (Console::next_pid == UINT16_MAX) Console::next_pid = 0;
+    auto& npid = ++Console::next_pid;
+    if (Console::used_pids[npid]) goto newpidgen;
+    Console::used_pids[npid] = true;
+
+    utfcstr* args = (utfcstr*)System::AllocateMemory(sizeof(void*) * (argc+3));
+#if defined(_WIN32) || defined(__CYGWIN__)
+    #define sep L'\\'
+    #define topen _wfopen
+    #define fgetnc fgetwc
+#else
+    #define sep '/'
+    #define topen fopen
+    #define fgetnc fgetc
+    char* appdata = getenv("HOME");
+    const char* tmppath = "/tmp";
+#endif
+    utfstr procdir = utfstr(N("proc")) + sep + to_nstring(npid) + sep;
+    if (System::MakeDirectory((Console::tmp_data + subdir + procdir).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg((utfstr(N("Couldn't create directory: \"")) + Console::tmp_data + sep + subdir + procdir + N("\"")).c_str());
+    if (System::MakeDirectory((Console::dev_data + N("logs") + sep + to_nstring(type) + sep).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg((utfstr(N("Couldn't create directory: \"")) + Console::dev_data + sep + N("logs") + sep + to_nstring(type) + sep + N("\"")).c_str());
+    utfstr info = N("\033&");
+    info.append(to_nstring(type)).push_back(N('~'));
+    info.append(subdir).append(procdir).push_back(N('~'));
+    utfstr root_pth = System::GetSelfPath();
+
+#ifdef _WIN32
+    if (mintty && !good) {
+        if (term.find(L"mintty") == std::wstring::npos) {
+            Console::window = GetForegroundWindow();
+        }
+        term = Console::GetTerminalExecutableName();
+        if (!(good = term.find(L"mintty") != std::wstring::npos))
+            goto console;
+    } else if (!term.size())
+        goto console;
+#elif __CYGWIN__
+    if (!term.size()) {
+        term.append(L"C:\\cygwin64\\bin\\mintty.exe"); // todo - if mintty doesn't exists the use default 
+        if (false) goto console;
+    }
+#elif __APPLE__
+    if (!term.size()) {
+        term.append("/System/Applications/Utilities/Terminal.app"); // idk if this is the actual path
+    }
+#elif __linux__
+    if (!term.size()) {
+        term.append("/usr/bin/gnome-terminal"); // todo - find default terminal emulator
+    }
+#else
+    return -1;
+#endif
+    args[0] = root_pth.c_str();
+    args[1] = info.c_str();
+    for (int i = 1; i <= argc; i++) args[i+1] = argv[i-1].c_str();
+    args[argc+2] = nullptr;
+#ifndef __APPLE__
+    if (!System::RunProgramAsync(term.c_str(), args)) return nullopt;
+#else
+    string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".command";
+    auto file = fopen(runpth.c_str(), "w");
+    fwrite("#!/bin/sh\nrm -f $0\n", sizeof(char), 19, file);
+    for (int i = 0; args[i]; i++)
+        { fwrite("\"",sizeof(char),1,file); fwrite(args[i], sizeof(char), strlen(args[i]), file); fwrite("\" ", sizeof(char), 2, file); }
+    fwrite("\n", sizeof(char), 1, file);
+    string killtrmpth = root_pth; while (killtrmpth.back() != '/') killtrmpth.pop_back();
+    killtrmpth += "../share/factoryrush/bin/killterm";
+    fwrite(killtrmpth.c_str(), sizeof(char), killtrmpth.size(), file);
+    fwrite("\n", sizeof(char), 1, file);
+    fchmod(fileno(file), 0755);
+    fclose(file);
+    if (openFileInApp(runpth.c_str(), term.c_str()) != 0) return -1;
+#endif
+#ifdef _WIN32
+    goto contcons;
+console:
+    for (int i = 0; i < argc; i++) args[i] = argv[i].c_str();
+    args[argc] = info.c_str();
+    args[argc+1] = nullptr;
+    if (!System::RunProgramAsyncC(root_pth.c_str(), args)) return nullopt;
+contcons:
+#endif
+    System::FreeMemory(args);
+    int counter = 0;
+
+    // maybe don't wait or do it on a thread [?]
+    while (!System::IsFile((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str()) && ++counter < max_popup_startup_wait)
+        SysSleep(1000);
+    if (counter >= max_popup_startup_wait) return nullopt;
+
+    auto retx = stsb::promise<std::optional<std::pair<int, u16string>>>();
+    auto retdir = Console::tmp_data + subdir + procdir;
+    thread waitthr = thread([retx, retdir]() mutable {
+        bool oldfocus = false;
+        while (!System::IsFile((retdir + N("exit.dat")).c_str())) {
+            SysSleep(1000);
+            Console::HandleMouseAndFocus();
+            if (Console::focused && !oldfocus)
+                csimp::SoundSystem_PlaySound(uniconv::Utf8StringToUnicode((System::GetRootDir() + sep + N("assets") + sep + N("illegal-operation.wav")).c_str()), 0);
+            oldfocus = Console::focused;
+        }
+
+        FILE* fl = topen((retdir + N("exit.dat")).c_str(), L"r");
+        if (!fl) ThrowMsg(utfstr(N("Couldn't open file: ")) + retdir + N("exit.dat"));
+        int pret;
+        fscanf(fl, "%d", &pret);
+        fclose(fl);
+
+        fl = topen((retdir + N("result.dat")).c_str(), L"r");
+        if (!fl) return nullopt;
+        utfstr result; char_t c;
+        while (!feof(fl))
+            result.push_back(fgetnc(fl));
+        fclose(fl);
+        if (result.back() == '\0') result.pop_back();
+
+        if (pret)
+            Console::out << utfstr(N("Popup exited with code: 0x")) << std::hex << pret << utfstr(N(" and result: \"")) << result << utfstr(N("\"\n"));
+            
+        u16string result16 = UnicodeToU16String(Utf8StringToUnicode(result.c_str()));
+
+        retx = std::optional<std::pair<int, u16string>>({pret,result16});
+        return nullopt;
+    });
+    waitthr.detach();
+    return retx;
+}
+
+void Console::DontHandleKeyboard(void) {
+    Console::key_hit = -1;
+    Console::key_released = -1;
+}
+
+void Console::ResetKeyboard(void) {
+    Console::key_hit = -1;
+    Console::key_released = -1;
+    for (int i = 0; i < KEYBOARD_MAX; i++)
+        Console::key_states[i] = false;
 }
 
 void Console::Update(void) {
     Console::HandleKeyboard();
     Console::HandleMouseAndFocus();
+    // handle dead popups
+    for (auto&& pid : Console::popup_pids) {
+        auto procdir = utfstr(N("proc")) + sep + to_nstring(pid) + sep;
+        if (!System::IsFile((Console::tmp_data + subdir + procdir + N("exit.dat")).c_str()))
+            continue;
+        FILE* fl = topen((Console::tmp_data + subdir + procdir + N("exit.dat")).c_str(), L"r");
+        if (!fl) ThrowMsg(utfstr(N("Couldn't open file: ")) + Console::tmp_data + subdir + procdir + N("exit.dat"));
+        int pret;
+        fscanf(fl, "%d", &pret);
+        fclose(fl);
+
+        fl = topen((Console::tmp_data + subdir + procdir + N("result.dat")).c_str(), L"r");
+        utfstr result;
+        while (auto c = fgetnc(fl))
+            result.push_back(c);
+        fclose(fl);
+
+        if (pret) {
+            Console::out << utfstr(N("Popup exited with code ")) << pret << utfstr(N(" and result: ")) << result << utfstr(N("\n"));
+        }
+    }
 }

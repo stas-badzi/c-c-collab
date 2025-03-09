@@ -92,26 +92,18 @@ int32_t Console::GetArgC(void) {
     return Console_GetArgC();
 }
 
-wchar_t** Console::GetArgV(void) {
+char16_t** Console::GetArgV(void) {
     unichar** ret = Console_GetArgV();
     int32_t length = Console_GetArgC();
-    wchar_t** out = (wchar_t**)malloc(sizeof(wchar_t*)*length); // i think it doesn't mean anything anymore -> // 4 is max utf bytes in one char
+    char16_t** out = (char16_t**)malloc(sizeof(char16_t*)*length); // i think it doesn't mean anything anymore -> // 4 is max utf bytes in one char
     for (int i = 0; i < length; i++) {
-        wstring arg = NativeToWString(UnicodeToUtf8String(ret[i]).c_str());
-        out[i] = (wchar_t*)System::AllocateMemory(sizeof(wchar_t)*arg.size()+1);
+        u16string arg = UnicodeToU16String(ret[i]);
+        out[i] = (char16_t*)System::AllocateMemory(sizeof(char16_t)*arg.size()+1);
         for (size_t j = 0; j < arg.size(); j++) out[i][j] = arg[j];
         out[i][arg.size()] = L'\0';
     }
     System::FreeMemory(ret);
     return out;
-}
-
-int Console::PopupWindow(int type, int argc, wchar_t* argv[]) {
-    unichar** args = (unichar**)System::AllocateMemory(sizeof(unichar*)*argc);
-    for (int i = 0; i < argc; i++) {
-        args[i] = Utf8StringToUnicode(WStringToNative(argv[i]).c_str());
-    }
-    return Console_PopupWindow(type, argc, args);
 }
 
 void Console::Sleep(double seconds){
@@ -132,8 +124,8 @@ Console::Symbol::Symbol(void* ptr, bool direct) {
     else symbol = Console_Symbol_Construct$smb(ptr);
 }
 
-Console::Symbol::Symbol(wchar_t character, uint8_t foreground, uint8_t background) {
-    symbol = Console_Symbol_Construct$cfb(Utf8ToUnicode(WCharToNative(character)),foreground,background);
+Console::Symbol::Symbol(char16_t character, uint8_t foreground, uint8_t background) {
+    symbol = Console_Symbol_Construct$cfb(Char16ToUnicode(character),foreground,background);
 }
 
 Console::Symbol::~Symbol() {
@@ -146,53 +138,53 @@ Console::Symbol Console::Symbol::operator=(const Console::Symbol &src) {
     return *this;
 }
 
-vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(wstring characters, uint8_t backgrounds[], uint8_t foregrounds[]) {
+vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(u16string characters, uint8_t backgrounds[], uint8_t foregrounds[]) {
     size_t count = 0;
-    vector<wstring> out;
-    out.push_back(wstring());
+    vector<u16string> out;
+    out.push_back(u16string());
     for (size_t i = 0; i < characters.size(); i++) {
         if (characters[i] != '\n') out.back().push_back(characters[i]);
         else {
             ++count;
-            out.push_back(wstring());
+            out.push_back(u16string());
         }
     }
     
     return Console::Symbol::CreateTexture(out.data(), ++count, backgrounds, foregrounds); 
 }
 
-vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(wstring characters) {
+vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(u16string characters) {
     size_t count = 0;
-    vector<wstring> out;
-    out.push_back(wstring());
+    vector<u16string> out;
+    out.push_back(u16string());
     for (size_t i = 0; i < characters.size(); i++) {
         if (characters[i] != '\n') out.back().push_back(characters[i]);
         else {
             ++count;
-            out.push_back(wstring());
+            out.push_back(u16string());
         }
     }
     
     return Console::Symbol::CreateTexture(out.data(), ++count); 
 }
 
-vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(wstring characters[], uint8_t backgrounds[], uint8_t foregrounds[]) {
+vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(u16string characters[], uint8_t backgrounds[], uint8_t foregrounds[]) {
     size_t count = 0;
     while (characters[count].size()) ++count;
     return Console::Symbol::CreateTexture(characters, count, backgrounds, foregrounds); 
 }
 
-vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(wstring characters[]) {
+vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(u16string characters[]) {
     size_t count = 0;
     while (characters[count].size()) ++count;
     return Console::Symbol::CreateTexture(characters, count); 
 }
 
-vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(wstring characters[], size_t size) {
+vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(u16string characters[], size_t size) {
     vector<vector<Console::Symbol> > out;
     for (size_t i = 0; i < size; i++) {
         out.push_back(vector<Console::Symbol>());
-        wstring &elem = characters[i];
+        u16string &elem = characters[i];
         for (size_t j = 0; j < elem.size(); j++) {
             out.back().push_back(Console::Symbol(elem[j]));
         }
@@ -200,12 +192,12 @@ vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(wstring characte
     return out;
 }
 
-vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(wstring characters[], size_t size, uint8_t backgrounds[], uint8_t foregrounds[]) {
+vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(u16string characters[], size_t size, uint8_t backgrounds[], uint8_t foregrounds[]) {
     vector<vector<Console::Symbol> > out;
     int count = 0;
     for (size_t i = 0; i < size; i++) {
         out.push_back(vector<Console::Symbol>());
-        wstring &str = characters[i];
+        u16string &str = characters[i];
         uint8_t *bkg = backgrounds + count;
         uint8_t *frg = foregrounds + count;
         for (size_t j = 0; j < str.size(); j++) {
@@ -216,13 +208,13 @@ vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(wstring characte
     return out;
 }
 
-wchar_t Console::Symbol::character(void)
+char16_t Console::Symbol::character(void)
 {
-    return NativeToWChar(UnicodeToUtf8(Console_Symbol_character$get(symbol)));
+    return UnicodeToChar16(Console_Symbol_character$get(symbol));
 }
 
-void Console::Symbol::character(wchar_t val) {
-    return Console_Symbol_character$set(symbol, Utf8ToUnicode(WCharToNative(val)));
+void Console::Symbol::character(char16_t val) {
+    return Console_Symbol_character$set(symbol, Char16ToUnicode(val));
 }
 
 uint8_t Console::Symbol::foreground(void) {

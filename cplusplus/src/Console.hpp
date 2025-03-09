@@ -9,7 +9,11 @@
 #include <fstream>
 #include <filesystem>
 #include <cwchar>
-    #include <stdio.h>
+#include <optional>
+#include <inttypes.h>
+#include <stdio.h>
+#include <promise.hpp>
+#include <thread>
 #include "System.hpp"
 
 #ifdef __APPLE__
@@ -124,6 +128,10 @@ namespace cpp {
             MouseStatus(void);
         };
 
+        struct PopupResult {
+            bool finished;
+        };
+
         struct ClientInfo {
             enum class OS {
                 WINDOWS,
@@ -156,6 +164,8 @@ namespace cpp {
         } client_info;
         
     private:
+        // max time to wait for the popup window to start up before returning -1 (in milliseconds)
+        static int max_popup_startup_wait;
         static bool initialised;
         static std::bitset<KEYBOARD_MAX> key_states;
         static int key_hit;
@@ -183,6 +193,10 @@ namespace cpp {
         static std::pair<int16_t,int16_t> cursorpos;
         static bool cursor_visible;
         static uint8_t cursor_size;
+        static uniconv::utfstr user_data;
+        static uniconv::utfstr dev_data;
+        static uniconv::utfstr tmp_data;
+        static std::vector<uint16_t> popup_pids; // pid_t may differ, but it should be <= int64_t
     #ifdef _WIN32
         static const wchar_t* subdir;
         //static std::vector<std::vector<COLORREF>> SaveScreen(void);
@@ -283,6 +297,10 @@ namespace cpp {
         static void FillScreen(std::vector<std::vector<Symbol> > symbols);
         
         static void HandleKeyboard(void);
+        // Call this when you don't want to handle keyboard input to remove "key pressed" & "key released" states
+        static void DontHandleKeyboard(void);
+        // Call this to reset every key to not-pressed state
+        static void ResetKeyboard(void);
         static bool IsKeyDown(enum Key::Enum key);
         static struct ToggledKeys KeysToggled(void);
         static enum Key::Enum KeyPressed(void);
@@ -298,13 +316,22 @@ namespace cpp {
         static void Update(void);
 
         static void Sleep(double seconds = 1.0);
+        static void Exit(int code);
+        static void QuickExit(int code);
+        static void SetResult(uniconv::utfcstr result);
+
         static void ThrowMsg(const char* msg);
         static void ThrowMsg(const wchar_t* msg);
+        static void ThrowMsg(const std::string msg);
+        static void ThrowMsg(const std::wstring msg);
 
         static void SetDoubleClickMaxWait(unsigned short milliseconds);
         static unsigned short GetDoubleClickMaxWait(void);
 
-        static int PopupWindow(int type, int argc, const char_t* argv[]);
+        static std::optional<std::pair<int,uniconv::utfstr>> PopupWindow(int type, int argc, const char_t* argv[]);
+        static std::optional<stsb::promise<std::optional<std::pair<int,uniconv::utfstr>>>> PopupWindowAsync(int type, int argc, const char_t* argv[]);
+        static std::optional<stsb::promise<std::optional<std::pair<int,std::u16string>>>> PopupWindowAsync(int type, int argc, const char16_t* argv[]);
+
         static void MoveCursor(int x, int y);
         static void ShowCursor(void);
         static void HideCursor(void);

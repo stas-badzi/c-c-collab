@@ -1,14 +1,14 @@
-#include "SoundSystem.hpp"
-#include "System.hpp"
 #include "dllimport.hpp"
+#include <unicode_conversion.hpp>
+#include "SoundSystem.hpp"
 
 using namespace std;
 using namespace csimp;
+using namespace cs;
 using namespace uniconv;
 
-void SoundSystem::PlaySound(wstring filepath, bool wait)
-{
-    auto filepathPtr = Utf8StringToUnicode(WStringToNative(filepath).c_str());
+void SoundSystem::PlaySound(u16string filepath, bool wait) {
+    auto filepathPtr = U16StringToUnicode(filepath);
 
-    csimp::TextureSystem_PlaySound(filepathPtr, wait);
+    csimp::SoundSystem_PlaySound(filepathPtr, wait);
 }

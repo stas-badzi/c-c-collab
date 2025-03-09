@@ -22,20 +22,20 @@ defcompc = cc
 cflags = -Wno-dollar-in-identifier-extension -Wno-unused-command-line-argument
 cxxflags = -Wno-dollar-in-identifier-extension -Wno-unused-command-line-argument
 #> source files
-sources = Console.cpp TextureSystem.cpp System.cpp Game.cpp dllexport.cpp
+sources = Console.cpp TextureSystem.cpp System.cpp Game.cpp dllexport.cpp SoundSystem.cpp
 #> header files
-headers = Console.hpp TextureSystem.hpp TextureSystem.ipp Game.hpp dllimport.hpp System.hpp System.ipp smart_ref.hpp smart_ref.ipp
+headers = Console.hpp TextureSystem.hpp TextureSystem.ipp Game.hpp dllimport.hpp System.hpp System.ipp smart_ref.hpp smart_ref.ipp SoundSystem.hpp
 #> include files
-includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp apple/keyboard.h apple/openfile.h linux/ledctrl.h linux/mousefd.h
+includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp apple/keyboard.h apple/openfile.h linux/ledctrl.h linux/mousefd.h promise.hpp
 #> name the dynamic library
 name = factoryrushplus
 # *******************************
 
 #******** c++ binary config *****
 #> source files
-binsources = main.cpp Console.cpp TextureSystem.cpp System.cpp Control.cpp dllexport.cpp
+binsources = main.cpp Console.cpp TextureSystem.cpp System.cpp Control.cpp dllexport.cpp SoundSystem.cpp
 #> header files
-binheaders = dllimport.hpp Console.hpp TextureSystem.hpp System.hpp defines.h Control.hpp
+binheaders = dllimport.hpp Console.hpp TextureSystem.hpp System.hpp defines.h Control.hpp SoundSystem.hpp
 #> include files
 binincludes = dynamic_library.h unicode_conversion.hpp control_heap.h utils/cextern.h control_heap.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp
 #> name the binary file
@@ -199,8 +199,8 @@ endif
 ifeq ($(msvc),1)
 ifeq ($(findstring clang, $(c-compiler)),clang)
 ifeq ($(arch),x86)
-	archarg = -m32
-	archarg = -m32
+	archarg = --target=$(arch)
+	archarg = --target=$(arch)
 endif
 	clstd = /std:c17 $(archarg)
 	clstdpp = /std:c++latest $(archarg)
@@ -659,7 +659,7 @@ endif
 csrun:
 	-cd binarysharp/bin/exe && $(run)$(binfile).$(binary)
 
-cpp: cs  $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
+cpp: resources $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
 	@echo MAKE CPP
 
 ifeq ($(msvc),1)
@@ -777,7 +777,7 @@ endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
 
-cppbin: cpp $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc))
+cppbin: $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc))
 	@echo MAKE CPPBIN
 
 ifeq ($(msvc),1)
@@ -830,7 +830,7 @@ endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
 
-csbin: $(cppdep) $(foreach bfl,$(binfiles),binarysharp/$(bfl))
+csbin: $(foreach bfl,$(binfiles),binarysharp/$(bfl))
 	@echo MAKE CSBIN
 	cd binarysharp && dotnet publish -p:SelfContained=true -r $(os_name) -c $(binconfig)
 

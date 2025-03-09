@@ -18,6 +18,14 @@ using namespace uniconv;
         cpp::Console::ThrowMsg(uniconv::UnicodeToUtf8String(msg).c_str());
     }
 
+    libexport void Exit(int code) {
+        cpp::Console::Exit(code);
+    }
+
+    libexport void QuickExit(int code) {
+        cpp::Console::QuickExit(code);
+    }
+
     libexport void Console_Init(void) {
         cpp::Console::Init();
     }
@@ -32,6 +40,14 @@ using namespace uniconv;
 
     libexport void Console_HandleKeyboard(void) {
         cpp::Console::HandleKeyboard();
+    }
+
+    libexport void Console_DontHandleKeyboard(void) {
+        cpp::Console::DontHandleKeyboard();
+    }
+
+    libexport void Console_ResetKeyboard(void) {
+        cpp::Console::ResetKeyboard();
     }
 
     libexport bool Console_IsKeyDown(enum Key::Enum arg1) {
@@ -94,6 +110,10 @@ using namespace uniconv;
         return cpp::Console::Update();
     }
 
+    libexport void Console_SetResult(unichar* result) {
+        return cpp::Console::SetResult(UnicodeToUtf8String(result).c_str());
+    }
+
     libexport void Console_MoveCursor(int x, int y) {
         return cpp::Console::MoveCursor(x,y);
     }
@@ -139,32 +159,52 @@ using namespace uniconv;
         return out;
     }
 
-    libexport int Console_PopupWindow(int type, int argc, uniconv::unichar* argv[]) {
+    struct popwinretval { bool val; int code; uniconv::unichar* result; };
+
+    libexport popwinretval Console_PopupWindow(int type, int argc, uniconv::unichar* argv[]) {
         uniconv::utfcstr* args = (uniconv::utfcstr*)System::AllocateMemory(sizeof(uniconv::utfcstr)*argc);
         for (int i = 0; i < argc; i++) {
             uniconv::utfstr arg = UnicodeToUtf8String(argv[i]).c_str();
             args[i] = (uniconv::utfcstr)System::AllocateMemory(sizeof(wchar_t)*arg.size());
-        #ifdef _WIN32
-            wchar_t* loc = (wchar_t*)args[i];
-        #else
-            char* loc = (char*)args[i];
-        #endif
+            char_t* loc = (char_t*)args[i];
             for (size_t j = 0; j < arg.size(); j++) loc[j] = arg[j];
         }
         System::FreeMemory(argv);
-        int ret = Console::PopupWindow(type, argc, args);
+        auto ret = Console::PopupWindow(type, argc, args);
+        popwinretval retval;
+        if (retval.val = ret.has_value()) {
+            retval.code = ret.value().first;
+            retval.result = Utf8StringToUnicode(ret.value().second.c_str());
+        }
         System::FreeMemory(args);
-        return ret;
+        return retval;
     }
+
+    libexport auto Console_PopupWindowAsync(int type, int argc, const char16_t* arg16v[]) {
+        return Console::PopupWindowAsync(type, argc, arg16v);
+    }
+
+    struct popwinasyncretval { bool val; void* promise; };
 
     int (*Console_sub)(int);
 
-    int sub (int arg1) {
+    int sub(int arg1) {
         return Console_sub(arg1);
     }
 
     libexport void Console_sub$define(int (*arg1)(int)) {
         Console_sub = arg1;
+    }
+    
+
+    int (*_Main)(void);
+
+    int Main() {
+        return _Main();
+    }
+
+    libexport void Main$define(int (*arg1)(void)) {
+        _Main = arg1;
     }
 
     // Symbol

@@ -40,7 +40,7 @@ namespace BinarySharp {
                         sym = new Terminal.Symbol('▒',16,16);
                         break;
                     case Key.Enum.s:
-                        SoundSystem.PlaySound(GetSoundPath("shoot.mp3"), false);
+                        SoundSystem.PlaySound(GetSoundPath("shoot.wav"), false);
                         break;
                 }
             }

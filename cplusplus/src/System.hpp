@@ -50,6 +50,12 @@ namespace cpp {
         static nint MovePointer(nint pointer, signed int bytes);
 
         static int MakeDirectory(uniconv::utfcstr path);
+        static int ClearDirectory(uniconv::utfcstr path);
+        static int DeleteDirectory(uniconv::utfcstr path);
+        static int RemoveFile(uniconv::utfcstr path);
+        static bool IsFile(uniconv::utfcstr path);
+        static bool IsDirectory(uniconv::utfcstr path);
+        static bool DoesPathExist(uniconv::utfcstr path);
 
         template<typename T> static T ReadPointer(nint pointer);
         template<typename T> static T ReadPointer(nint pointer, int offset);

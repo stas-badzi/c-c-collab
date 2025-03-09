@@ -131,6 +131,6 @@ namespace csimp {
 
     libimport void TextureSystem_DrawTextureToScreen(int x, int y, void* texturePtr, void* screenPtr);
 
-    libimport void TextureSystem_PlaySound(uniconv::unichar* filepathPtr, bool wait);
+    libimport void SoundSystem_PlaySound(uniconv::unichar* filepathPtr, bool wait);
 
 } // namespace csimp

@@ -8,15 +8,15 @@ using namespace std;
 using namespace cs;
 using namespace cpp;
 
-vector<wstring> TextureSystem::ImportText(wstring filename) {
-    unichar** textptr = TextureSystem_ImportText(Utf8StringToUnicode(WStringToNative(filename).c_str()));
+vector<u16string> TextureSystem::ImportText(u16string filename) {
+    unichar** textptr = TextureSystem_ImportText(U16StringToUnicode(filename));
 
 
-    vector<wstring> utftext;
+    vector<u16string> utftext;
     for (size_t i = 0; true; i++) {
-        wstring utfline;
+        u16string utfline;
         for (size_t j = 0; textptr[i][j] > 0; j++) {
-            utfline.push_back(NativeToWChar(UnicodeToUtf8(textptr[i][j])));
+            utfline.push_back(UnicodeToChar16(textptr[i][j]));
         }
         delete[] textptr[i];
         if (utfline.size() == 0) { break; }
@@ -29,32 +29,26 @@ vector<wstring> TextureSystem::ImportText(wstring filename) {
     
 }
 
-void TextureSystem::ExportText(wstring file, vector<wstring> lines) {
+void TextureSystem::ExportText(u16string file, vector<u16string> lines) {
     unichar** unilines = new unichar*[lines.size()];
 
     for (size_t i = 0; i < lines.size(); i++) {
-        unilines[i] = new unichar[lines[i].size() + 1];
-        size_t ofst = 0;
-        for (size_t j = 0; j < lines[i].size(); j++) {
-            size_t ch_size;
-            unilines[i][j] = Utf8ToUnicode(ReadUtfChar(WStringToNative(lines[i]).c_str(),ofst, &ch_size));
-            ofst += ch_size;
-        }
+        unilines[i] = U16StringToUnicode(lines[i]);
     }
     unilines[lines.size()] = new unichar[1]{0};
     
-    TextureSystem_ExportText(Utf8StringToUnicode(WStringToNative(file).c_str()),unilines);
+    TextureSystem_ExportText(U16StringToUnicode(file),unilines);
 }
 
-vector<vector<Console::Symbol> > TextureSystem::TextureFromFile(wstring filepath) {
-    unichar* arg1 = Utf8StringToUnicode(WStringToNative(filepath).c_str());
+vector<vector<Console::Symbol> > TextureSystem::TextureFromFile(u16string filepath) {
+    unichar* arg1 = U16StringToUnicode(filepath);
     void* ret = csimp::TextureSystem_TextureFromFile(arg1);
 
     return PtrToTexture(ret);
 }
 
-void TextureSystem::FileFromTexture(wstring filepath, vector<vector<Console::Symbol> > texture, bool recycle) {
-    unichar* filepathPtr = Utf8StringToUnicode(WStringToNative(filepath).c_str());
+void TextureSystem::FileFromTexture(u16string filepath, vector<vector<Console::Symbol> > texture, bool recycle) {
+    unichar* filepathPtr = U16StringToUnicode(filepath);
     void* texturePtr = TextureToPtr(texture);
 
     csimp::TextureSystem_FileFromTexture(filepathPtr, texturePtr, recycle);

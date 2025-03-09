@@ -5,6 +5,9 @@
 #include <dynamic_library.h>
 #include <unicode_conversion.hpp>
 
+#include <optional>
+#include <promise.hpp>
+
 #ifdef _WIN32
 #include <windows/key.hpp>
 #elif __linux__
@@ -20,6 +23,10 @@ namespace cppimp {
 
     libimport void ThrowMsg(uniconv::unichar* msg);
 
+    libimport void Exit(int code);
+
+    libimport void QuickExit(int code);
+
     libimport void Console_Init(void);
 
     libimport void Console_Fin(void);
@@ -27,6 +34,10 @@ namespace cppimp {
     libimport void Console_Sleep(double seconds);
 
     libimport void Console_HandleKeyboard(void);
+
+    libimport void Console_DontHandleKeyboard(void);
+
+    libimport void Console_ResetKeyboard(void);
 
     libimport bool Console_IsKeyDown(enum Key::Enum arg1);
 
@@ -54,6 +65,8 @@ namespace cppimp {
 
     libimport void Console_Update(void);
 
+    libimport void Console_SetResult(uniconv::unichar* result);
+
     libimport void Console_MoveCursor(int x, int y);
 
     libimport void Console_ShowCursor(void);
@@ -68,10 +81,17 @@ namespace cppimp {
 
     libimport uniconv::unichar** Console_GetArgV(void);
 
-    libimport int Console_PopupWindow(int type, int argc, uniconv::unichar* argv[]);
-    
+    struct popwinretval { bool val; int code; uniconv::unichar* result; };
+    libimport popwinretval Console_PopupWindow(int type, int argc, uniconv::unichar* argv[]);
+
+    libimport std::optional<stsb::promise<std::optional<std::pair<int,std::u16string>>>> Console_PopupWindowAsync(int type, int argc, const char16_t* arg16v[]);
+
+    libimport void Main$define(int (*arg1)(void));
+
 #ifdef __cplusplus
     extern "C"
+#else
+    extern
 #endif
     int Console_sub(int);
 
@@ -227,6 +247,6 @@ namespace csimp {
     libimport void TextureSystem_DrawTextureToScreen(int x, int y, void* texturePtr, void* screenPtr);
 // Control
     libimport void Control_CleanMemory(void);
-// Console
-    libimport void Console_PlaySound(uniconv::unichar* filepathPtr, bool wait);
+// SoundSystem
+    libimport void SoundSystem_PlaySound(uniconv::unichar* filepathPtr, bool wait);
 } // namespace csimp
