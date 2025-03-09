@@ -41,7 +41,7 @@ void Game::Camera::DrawTexture(vector<vector<Console::Symbol>> texture, MatrixPo
 
     for (int i = startX, ti = 0; i < endX; i++, ti++) {
         for (int j = startY, tj = 0; j < endY; j++, tj++) {
-            this->buffer[i][j] = texture[ti][tj]();
+            this->buffer[i][j] = texture[ti][tj];
         }
     }
 }
