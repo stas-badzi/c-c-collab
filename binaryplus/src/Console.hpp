@@ -120,6 +120,7 @@ namespace cpp {
         static int PopupWindow(int type, int argc, wchar_t* argv[]);
         static void Sleep(double seconds = 1.0);
         static void FillScreen(const std::vector<std::vector<Symbol> >& symbols);
+        static inline void ClearScreenBuffer(void) { return cppimp::Console_ClearScreenBuffer(); }
         static void HandleMouseAndFocus(void);
         static bool IsFocused(void);
         static struct MouseStatus GetMouseStatus(void);

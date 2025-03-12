@@ -338,9 +338,10 @@ endminput:
             if (screen[mouse.y][mouse.x].foreground() == 16) screen[mouse.y][mouse.x].foreground(7);
             screen[mouse.y][mouse.x].ReverseColors();
         }
+        if (Console::KeyPressed() == Key::Enum::r && IsCtrlDown()) Console::ClearScreenBuffer();
         Console::FillScreen(screen);
 
-        if (Console::IsFocused() && false) Console::HandleKeyboard();
+        if (Console::IsFocused()) Console::HandleKeyboard();
         //string x;
         //gin >> x;
         //if (!gin.eof()) cout << 'a' << x << '\n' << flush;

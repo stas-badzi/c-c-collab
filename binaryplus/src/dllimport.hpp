@@ -46,6 +46,8 @@ namespace cppimp {
 
     libimport void Console_FillScreen(void* symbols);
 
+    libimport void Console_ClearScreenBuffer(void);
+
     libimport int16_t Console_GetWindowWidth(void);
 
     libimport int16_t Console_GetWindowHeight(void);

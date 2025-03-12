@@ -275,7 +275,7 @@ namespace cpp {
             Symbol & operator=(const Symbol &src);
 
             #ifdef _WIN32
-                uint8_t GetAttribute(void);
+                uint8_t GetAttribute(void) const;
                 void SetAttribute(uint8_t attribute);
             #endif
 
@@ -302,6 +302,7 @@ namespace cpp {
         static uniconv::utfcstr* GetArgV(void);
 
         static void FillScreen(const std::vector<std::vector<Symbol> >& symbols);
+        static void ClearScreenBuffer(void);
         
         static void HandleKeyboard(void);
         static bool IsKeyDown(enum Key::Enum key);

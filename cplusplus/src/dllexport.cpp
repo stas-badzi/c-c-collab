@@ -148,6 +148,10 @@ using namespace uniconv;
         return cpp::Console::FillScreen(texture);
     }
 
+    libexport void Console_ClearScreenBuffer(void) {
+        return cpp::Console::ClearScreenBuffer();
+    }
+
     libexport int16_t Console_GetWindowWidth(void) {
         return cpp::Console::GetWindowWidth();
     }
