@@ -463,7 +463,7 @@ package: release
 
 check-arch: $(archfile)
 	@echo "Architecture changed from $(shell cat __oldarch.dat) to $(arch) - Cleaning"
-	@rm __oldarch.dat
+	-@rm __oldarch.dat
 	@$(MAKE) clean
 	@echo "Version file. Remove to enable recompile" > $@
 
