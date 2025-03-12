@@ -8,6 +8,7 @@
 #include <sstream>
 #include <fstream>
 #include <filesystem>
+#include <mutex>
 #include <cwchar>
     #include <stdio.h>
 #include "System.hpp"
@@ -157,6 +158,7 @@ namespace cpp {
         
     private:
         static bool initialised;
+        static std::mutex stderr_lock;
         static std::bitset<KEYBOARD_MAX> key_states;
         static int key_hit;
         static int key_released;
@@ -185,6 +187,7 @@ namespace cpp {
         static uint8_t cursor_size;
         static bool cursor_blink_opposite;
     #ifdef _WIN32
+        static std::mutex screen_lock;
         static const wchar_t* subdir;
         //static std::vector<std::vector<COLORREF>> SaveScreen(void);
         //static std::pair<std::pair<uint16_t,uint16_t>,std::pair<uint16_t,uint16_t>> GetOffsetSymSize(int color1 = 3, int color2 = 9, int color3 = 1);

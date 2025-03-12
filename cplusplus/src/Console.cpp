@@ -49,20 +49,26 @@ void Console::PushChar(char_t c) {
 void Console::EscSeqSetTitle(const char_t* title) {
     utfstr str;
     str.append(N("\033]30;")).append(title).append(N("\a\033]0;")).append(title).push_back(N('\a'));
+    stderr_lock.lock();
     fwrite(str.c_str(), sizeof(char_t), str.size(), stderr);
+    stderr_lock.unlock();
 }
 
 void Console::EscSeqMoveCursor(void) {
     utfstr str;
     str.append(N("\033[")).append(to_nstring(Console::cursorpos.second+1)).append(N(";")).append(to_nstring(Console::cursorpos.first+1)).push_back(N('H'));
+    stderr_lock.lock();
     fwrite(str.c_str(), sizeof(char_t), str.size(), stderr);
+    stderr_lock.unlock();
 }
 
 void Console::EscSeqSetCursor(void) {
     utfstr str = N("\033[?25");
     if (Console::cursor_visible) str.push_back(N('h'));
     else str.push_back(N('l'));
+    stderr_lock.lock();
     fwrite(str.c_str(), sizeof(char_t), str.size(), stderr);
+    stderr_lock.unlock();
 }
 
 void cpp::Console::ReverseCursorBlink(void) {
@@ -80,7 +86,9 @@ void Console::EscSeqSetCursorSize(void) {
     str.append(to_nstring(val));
     str.push_back(N(' '));
     str.push_back(N('q'));
+    stderr_lock.lock();
     fwrite(str.c_str(), sizeof(char_t), str.size(), stderr);
+    stderr_lock.unlock();
 }
 
 void Console::EscSeqRestoreCursor(void) {
@@ -392,8 +400,11 @@ void Console::XtermMouseAndFocus(void) {
     void cpp::Console::MoveCursor(int x, int y) {
         Console::cursorpos.first = x;
         Console::cursorpos.second = y;
-        HANDLE hThread = CreateThread(NULL, 0, MoveCursorThread, Console::is_setting_cursor, 0, NULL);
-        thread_handles->push_back(hThread);
+        //HANDLE hThread = CreateThread(NULL, 0, MoveCursorThread, Console::is_setting_cursor, 0, NULL);
+        //thread_handles->push_back(hThread);
+        screen_lock.lock();
+        SetConsoleCursorPosition(Console::screen, {cursorpos.first, cursorpos.second});
+        screen_lock.unlock();
     }
 
     void cpp::Console::ShowCursor(void) {
@@ -402,7 +413,9 @@ void Console::XtermMouseAndFocus(void) {
         CONSOLE_CURSOR_INFO cci;
         cci.bVisible = Console::cursor_visible;
         cci.dwSize = Console::cursor_size;
+        screen_lock.lock();
         SetConsoleCursorInfo(Console::screen, &cci);
+        screen_lock.unlock();
     }
 
     void cpp::Console::HideCursor(void) {
@@ -411,7 +424,9 @@ void Console::XtermMouseAndFocus(void) {
         CONSOLE_CURSOR_INFO cci;
         cci.bVisible = Console::cursor_visible;
         cci.dwSize = Console::cursor_size;
+        screen_lock.lock();
         SetConsoleCursorInfo(Console::screen, &cci);
+        screen_lock.unlock();
     }
 
     void cpp::Console::SetCursorSize(uint8_t size) {
@@ -420,7 +435,9 @@ void Console::XtermMouseAndFocus(void) {
         CONSOLE_CURSOR_INFO cci;
         cci.bVisible = Console::cursor_visible;
         cci.dwSize = Console::cursor_size;
+        screen_lock.lock();
         SetConsoleCursorInfo(Console::screen, &cci);
+        screen_lock.unlock();
     }
 
     void cpp::Console::SetTitle(const wchar_t* title) {
@@ -1111,15 +1128,22 @@ void Console::XtermMouseAndFocus(void) {
         return csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
     }
 
+    DWORD WINAPI WaitClrScrBuf(LPVOID lpParam) {
+        ::Sleep(1000);
+        Console::ClearScreenBuffer();
+        return 0;
+    }
+
     void Console::FillScreen(const vector<vector<Symbol> >& symbols) {
+        if (!Console::screen_lock.try_lock()) return; // it's a slow function so we can't put multiple in a queue
         try {
         Symbol empty_sym = Symbol(L' ', 16, 16);
         const size_t win_width = GetWindowWidth(), win_height = GetWindowHeight(), height = symbols.size();
         if (win_width == 0 || win_height == 0) return;
 
-        if ((int16_t)win_width != Console::old_scr_size.first || (int16_t)win_height != Console::old_scr_size.second) {
+        bool resize;
+        if ((resize = ((int16_t)win_width != Console::old_scr_size.first || (int16_t)win_height != Console::old_scr_size.second)))
             Console::old_symbols.clear();
-        }
 
         wstring now_screen; vector<WORD> now_attrs;
         COORD scr_lastcoord = {-1,-1}, atr_lastcoord = {-1,-1};
@@ -1258,11 +1282,17 @@ void Console::XtermMouseAndFocus(void) {
         SetConsoleCursorInfo(Console::screen, &cci);
 
         old_scr_size = {win_width,win_height};
-        old_symbols = symbols;
+        if (resize) {
+            HANDLE hThread = CreateThread(NULL,0,WaitClrScrBuf,NULL,0,NULL);
+            thread_handles->push_back(hThread);
+        }
+        else old_symbols = symbols;
+
         } catch (exception e) {
             cout << e.what() << endl;
             exit(1);
         }
+        Console::screen_lock.unlock();
     }
 
     void Console::HandleKeyboard(void) {
@@ -1489,6 +1519,8 @@ void Console::XtermMouseAndFocus(void) {
         this->SetAttribute(attribute);
     }
 
+    
+    mutex Console::screen_lock = mutex();
     tsqueue<wchar_t>* Console::input_buf = new tsqueue<wchar_t>();
     HANDLE Console::super_thread = HANDLE();
     bool* Console::super_thread_run = new bool();
@@ -2586,6 +2618,7 @@ void Console::XtermMouseAndFocus(void) {
     }
 
     void Console::FillScreen(const vector<vector<Console::Symbol> >& symbols) {
+        if (!Console::screen_lock.try_lock()) return; // it's a slow function so we can't put multiple in a queue
         string screen = "\033[H";
         bool moved = false;
         size_t width = GetWindowWidth(), height = GetWindowHeight();
@@ -2671,6 +2704,7 @@ void Console::XtermMouseAndFocus(void) {
         fflush(stdout);
         old_scr_size = {width,height};
         old_symbols = symbols;
+        Console::screen_lock.unlock();
     }
 
     void SysSleep(int microseconds){
@@ -2692,6 +2726,7 @@ utfcstr* Console::argv = (utfcstr*)malloc(sizeof(utfcstr));
 
 bool Console::emulator = false;
 bool Console::initialised = false;
+mutex Console::stderr_lock = mutex();
 bitset<KEYBOARD_MAX> Console::key_states = bitset<KEYBOARD_MAX>(0);
 struct ToggledKeys Console::keys_toggled = ToggledKeys();
 bitset<16> Console::mouse_buttons_down = bitset<16>(0);
@@ -2827,7 +2862,9 @@ Console::Symbol & Console::Symbol::operator=(const Console::Symbol & src) {
 }
 
 void Console::ClearScreenBuffer(void) {
+    Console::screen_lock.lock();
     Console::old_symbols.clear();
+    Console::screen_lock.unlock();
 }
 
 int cpp::Console::PopupWindow(int type, int argc, const char_t* argv[]) {
