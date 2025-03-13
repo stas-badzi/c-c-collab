@@ -27,9 +27,9 @@ using namespace cpp;
 using namespace cs;
 
 wchar_t getChar(wchar_t current) {
-    wstringstream wstr;
-    wstr << "Press 0-9 to change the symbol\nESC to cancel\n...\n";
-    auto texture = Console::Symbol::CreateTexture(wstr.str());
+    u16stringstream u16str;
+    u16str << "Press 0-9 to change the symbol\nESC to cancel\n...\n";
+    auto texture = Console::Symbol::CreateTexture(u16str.str());
     Console::FillScreen(texture);
     do {
         Console::HandleKeyboard();
@@ -95,23 +95,23 @@ u16string getPath(u16string current) {
 
 int Main(void) {
     Console::Init();
-    Console::SetTitle(L"FactoryRush");
+    Console::SetTitle(u"FactoryRush");
     Console::SetCursorSize(0);
-    std::wstring buf;
+    std::u16string buf;
     Console::MouseStatus lastmouse = Console::GetMouseStatus();
     int siz = 0;
     while (1) {
         Console::HandleMouseAndFocus();
         wchar_t x;
         Console::Symbol sym = Console::Symbol(L'~',16,16);
-        while ((x = gin.get()) && gin.good())
+        while ((x = u16in.get()) && u16in.good())
             if (isalnum(x)) buf.push_back(x);
             else if (x == L'\177') {if (buf.size()) buf.pop_back();}
             else wcout << x << endl;
         bool focs = Console::IsFocused();
         auto focsym = focs ? Console::Symbol(L'✓',16,16) : Console::Symbol(L'X',16,16);
-        auto sym1 = Console::Symbol::CreateTexture(to_wstring(Console::GetMouseStatus().x));
-        auto sym2 = Console::Symbol::CreateTexture(to_wstring(Console::GetMouseStatus().y));
+        auto sym1 = Console::Symbol::CreateTexture(to_u16string(Console::GetMouseStatus().x));
+        auto sym2 = Console::Symbol::CreateTexture(to_u16string(Console::GetMouseStatus().y));
         if (Console::GetMouseStatus().x == 0 && Console::GetMouseStatus().y == 4) {
             if (Console::GetMouseStatus().primary && !lastmouse.primary) return EXIT_SUCCESS; 
             if (Console::GetMouseStatus().secondary && !lastmouse.secondary) Console::PopupWindow(0,0,nullptr);
@@ -194,9 +194,9 @@ int Main(void) {
         //Control::CleanMemory();
 
         auto enlapsed_time = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count();
-        u16stringstream wstr;
-        wstr << "[  " << enlapsed_time << "MPF  ]";
-        auto pos = Console::Symbol::CreateTexture(wstr.str());
+        u16stringstream u16str;
+        u16str << "[  " << enlapsed_time << "MPF  ]";
+        auto pos = Console::Symbol::CreateTexture(u16str.str());
         Console::Sleep(1);
         Console::FillScreen(pos);
         Console::Sleep(1);
@@ -339,13 +339,13 @@ endminput:
 
         // Count FPS
         auto enlapsed_time = chrono::duration_cast<std::chrono::duration<long double, std::milli>>(chrono::high_resolution_clock::now() - start).count();
-        wstringstream wstr;
+        u16stringstream u16str;
         if (counter == INT64_MAX) counter = 0;
         avg *= counter;
         avg += (1000.0/enlapsed_time);
         avg /= ++counter;
-        wstr << "[  " << avg << "FPS  ]";
-        auto pos = Console::Symbol::CreateTexture(wstr.str());
+        u16str << "[  " << avg << "FPS  ]";
+        auto pos = Console::Symbol::CreateTexture(u16str.str());
         start = chrono::high_resolution_clock::now();
         u16out << u16str.str();
         Console::HandleOutput();
