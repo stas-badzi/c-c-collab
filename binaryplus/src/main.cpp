@@ -96,6 +96,12 @@ u16string getPath(u16string current) {
 int Main(void) {
     Console::Init();
 
+    auto popx = Console::PopupWindow(3,0,nullptr);
+    if (!popx.has_value()) ThrowMsg(u"Popup launch or exec failed");
+    auto sym = Console::Symbol::CreateTexture(popx.value().second);
+    Console::FillScreen(sym);
+    Console::Sleep(20);
+
     auto popup = Console::PopupWindowAsync(1,0,nullptr);
     if (!popup.has_value()) ThrowMsg(u"Popup launch failed");
     auto await = popup.value();
@@ -323,8 +329,9 @@ endminput:
         u16str << "[  " << avg << "FPS  ]";
         auto pos = Console::Symbol::CreateTexture(u16str.str());
         start = chrono::high_resolution_clock::now();
-
-        TextureSystem::DrawTextureToScreen(2,15,pos,screen);
+        u16out << u16str.str();
+        Console::HandleOutput();
+        //TextureSystem::DrawTextureToScreen(2,15,pos,screen);
 
         // first check y 'cause if screen.size() is 0 than screen[0].size() will crash
         if (mouse.y < screen.size() && mouse.x < screen[0].size()) screen[mouse.y][mouse.x].character(Console::KeysToggled().CapsLock ? L'*' : screen[mouse.y][mouse.x].character());
@@ -355,6 +362,7 @@ int sub(int type) {
     auto&& sym = Console::Symbol::CreateTexture(u"▒frfjyyjyjt\n");
     Console::FillScreen(sym);
     Console::Sleep(10);
+    do {Console::HandleMouseAndFocus();} while (!Console::IsFocused());
     Console::SetResult(to_u16string(type));
     return type;
 }

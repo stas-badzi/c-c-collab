@@ -106,6 +106,10 @@ using namespace uniconv;
         return cpp::Console::GetWindowHeight();
     }
 
+    libexport void Console_HandleOutput(void) {
+        return cpp::Console::HandleOutput();
+    }
+
     libexport void Console_Update(void) {
         return cpp::Console::Update();
     }

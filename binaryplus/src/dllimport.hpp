@@ -63,6 +63,8 @@ namespace cppimp {
 
     libimport int16_t Console_GetWindowHeight(void);
 
+    libimport void Console_HandleOutput(void);
+
     libimport void Console_Update(void);
 
     libimport void Console_SetResult(uniconv::unichar* result);

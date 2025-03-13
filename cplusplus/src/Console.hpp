@@ -184,7 +184,7 @@ namespace cpp {
         static uniconv::utfcstr* argv;
         static struct ToggledKeys keys_toggled;
         static bool emulator;
-        static int pid;
+        static pid_t pid;
         static bool sub_proc;
         static int ret;
         static std::array<bool,UINT16_MAX> used_pids;
@@ -196,7 +196,7 @@ namespace cpp {
         static uniconv::utfstr user_data;
         static uniconv::utfstr dev_data;
         static uniconv::utfstr tmp_data;
-        static std::vector<uint16_t> popup_pids; // pid_t may differ, but it should be <= int64_t
+        static std::vector<pid_t> popup_pids; // pid_t may differ, but it should be <= int64_t
     #ifdef _WIN32
         static const wchar_t* subdir;
         //static std::vector<std::vector<COLORREF>> SaveScreen(void);
@@ -225,12 +225,14 @@ namespace cpp {
         static void* super_thread_arg;
         static bool* is_setting_cursor;
         static tsvector<HANDLE>* thread_handles;
+        static std::wofstream real_out; 
         static inline constexpr uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2);
         static DWORD WINAPI MoveCursorThread(LPVOID lpParam);
         static DWORD WINAPI SuperThread(LPVOID lpParam);
         //static std::pair<uint16_t,uint16_t> xyoffset;
         //static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
     #else
+        static std::ofstream real_out;
         static const char* subdir;
         static struct termios old_termios;
         static struct winsize window_size;
@@ -313,6 +315,8 @@ namespace cpp {
         static std::pair<uint8_t,uint8_t> MouseButtonClicked(void); // returns button ID and whitch consecutive click was it
         static uint8_t MouseButtonReleased(void); // returns button ID
 
+        static void HandleOutput(void);
+
         static void Update(void);
 
         static void Sleep(double seconds = 1.0);
@@ -337,19 +341,14 @@ namespace cpp {
         static void HideCursor(void);
         static void SetCursorSize(uint8_t size);
         static void SetTitle(const char_t* title);
-#ifdef _WIN32
-        static std::wistringstream in;
-        static std::wofstream out;
-#else
-        static std::wistringstream in;
-        static std::ofstream out;
-#endif
+        static std::basic_istringstream<char16_t> in;
+        static std::basic_ostringstream<char16_t> out;
     };
 #ifdef _WIN32
-    extern __declspec(dllexport) std::wistream& gin;
-    extern __declspec(dllexport) std::wostream& gout;
+    extern __declspec(dllexport) std::basic_istream<char16_t>& u16in;
+    extern __declspec(dllexport) std::basic_ostream<char16_t>& u16out;
 #else
-    extern __attribute__((visibility("default"))) std::wistream& gin;
-    extern __attribute__((visibility("default"))) std::ostream& gout;
+    extern __attribute__((visibility("default"))) std::basic_istream<char16_t>& u16in;
+    extern __attribute__((visibility("default"))) std::basic_ofstream<char16_t>& u16out;
 #endif
 } // namespace cpp

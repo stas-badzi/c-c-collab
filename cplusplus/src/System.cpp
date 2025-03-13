@@ -37,7 +37,7 @@ utfstr System::self = utfstr();
     }
 
     int cpp::System::MakeDirectory(utfcstr path) {
-        Console::out << L"MakeDirectory: " << path << endl; 
+        Console::out << u"MakeDirectory: " << WStringToU16String(path) << u'\n'; 
         SECURITY_ATTRIBUTES sec_atrs{};
         sec_atrs.nLength = sizeof(SECURITY_ATTRIBUTES);
         sec_atrs.lpSecurityDescriptor = nullptr;
@@ -220,7 +220,6 @@ utfstr System::self = utfstr();
         si.cb = sizeof(STARTUPINFO);
         int status;
         DWORD dwCreationFlags = CREATE_PRESERVE_CODE_AUTHZ_LEVEL;
-        //Console::out << path << L' ' << args_v << endl;
         if (no_args)
             status = CreateProcess(path, nullptr, nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
         else status = CreateProcess(path, (wchar_t*)args_v.c_str(), nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
@@ -375,7 +374,6 @@ utfstr System::self = utfstr();
         si.cb = sizeof(STARTUPINFO);
         int status;
         DWORD dwCreationFlags = CREATE_PRESERVE_CODE_AUTHZ_LEVEL;
-        //Console::out << path << L' ' << args_v << endl;
         if (no_args)
             status = CreateProcess(path, nullptr, nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
         else status = CreateProcess(path, (wchar_t*)args_v.c_str(), nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);

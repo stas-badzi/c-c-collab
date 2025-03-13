@@ -142,6 +142,7 @@ namespace cpp {
         static struct MouseStatus GetMouseStatus(void);
         static std::pair<uint8_t,uint8_t> MouseButtonClicked(void); // returns button ID and whitch consecutive click was it
         static uint8_t MouseButtonReleased(void); // returns button ID
+        static inline void HandleOutput(void) { return cppimp::Console_HandleOutput(); }
         static inline void Update(void) { return cppimp::Console_Update(); }
         static inline void SetResult(std::u16string result) { return cppimp::Console_SetResult(uniconv::U16StringToUnicode(result)); }
         static inline void MoveCursor(int x, int y) { return cppimp::Console_MoveCursor(x,y); }
@@ -151,10 +152,10 @@ namespace cpp {
         static inline void SetTitle(std::u16string title) { return cppimp::Console_SetTitle(uniconv::U16StringToUnicode(title)); }
     };
 #if defined(_WIN32) || defined(__CYGWIN__)
-    extern __declspec(dllimport) std::wistream& gin;
-    extern __declspec(dllimport) std::wostream& gout;
+    extern __declspec(dllimport) std::basic_istream<char16_t>& u16in;
+    extern __declspec(dllimport) std::basic_ostream<char16_t>& u16out;
 #else
-    extern std::wistream& gin;
-    extern std::ostream& gout;
+    extern std::basic_istream<char16_t>& u16in;
+    extern std::basic_ostream<char16_t>& u16out;
 #endif
 }
