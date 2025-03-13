@@ -1,4 +1,6 @@
 #include "System.hpp"
+
+#include "Console.hpp"
 #include <stdarg.h>
 
 #include <iostream>
@@ -35,13 +37,61 @@ utfstr System::self = utfstr();
     }
 
     int cpp::System::MakeDirectory(utfcstr path) {
-        //wcerr << L"MakeDirectory: " << path << endl; 
+        Console::out << u"MakeDirectory: " << WStringToU16String(path) << u'\n'; 
         SECURITY_ATTRIBUTES sec_atrs{};
         sec_atrs.nLength = sizeof(SECURITY_ATTRIBUTES);
         sec_atrs.lpSecurityDescriptor = nullptr;
         sec_atrs.bInheritHandle = false;
         if (CreateDirectory(path, &sec_atrs)) return 0;
         return GetLastError(); 
+    }
+
+    int cpp::System::ClearDirectory(uniconv::utfcstr path) {
+        wstring folderPath = path;
+        if (folderPath.back() != L'\\') folderPath.push_back(L'\\');
+        folderPath.push_back(L'*');
+        WIN32_FIND_DATA info;
+        HANDLE FindHndle = FindFirstFileEx(folderPath.c_str(), FindExInfoBasic, &info, FindExSearchNameMatch, NULL, 0);
+        do {
+            wstring fileFound = path;
+            if (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+                if (wcscmp(info.cFileName, L".") == 0 || wcscmp(info.cFileName, L"..") == 0) continue;
+                if (fileFound.back() != L'\\') fileFound.push_back(L'\\');
+                fileFound.append(info.cFileName);
+                ClearDirectory(fileFound.c_str());
+                DeleteDirectory(fileFound.c_str());
+                continue;
+            }
+            if (fileFound.back() != L'\\') fileFound.push_back(L'\\');
+            fileFound.append(info.cFileName);
+            if (RemoveFile(fileFound.c_str())) exit(0xC3);
+        } while(FindNextFile(FindHndle, &info));
+        return !FindClose(FindHndle);
+    }
+
+    int cpp::System::DeleteDirectory(uniconv::utfcstr path) {
+        if (RemoveDirectory(path)) return 0;
+        return GetLastError();
+    }
+
+    int cpp::System::RemoveFile(uniconv::utfcstr path) {
+        if (DeleteFile(path)) return 0;
+        return GetLastError();
+    }
+
+    bool cpp::System::IsFile(uniconv::utfcstr path) {
+        DWORD dwAttrib = GetFileAttributes(path);
+        return (dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+    }
+
+    bool cpp::System::IsDirectory(uniconv::utfcstr path) {
+        DWORD dwAttrib = GetFileAttributes(path);
+        return (dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+    }
+
+    bool cpp::System::DoesPathExist(uniconv::utfcstr path) {
+        DWORD dwAttrib = GetFileAttributes(path);
+        return (dwAttrib != INVALID_FILE_ATTRIBUTES);
     }
 
     int cpp::System::Shell(uniconv::utfcstr arg) {
@@ -170,7 +220,6 @@ utfstr System::self = utfstr();
         si.cb = sizeof(STARTUPINFO);
         int status;
         DWORD dwCreationFlags = CREATE_PRESERVE_CODE_AUTHZ_LEVEL;
-        //wcerr << path << L' ' << args_v << endl;
         if (no_args)
             status = CreateProcess(path, nullptr, nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
         else status = CreateProcess(path, (wchar_t*)args_v.c_str(), nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
@@ -325,7 +374,6 @@ utfstr System::self = utfstr();
         si.cb = sizeof(STARTUPINFO);
         int status;
         DWORD dwCreationFlags = CREATE_PRESERVE_CODE_AUTHZ_LEVEL;
-        //wcerr << path << L' ' << args_v << endl;
         if (no_args)
             status = CreateProcess(path, nullptr, nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
         else status = CreateProcess(path, (wchar_t*)args_v.c_str(), nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
@@ -374,6 +422,16 @@ utfstr System::self = utfstr();
 
 int cpp::System::MakeDirectory(utfcstr path) {
     if (mkdir(path, 0777) == 0) return 0;
+    return errno;
+}
+
+int cpp::System::DeleteDirectory(utfcstr path) {
+    if (rmdir(path) == 0) return 0;
+    return errno;
+}
+
+int cpp::System::RemoveFile(utfcstr path) {
+    if (unlink(path) == 0) return 0;
     return errno;
 }
 
@@ -443,6 +501,7 @@ bool cpp::System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr arg, .
     }
     return true;
 }
+
 
 
 int cpp::System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {

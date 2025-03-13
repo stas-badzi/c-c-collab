@@ -3,9 +3,15 @@ using Utility;
 
 namespace CppImp {
 
-    public class System {
+    public class _ {
         private const string DllSource = @"" + DllHandle.Prefix + "factoryrushplus" + DllHandle.Suffix;
         
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "ThrowMsg", CharSet = CharSet.Unicode)]
+        public static extern void ThrowMsg(IntPtr arg1);
+    }
+
+    public class System {
+        private const string DllSource = @"" + DllHandle.Prefix + "factoryrushplus" + DllHandle.Suffix;
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "System_GetRootDir", CharSet = CharSet.Unicode)]
         public static extern IntPtr GetRootDir();

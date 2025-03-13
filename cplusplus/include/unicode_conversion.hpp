@@ -5,6 +5,7 @@
 #include <limits>
 #include <string.h>
 #include <math.h>
+#include <iterator>
 
 #include "utils/dllalloc.h"
 
@@ -14,6 +15,7 @@
     #include <locale>
     #include <codecvt>
     #include <bitset>
+    #include <string_view>
     #include <exception>
     #include "cuchar.hpp"
 #endif
@@ -22,19 +24,19 @@ namespace uniconv {
 
     typedef uint32_t unichar;
 
-    inline unsigned char GetUnsignedChar(char val) {
+    inline constexpr unsigned char GetUnsignedChar(char val) {
         return val;
     }
 
-    inline char GetDefaultChar(unsigned char val) {
+    inline constexpr char GetDefaultChar(unsigned char val) {
         return (std::numeric_limits<char>::is_signed) ? (char)val+2*INT8_MIN : val;
     }
 
-    inline unsigned int GetUnsignedWChar(wchar_t val) {
+    inline constexpr unsigned int GetUnsignedWChar(wchar_t val) {
         return (std::numeric_limits<wchar_t>::is_signed) ? (unsigned int)(((long long)val-2LL*WCHAR_MIN)%(1LL+WCHAR_MAX-WCHAR_MIN)) : val;
     }
 
-    inline wchar_t GetDefaultWChar(unsigned int val) {
+    inline constexpr wchar_t GetDefaultWChar(unsigned int val) {
         return (std::numeric_limits<wchar_t>::is_signed) ? (wchar_t)val+2LL*WCHAR_MIN : val;
     }
 
@@ -44,21 +46,21 @@ namespace uniconv {
     typedef wchar_t utfchar;
     typedef std::wstring utfstr;
     typedef const wchar_t* utfcstr;
-    inline utfstr to_string(utfchar val) {
+    inline constexpr utfstr to_string(utfchar val) {
         utfstr out; 
         out.push_back(val);
         return out;
     }
 #else
     #define to_nstring(val) to_string(val)
-    #define N(val) val
+    #define N(val) u8##val
     typedef std::string utfchar;
     typedef std::string utfstr;
     typedef const char* utfcstr;
-    inline utfstr to_string(utfchar val) { return val; }
+    inline constexpr utfstr to_string(utfchar val) { return val; }
 #endif
 
-inline unichar Utf8ToUnicode(utfchar utf8_code) {
+inline constexpr unichar Utf8ToUnicode(utfchar utf8_code) {
     
 #ifdef _WIN32
     return utf8_code;
@@ -72,7 +74,7 @@ inline unichar Utf8ToUnicode(utfchar utf8_code) {
 }
 
 
-inline utfchar UnicodeToUtf8(unichar unicode) {
+inline constexpr utfchar UnicodeToUtf8(unichar unicode) {
 
 #ifdef _WIN32
     return unicode;
@@ -88,18 +90,59 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
 #endif
 }
 
+inline unichar* U16StringToUnicode(std::u16string utf16s) {
+    unichar* out = (unichar*)__dllalloc(sizeof(unichar) * (utf16s.size() + 1));
+    for (size_t i = 0; i < utf16s.size(); ++i)
+        out[i] = static_cast<unichar>(utf16s[i]);
+    out[utf16s.size()] = 0;
+    return out;
+}
+
+inline std::u16string UnicodeToU16String(unichar* unicodes) {
+    std::u16string out;
+    for (int i = 0; unicodes[i] != 0; ++i)
+        out.push_back(static_cast<char16_t>(unicodes[i]));
+    __dllfree(unicodes);
+    return out;
+}
+
+inline constexpr char16_t UnicodeToChar16(unichar unicode) {
+    return static_cast<char16_t>(unicode);
+}
+
+inline constexpr unichar Char16ToUnicode(char16_t char16) {
+    return static_cast<unichar>(char16);
+}
+
 #ifdef _WIN32
-    inline utfstr WStringToNative(std::wstring wstr) { return wstr; }
-    inline utfchar WCharToNative(wchar_t wchar) { return wchar; }
-    inline std::wstring NativeToWString(utfcstr str) { return utfstr(str); }
-    inline wchar_t NativeToWChar(utfchar utfchar) { return utfchar; }
+    inline constexpr std::u16string NativeToU16String(std::wstring str) {
+        std::u16string out;
+        out.reserve(str.size());
+        copy(str.begin(), str.end(), back_inserter(out));
+        return out;
+    }
+
+    inline constexpr std::wstring U16StringToNative(std::u16string u16str) {
+        std::wstring out;
+        out.reserve(u16str.size());
+        copy(u16str.begin(), u16str.end(), back_inserter(out));
+        return out;
+    }
+
+    inline constexpr std::u16string WStringToU16String(std::wstring wstr) { return NativeToU16String(wstr); }
+    
+    inline constexpr std::wstring U16StringToWString(std::u16string u16str) { return U16StringToNative(u16str); }
+
+    inline constexpr char16_t WCharToChar16(wchar_t wc) { return wc; }
+    inline constexpr wchar_t Char16ToWChar(char16_t c16) { return c16; }
+
     // don't use this function anymore
     inline utfchar ReadUtfChar(utfcstr str, size_t offset = 0, size_t* bytes_read = nullptr) {
         if (bytes_read != nullptr) { *bytes_read = 1; }
         return str[offset];
     }
     
-    inline unichar* Utf8StringToUnicode (utfcstr utf8s) {
+    inline unichar* Utf8StringToUnicode(utfcstr utf8s) {
         unichar* out = (unichar*)__dllalloc(sizeof(unichar) * (wcslen(utf8s) + 1));
         size_t offset;
         for (size_t i = 0; i < wcslen(utf8s); i++) out[i] = utf8s[i];
@@ -107,7 +150,7 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
         return out;
     }
 
-    inline utfstr UnicodeToUtf8String (unichar* unicodes) {
+    inline utfstr UnicodeToUtf8String(unichar* unicodes) {
         utfstr out;
         for (int i = 0; unicodes[i] != 0; ++i) {
             out.push_back(unicodes[i]);
@@ -117,6 +160,54 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
     }
 
 #else
+    inline constexpr std::u16string NativeToU16String(std::string str) {
+        using namespace std;
+        std::u16string out;
+        mbstate_t state = mbstate_t();
+        char* c = (char*)str.c_str();
+        char* end = c + str.size();
+        while (c < end) {
+            char16_t c16;
+            size_t siz = mbrtoc16(&c16, c, end-c, &state);
+            switch (siz) {
+            case static_cast<size_t>(-1):
+                exit(1);
+            case static_cast<size_t>(-2):
+                continue;
+            case static_cast<size_t>(-3):
+                out.push_back(c16);
+                continue;
+            default:
+                out.push_back(c16);
+                c += siz;
+                continue;
+            }
+        }
+        // handling surrogate pair at end of string
+        char empty = 0;
+        char16_t c16;
+        size_t siz =  mbrtoc16(&c16, &empty, 1, &state);
+        if (siz == static_cast<size_t>(-3))
+            out.push_back(c16);
+        return out;
+    }
+
+    inline constexpr std::string U16StringToNative(std::u16string u16str) {
+        using namespace std;
+        std::string out;
+        std::mbstate_t state = std::mbstate_t();
+        char16_t* c16 = (char16_t*)u16str.c_str();
+        char16_t* end = c16 + u16str.size();
+        --c16; while (++c16 < end) {
+            char ch[4] = {0};
+            size_t siz = c16rtomb(ch, c16, &state);
+            if (siz != (size_t)-1)
+                for (char c8 : std::string_view{ch, siz})
+                    out.push_back(c8);
+            else exit(1);
+        }
+    }
+
     // don't use this function anymore
     inline utfchar ReadUtfChar(utfcstr str, size_t offset = 0, size_t* bytes_read = nullptr) {
         utfchar out;
@@ -213,29 +304,26 @@ inline utfchar UnicodeToUtf8(unichar unicode) {
         return out;
     }
 
-    inline utfstr WStringToNative(std::wstring wstr) {
-        unichar* uninput = (unichar*)__dllalloc(sizeof(unichar) * (wstr.size() + 1) );
-        for (size_t i = 0; i < wstr.size(); ++i)
-            uninput[i] = wstr[i];
-        uninput[wstr.size()] = 0;
-        return UnicodeToUtf8String(uninput);
-    }
-
-    inline utfchar WCharToNative(wchar_t wchar) {
-        return UnicodeToUtf8(wchar);
-    }
-
-    inline std::wstring NativeToWString(utfcstr utf8str) {
-        auto ret =  Utf8StringToUnicode(utf8str);
-        std::wstring out = L"";
-        for (size_t i = 0; ret[i] != 0; i++)
-            out.push_back(ret[i]);
-        __dllfree(ret);
+    inline constexpr std::u16string WStringToU16String(std::wstring wstr) {
+        std::u16string out;
+        for (size_t i = 0; i < wstr.size(); i++)
+            out.push_back(static_cast<char16_t>(wstr[i]));
         return out;
     }
 
-    inline wchar_t NativeToWChar(utfchar utfchar) {
-        return Utf8ToUnicode(utfchar);
+    inline constexpr char16_t WCharToChar16(wchar_t wchar) {
+        return static_cast<char16_t>(wchar);
+    }
+
+    inline constexpr std::wstring U16StringToWString(std::u16string u16str) {
+        std::wstring out;
+        for (size_t i = 0; i < u16str.size(); i++)
+            out.push_back(static_cast<wchar_t>(u16str[i]));
+        return out;
+    }
+
+    inline constexpr wchar_t Char16ToWChar(char16_t utfchar) {
+        return static_cast<wchar_t>(utfchar);
     }
 
 #endif
