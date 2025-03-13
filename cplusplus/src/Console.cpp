@@ -2843,7 +2843,7 @@ contcons:
     fl = topen((Console::tmp_data + subdir + procdir + N("exit.dat")).c_str(), L"r");
     if (!fl) ThrowMsg(utfstr(N("Couldn't open file: ")) + Console::tmp_data + subdir + procdir + N("exit.dat"));
     int pret;
-    fscanf(fl, "%d", &pret);
+    fread(&pret, sizeof(int), 1, fl);
     fclose(fl);
 
     fl = topen((Console::tmp_data + subdir + procdir + N("result.dat")).c_str(), L"r");
@@ -2979,7 +2979,7 @@ contcons:
         FILE* fl = topen((retdir + N("exit.dat")).c_str(), L"r");
         if (!fl) ThrowMsg(utfstr(N("Couldn't open file: ")) + retdir + N("exit.dat"));
         int pret;
-        fscanf(fl, "%d", &pret);
+        fread(&pret, sizeof(int), 1, fl);
         fclose(fl);
 
         fl = topen((retdir + N("result.dat")).c_str(), L"r");
@@ -3125,7 +3125,7 @@ contcons:
         FILE* fl = topen((retdir + N("exit.dat")).c_str(), L"r");
         if (!fl) ThrowMsg(utfstr(N("Couldn't open file: ")) + retdir + N("exit.dat"));
         int pret;
-        fscanf(fl, "%d", &pret);
+        fread(&pret, sizeof(int), 1, fl);
         fclose(fl);
 
         fl = topen((retdir + N("result.dat")).c_str(), L"r");
