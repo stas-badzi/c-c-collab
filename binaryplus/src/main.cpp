@@ -98,7 +98,7 @@ int Main(void) {
 
     auto popx = Console::PopupWindow(3,0,nullptr);
     if (!popx.has_value()) ThrowMsg(u"Popup launch or exec failed");
-    auto sym = Console::Symbol::CreateTexture(popx.value().second);
+    auto sym = Console::Symbol::CreateTexture(to_u16string(popx.value().first));
     Console::FillScreen(sym);
     Console::Sleep(20);
 
