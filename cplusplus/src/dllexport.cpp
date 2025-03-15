@@ -14,6 +14,18 @@ using namespace uniconv;
 
 // Console
 
+    libexport void ThrowMsg(uniconv::unichar* msg) {
+        cpp::Console::ThrowMsg(uniconv::UnicodeToUtf8String(msg).c_str());
+    }
+
+    libexport void Exit(int code) {
+        cpp::Console::Exit(code);
+    }
+
+    libexport void QuickExit(int code) {
+        cpp::Console::QuickExit(code);
+    }
+
     libexport void Console_Init(void) {
         cpp::Console::Init();
     }
@@ -28,6 +40,14 @@ using namespace uniconv;
 
     libexport void Console_HandleKeyboard(void) {
         cpp::Console::HandleKeyboard();
+    }
+
+    libexport void Console_DontHandleKeyboard(void) {
+        cpp::Console::DontHandleKeyboard();
+    }
+
+    libexport void Console_ResetKeyboard(void) {
+        cpp::Console::ResetKeyboard();
     }
 
     libexport bool Console_IsKeyDown(enum Key::Enum arg1) {
@@ -78,12 +98,52 @@ using namespace uniconv;
         return cpp::Console::FillScreen(texture);
     }
 
+    libexport void Console_ClearScreenBuffer(void) {
+        return cpp::Console::ClearScreenBuffer();
+    }
+
     libexport int16_t Console_GetWindowWidth(void) {
         return cpp::Console::GetWindowWidth();
     }
 
     libexport int16_t Console_GetWindowHeight(void) {
         return cpp::Console::GetWindowHeight();
+    }
+
+    libexport void Console_HandleOutput(void) {
+        return cpp::Console::HandleOutput();
+    }
+
+    libexport void Console_Update(void) {
+        return cpp::Console::Update();
+    }
+
+    libexport void Console_SetResult(unichar* result) {
+        return cpp::Console::SetResult(UnicodeToUtf8String(result).c_str());
+    }
+
+    libexport void Console_MoveCursor(int x, int y) {
+        return cpp::Console::MoveCursor(x,y);
+    }
+
+    libexport void Console_ShowCursor(void) {
+        return cpp::Console::ShowCursor();
+    }
+
+    libexport void Console_HideCursor(void) {
+        return cpp::Console::HideCursor();
+    }
+
+    libexport void Console_SetCursorSize(uint8_t size) {
+        return cpp::Console::SetCursorSize(size);
+    }
+
+    libexport void Console_SetTitle(uniconv::unichar* title) {
+        return cpp::Console::SetTitle(uniconv::UnicodeToUtf8String(title).c_str());
+    }
+
+    libexport void Console_ReverseCursorBlink(void) {
+        return cpp::Console::ReverseCursorBlink();
     }
 
     libexport int32_t Console_GetArgC(void) {
@@ -111,14 +171,52 @@ using namespace uniconv;
         return out;
     }
 
+    struct popwinretval { bool val; int code; uniconv::unichar* result; };
+
+    libexport popwinretval Console_PopupWindow(int type, int argc, uniconv::unichar* argv[]) {
+        uniconv::utfcstr* args = (uniconv::utfcstr*)System::AllocateMemory(sizeof(uniconv::utfcstr)*argc);
+        for (int i = 0; i < argc; i++) {
+            uniconv::utfstr arg = UnicodeToUtf8String(argv[i]).c_str();
+            args[i] = (uniconv::utfcstr)System::AllocateMemory(sizeof(wchar_t)*arg.size());
+            char_t* loc = (char_t*)args[i];
+            for (size_t j = 0; j < arg.size(); j++) loc[j] = arg[j];
+        }
+        System::FreeMemory(argv);
+        auto ret = Console::PopupWindow(type, argc, args);
+        popwinretval retval;
+        if (retval.val = ret.has_value()) {
+            retval.code = ret.value().first;
+            retval.result = Utf8StringToUnicode(ret.value().second.c_str());
+        }
+        System::FreeMemory(args);
+        return retval;
+    }
+
+    libexport auto Console_PopupWindowAsync(int type, int argc, const char16_t* arg16v[]) {
+        return Console::PopupWindowAsync(type, argc, arg16v);
+    }
+
+    struct popwinasyncretval { bool val; void* promise; };
+
     int (*Console_sub)(int);
 
-    int sub (int arg1) {
+    int sub(int arg1) {
         return Console_sub(arg1);
     }
 
     libexport void Console_sub$define(int (*arg1)(int)) {
         Console_sub = arg1;
+    }
+    
+
+    int (*_Main)(void);
+
+    int Main() {
+        return _Main();
+    }
+
+    libexport void Main$define(int (*arg1)(void)) {
+        _Main = arg1;
     }
 
     // Symbol
@@ -232,8 +330,12 @@ using namespace uniconv;
 // ~Console
 
 // System
-    libexport uniconv::unichar* System_GetRootPath(void) {
-        return uniconv::Utf8StringToUnicode(cpp::System::GetRootPath().c_str());
+    libexport uniconv::unichar* System_GetRootDir(void) {
+        return uniconv::Utf8StringToUnicode(cpp::System::GetRootDir().c_str());
+    }
+
+    libexport uniconv::unichar* System_GetSelfPath(void) {
+        return uniconv::Utf8StringToUnicode(cpp::System::GetSelfPath().c_str());
     }
     
     libexport uniconv::unichar* System_ToNativePath(uniconv::unichar* arg1) {
@@ -426,7 +528,10 @@ using namespace uniconv;
 // Camera
     libexport void* Game_Camera_Construct(int height, int width, void* symptr) {
         cpp::Game::Camera cam(height, width, *(cpp::Console::Symbol*)symptr);
-        return (void*)&cam;
+        // nie mozna zwracac pointera do zmiennej lokalnej, więc:
+        auto ret = (cpp::Game::Camera*)System::AllocateMemory(sizeof(cpp::Game::Camera)); // jak malloc, tylko że z kontrolą pamięci przy `debug=1`
+        *ret = cam;
+        return ret;
     }
 
     libexport void Game_Camera_DrawTexture(void* textureptr, cpp::Game::MatrixPosition* centerptr, cpp::Game::Camera* cameraptr) {

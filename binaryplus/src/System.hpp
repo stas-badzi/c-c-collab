@@ -12,8 +12,9 @@
 namespace cpp {
     class System {
     public:
-        static std::wstring GetRootPath(void);
-        static std::wstring ToNativePath(std::wstring path);
+        static std::u16string GetRootDir(void);
+        static std::u16string GetSelfPath(void);
+        static std::u16string ToNativePath(std::u16string path);
 
         static nint AllocateMemory(size_t bytes);
         static void FreeMemory(nint pointer);

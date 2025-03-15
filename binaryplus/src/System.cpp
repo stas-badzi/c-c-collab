@@ -5,12 +5,16 @@ using namespace cpp;
 using namespace std;
 using namespace uniconv;
 
-wstring System::ToNativePath(wstring path) {
-    return NativeToWString(UnicodeToUtf8String(cppimp::System_ToNativePath(Utf8StringToUnicode(WStringToNative(path).c_str()))).c_str());
+u16string System::ToNativePath(u16string path) {
+    return UnicodeToU16String(cppimp::System_ToNativePath(U16StringToUnicode(path)));
 }
 
-wstring System::GetRootPath(void) {
-    return NativeToWString(UnicodeToUtf8String(cppimp::System_GetRootPath()).c_str());
+u16string System::GetRootDir(void) {
+    return UnicodeToU16String(cppimp::System_GetRootDir());
+}
+
+u16string System::GetSelfPath(void) {
+    return UnicodeToU16String(cppimp::System_GetSelfPath());
 }
 
 nint System::AllocateMemory(size_t bytes) {

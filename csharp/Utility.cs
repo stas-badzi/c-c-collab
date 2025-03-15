@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Cpp;
+using _ = Cpp._;
 using CppImp;
 
 #pragma warning disable CS8500
@@ -297,7 +298,7 @@ namespace Utility
         #if WIN32 // it's suppose to not be used even on windows
             string? output = Marshal.PtrToStringUni(ptr);
             Exec.FreeMemory(ptr);
-            if (output == null) { throw new Exception("Parsed data is null"); }
+            if (output == null) { _.ThrowMsg("PtrToString Null"); return ""; }
             return output;
         #else
             int int32_size = sizeof(Int32);

@@ -51,9 +51,9 @@ namespace Cs
             var file = new List<List<char>>(); // Every character of file
             var symbols = new Texture(); // Final symbol list
 
-            if (!int.TryParse(fileImported[0], out int width)) throw new Exception("Parsing width failed");
+            if (!int.TryParse(fileImported[0], out int width)) _.ThrowMsg("Parsing width failed");
             
-            if (!int.TryParse(fileImported[1], out int height)) throw new Exception("Parsing height failed");
+            if (!int.TryParse(fileImported[1], out int height)) _.ThrowMsg("Parsing height failed");
 
             for (int i = 2; i < fileImported.Count; i++) { // Importing file to List<List<char>>
                 file.Add(ToCharList(fileImported[i]));

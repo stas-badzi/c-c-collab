@@ -6,6 +6,15 @@
 #include <utility>
 #include <clang_constexpr.h>
 #include <sstream>
+#include <fstream>
+#include <filesystem>
+#include <mutex>
+#include <cwchar>
+#include <optional>
+#include <inttypes.h>
+#include <stdio.h>
+#include <promise.hpp>
+#include <thread>
 #include "System.hpp"
 
 #ifdef __APPLE__
@@ -27,14 +36,18 @@
     #include <tlhelp32.h>
     #include <psapi.h>
     #include <dbghelp.h>
+    #include <process.h>
     #include <windows/key.hpp>
     #include <iostream>
+    #include <conio.h>
+    #include <windows/thread_safe/queue>
+    #include <windows/thread_safe/vector>
 #ifndef _MSVC
     #include <windows/quick_exit.h>
 #endif
+    typedef wchar_t char_t;
 #else
     #include <signal.h>
-    #include <stdio.h>
     #include <limits>
     #include <climits>
     #include <sys/ioctl.h>
@@ -57,13 +70,26 @@
     #include <fcntl.h>
 #elif __APPLE__
     #include <apple/key.hpp>
+    #include <apple/keyboard.h>
+    #include <apple/openfile.h>
+    #include <crt_externs.h>
+    #include <libproc.h>
 #elif __CYGWIN__
     #include <windows.h>
     #include <windows/key.hpp>
 #else
 #endif
+    typedef char char_t;
 #endif
+#ifdef __APPLE__
+    #define KEYBOARD_MAX 0x80
+#else
     #define KEYBOARD_MAX 256
+#endif
+
+// change to 1 for less cpu usage but less responsiveness (windows keyboard input)
+#define SLEEP_THREAD_INPUT false
+// todo: make it into an cmdline trigger
 
 #define MOUSE_BUTTON_1  1
 #define MOUSE_BUTTON_2  2
@@ -103,6 +129,10 @@ namespace cpp {
             MouseStatus(void);
         };
 
+        struct PopupResult {
+            bool finished;
+        };
+
         struct ClientInfo {
             enum class OS {
                 WINDOWS,
@@ -110,6 +140,9 @@ namespace cpp {
                 CYGWIN,
                 LINUX,
                 MACOS,
+            #ifdef BSD
+            #undef BSD
+            #endif
                 BSD
             } operating_system;
 
@@ -132,12 +165,15 @@ namespace cpp {
         } client_info;
         
     private:
+        // max time to wait for the popup window to start up before returning -1 (in milliseconds)
+        static int max_popup_startup_wait;
         static bool initialised;
+        static std::mutex stderr_lock;
         static std::bitset<KEYBOARD_MAX> key_states;
         static int key_hit;
         static int key_released;
         static unsigned short double_click_max; // = 500;
-        static std::bitset<5> mouse_buttons_down;
+        static std::bitset<16> mouse_buttons_down;
         static bool focused;
         static struct MouseStatus mouse_status;
         static uint8_t this_mouse_button;
@@ -150,52 +186,90 @@ namespace cpp {
         static uniconv::utfcstr* argv;
         static struct ToggledKeys keys_toggled;
         static bool emulator;
-        static int pid;
+        static pid_t pid;
         static bool sub_proc;
         static int ret;
-        #ifdef _WIN32
-            static const wchar_t* subdir;
-            //static std::vector<std::vector<COLORREF>> SaveScreen(void);
-            //static std::pair<std::pair<uint16_t,uint16_t>,std::pair<uint16_t,uint16_t>> GetOffsetSymSize(int color1 = 3, int color2 = 9, int color3 = 1);
-            
-            //static std::pair<uint16_t,uint16_t> scr_offs;
-            //static std::pair<uint16_t,uint16_t> sym_size;
-            //static bool auto_size_updates;
-            //static int16_t old_width;
-            //static int16_t old_height;
-            //static RECT old_rect;
-            static uint8_t default_fcol;
-            static uint8_t default_bcol;
-            static HANDLE screen;
-            static HANDLE fd;
-            static HWND window;
-            static HDC device;
-            static DWORD old_console;
-            static HANDLE old_buffer;
-            static inline constexpr uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2);
-            //static std::pair<uint16_t,uint16_t> xyoffset;
-            //static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
-        #else
-            static const char* subdir;
-            static struct termios old_termios;
-            static struct winsize window_size;
-            static char buf[127]; static int8_t buf_it;
-        #ifdef __linux__
-            static inline char GetChar(void);
-            static struct termios old_fdterm;
-            static int old_kbdmode;
-            static int fd;
-            static int fb_fd;
-            static std::pair<uint32_t,uint32_t> pixelpos; 
-            static input_event events[255]; static uint8_t evnts_siz;
-            static int mouse_fd;
-            static bool discard_mouse;
-            static bool no_gpm;
-            static bool parent;
-            static uint8_t root_type;
-            static Key::Enum key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX];
-        #endif
-        #endif
+        static std::array<bool,UINT16_MAX> used_pids;
+        static uint16_t next_pid;
+        static char_t buf[127]; static int8_t buf_it;
+        static std::pair<int16_t,int16_t> cursorpos;
+        static bool cursor_visible;
+        static uint8_t cursor_size;
+        static bool cursor_blink_opposite;
+        static uniconv::utfstr user_data;
+        static uniconv::utfstr dev_data;
+        static uniconv::utfstr tmp_data;
+        static std::vector<pid_t> popup_pids; // pid_t may differ, but it should be <= int64_t
+    #ifdef _WIN32
+        static std::mutex screen_lock;
+        static const wchar_t* subdir;
+        //static std::vector<std::vector<COLORREF>> SaveScreen(void);
+        //static std::pair<std::pair<uint16_t,uint16_t>,std::pair<uint16_t,uint16_t>> GetOffsetSymSize(int color1 = 3, int color2 = 9, int color3 = 1);
+        
+        //static std::pair<uint16_t,uint16_t> scr_offs;
+        //static std::pair<uint16_t,uint16_t> sym_size;
+        //static bool auto_size_updates;
+        //static int16_t old_width;
+        //static int16_t old_height;
+        //static RECT old_rect;
+        static uint8_t default_fcol;
+        static uint8_t default_bcol;
+        static HANDLE screen;
+        static HANDLE fd;
+        static HWND window;
+        static HDC device;
+        static DWORD old_console;
+        static HANDLE old_buffer;
+        static CONSOLE_CURSOR_INFO old_curinf;
+        static tsqueue<wchar_t>* input_buf;
+        static HANDLE input_thread;
+        static void* input_thread_arg;
+        static HANDLE super_thread;
+        static bool* super_thread_run;
+        static void* super_thread_arg;
+        static bool* is_setting_cursor;
+        static tsvector<HANDLE>* thread_handles;
+        static std::wofstream real_out; 
+        static inline constexpr uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2);
+        static DWORD WINAPI MoveCursorThread(LPVOID lpParam);
+        static DWORD WINAPI SuperThread(LPVOID lpParam);
+        //static std::pair<uint16_t,uint16_t> xyoffset;
+        //static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
+    #else
+        static std::ofstream real_out;
+        static const char* subdir;
+        static struct termios old_termios;
+        static struct winsize window_size;
+        static mbstate_t streammbs;
+    #ifdef __linux__
+        static struct termios old_fdterm;
+        static int old_kbdmode;
+        static int fd;
+        static int fb_fd;
+        static std::pair<uint32_t,uint32_t> pixelpos; 
+        static input_event events[255]; static uint8_t evnts_siz;
+        static int mouse_fd;
+        static bool discard_mouse;
+        static bool no_gpm;
+        static bool parent;
+        static uint8_t root_type;
+        static Key::Enum key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX];
+    #endif
+    #ifdef __APPLE__
+        static pid_t ppid;
+    #endif
+    #endif
+        static uniconv::utfstr GetTerminalExecutableName();
+        static inline char_t GetChar(void);
+        static void PushChar(char_t c);
+        static void XtermMouseAndFocus(void);
+        static void XtermInitTracking(void);
+        static void XtermFinishTracking(void);
+        static void EscSeqSetTitle(const char_t* title);
+        static void EscSeqMoveCursor(void);
+        static void EscSeqSetCursor(void);
+        static void EscSeqSetCursorSize(void);
+        static void EscSeqRestoreCursor(void);
     public:
         static void Init(void);
         static void Fin(void);
@@ -220,20 +294,40 @@ namespace cpp {
             Symbol & operator=(const Symbol &src);
 
             #ifdef _WIN32
-                uint8_t GetAttribute(void);
+                uint8_t GetAttribute(void) const;
                 void SetAttribute(uint8_t attribute);
             #endif
 
         };
+        enum class conf : bool {
+            Native = true,
+            Terminal = false
+        };
+        static struct config_t {
+            conf focus;
+            conf mouse;
+            conf title;
+            conf cursor;
+            conf cursor_size;
+            conf cursor_visibility;
+        } config;
+
+        static struct config_t& GetConfigRef(void);
+
         static int16_t GetWindowWidth(void);
         static int16_t GetWindowHeight(void);
 
         static int32_t GetArgC(void);
         static uniconv::utfcstr* GetArgV(void);
 
-        static void FillScreen(std::vector<std::vector<Symbol> > symbols);
+        static void FillScreen(const std::vector<std::vector<Symbol> >& symbols);
+        static void ClearScreenBuffer(void);
         
         static void HandleKeyboard(void);
+        // Call this when you don't want to handle keyboard input to remove "key pressed" & "key released" states
+        static void DontHandleKeyboard(void);
+        // Call this to reset every key to not-pressed state
+        static void ResetKeyboard(void);
         static bool IsKeyDown(enum Key::Enum key);
         static struct ToggledKeys KeysToggled(void);
         static enum Key::Enum KeyPressed(void);
@@ -246,18 +340,45 @@ namespace cpp {
         static std::pair<uint8_t,uint8_t> MouseButtonClicked(void); // returns button ID and whitch consecutive click was it
         static uint8_t MouseButtonReleased(void); // returns button ID
 
-        static void Sleep(double seconds = 1);
+        static void HandleOutput(void);
+
+        static void Update(void);
+
+        static void Sleep(double seconds = 1.0);
+        static void Exit(int code);
+        static void QuickExit(int code);
+        static void SetResult(uniconv::utfcstr result);
+
+        static void ThrowMsg(const char* msg);
+        static void ThrowMsg(const wchar_t* msg);
+        static void ThrowMsg(const std::string msg);
+        static void ThrowMsg(const std::wstring msg);
 
         static void SetDoubleClickMaxWait(unsigned short milliseconds);
         static unsigned short GetDoubleClickMaxWait(void);
 
-        static std::istringstream in;
+        static std::optional<std::pair<int,uniconv::utfstr>> PopupWindow(int type, int argc, const char_t* argv[]);
+        static std::optional<stsb::promise<std::optional<std::pair<int,uniconv::utfstr>>>> PopupWindowAsync(int type, int argc, const char_t* argv[]);
+        static std::optional<stsb::promise<std::optional<std::pair<int,std::u16string>>>> PopupWindowAsync(int type, int argc, const char16_t* argv[]);
+
+        static void MoveCursor(int x, int y);
+        static void ShowCursor(void);
+        static void HideCursor(void);
+        static void SetCursorSize(uint8_t size);
+        static void SetTitle(const char_t* title);
+        static void ReverseCursorBlink(void);
+        static std::basic_istringstream<char16_t> in;
+        static std::basic_ostringstream<char16_t> out;
+    private:
+        static std::vector<std::vector<Symbol>> old_symbols;
+        static std::pair<int16_t,int16_t> old_scr_size;
+        
     };
-    extern
-#ifdef __WIN32
-    __declspec(dllexport)
+#ifdef _WIN32
+    extern __declspec(dllexport) std::basic_istream<char16_t>& u16in;
+    extern __declspec(dllexport) std::basic_ostream<char16_t>& u16out;
 #else
-    __attribute__((visibility("default")))
+    extern __attribute__((visibility("default"))) std::basic_istream<char16_t>& u16in;
+    extern __attribute__((visibility("default"))) std::basic_ofstream<char16_t>& u16out;
 #endif
-    std::istream& gin;
 } // namespace cpp

@@ -1,0 +1,106 @@
+#include <vector>
+#include <windows.h>
+namespace cpp {
+    template<typename T>
+    struct tsvector {
+        tsvector() {
+            m = CreateMutex(NULL,FALSE,NULL);
+            if (!m) {
+                printf("CreateMutex error: %lu\n", GetLastError());
+                exit(1);
+            }
+        }
+        ~tsvector() {	
+            if (!CloseHandle(m)) {
+                printf("CloseHandle error: %lu\n", GetLastError());
+                exit(1);
+            }
+        }
+        void push_back(T val) {
+            if (WaitForSingleObject(m,INFINITE) != WAIT_OBJECT_0) { printf("WaitForSingleObject error: %lu\n", GetLastError()); exit(1); }
+            v.push_back(val);
+            if (!ReleaseMutex(m)) { printf("ReleaseMutex error: %lu\n", GetLastError()); exit(1); }
+        }
+        void pop_back(void) {
+            if (WaitForSingleObject(m,INFINITE) != WAIT_OBJECT_0) { printf("WaitForSingleObject error: %lu\n", GetLastError()); exit(1); }
+            v.pop_back();
+            if (!ReleaseMutex(m)) { printf("ReleaseMutex error: %lu\n", GetLastError()); exit(1); }
+        }
+        T& operator[](size_t i) {
+            if (WaitForSingleObject(m,INFINITE) != WAIT_OBJECT_0) { printf("WaitForSingleObject error: %lu\n", GetLastError()); exit(1); }
+            T& val = v[i];
+            if (!ReleaseMutex(m)) { printf("ReleaseMutex error: %lu\n", GetLastError()); exit(1); }
+            return val;
+        }
+        T& front(void) {
+            if (WaitForSingleObject(m,INFINITE) != WAIT_OBJECT_0) { printf("WaitForSingleObject error: %lu\n", GetLastError()); exit(1); }
+            T& val = v.front();
+            if (!ReleaseMutex(m)) { printf("ReleaseMutex error: %lu\n", GetLastError()); exit(1); }
+            return val;
+        }
+        T& back(void) {
+            if (WaitForSingleObject(m,INFINITE) != WAIT_OBJECT_0) { printf("WaitForSingleObject error: %lu\n", GetLastError()); exit(1); }
+            T& val = v.back();
+            if (!ReleaseMutex(m)) { printf("ReleaseMutex error: %lu\n", GetLastError()); exit(1); }
+            return val;
+        }
+        T& at(size_t i) {
+            if (WaitForSingleObject(m,INFINITE) != WAIT_OBJECT_0) { printf("WaitForSingleObject error: %lu\n", GetLastError()); exit(1); }
+            T& val = v.at(i);
+            if (!ReleaseMutex(m)) { printf("ReleaseMutex error: %lu\n", GetLastError()); exit(1); }
+            return val;
+        }
+        void clear(void) {
+            if (WaitForSingleObject(m,INFINITE) != WAIT_OBJECT_0) { printf("WaitForSingleObject error: %lu\n", GetLastError()); exit(1); }
+            v.clear();
+            if (!ReleaseMutex(m)) { printf("ReleaseMutex error: %lu\n", GetLastError()); exit(1); }
+        }
+        void resize(size_t s) {
+            if (WaitForSingleObject(m,INFINITE) != WAIT_OBJECT_0) { printf("WaitForSingleObject error: %lu\n", GetLastError()); exit(1); }
+            v.resize(s);
+            if (!ReleaseMutex(m)) { printf("ReleaseMutex error: %lu\n", GetLastError()); exit(1); }
+        }
+        void reserve(size_t s) {
+            if (WaitForSingleObject(m,INFINITE) != WAIT_OBJECT_0) { printf("WaitForSingleObject error: %lu\n", GetLastError()); exit(1); }
+            v.reserve(s);
+            if (!ReleaseMutex(m)) { printf("ReleaseMutex error: %lu\n", GetLastError()); exit(1); }
+        }
+        void erase(size_t i) {
+            if (WaitForSingleObject(m,INFINITE) != WAIT_OBJECT_0) { printf("WaitForSingleObject error: %lu\n", GetLastError()); exit(1); }
+            v.erase(v.begin()+i);
+            if (!ReleaseMutex(m)) { printf("ReleaseMutex error: %lu\n", GetLastError()); exit(1); }
+        }
+        bool empty(void) {
+            if (WaitForSingleObject(m,INFINITE) != WAIT_OBJECT_0) { printf("WaitForSingleObject error: %lu\n", GetLastError()); exit(1); }
+            bool e = v.empty();
+            if (!ReleaseMutex(m)) { printf("ReleaseMutex error: %lu\n", GetLastError()); exit(1); }
+            return e;
+        }
+        size_t size(void) {
+            if (WaitForSingleObject(m,INFINITE) != WAIT_OBJECT_0) { printf("WaitForSingleObject error: %lu\n", GetLastError()); exit(1); }
+            size_t s = v.size();
+            if (!ReleaseMutex(m)) { printf("ReleaseMutex error: %lu\n", GetLastError()); exit(1); }
+            return s;
+        }
+        size_t capacity(void) {
+            if (WaitForSingleObject(m,INFINITE) != WAIT_OBJECT_0) { printf("WaitForSingleObject error: %lu\n", GetLastError()); exit(1); }
+            size_t s = v.capacity();
+            if (!ReleaseMutex(m)) { printf("ReleaseMutex error: %lu\n", GetLastError()); exit(1); }
+            return s;
+        }
+        size_t max_size(void) {
+            if (WaitForSingleObject(m,INFINITE) != WAIT_OBJECT_0) { printf("WaitForSingleObject error: %lu\n", GetLastError()); exit(1); }
+            size_t s = v.max_size();
+            if (!ReleaseMutex(m)) { printf("ReleaseMutex error: %lu\n", GetLastError()); exit(1); }
+            return s;
+        }
+        void shrink_to_fit(void) {
+            if (WaitForSingleObject(m,INFINITE) != WAIT_OBJECT_0) { printf("WaitForSingleObject error: %lu\n", GetLastError()); exit(1); }
+            v.shrink_to_fit();
+            if (!ReleaseMutex(m)) { printf("ReleaseMutex error: %lu\n", GetLastError()); exit(1); }
+        }
+    protected:
+        std::vector<T> v;
+        HANDLE m;
+    };
+}

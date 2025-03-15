@@ -1,3 +1,6 @@
 [submodule "doas-keepenv"]
 	path = utilities/doas-keepenv
 	url = https://github.com/stas-badzi/doas-keepenv
+[submodule "utilities/give-control"]
+	path = utilities/give-control
+	url = https://github.com/stas-badzi/macos-givecontrol.git

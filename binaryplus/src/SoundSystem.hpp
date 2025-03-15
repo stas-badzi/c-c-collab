@@ -1,11 +1,12 @@
 #pragma once
-
-#include <vector>
-#include <unicode_conversion.hpp>
-#include "Console.hpp"
+#include <string>
+#ifdef PlaySound
+#undef PlaySound
+#endif
 
 namespace cs {
     class SoundSystem {
-        static void PlaySound(std::wstring filepath, bool wait = false);
+    public:
+        static void PlaySound(std::u16string filepath, bool wait = false);
     };
 }
