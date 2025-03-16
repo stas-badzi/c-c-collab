@@ -6,6 +6,10 @@ using Cpp;
 
 namespace Cpp
 {
+    public class _ {
+        public static void ThrowMsg(string str) { CppImp._.ThrowMsg(TypeConvert.StringToPtr(str)); }
+    }
+
     public class Exec {
         public static string GetRootDir() { return TypeConvert.PtrToString(CppImp.System.GetRootDir()); }
 

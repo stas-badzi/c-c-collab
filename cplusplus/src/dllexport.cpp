@@ -5,84 +5,26 @@
 
 #include "Console.hpp"
 #include "System.hpp"
-#include "FileSystem.hpp"
+#include "TextureSystem.hpp"
+#include "Game.hpp"
 #include <control_heap.h>
-
-// don't ask (compiler optimazations forced me to do this)
-// now I know the problem but I don;t want to fix it now
-namespace cs {
-    inline std::vector<std::vector<smart_ref<cpp::Console::Symbol> > > PtrToTexture(void* ptr, bool direct = false) {
-        using namespace std;
-        using namespace cpp;
-
-        auto sym = vector<vector<smart_ref<Console::Symbol> > >();
-
-        const int int32_size = sizeof(int32_t);
-        const int intptr_size = sizeof(void*);
-
-        void* now_ptr;
-
-        int32_t height = System::ReadPointer<int32_t>(ptr);
-        now_ptr = System::MovePointer(ptr, int32_size);
-
-        for (int32_t i = 0; i < height; i++) {
-            int32_t width = System::ReadPointer<int32_t>(now_ptr);
-            now_ptr = System::MovePointer(now_ptr, int32_size);
-            vector<smart_ref<Console::Symbol> > now;
-
-            for (int32_t j = 0; j < width; j++) {
-                Console::Symbol* sym = (Console::Symbol*)System::ReadPointer<nint>(now_ptr);
-                if (direct) now.push_back(smart_ref(sym));
-                else now.push_back(smart_ref(Console::Symbol(*sym)));
-                now_ptr = System::MovePointer(now_ptr, intptr_size);
-            }
-
-            if (direct) sym.push_back(now);
-            else sym.push_back(now);
-        }
-
-        System::FreeMemory(ptr);
-        
-        return sym;
-    }
-
-    inline void* TextureToPtr(std::vector<std::vector<cpp::Console::Symbol> > &texture) {
-        using namespace std;
-        using namespace cpp;
-
-        const int int32_size = sizeof(int32_t);
-        const int intptr_size = sizeof(void*);
-        int32_t size, count;
-
-        size = texture.size();
-        count = 0;
-        for (int32_t i = 0; i < size; i++) {
-            count += texture[i].size();
-        }
-
-        void* ret = System::AllocateMemory((size + 1) * int32_size + count * intptr_size);
-
-        count = 0;
-        void* where;
-        System::WritePointer<int32_t>(ret, size);
-        where = System::MovePointer(ret, int32_size);
-        for (int32_t i = 0; i < size; i++) {
-            System::WritePointer<int32_t>(where,texture[i].size());
-            where = System::MovePointer(where, int32_size);
-            for (size_t j = 0; j < texture[i].size(); j++) {
-                System::WritePointer<nint>(where, &texture[i][j]);
-                where = System::MovePointer(where, intptr_size);
-            }
-        }
-
-        return ret;
-    }
-}
 
 
 using namespace uniconv;
 
 // Console
+
+    libexport void ThrowMsg(uniconv::unichar* msg) {
+        cpp::Console::ThrowMsg(uniconv::UnicodeToUtf8String(msg).c_str());
+    }
+
+    libexport void Exit(int code) {
+        cpp::Console::Exit(code);
+    }
+
+    libexport void QuickExit(int code) {
+        cpp::Console::QuickExit(code);
+    }
 
     libexport void Console_Init(void) {
         cpp::Console::Init();
@@ -98,6 +40,14 @@ using namespace uniconv;
 
     libexport void Console_HandleKeyboard(void) {
         cpp::Console::HandleKeyboard();
+    }
+
+    libexport void Console_DontHandleKeyboard(void) {
+        cpp::Console::DontHandleKeyboard();
+    }
+
+    libexport void Console_ResetKeyboard(void) {
+        cpp::Console::ResetKeyboard();
     }
 
     libexport bool Console_IsKeyDown(enum Key::Enum arg1) {
@@ -160,8 +110,16 @@ using namespace uniconv;
         return cpp::Console::GetWindowHeight();
     }
 
+    libexport void Console_HandleOutput(void) {
+        return cpp::Console::HandleOutput();
+    }
+
     libexport void Console_Update(void) {
         return cpp::Console::Update();
+    }
+
+    libexport void Console_SetResult(unichar* result) {
+        return cpp::Console::SetResult(UnicodeToUtf8String(result).c_str());
     }
 
     libexport void Console_MoveCursor(int x, int y) {
@@ -213,32 +171,57 @@ using namespace uniconv;
         return out;
     }
 
-    libexport int Console_PopupWindow(int type, int argc, uniconv::unichar* argv[]) {
+    struct popwinretval { bool val; int code; uniconv::unichar* result; };
+
+    libexport popwinretval Console_PopupWindow(int type, int argc, uniconv::unichar* argv[]) {
         uniconv::utfcstr* args = (uniconv::utfcstr*)System::AllocateMemory(sizeof(uniconv::utfcstr)*argc);
         for (int i = 0; i < argc; i++) {
             uniconv::utfstr arg = UnicodeToUtf8String(argv[i]).c_str();
             args[i] = (uniconv::utfcstr)System::AllocateMemory(sizeof(wchar_t)*arg.size());
-        #ifdef _WIN32
-            wchar_t* loc = (wchar_t*)args[i];
-        #else
-            char* loc = (char*)args[i];
-        #endif
+            char_t* loc = (char_t*)args[i];
             for (size_t j = 0; j < arg.size(); j++) loc[j] = arg[j];
         }
         System::FreeMemory(argv);
-        int ret = Console::PopupWindow(type, argc, args);
+        auto ret = Console::PopupWindow(type, argc, args);
+        popwinretval retval;
+        if ((retval.val = ret.has_value())) {
+            retval.code = ret.value().first;
+            retval.result = Utf8StringToUnicode(ret.value().second.c_str());
+        }
         System::FreeMemory(args);
-        return ret;
+        return retval;
     }
+
+#ifdef _WIN32
+    __declspec(dllexport)
+#else
+    __attribute__((visibility("default")))
+#endif
+    auto Console_PopupWindowAsync(int type, int argc, const char16_t* arg16v[]) {
+        return Console::PopupWindowAsync(type, argc, arg16v);
+    }
+
+    struct popwinasyncretval { bool val; void* promise; };
 
     int (*Console_sub)(int);
 
-    int sub (int arg1) {
+    int sub(int arg1) {
         return Console_sub(arg1);
     }
 
     libexport void Console_sub$define(int (*arg1)(int)) {
         Console_sub = arg1;
+    }
+    
+
+    int (*_Main)(void);
+
+    int Main() {
+        return _Main();
+    }
+
+    libexport void Main$define(int (*arg1)(void)) {
+        _Main = arg1;
     }
 
     // Symbol
@@ -547,6 +530,21 @@ using namespace uniconv;
 
 // ~System
 
+// Camera
+    libexport void* Game_Camera_Construct(int height, int width, void* symptr) {
+        cpp::Game::Camera cam(height, width, *(cpp::Console::Symbol*)symptr);
+        // nie mozna zwracac pointera do zmiennej lokalnej, więc:
+        auto ret = (cpp::Game::Camera*)System::AllocateMemory(sizeof(cpp::Game::Camera)); // jak malloc, tylko że z kontrolą pamięci przy `debug=1`
+        *ret = cam;
+        return ret;
+    }
+
+    libexport void Game_Camera_DrawTexture(void* textureptr, cpp::Game::MatrixPosition* centerptr, cpp::Game::Camera* cameraptr) {
+        const auto& texture = cs::PtrToTexture(textureptr, true);
+        cpp::Game::MatrixPosition center = *centerptr;
+        const auto& real_texture = cs::Convert2dVector<Console::Symbol>(texture);
+        cameraptr->DrawTexture(real_texture,center);
+    }
 #ifdef _DEBUG
 // control_heap
     libexport void ControlHeap__save$ALLOCATIONS(void* arg1, unsigned long arg2) {

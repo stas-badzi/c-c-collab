@@ -11,33 +11,26 @@ namespace CsImp {
         }
     }
 
-    public class FileSystem {
+    public class TextureSystem {
         private const string DllSource =  @"" + DllHandle.Prefix + "factoryrushsharp" + DllHandle.Suffix;
 
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_Add", CharSet = CharSet.Unicode)]
-        public static extern ulong Add(uint arg1, byte arg2);
-
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_DoSomething", CharSet = CharSet.Unicode)]
-        public static extern uint DoSomething(bool arg1, uint arg2);
-
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_DoSomeThings", CharSet = CharSet.Unicode)]
-        public static extern nint DoSomeThings(nint arg1, nint arg2);
-
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_DoMoreThings", CharSet = CharSet.Unicode)]
-        public static extern nint DoMoreThings(nint arg1);
-
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_ImportText", CharSet = CharSet.Unicode)]
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "TextureSystem_ImportText", CharSet = CharSet.Unicode)]
         public static extern IntPtr ImportText(IntPtr fileptr);
 
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_ExportText", CharSet = CharSet.Unicode)]
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "TextureSystem_ExportText", CharSet = CharSet.Unicode)]
         public static extern void ExportText(IntPtr pathptr, IntPtr contentptr);
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_TextureFromFile", CharSet = CharSet.Unicode)]
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "TextureSystem_TextureFromFile", CharSet = CharSet.Unicode)]
         public static extern nint TextureFromFile(nint filepathPtr);
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_FileFromTexture", CharSet = CharSet.Unicode)]
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "TextureSystem_FileFromTexture", CharSet = CharSet.Unicode)]
         public static extern void FileFromTexture(nint filepathPtr, nint texturePtr, bool recycle = false);
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_DrawTextureToScreen", CharSet = CharSet.Unicode)]
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "TextureSystem_DrawTextureToScreen", CharSet = CharSet.Unicode)]
         public static extern void DrawTextureToScreen(int x, int y, nint texturePtr, nint screenPtr);
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FileSystem_PlaySound", CharSet = CharSet.Unicode)]
+    }
+
+    public class SoundSystem {
+        private const string DllSource =  @"" + DllHandle.Prefix + "factoryrushsharp" + DllHandle.Suffix;
+        
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SoundSystem_PlaySound", CharSet = CharSet.Unicode)]
         public static extern void PlaySound(nint filepathPtr, bool wait = false);
     }
 }
@@ -205,7 +198,7 @@ namespace CppImp {
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_Fin", CharSet = CharSet.Unicode)]
         public static extern void Fin();
 
-        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_HandleKeyBoard", CharSet = CharSet.Unicode)]
+        [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_HandleKeyboard", CharSet = CharSet.Unicode)]
         public static extern void HandleKeyboard();
 
         [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Console_IsKeyDown", CharSet = CharSet.Unicode)]

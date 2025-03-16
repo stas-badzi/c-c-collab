@@ -22,20 +22,20 @@ defcompc = cc
 cflags = -Wno-dollar-in-identifier-extension -Wno-unused-command-line-argument
 cxxflags = -Wno-dollar-in-identifier-extension -Wno-unused-command-line-argument
 #> source files
-sources = Console.cpp FileSystem.cpp System.cpp dllexport.cpp
+sources = Console.cpp TextureSystem.cpp System.cpp Game.cpp dllexport.cpp SoundSystem.cpp
 #> header files
-headers = Console.hpp FileSystem.hpp FileSystem.ipp dllimport.hpp System.hpp System.ipp smart_ref.hpp smart_ref.ipp
+headers = Console.hpp TextureSystem.hpp TextureSystem.ipp Game.hpp dllimport.hpp System.hpp System.ipp smart_ref.hpp smart_ref.ipp SoundSystem.hpp
 #> include files
-includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp apple/keyboard.h apple/openfile.h linux/ledctrl.h linux/mousefd.h
+includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp apple/keyboard.h apple/openfile.h linux/ledctrl.h linux/mousefd.h promise.hpp
 #> name the dynamic library
 name = factoryrushplus
 # *******************************
 
 #******** c++ binary config *****
 #> source files
-binsources = main.cpp Console.cpp FileSystem.cpp System.cpp Control.cpp dllexport.cpp
+binsources = main.cpp Console.cpp TextureSystem.cpp System.cpp Control.cpp dllexport.cpp SoundSystem.cpp
 #> header files
-binheaders = dllimport.hpp Console.hpp FileSystem.hpp System.hpp defines.h Control.hpp
+binheaders = dllimport.hpp Console.hpp TextureSystem.hpp System.hpp defines.h Control.hpp SoundSystem.hpp
 #> include files
 binincludes = dynamic_library.h unicode_conversion.hpp control_heap.h utils/cextern.h control_heap.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp
 #> name the binary file
@@ -46,14 +46,14 @@ binname = cpp-factoryrush
 #> name the dynamic library
 filename = factoryrushsharp
 #>source code files
-files = DllExport.cs DllImport.cs FileSystem.cs Terminal.cs Console.cs Utility.cs Exec.cs Control.cs Key.cs linux_keyboard.cs apple_event.cs windows_vkcodes.cs
+files = DllExport.cs DllImport.cs TextureSystem.cs Terminal.cs Console.cs Utility.cs Exec.cs Control.cs Key.cs linux_keyboard.cs apple_event.cs windows_vkcodes.cs SoundSystem.cs
 # *******************************
 
 #********* c# binary config *****
 #> name the binary file
 binfile = cs-factoryrush
 #>source code files
-binfiles = Program.cs DllImport.cs FileSystem.cs Terminal.cs Utility.cs Exec.cs Key.cs linux_keyboard.cs apple_event.cs windows_vkcodes.cs
+binfiles = Program.cs DllImport.cs TextureSystem.cs Terminal.cs Utility.cs Exec.cs Key.cs linux_keyboard.cs apple_event.cs windows_vkcodes.cs SoundSystem.cs
 # *******************************
 
 #***** application config ****
@@ -254,10 +254,20 @@ fbobj = $(foreach file,$(binsources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .c
 endif
 
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
-os = $(subst $(space),-,$(shell echo $$(uname -s)_$$(uname -r)))
+os1 = $(subst $(space),-,$(shell echo $$(uname -s)_$$(uname -r)))
+ifeq ($(tgarch),i686)
+os = $(shell echo $(os1) | sed 's/x86_64/i686/g')
+else
+os = $(os1)
+endif
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
-os = $(subst $(space),-,$(shell echo $$(uname -s)_$$(uname -r)))
+os1 = $(subst $(space),-,$(shell echo $$(uname -s)_$$(uname -r)))
+ifeq ($(tgarch),i686)
+os = $(shell echo $(os1) | sed 's/x86_64/i686/g')
+else
+os = $(os1)
+endif
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 os = $(subst $(space),-,$(shell echo $$(uname -s)_$$(uname -r)))
@@ -582,7 +592,7 @@ resources: $(check_arch) source/setkbdmode.c source/killterm.c source/getfd.c so
 
 ifneq ($(msvc),1)
 	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
-	$(staticgen)assets/$(prefix)globals.$(static) objects/globals.o
+	$(staticgen)assets/libglobals.$(static) objects/globals.o
 else
 	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) source/globals.c /Icplusplus\include $(clstd)" > run.bat
 	@cmd.exe /c run.bat
@@ -601,7 +611,7 @@ endif
 ifeq ($(shell uname -s),Linux)
 	-@rm *.o 2> $(nulldir)
 	$(c-compiler) -c source/setkbdmode.c source/getfd.c source/ledctrl.c source/mousefd.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
-	ar rcs assets/$(prefix)linuxctrl.$(static) objects/getfd.o objects/ledctrl.o objects/mousefd.o objects/setkbdmode.o
+	ar rcs assets/liblinuxctrl.$(static) objects/getfd.o objects/ledctrl.o objects/mousefd.o objects/setkbdmode.o
 	$(c-compiler) -o assets/setkbdmode objects/setkbdmode.o -Lassets -llinuxctrl $(static-libc)
 	git submodule update --init --recursive --remote utilities/doas-keepenv
 ifeq ($(copylibs),1)
