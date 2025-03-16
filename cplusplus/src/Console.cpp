@@ -3104,7 +3104,9 @@ newpidgen:
         term.append("/usr/bin/gnome-terminal"); // todo - find default terminal emulator
     }
 #else
-    return -1;
+    if (!term.size()) {
+        return nullopt;
+    }
 #endif
     args[0] = root_pth.c_str();
     args[1] = info.c_str();
@@ -3129,7 +3131,7 @@ newpidgen:
     fwrite("\n", sizeof(char), 1, file);
     fchmod(fileno(file), 0755);
     fclose(file);
-    if (openFileInApp(runpth.c_str(), term.c_str()) != 0) return -1;
+    if (openFileInApp(runpth.c_str(), term.c_str()) != 0) return nullopt;
 #endif
 #ifdef _WIN32
     goto contcons;
