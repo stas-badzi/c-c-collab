@@ -33,6 +33,9 @@
 *.app
 *.apk
 
+# temporary files
+*.tmp
+
 # zipped binaries
 *.zip
 *.tgz
