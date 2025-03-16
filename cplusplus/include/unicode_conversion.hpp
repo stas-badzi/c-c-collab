@@ -127,9 +127,9 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         return out;
     }
 
-    inline constexpr std::string WStringToNative(std::wstring wstr) { return wstr; }
+    inline constexpr std::wstring WStringToNative(std::wstring wstr) { return wstr; }
 
-    inline constexpr std::wstring NativeToWString(std::string str) { return str; }
+    inline constexpr std::wstring NativeToWString(std::wstring wstr) { return wstr; }
 
     inline constexpr std::u16string WStringToU16String(std::wstring wstr) { return NativeToU16String(wstr); }
     

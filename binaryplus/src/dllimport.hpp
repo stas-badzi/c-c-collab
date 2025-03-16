@@ -90,7 +90,10 @@ namespace cppimp {
     struct popwinretval { bool val; int code; uniconv::unichar* result; };
     libimport popwinretval Console_PopupWindow(int type, int argc, uniconv::unichar* argv[]);
 
-    libimport std::optional<stsb::promise<std::optional<std::pair<int,std::u16string>>>> Console_PopupWindowAsync(int type, int argc, const char16_t* arg16v[]);
+#ifdef _WIN32
+    __declspec(dllimport)
+#endif
+    std::optional<stsb::promise<std::optional<std::pair<int,std::u16string>>>> Console_PopupWindowAsync(int type, int argc, const char16_t* arg16v[]);
 
     libimport void Main$define(int (*arg1)(void));
 

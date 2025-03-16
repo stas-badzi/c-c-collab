@@ -254,10 +254,20 @@ fbobj = $(foreach file,$(binsources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .c
 endif
 
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
-os = $(subst $(space),-,$(shell echo $$(uname -s)_$$(uname -r)))
+os1 = $(subst $(space),-,$(shell echo $$(uname -s)_$$(uname -r)))
+ifeq ($(tgarch),i686)
+os = $(shell echo $(os1) | sed 's/x86_64/i686/g')
+else
+os = $(os1)
+endif
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
-os = $(subst $(space),-,$(shell echo $$(uname -s)_$$(uname -r)))
+os1 = $(subst $(space),-,$(shell echo $$(uname -s)_$$(uname -r)))
+ifeq ($(tgarch),i686)
+os = $(shell echo $(os1) | sed 's/x86_64/i686/g')
+else
+os = $(os1)
+endif
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 os = $(subst $(space),-,$(shell echo $$(uname -s)_$$(uname -r)))

@@ -1208,7 +1208,7 @@ void Console::XtermMouseAndFocus(void) {
         return csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
     }
 
-    DWORD WINAPI WaitClrScrBuf(LPVOID lpParam) {
+    DWORD WINAPI WaitClrScrBuf(__attribute__((unused)) LPVOID lpParam) {
         ::Sleep(1000);
         Console::ClearScreenBuffer();
         return 0;
@@ -1232,7 +1232,7 @@ void Console::XtermMouseAndFocus(void) {
         array<DWORD,2> written;
 
 		for (size_t i = 0; i < win_height; i++) {
-            if (i < Console::old_symbols.size())
+            if (i < Console::old_symbols.size()) {
                 if (i >= symbols.size())
                     for (size_t j = 0; j < win_width; j++) {
                         if (j >= Console::old_symbols[i].size()) {
@@ -1276,30 +1276,54 @@ void Console::XtermMouseAndFocus(void) {
                         }
                     }
                 else {
-                for (size_t j = 0; j < win_width; j++) {
-                    if (j >= symbols[i].size())
-                        for (;j < win_width; ++j) {
-                            if (j >= Console::old_symbols[i].size()) {
-                                if (!scr_lastmatch) {
+                    for (size_t j = 0; j < win_width; j++) {
+                        if (j >= symbols[i].size())
+                            for (;j < win_width; ++j) {
+                                if (j >= Console::old_symbols[i].size()) {
+                                    if (!scr_lastmatch) {
+                                        //wcerr << L"WriteConsoleOutputCharacter: " << now_screen.size() << L' ' << L'+' << L' ' << L'{' << scr_lastcoord.X << L' ' << scr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                                        BOOL out = WriteConsoleOutputCharacter(Console::screen, now_screen.c_str(), now_screen.size(), scr_lastcoord, &(written[0]) );
+                                        if (out == 0) { Console::out << GetLastError() << endl; return; }
+                                        now_screen.clear();
+                                        scr_lastmatch = true;
+                                    }
+                                    if (!atr_lastmatch) {
+                                        //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                                        BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
+                                        if (out == 0) { Console::out << GetLastError() << endl; return; }
+                                        now_attrs.clear();
+                                        atr_lastmatch = true;
+                                    }
+                                    break;
+                                }
+                                if (Console::old_symbols[i][j].character != L' ') {
+                                    if (scr_lastmatch) { scr_lastcoord = {(SHORT)j,(SHORT)i}; }
+                                    scr_lastmatch = false;
+                                    now_screen.push_back(L' ');
+                                } else if (!scr_lastmatch) {
                                     //wcerr << L"WriteConsoleOutputCharacter: " << now_screen.size() << L' ' << L'+' << L' ' << L'{' << scr_lastcoord.X << L' ' << scr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
                                     BOOL out = WriteConsoleOutputCharacter(Console::screen, now_screen.c_str(), now_screen.size(), scr_lastcoord, &(written[0]) );
                                     if (out == 0) { Console::out << GetLastError() << endl; return; }
                                     now_screen.clear();
                                     scr_lastmatch = true;
                                 }
-                                if (!atr_lastmatch) {
+                                if (Console::old_symbols[i][j].foreground != 16 || Console::old_symbols[i][j].background != 16) {
+                                    if (atr_lastmatch) { atr_lastcoord = {(SHORT)j,(SHORT)i}; }
+                                    atr_lastmatch = false;
+                                    now_attrs.push_back(Console::GenerateAtrVal(Console::old_symbols[i][j].foreground,Console::old_symbols[i][j].background));
+                                } else if (!atr_lastmatch) {
                                     //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
                                     BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
                                     if (out == 0) { Console::out << GetLastError() << endl; return; }
                                     now_attrs.clear();
                                     atr_lastmatch = true;
                                 }
-                                break;
                             }
-                            if (Console::old_symbols[i][j].character != L' ') {
+                        else {
+                            if ((j >= Console::old_symbols[i].size() && symbols[i][j].character != L' ') || (j < Console::old_symbols[i].size() && Console::old_symbols[i][j].character != symbols[i][j].character)) {
                                 if (scr_lastmatch) { scr_lastcoord = {(SHORT)j,(SHORT)i}; }
                                 scr_lastmatch = false;
-                                now_screen.push_back(L' ');
+                                now_screen.push_back(symbols[i][j].character);
                             } else if (!scr_lastmatch) {
                                 //wcerr << L"WriteConsoleOutputCharacter: " << now_screen.size() << L' ' << L'+' << L' ' << L'{' << scr_lastcoord.X << L' ' << scr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
                                 BOOL out = WriteConsoleOutputCharacter(Console::screen, now_screen.c_str(), now_screen.size(), scr_lastcoord, &(written[0]) );
@@ -1307,10 +1331,10 @@ void Console::XtermMouseAndFocus(void) {
                                 now_screen.clear();
                                 scr_lastmatch = true;
                             }
-                            if (Console::old_symbols[i][j].foreground != 16 || Console::old_symbols[i][j].background != 16) {
+                            if ((j >= Console::old_symbols[i].size() && (symbols[i][j].foreground != 16 || symbols[i][j].background != 16)) || (j < Console::old_symbols[i].size() && (Console::old_symbols[i][j].foreground != symbols[i][j].foreground || Console::old_symbols[i][j].background != symbols[i][j].background))) {
                                 if (atr_lastmatch) { atr_lastcoord = {(SHORT)j,(SHORT)i}; }
                                 atr_lastmatch = false;
-                                now_attrs.push_back(Console::GenerateAtrVal(Console::old_symbols[i][j].foreground,Console::old_symbols[i][j].background));
+                                now_attrs.push_back(Console::GenerateAtrVal(symbols[i][j].foreground,symbols[i][j].background));
                             } else if (!atr_lastmatch) {
                                 //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
                                 BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
@@ -1318,29 +1342,6 @@ void Console::XtermMouseAndFocus(void) {
                                 now_attrs.clear();
                                 atr_lastmatch = true;
                             }
-                        }
-                    else {
-                        if ((j >= Console::old_symbols[i].size() && symbols[i][j].character != L' ') || (j < Console::old_symbols[i].size() && Console::old_symbols[i][j].character != symbols[i][j].character)) {
-                            if (scr_lastmatch) { scr_lastcoord = {(SHORT)j,(SHORT)i}; }
-                            scr_lastmatch = false;
-                            now_screen.push_back(symbols[i][j].character);
-                        } else if (!scr_lastmatch) {
-                            //wcerr << L"WriteConsoleOutputCharacter: " << now_screen.size() << L' ' << L'+' << L' ' << L'{' << scr_lastcoord.X << L' ' << scr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
-                            BOOL out = WriteConsoleOutputCharacter(Console::screen, now_screen.c_str(), now_screen.size(), scr_lastcoord, &(written[0]) );
-                            if (out == 0) { Console::out << GetLastError() << endl; return; }
-                            now_screen.clear();
-                            scr_lastmatch = true;
-                        }
-                        if ((j >= Console::old_symbols[i].size() && (symbols[i][j].foreground != 16 || symbols[i][j].background != 16)) || (j < Console::old_symbols[i].size() && (Console::old_symbols[i][j].foreground != symbols[i][j].foreground || Console::old_symbols[i][j].background != symbols[i][j].background))) {
-                            if (atr_lastmatch) { atr_lastcoord = {(SHORT)j,(SHORT)i}; }
-                            atr_lastmatch = false;
-                            now_attrs.push_back(Console::GenerateAtrVal(symbols[i][j].foreground,symbols[i][j].background));
-                        } else if (!atr_lastmatch) {
-                            //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
-                            BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
-                            if (out == 0) { Console::out << GetLastError() << endl; return; }
-                            now_attrs.clear();
-                            atr_lastmatch = true;
                         }
                     }
                 }
@@ -3183,7 +3184,7 @@ contcons:
     if (result.size() && result.back() == '\0') result.pop_back();
 
     if (pret)
-        Console::out << L"Popup exited with code: 0x" << std::hex << pret << L" and result: \"" << NativeToWstring(result) << L"\"\n";
+        Console::out << L"Popup exited with code: 0x" << std::hex << pret << L" and result: \"" << NativeToWString(result) << L"\"\n";
 
     return { {pret,result} };
 }
@@ -3319,7 +3320,7 @@ contcons:
         if (result.size() && result.back() == '\0') result.pop_back();
 
         if (pret)
-            Console::out << L"Popup exited with code: 0x" << std::hex << pret << L" and result: \"" << NativeToWstring(result) << L"\"\n";
+            Console::out << L"Popup exited with code: 0x" << std::hex << pret << L" and result: \"" << NativeToWString(result) << L"\"\n";
         
         tstint = 13;
         retx = std::optional<std::pair<int, uniconv::utfstr>>({pret,result});
@@ -3465,7 +3466,7 @@ contcons:
         if (result.size() && result.back() == '\0') result.pop_back();
 
         if (pret)
-            Console::out << L"Popup exited with code: 0x" << std::hex << pret << L" and result: \"" << NativeToWstring(result) << L"\"\n";
+            Console::out << L"Popup exited with code: 0x" << std::hex << pret << L" and result: \"" << NativeToWString(result) << L"\"\n";
             
         u16string result16 = UnicodeToU16String(Utf8StringToUnicode(result.c_str()));
 
