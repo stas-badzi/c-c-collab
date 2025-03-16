@@ -199,8 +199,8 @@ endif
 ifeq ($(msvc),1)
 ifeq ($(findstring clang, $(c-compiler)),clang)
 ifeq ($(arch),x86)
-	archarg = -m32
-	archarg = -m32
+	archarg = 
+	archarg = 
 endif
 	clstd = /std:c17 $(archarg)
 	clstdpp = /std:c++latest $(archarg)
@@ -446,6 +446,12 @@ ifeq ($(copylibs),1)
 flibdir = $(libdir)
 endif
 
+ifeq ($(debug),1)
+build-type = Debug-$(arch)
+else
+build-type = Release-$(arch)
+endif
+
 ifeq ($(archchk),0)
 check_arch =
 else
@@ -453,8 +459,8 @@ check_arch = check-arch
 endif
 
 old_arch = $(shell cat __arch.dat 2> /dev/null || echo > __arch.dat)
-ifneq ($(old_arch),$(arch))
-archfile = $(shell echo $(old_arch) > __oldarch.dat && echo $(arch) > __arch.dat && echo __arch.dat)
+ifneq ($(old_arch),$(build-type))
+archfile = $(shell echo $(old_arch) > __oldarch.dat && echo $(build-type) > __arch.dat && echo __arch.dat)
 else
 archfile = __arch.dat
 endif
@@ -462,7 +468,7 @@ endif
 package: release
 
 check-arch: $(archfile)
-	@echo "Architecture changed from $(shell cat __oldarch.dat) to $(arch) - Cleaning"
+	@echo "Build type changed from $(shell cat __oldarch.dat) to $(build-type) - Cleaning"
 	-@rm __oldarch.dat
 	@$(MAKE) clean
 	@echo "Version file. Remove to enable recompile" > $@
