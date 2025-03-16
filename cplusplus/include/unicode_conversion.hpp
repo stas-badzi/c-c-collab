@@ -228,7 +228,7 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         return out;
     }
 
-    inline std::wstring NativeToWstring(std::string str) {
+    inline std::wstring NativeToWString(std::string str) {
         using namespace std;
         std::wstring out;
         mbstate_t state = mbstate_t();
