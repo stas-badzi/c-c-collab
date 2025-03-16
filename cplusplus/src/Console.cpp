@@ -9,15 +9,15 @@ extern int Main(void);
 
 namespace cpp {
 #if defined(_WIN32)
-    __declspec(dllexport) std::basic_istream<char16_t>& u16in = *((std::basic_istream<char16_t>*)&Console::in);
-    __declspec(dllexport) std::basic_ostream<char16_t>& u16out = *((std::basic_ostream<char16_t>*)&Console::out);
+    __declspec(dllexport) std::basic_istream<wchar_t>& win = *((std::basic_istream<wchar_t>*)&Console::in);
+    __declspec(dllexport) std::basic_ostream<wchar_t>& wout = *((std::basic_ostream<wchar_t>*)&Console::out);
 #define getnch() Console::input_buf->pop()
 #define ncerr wcerr
 #else
 #define getnch() getc(stdin)
 #define ncerr cerr
-    __attribute__((visibility("default"))) std::basic_istream<char16_t>& u16in = *((std::basic_istream<char16_t>*)&Console::in);
-    __attribute__((visibility("default"))) std::basic_ostream<char16_t>& u16out = *((std::basic_ostream<char16_t>*)&Console::out);
+    __attribute__((visibility("default"))) std::basic_istream<wchar_t>& win = *((std::basic_istream<wchar_t>*)&Console::in);
+    __attribute__((visibility("default"))) std::basic_ostream<wchar_t>& wout = *((std::basic_ostream<wchar_t>*)&Console::out);
 #endif
 }
 
@@ -58,18 +58,11 @@ char_t Console::GetChar(void) {
     return Console::buf[buf_it-1];
 };
 
-void Console::HandleOutput(void) {
-    auto str = Console::out.str();
-    Console::out.str(std::u16string());
-    Console::real_out << U16StringToNative(str);
-    Console::real_out.flush();
-}
-
 void Console::PushChar(char_t c) {
     Console::in.clear();
     auto pos = Console::in.tellg();
 #ifdef _WIN32
-    Console::in.str(Console::in.str()+(char16_t)c);
+    Console::in.str(Console::in.str()+c);
 #else
     //write(fileno(stdout), &c, 1);
     char16_t c16 = 0;
@@ -169,7 +162,6 @@ void Console::XtermMouseAndFocus(void) {
     int bytes;
 
 #ifdef _WIN32
-    while (_kbhit()) Console::input_buf->push(_getwch());
     bytes = Console::input_buf->size();
 #define nstrlen wcslen
 #define decbytes() --bytes
@@ -412,7 +404,7 @@ void Console::XtermMouseAndFocus(void) {
                     threads.erase(i);
                 }
                 else if (res != WAIT_TIMEOUT) {
-                    Console::out << u"WaitForSingleObject failed: " << GetLastError() << u'\n';
+                    Console::out << L"WaitForSingleObject failed: " << GetLastError() << L'\n';
                     return FALSE;
                 }
             }
@@ -434,7 +426,7 @@ void Console::XtermMouseAndFocus(void) {
         issetting = true;
         if (!SetConsoleCursorPosition(Console::screen, {cursorpos.first, cursorpos.second})) {
             issetting = false;
-            Console::out << u"SetCursorPos failed: " << GetLastError() << u'\n';
+            Console::out << L"SetCursorPos failed: " << GetLastError() << L'\n';
             return FALSE;
         }
         issetting = false;
@@ -486,7 +478,7 @@ void Console::XtermMouseAndFocus(void) {
 
     void cpp::Console::SetTitle(const wchar_t* title) {
         if (!SetConsoleTitle(title)) {
-            Console::out << u"SetConsoleTitle failed: " << GetLastError() << u'\n';
+            Console::out << L"SetConsoleTitle failed: " << GetLastError() << L'\n';
             ThrowMsg("SetConsoleTitle failed");
         }
     }
@@ -523,29 +515,29 @@ void Console::XtermMouseAndFocus(void) {
     }
 
     std::wstring GetProcessExecutableName(DWORD processId, bool ischild = false, bool isparent = false) {
-        Console::out << u"Process: " << processId << u'\n' << u'\t';
+        Console::out << L"Process: " << processId << L'\n' << L'\t';
         HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
         if (processHandle) {
             wchar_t exePath[MAX_PATH];
             if (GetModuleFileNameEx(processHandle, NULL, exePath, MAX_PATH)) {
-                Console::out << u"Found name: " << WStringToU16String(exePath) << u'\n' << u'\t';
+                Console::out << L"Found name: " << exePath << L'\n' << L'\t';
                 CloseHandle(processHandle);
                 HMODULE moduleHandle = LoadLibrary(exePath);
                 if (!moduleHandle) {
                     int err = GetLastError();
-                    Console::out << u"Failed to load module: " << err << u'\n';
+                    Console::out << L"Failed to load module: " << err << L'\n';
                     if (err == ERROR_ACCESS_DENIED) {
-                        Console::out << u"Access denied" << u'\n' << u'\t';
+                        Console::out << L"Access denied" << L'\n' << L'\t';
                         return exePath;
                     }
                     return std::wstring();
                 }
-                //cerr << "Handle: " << moduleHandle << u'\n' << '\t';
+                //cerr << "Handle: " << moduleHandle << L'\n' << '\t';
                 PIMAGE_NT_HEADERS nth = ImageNtHeader((PVOID)moduleHandle);
                 if (!nth) return std::wstring();
-                //cerr << "Image NT Header: " << nth << u'\n' << '\t';
+                //cerr << "Image NT Header: " << nth << L'\n' << '\t';
                 if (nth->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || nth->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_OS2_CUI || nth->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_POSIX_CUI) {  
-                    Console::out << u"Subsystem: Console" << u'\n' << u'\t';
+                    Console::out << L"Subsystem: Console" << L'\n' << L'\t';
                     // Check child processes
                     auto childProcessIds = GetChildProcessIds(processId);
                     if (!isparent)
@@ -561,10 +553,10 @@ void Console::XtermMouseAndFocus(void) {
                         if (!parentExeName.empty())
                             return parentExeName;
                     }
-                    Console::out << u"None Found" << u'\n';
+                    Console::out << L"None Found" << L'\n';
                     return (ischild || isparent) ? std::wstring() : exePath;
                 }
-                Console::out << u"Subsystem: GUI" << u'\n' << u'\t';
+                Console::out << L"Subsystem: GUI" << L'\n' << L'\t';
                 return std::wstring(exePath);
             }
             CloseHandle(processHandle);
@@ -573,7 +565,7 @@ void Console::XtermMouseAndFocus(void) {
     }
 
     std::wstring GetWindowExecutableName(HWND hwnd) {
-        Console::out << u"Window: " << hwnd << u'\n';
+        Console::out << L"Window: " << hwnd << L'\n';
         DWORD processId;
         GetWindowThreadProcessId(hwnd, &processId);
         return GetProcessExecutableName(processId);
@@ -960,11 +952,11 @@ void Console::XtermMouseAndFocus(void) {
             if (mintty) {
                 NameHwnd namehwnd = {pszNewWindowTitle, 0};
                 BOOL ret = EnumWindows(FindWindowBegin, (LPARAM)&namehwnd);
-                Console::out << u"EnumWindows: " << ret << u'\n';
+                Console::out << L"EnumWindows: " << ret << L'\n';
                 if (!ret) {
                     good = true;
                     hwndFound = namehwnd.hwnd;
-                    Console::out << u"Window: " << hwndFound << u" good: " << good << u'\n';
+                    Console::out << L"Window: " << hwndFound << L" good: " << good << L'\n';
                     return hwndFound;
                 }
             }
@@ -974,7 +966,7 @@ void Console::XtermMouseAndFocus(void) {
             pszWindowTitle[siz] = L'\0';
             if (wcscmp(pszWindowTitle, pszNewWindowTitle) == 0) good = true;
         }
-        Console::out << u"Window: " << hwndFound << u" good: " << good << u'\n';
+        Console::out << L"Window: " << hwndFound << L" good: " << good << L'\n';
         return hwndFound;
     }
     void Console::Init(void) {
@@ -1088,7 +1080,7 @@ void Console::XtermMouseAndFocus(void) {
                     sstr = ss.str() + L"-" + to_wstring(++filenum);
                     goto logfile;
                 }
-                Console::out << u"Couldn't create log file: " << NativeToU16String(out_file.native()) << u", with error: " << err << '\n';
+                Console::out << L"Couldn't create log file: " << out_file.native() << L", with error: " << err << '\n';
                 exit(0xC2);
             }
             CloseHandle(logfl);
@@ -1105,8 +1097,8 @@ void Console::XtermMouseAndFocus(void) {
             GetConsoleMode(Console::fd, &Console::old_console);
             SetConsoleMode(Console::fd, ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT | ENABLE_WINDOW_INPUT);
 
-            //Console::input_thread_arg = (void*)new __getinput_arg{Console::input_buf, SLEEP_THREAD_INPUT};
-            //Console::input_thread = CreateThread(NULL, 0, InputThread, input_thread_arg, 0, NULL);
+            Console::input_thread_arg = (void*)new __getinput_arg{Console::input_buf, SLEEP_THREAD_INPUT};
+            Console::input_thread = CreateThread(NULL, 0, InputThread, input_thread_arg, 0, NULL);
             *Console::super_thread_run = true;
             Console::super_thread_arg = (void*)new __superthread_arg{Console::super_thread_run, Console::thread_handles};
             Console::super_thread = CreateThread(NULL, 0, Console::SuperThread, Console::super_thread_arg, 0, NULL);
@@ -1158,10 +1150,10 @@ void Console::XtermMouseAndFocus(void) {
 
     void Console::Fin(void) {
         if (initialised) {
-            //TerminateThread(Console::input_thread, 0);
-            //WaitForSingleObject(Console::input_thread, INFINITE);
-            //CloseHandle(Console::input_thread);
-            //delete (__getinput_arg*)Console::input_thread_arg;
+            TerminateThread(Console::input_thread, 0);
+            WaitForSingleObject(Console::input_thread, INFINITE);
+            CloseHandle(Console::input_thread);
+            delete (__getinput_arg*)Console::input_thread_arg;
 
             *Console::super_thread_run = false;
             WaitForSingleObject(Console::super_thread, INFINITE);
@@ -1243,114 +1235,161 @@ void Console::XtermMouseAndFocus(void) {
             if (i < Console::old_symbols.size())
                 if (i >= symbols.size())
                     for (size_t j = 0; j < win_width; j++) {
-                        if (Console::old_symbols[i][j].character != L' ') {
-                            if (scr_lastmatch) { scr_lastcoord = {(SHORT)j,(SHORT)i}; }
-                            scr_lastmatch = false;
-                            now_screen.push_back(L' ');
-                        } else {
+                        if (j >= Console::old_symbols[i].size()) {
                             if (!scr_lastmatch) {
                                 //wcerr << L"WriteConsoleOutputCharacter: " << now_screen.size() << L' ' << L'+' << L' ' << L'{' << scr_lastcoord.X << L' ' << scr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
                                 BOOL out = WriteConsoleOutputCharacter(Console::screen, now_screen.c_str(), now_screen.size(), scr_lastcoord, &(written[0]) );
                                 if (out == 0) { Console::out << GetLastError() << endl; return; }
                                 now_screen.clear();
+                                scr_lastmatch = true;
                             }
+                            if (!atr_lastmatch) {
+                                //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                                BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
+                                if (out == 0) { Console::out << GetLastError() << endl; return; }
+                                now_attrs.clear();
+                                atr_lastmatch = true;
+                            }
+                            break;
+                        }
+                        if (Console::old_symbols[i][j].character != L' ') {
+                            if (scr_lastmatch) { scr_lastcoord = {(SHORT)j,(SHORT)i}; }
+                            scr_lastmatch = false;
+                            now_screen.push_back(L' ');
+                        } else if (!scr_lastmatch) {
+                            //wcerr << L"WriteConsoleOutputCharacter: " << now_screen.size() << L' ' << L'+' << L' ' << L'{' << scr_lastcoord.X << L' ' << scr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                            BOOL out = WriteConsoleOutputCharacter(Console::screen, now_screen.c_str(), now_screen.size(), scr_lastcoord, &(written[0]) );
+                            if (out == 0) { Console::out << GetLastError() << endl; return; }
+                            now_screen.clear();
                             scr_lastmatch = true;
                         }
                         if (Console::old_symbols[i][j].foreground != 16 || Console::old_symbols[i][j].background != 16) {
                             if (atr_lastmatch) { atr_lastcoord = {(SHORT)j,(SHORT)i}; }
                             atr_lastmatch = false;
                             now_attrs.push_back(Console::GenerateAtrVal(Console::old_symbols[i][j].foreground,Console::old_symbols[i][j].background));
-                        } else {
-                            if (!atr_lastmatch) {
-                                //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
-                                BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
-                                if (out == 0) { Console::out << GetLastError() << endl; return; }
-                                now_attrs.clear();
-                            }
+                        } else if (!atr_lastmatch) {
+                            //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                            BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
+                            if (out == 0) { Console::out << GetLastError() << endl; return; }
+                            now_attrs.clear();
                             atr_lastmatch = true;
                         }
                     }
                 else {
                 for (size_t j = 0; j < win_width; j++) {
-                    if (j >= symbols[i].size()) {
-                        --j;
-                        while (++j < win_width)
-                            if (Console::old_symbols[i][j].character != L' ') {
-                                if (scr_lastmatch) { scr_lastcoord = {(SHORT)j,(SHORT)i}; }
-                                scr_lastmatch = false;
-                                now_screen.push_back(L' ');
-                            } else {
+                    if (j >= symbols[i].size())
+                        for (;j < win_width; ++j) {
+                            if (j >= Console::old_symbols[i].size()) {
                                 if (!scr_lastmatch) {
                                     //wcerr << L"WriteConsoleOutputCharacter: " << now_screen.size() << L' ' << L'+' << L' ' << L'{' << scr_lastcoord.X << L' ' << scr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
                                     BOOL out = WriteConsoleOutputCharacter(Console::screen, now_screen.c_str(), now_screen.size(), scr_lastcoord, &(written[0]) );
                                     if (out == 0) { Console::out << GetLastError() << endl; return; }
                                     now_screen.clear();
+                                    scr_lastmatch = true;
                                 }
+                                if (!atr_lastmatch) {
+                                    //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                                    BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
+                                    if (out == 0) { Console::out << GetLastError() << endl; return; }
+                                    now_attrs.clear();
+                                    atr_lastmatch = true;
+                                }
+                                break;
+                            }
+                            if (Console::old_symbols[i][j].character != L' ') {
+                                if (scr_lastmatch) { scr_lastcoord = {(SHORT)j,(SHORT)i}; }
+                                scr_lastmatch = false;
+                                now_screen.push_back(L' ');
+                            } else if (!scr_lastmatch) {
+                                //wcerr << L"WriteConsoleOutputCharacter: " << now_screen.size() << L' ' << L'+' << L' ' << L'{' << scr_lastcoord.X << L' ' << scr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                                BOOL out = WriteConsoleOutputCharacter(Console::screen, now_screen.c_str(), now_screen.size(), scr_lastcoord, &(written[0]) );
+                                if (out == 0) { Console::out << GetLastError() << endl; return; }
+                                now_screen.clear();
                                 scr_lastmatch = true;
                             }
                             if (Console::old_symbols[i][j].foreground != 16 || Console::old_symbols[i][j].background != 16) {
                                 if (atr_lastmatch) { atr_lastcoord = {(SHORT)j,(SHORT)i}; }
                                 atr_lastmatch = false;
                                 now_attrs.push_back(Console::GenerateAtrVal(Console::old_symbols[i][j].foreground,Console::old_symbols[i][j].background));
-                            } else {
-                                if (!atr_lastmatch) {
-                                    //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
-                                    BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
-                                    if (out == 0) { Console::out << GetLastError() << endl; return; }
-                                    now_attrs.clear();
-                                }
-                                atr_lastmatch = true;
-                            }
-                    } else {
-                        if ((j >= Console::old_symbols[i].size() && symbols[i][j].character != L' ') || (Console::old_symbols[i][j].character != symbols[i][j].character)) {
-                            if (scr_lastmatch) { scr_lastcoord = {(SHORT)j,(SHORT)i}; }
-                            scr_lastmatch = false;
-                            now_screen.push_back(symbols[i][j].character);
-                        } else {
-                            if (!scr_lastmatch) {
-                                //wcerr << L"WriteConsoleOutputCharacter: " << now_screen.size() << L' ' << L'+' << L' ' << L'{' << scr_lastcoord.X << L' ' << scr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
-                                BOOL out = WriteConsoleOutputCharacter(Console::screen, now_screen.c_str(), now_screen.size(), scr_lastcoord, &(written[0]) );
-                                if (out == 0) { Console::out << GetLastError() << endl; return; }
-                                now_screen.clear();
-                            }
-                            scr_lastmatch = true;
-                        }
-                        if ((j >= Console::old_symbols[i].size() && (symbols[i][j].foreground != 16 || symbols[i][j].background != 16)) || (Console::old_symbols[i][j].foreground != symbols[i][j].foreground || Console::old_symbols[i][j].background != symbols[i][j].background)) {
-                            if (atr_lastmatch) { atr_lastcoord = {(SHORT)j,(SHORT)i}; }
-                            atr_lastmatch = false;
-                            now_attrs.push_back(Console::GenerateAtrVal(symbols[i][j].foreground,symbols[i][j].background));
-                        } else {
-                            if (!atr_lastmatch) {
+                            } else if (!atr_lastmatch) {
                                 //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
                                 BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
                                 if (out == 0) { Console::out << GetLastError() << endl; return; }
                                 now_attrs.clear();
+                                atr_lastmatch = true;
                             }
+                        }
+                    else {
+                        if ((j >= Console::old_symbols[i].size() && symbols[i][j].character != L' ') || (j < Console::old_symbols[i].size() && Console::old_symbols[i][j].character != symbols[i][j].character)) {
+                            if (scr_lastmatch) { scr_lastcoord = {(SHORT)j,(SHORT)i}; }
+                            scr_lastmatch = false;
+                            now_screen.push_back(symbols[i][j].character);
+                        } else if (!scr_lastmatch) {
+                            //wcerr << L"WriteConsoleOutputCharacter: " << now_screen.size() << L' ' << L'+' << L' ' << L'{' << scr_lastcoord.X << L' ' << scr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                            BOOL out = WriteConsoleOutputCharacter(Console::screen, now_screen.c_str(), now_screen.size(), scr_lastcoord, &(written[0]) );
+                            if (out == 0) { Console::out << GetLastError() << endl; return; }
+                            now_screen.clear();
+                            scr_lastmatch = true;
+                        }
+                        if ((j >= Console::old_symbols[i].size() && (symbols[i][j].foreground != 16 || symbols[i][j].background != 16)) || (j < Console::old_symbols[i].size() && (Console::old_symbols[i][j].foreground != symbols[i][j].foreground || Console::old_symbols[i][j].background != symbols[i][j].background))) {
+                            if (atr_lastmatch) { atr_lastcoord = {(SHORT)j,(SHORT)i}; }
+                            atr_lastmatch = false;
+                            now_attrs.push_back(Console::GenerateAtrVal(symbols[i][j].foreground,symbols[i][j].background));
+                        } else if (!atr_lastmatch) {
+                            //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                            BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
+                            if (out == 0) { Console::out << GetLastError() << endl; return; }
+                            now_attrs.clear();
                             atr_lastmatch = true;
                         }
                     }
                 }
                 continue;
             }
-            if (scr_lastmatch) scr_lastcoord = {0,(SHORT)i};
-            if (atr_lastmatch) atr_lastcoord = {0,(SHORT)i};
-            scr_lastmatch = atr_lastmatch = false;
             if (i < height) {
                 const size_t width = symbols[i].size();
                 for (size_t j = 0; j < win_width; j++) {
-                    if (i >= height || j >= width) {
-                        now_screen.push_back(empty_sym.character);
-                        now_attrs.push_back(empty_sym.GetAttribute());
+                    if (j >= width) {
+                        if (!scr_lastmatch) {
+                            //wcerr << L"WriteConsoleOutputCharacter: " << now_screen.size() << L' ' << L'+' << L' ' << L'{' << scr_lastcoord.X << L' ' << scr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                            BOOL out = WriteConsoleOutputCharacter(Console::screen, now_screen.c_str(), now_screen.size(), scr_lastcoord, &(written[0]) );
+                            if (out == 0) { Console::out << GetLastError() << endl; return; }
+                            now_screen.clear();
+                            scr_lastmatch = true;
+                        }
+                        if (!atr_lastmatch) {
+                            //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                            BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
+                            if (out == 0) { Console::out << GetLastError() << endl; return; }
+                            now_attrs.clear();
+                            atr_lastmatch = true;
+                        }
+                        break;
                     }
-                    now_screen.push_back(symbols[i][j].character);
-                    now_attrs.push_back(symbols[i][j].GetAttribute());
+                    if (symbols[i][j].character != L' ') {
+                        if (scr_lastmatch) { scr_lastcoord = {(SHORT)j,(SHORT)i}; }
+                        scr_lastmatch = false;
+                        now_screen.push_back(symbols[i][j].character);
+                    } else if (!scr_lastmatch) {
+                        //wcerr << L"WriteConsoleOutputCharacter: " << now_screen.size() << L' ' << L'+' << L' ' << L'{' << scr_lastcoord.X << L' ' << scr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                        BOOL out = WriteConsoleOutputCharacter(Console::screen, now_screen.c_str(), now_screen.size(), scr_lastcoord, &(written[0]) );
+                        if (out == 0) { Console::out << GetLastError() << endl; return; }
+                        now_screen.clear();
+                        scr_lastmatch = true;
+                    }
+                    if (!(symbols[i][j].background == 16 && symbols[i][j].foreground == 16)) {
+                        if (atr_lastmatch) { atr_lastcoord = {(SHORT)j,(SHORT)i}; }
+                        atr_lastmatch = false;
+                        now_attrs.push_back(symbols[i][j].GetAttribute());
+                    } else if (!atr_lastmatch) {
+                        //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                        BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
+                        if (out == 0) { Console::out << GetLastError() << endl; return; }
+                        now_attrs.clear();
+                        atr_lastmatch = true;
+                    }
                 }
-            } else {
-                for (size_t j = 0; j < win_width; j++) {
-                    now_screen.push_back(empty_sym.character);
-                    now_attrs.push_back(empty_sym.GetAttribute());
-                }
-            }
+            } else break;
 		}
 
         if (!scr_lastmatch) {
@@ -1423,11 +1462,10 @@ void Console::XtermMouseAndFocus(void) {
         Console::mouse_buttons_down[4] = false;
         Console::mouse_status.scroll = {false,false};
         GetNumberOfConsoleInputEvents(Console::fd, &evnts);
-        if (!evnts) goto getinputx;
         for (unsigned i = 0; i < evnts; ++i) {
         
             if(!ReadConsoleInput(Console::fd, &record, 1, &numRead)) {
-                Console::out << u"ReadConsoleInput";
+                Console::out << L"ReadConsoleInput";
                 int err = GetLastError();
                 exit(0x82);
             }
@@ -1455,7 +1493,7 @@ void Console::XtermMouseAndFocus(void) {
                 Console::mouse_buttons_down[2] = mouse_status.secondary;
                 Console::mouse_buttons_down[3] = flags[2] && ((mouse.dwButtonState & 0b11111111100000000000000000000000) != 0b11111111100000000000000000000000);
                 Console::mouse_buttons_down[4] = flags[2] && ((mouse.dwButtonState & 0b11111111100000000000000000000000) == 0b11111111100000000000000000000000);
-                //if (mouse.dwButtonState & 0b11111) Console::out << u'0' << u'x' << std::hex << mouse.dwButtonState << u'\n';
+                //if (mouse.dwButtonState & 0b11111) Console::out << L'0' << L'x' << std::hex << mouse.dwButtonState << L'\n';
                 Console::mouse_buttons_down[5] = GetKeyState(VK_XBUTTON1) & 0x8000;
                 Console::mouse_buttons_down[6] = GetKeyState(VK_XBUTTON2) & 0x8000;
                 Console::this_mouse_combo = (flags[1] ? this_mouse_combo : 0) + 1; 
@@ -1507,11 +1545,11 @@ void Console::XtermMouseAndFocus(void) {
         Console::mouse_status.y = mouse.y;
 */
     getinputx:
-        wchar_t wc;
         int bytes = Console::input_buf->size();
-        bytes += nstrlen(Console::buf);
         if (!bytes) return;
-    
+        bytes += nstrlen(Console::buf);
+
+        wchar_t wc;
         while (bytes) {
             buf_it = 0;
             switch ((wc = GetChar())) {
@@ -1568,6 +1606,10 @@ void Console::XtermMouseAndFocus(void) {
             decbytes();
         }
         return;
+    }
+
+    void Console::HandleOutput(void) {
+        Console::real_out.flush();
     }
 
     void SysSleep(int microseconds){
@@ -1631,6 +1673,14 @@ void Console::XtermMouseAndFocus(void) {
 #else
     // Not windows (Probably Posix and/or Unix)
 
+    void Console::HandleOutput(void) {
+        auto str = Console::out.str();
+        if (str.empty()) return;
+        Console::out.str(wstring());
+        Console::out.clear();
+        Console::real_out << WStringToNative(str);
+        Console::real_out.flush();
+    }
     
     void cpp::Console::SetResult(const char* result) {
         FILE* fl = fopen((Console::tmp_data+subdir+"result.dat").c_str(), "w");
@@ -2422,7 +2472,7 @@ mbstate_t Console::streammbs = mbstate_t();
                     switch (arg[1]) {
                         case '&':
                             // launched as popup
-                            Console::out << "launched as popup" << u'\n';
+                            Console::out << L"launched as popup" << L'\n';
                             Console::sub_proc = true;
                             if (strlen(arg) < 3) exit(0x31);
                             sub_process = 0;
@@ -2822,8 +2872,13 @@ mbstate_t Console::streammbs = mbstate_t();
     const char* Console::subdir = nullptr;
 #endif
 
-basic_istringstream<char16_t> Console::in = basic_istringstream<char16_t>(std::ios_base::ate|std::ios_base::in);
-basic_ostringstream<char16_t> Console::out = basic_ostringstream<char16_t>();
+basic_istringstream<wchar_t> Console::in = basic_istringstream<wchar_t>(std::ios_base::ate|std::ios_base::in);
+
+#ifdef _WIN32
+    basic_ofstream<wchar_t>& Console::out = *((basic_ofstream<wchar_t>*)&Console::real_out);
+#else
+    basic_ostringstream<wchar_t> Console::out = basic_ostringstream<wchar_t>();
+#endif
 
 int Console::argc = 0;
 utfcstr* Console::argv = (utfcstr*)malloc(sizeof(utfcstr));
@@ -3119,7 +3174,7 @@ contcons:
     if (result.size() && result.back() == '\0') result.pop_back();
 
     if (pret)
-        Console::out << u"Popup exited with code: 0x" << std::hex << pret << u" and result: \"" << NativeToU16String(result) << u"\"\n";
+        Console::out << L"Popup exited with code: 0x" << std::hex << pret << L" and result: \"" << result << L"\"\n";
 
     return { {pret,result} };
 }
@@ -3255,7 +3310,7 @@ contcons:
         if (result.size() && result.back() == '\0') result.pop_back();
 
         if (pret)
-            Console::out << u"Popup exited with code: 0x" << std::hex << pret << u" and result: \"" << NativeToU16String(result) << u"\"\n";
+            Console::out << L"Popup exited with code: 0x" << std::hex << pret << L" and result: \"" << result << L"\"\n";
         
         tstint = 13;
         retx = std::optional<std::pair<int, uniconv::utfstr>>({pret,result});
@@ -3401,7 +3456,7 @@ contcons:
         if (result.size() && result.back() == '\0') result.pop_back();
 
         if (pret)
-            Console::out << u"Popup exited with code: 0x" << std::hex << pret << u" and result: \"" << NativeToU16String(result) << u"\"\n";
+            Console::out << L"Popup exited with code: 0x" << std::hex << pret << L" and result: \"" << result << L"\"\n";
             
         u16string result16 = UnicodeToU16String(Utf8StringToUnicode(result.c_str()));
 
@@ -3425,7 +3480,7 @@ void Console::ResetKeyboard(void) {
 }
 
 void Console::Update(void) {
-    Console::HandleOutput();
     Console::HandleKeyboard();
     Console::HandleMouseAndFocus();
+    Console::HandleOutput();
 }

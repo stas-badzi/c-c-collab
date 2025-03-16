@@ -229,7 +229,8 @@ namespace cpp {
         static void* super_thread_arg;
         static bool* is_setting_cursor;
         static tsvector<HANDLE>* thread_handles;
-        static std::wofstream real_out; 
+        static std::wofstream real_out;
+        static inline wchar_t getnch(void);
         static inline constexpr uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2);
         static DWORD WINAPI MoveCursorThread(LPVOID lpParam);
         static DWORD WINAPI SuperThread(LPVOID lpParam);
@@ -367,18 +368,22 @@ namespace cpp {
         static void SetCursorSize(uint8_t size);
         static void SetTitle(const char_t* title);
         static void ReverseCursorBlink(void);
-        static std::basic_istringstream<char16_t> in;
-        static std::basic_ostringstream<char16_t> out;
+        static std::basic_istringstream<wchar_t> in;
+    #ifdef _WIN32
+        static std::basic_ofstream<wchar_t>& out;
+    #else
+        static std::basic_ostringstream<wchar_t> out;
+    #endif
     private:
         static std::vector<std::vector<Symbol>> old_symbols;
         static std::pair<int16_t,int16_t> old_scr_size;
         
     };
 #ifdef _WIN32
-    extern __declspec(dllexport) std::basic_istream<char16_t>& u16in;
-    extern __declspec(dllexport) std::basic_ostream<char16_t>& u16out;
+    extern __declspec(dllexport) std::basic_istream<wchar_t>& win;
+    extern __declspec(dllexport) std::basic_ostream<wchar_t>& wout;
 #else
-    extern __attribute__((visibility("default"))) std::basic_istream<char16_t>& u16in;
-    extern __attribute__((visibility("default"))) std::basic_ofstream<char16_t>& u16out;
+    extern __attribute__((visibility("default"))) std::basic_istream<wchar_t>& win;
+    extern __attribute__((visibility("default"))) std::basic_ofstream<wchar_t>& wout;
 #endif
 } // namespace cpp

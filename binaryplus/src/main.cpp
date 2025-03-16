@@ -23,13 +23,12 @@ typedef std::basic_stringstream<char16_t> u16stringstream;
 #define IsCtrlDown() (Console::IsKeyDown(Key::Enum::CTRL) || Console::IsKeyDown(Key::Enum::CTRLL) || Console::IsKeyDown(Key::Enum::CTRLR))
 
 using namespace std;
+using namespace uniconv;
 using namespace cpp;
 using namespace cs;
 
 wchar_t getChar(wchar_t current) {
-    u16stringstream u16str;
-    u16str << "Press 0-9 to change the symbol\nESC to cancel\n...\n";
-    auto texture = Console::Symbol::CreateTexture(u16str.str());
+    auto texture = Console::Symbol::CreateTexture(u"Press 0-9 to change the symbol\nESC to cancel\n...\n");
     Console::FillScreen(texture);
     do {
         Console::HandleKeyboard();
@@ -101,13 +100,13 @@ int Main(void) {
     Console::MouseStatus lastmouse = Console::GetMouseStatus();
     int siz = 0;
     while (1) {
-        Console::HandleMouseAndFocus();
+        Console::Update();
         wchar_t x;
         Console::Symbol sym = Console::Symbol(L'~',16,16);
-        while ((x = u16in.get()) && u16in.good())
-            if (isalnum(x)) buf.push_back(x);
-            else if (x == L'\177') {if (buf.size()) buf.pop_back();}
-            else wcout << x << endl;
+        while ((x = win.get()) && win.good())
+            if (x == L'\177' || x == '\b') {if (buf.size()) buf.pop_back();}
+            else if (x == L'\t') buf.push_back(L' ');
+            else buf.push_back(WCharToChar16(x));
         bool focs = Console::IsFocused();
         auto focsym = focs ? Console::Symbol(L'✓',16,16) : Console::Symbol(L'X',16,16);
         auto sym1 = Console::Symbol::CreateTexture(to_u16string(Console::GetMouseStatus().x));
@@ -339,15 +338,15 @@ endminput:
 
         // Count FPS
         auto enlapsed_time = chrono::duration_cast<std::chrono::duration<long double, std::milli>>(chrono::high_resolution_clock::now() - start).count();
-        u16stringstream u16str;
+        wstringstream u16str;
         if (counter == INT64_MAX) counter = 0;
         avg *= counter;
         avg += (1000.0/enlapsed_time);
         avg /= ++counter;
-        u16str << "[  " << avg << "FPS  ]";
-        auto pos = Console::Symbol::CreateTexture(u16str.str());
+        u16str << L"[  " << avg << L"FPS  ]";
+        auto pos = Console::Symbol::CreateTexture(WStringToU16String(u16str.str()));
+        wout << u16str.str();
         start = chrono::high_resolution_clock::now();
-        u16out << u16str.str();
         Console::HandleOutput();
         //TextureSystem::DrawTextureToScreen(2,15,pos,screen);
 

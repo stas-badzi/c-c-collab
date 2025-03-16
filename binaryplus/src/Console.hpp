@@ -60,7 +60,7 @@ namespace cpp {
             std::pair<bool,bool> scroll; // (is scrolling),(up or down)[windows/linux/freebsd - scroll up == move scroll whell (fingers on touchbad) down; down == move up | macos scroll like tablet/phone]
             unsigned int x;
             unsigned int y; 
-            inline MouseStatus(void) {
+            MouseStatus(void) {
                 this->primary = false;
                 this->middle = false;
                 this->secondary = false;
@@ -124,7 +124,7 @@ namespace cpp {
         static int16_t GetWindowHeight(void);
         static int32_t GetArgC(void);
         static char16_t** GetArgV(void);
-        static inline std::optional<std::pair<int,std::u16string>> PopupWindow(int type, int argc, const char16_t* argv[]) {
+        static std::optional<std::pair<int,std::u16string>> PopupWindow(int type, int argc, const char16_t* argv[]) {
             uniconv::unichar** args = (uniconv::unichar**)cppimp::System_AllocateMemory(sizeof(uniconv::unichar*)*argc);
             for (int i = 0; i < argc; i++)
                 args[i] = uniconv::U16StringToUnicode(argv[i]);
@@ -132,30 +132,31 @@ namespace cpp {
             if (ret.val) return std::pair<int,std::u16string>(ret.code,uniconv::UnicodeToU16String(ret.result));
             return std::nullopt;
         }
-        static inline std::optional<stsb::promise<std::optional<std::pair<int, std::u16string>>>> PopupWindowAsync(int type, int argc, const char16_t* argv[]) { return cppimp::Console_PopupWindowAsync(type, argc, argv); }
+        static std::optional<stsb::promise<std::optional<std::pair<int, std::u16string>>>> PopupWindowAsync(int type, int argc, const char16_t* argv[]) { return cppimp::Console_PopupWindowAsync(type, argc, argv); }
         static void Sleep(double seconds = 1.0);
-        static void FillScreen(std::vector<std::vector<Symbol> > symbols);
+        static void ClearScreenBuffer(void) { return cppimp::Console_ClearScreenBuffer(); }
+        static void FillScreen(const std::vector<std::vector<Symbol> >& symbols);
         static void HandleMouseAndFocus(void);
-        static inline void DontHandleKeyboard(void) { return cppimp::Console_DontHandleKeyboard(); }
-        static inline void ResetKeyboard(void) { return cppimp::Console_ResetKeyboard(); }
+        static void DontHandleKeyboard(void) { return cppimp::Console_DontHandleKeyboard(); }
+        static void ResetKeyboard(void) { return cppimp::Console_ResetKeyboard(); }
         static bool IsFocused(void);
         static struct MouseStatus GetMouseStatus(void);
         static std::pair<uint8_t,uint8_t> MouseButtonClicked(void); // returns button ID and whitch consecutive click was it
         static uint8_t MouseButtonReleased(void); // returns button ID
-        static inline void HandleOutput(void) { return cppimp::Console_HandleOutput(); }
-        static inline void Update(void) { return cppimp::Console_Update(); }
-        static inline void SetResult(std::u16string result) { return cppimp::Console_SetResult(uniconv::U16StringToUnicode(result)); }
-        static inline void MoveCursor(int x, int y) { return cppimp::Console_MoveCursor(x,y); }
-        static inline void ShowCursor(void) { return cppimp::Console_ShowCursor(); }
-        static inline void HideCursor(void) { return cppimp::Console_HideCursor(); }
-        static inline void SetCursorSize(uint8_t size) { return cppimp::Console_SetCursorSize(size); }
-        static inline void SetTitle(std::u16string title) { return cppimp::Console_SetTitle(uniconv::U16StringToUnicode(title)); }
+        static void HandleOutput(void) { return cppimp::Console_HandleOutput(); }
+        static void Update(void) { return cppimp::Console_Update(); }
+        static void SetResult(std::u16string result) { return cppimp::Console_SetResult(uniconv::U16StringToUnicode(result)); }
+        static void MoveCursor(int x, int y) { return cppimp::Console_MoveCursor(x,y); }
+        static void ShowCursor(void) { return cppimp::Console_ShowCursor(); }
+        static void HideCursor(void) { return cppimp::Console_HideCursor(); }
+        static void SetCursorSize(uint8_t size) { return cppimp::Console_SetCursorSize(size); }
+        static void SetTitle(std::u16string title) { return cppimp::Console_SetTitle(uniconv::U16StringToUnicode(title)); }
     };
-#if defined(_WIN32) || defined(__CYGWIN__)
-    extern __declspec(dllimport) std::basic_istream<char16_t>& u16in;
-    extern __declspec(dllimport) std::basic_ostream<char16_t>& u16out;
+#if defined(_WIN32)
+    extern __declspec(dllimport) std::basic_istream<wchar_t>& win;
+    extern __declspec(dllimport) std::basic_ostream<wchar_t>& wout;
 #else
-    extern std::basic_istream<char16_t>& u16in;
-    extern std::basic_ostream<char16_t>& u16out;
+    extern std::basic_istream<wchar_t>& win;
+    extern std::basic_ostream<wchar_t>& wout;
 #endif
 }

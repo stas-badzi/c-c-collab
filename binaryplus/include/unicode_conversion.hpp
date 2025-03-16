@@ -208,6 +208,23 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         }
     }
 
+    inline std::string WStringToNative(std::wstring wstr) {
+        using namespace std;
+        std::string out;
+        mbstate_t state = mbstate_t();
+        wchar_t* wc = (wchar_t*)wstr.c_str();
+        wchar_t* end = c + wstr.size();
+        while (wc < end) {
+            char c8;
+            size_t siz = wcrtomb(c8, wc, end-wc, &state);
+            if (siz != (size_t)-1)
+                for (char c8 : std::string_view{c8, siz})
+                    out.push_back(c8);
+            else exit(1);
+        }
+        return out;
+    }
+
     // don't use this function anymore
     inline utfchar ReadUtfChar(utfcstr str, size_t offset = 0, size_t* bytes_read = nullptr) {
         utfchar out;
@@ -311,9 +328,7 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         return out;
     }
 
-    inline constexpr char16_t WCharToChar16(wchar_t wchar) {
-        return static_cast<char16_t>(wchar);
-    }
+    inline constexpr char16_t WCharToChar16(wchar_t wchar) { return static_cast<char16_t>(wchar); }
 
     inline constexpr std::wstring U16StringToWString(std::u16string u16str) {
         std::wstring out;

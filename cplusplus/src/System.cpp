@@ -37,7 +37,7 @@ utfstr System::self = utfstr();
     }
 
     int cpp::System::MakeDirectory(utfcstr path) {
-        Console::out << u"MakeDirectory: " << WStringToU16String(path) << u'\n'; 
+        Console::out << L"MakeDirectory: " << path << L'\n';  
         SECURITY_ATTRIBUTES sec_atrs{};
         sec_atrs.nLength = sizeof(SECURITY_ATTRIBUTES);
         sec_atrs.lpSecurityDescriptor = nullptr;
