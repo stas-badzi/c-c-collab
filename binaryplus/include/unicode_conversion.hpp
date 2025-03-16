@@ -53,15 +53,14 @@ namespace uniconv {
     }
 #else
     #define to_nstring(val) to_string(val)
-    #define N(val) u8##val
+    #define N(val) val
     typedef std::string utfchar;
     typedef std::string utfstr;
     typedef const char* utfcstr;
     inline constexpr utfstr to_string(utfchar val) { return val; }
 #endif
 
-inline constexpr unichar Utf8ToUnicode(utfchar utf8_code) {
-    
+inline unichar Utf8ToUnicode(utfchar utf8_code) {
 #ifdef _WIN32
     return utf8_code;
 #else
@@ -74,8 +73,7 @@ inline constexpr unichar Utf8ToUnicode(utfchar utf8_code) {
 }
 
 
-inline constexpr utfchar UnicodeToUtf8(unichar unicode) {
-
+inline utfchar UnicodeToUtf8(unichar unicode) {
 #ifdef _WIN32
     return unicode;
 #else
@@ -129,6 +127,10 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         return out;
     }
 
+    inline constexpr std::string WStringToNative(std::wstring wstr) { return wstr; }
+
+    inline constexpr std::wstring NativeToWString(std::string str) { return str; }
+
     inline constexpr std::u16string WStringToU16String(std::wstring wstr) { return NativeToU16String(wstr); }
     
     inline constexpr std::wstring U16StringToWString(std::u16string u16str) { return U16StringToNative(u16str); }
@@ -160,7 +162,7 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
     }
 
 #else
-    inline constexpr std::u16string NativeToU16String(std::string str) {
+    inline std::u16string NativeToU16String(std::string str) {
         using namespace std;
         std::u16string out;
         mbstate_t state = mbstate_t();
@@ -186,13 +188,13 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         // handling surrogate pair at end of string
         char empty = 0;
         char16_t c16;
-        size_t siz =  mbrtoc16(&c16, &empty, 1, &state);
+        size_t siz = mbrtoc16(&c16, &empty, 1, &state);
         if (siz == static_cast<size_t>(-3))
             out.push_back(c16);
         return out;
     }
 
-    inline constexpr std::string U16StringToNative(std::u16string u16str) {
+    inline std::string U16StringToNative(std::u16string u16str) {
         using namespace std;
         std::string out;
         std::mbstate_t state = std::mbstate_t();
@@ -200,7 +202,7 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         char16_t* end = c16 + u16str.size();
         --c16; while (++c16 < end) {
             char ch[4] = {0};
-            size_t siz = c16rtomb(ch, c16, &state);
+            size_t siz = c16rtomb(ch, *c16, &state);
             if (siz != (size_t)-1)
                 for (char c8 : std::string_view{ch, siz})
                     out.push_back(c8);
@@ -213,15 +215,47 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         std::string out;
         mbstate_t state = mbstate_t();
         wchar_t* wc = (wchar_t*)wstr.c_str();
-        wchar_t* end = c + wstr.size();
+        wchar_t* end = wc + wstr.size();
         while (wc < end) {
-            char c8;
-            size_t siz = wcrtomb(c8, wc, end-wc, &state);
+            char ch[4] = {0};
+            size_t siz = wcrtomb(ch, *wc, &state);
             if (siz != (size_t)-1)
-                for (char c8 : std::string_view{c8, siz})
+                for (char c8 : std::string_view{ch, siz})
                     out.push_back(c8);
             else exit(1);
         }
+        return out;
+    }
+
+    inline std::wstring NativeToWstring(std::string str) {
+        using namespace std;
+        std::wstring out;
+        mbstate_t state = mbstate_t();
+        char* c = (char*)str.c_str();
+        char* end = c + str.size();
+        while (c < end) {
+            wchar_t wc;
+            size_t siz = mbrtowc(&wc, c, end-c, &state);
+            switch (siz) {
+            case static_cast<size_t>(-1):
+                exit(1);
+            case static_cast<size_t>(-2):
+                continue;
+            case static_cast<size_t>(-3):
+                out.push_back(wc);
+                continue;
+            default:
+                out.push_back(wc);
+                c += siz;
+                continue;
+            }
+        }
+        // handling surrogate pair at end of string
+        char empty = 0;
+        wchar_t wc;
+        size_t siz = mbrtowc(&wc, &empty, 1, &state);
+        if (siz == static_cast<size_t>(-3))
+            out.push_back(wc);
         return out;
     }
 
@@ -328,7 +362,9 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         return out;
     }
 
-    inline constexpr char16_t WCharToChar16(wchar_t wchar) { return static_cast<char16_t>(wchar); }
+    inline constexpr char16_t WCharToChar16(wchar_t wchar) {
+        return static_cast<char16_t>(wchar);
+    }
 
     inline constexpr std::wstring U16StringToWString(std::u16string u16str) {
         std::wstring out;

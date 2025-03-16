@@ -30,25 +30,25 @@ Console::config_t& Console::GetConfigRef(void) { return Console::config; }
 
 void Console::ThrowMsg(const char* msg) {
     Console::Fin();
-    cerr << msg << endl;
+    fwrite(msg, sizeof(char), strlen(msg), stderr);
     exit(1);
 }
 
 void Console::ThrowMsg(const wchar_t* msg) {
     Console::Fin();
-    wcerr << msg << endl;
+    fwrite(msg, sizeof(wchar_t), wcslen(msg), stderr);
     exit(0x100);
 }
 
 void Console::ThrowMsg(const string msg) {
     Console::Fin();
-    cerr << msg << endl;
+    fwrite(msg.c_str(), sizeof(char), msg.size(), stderr);
     exit(0x100);
 }
 
 void Console::ThrowMsg(const wstring msg) {
     Console::Fin();
-    wcerr << msg << endl;
+    fwrite(msg.c_str(), sizeof(wchar_t), msg.size(), stderr);
     exit(0x100);
 }
 
@@ -65,19 +65,19 @@ void Console::PushChar(char_t c) {
     Console::in.str(Console::in.str()+c);
 #else
     //write(fileno(stdout), &c, 1);
-    char16_t c16 = 0;
-    size_t siz = mbrtoc16(&c16, &c, 1, &Console::streammbs);
+    wchar_t wc = 0;
+    size_t siz = mbrtowc(&wc, &c, 1, &Console::streammbs);
     switch (siz) {
     case static_cast<size_t>(-1):
-        ThrowMsg("mbrtoc16 error");
+        ThrowMsg("mbrtowc error");
     case static_cast<size_t>(-2):
         return;
     }
-    Console::in.str(Console::in.str()+c16);
+    Console::in.str(Console::in.str()+wc);
     char empty = 0;
-    size_t siz =  mbrtoc16(&c16, &empty, 1, &Console::streammbs);
+    siz =  mbrtowc(&wc, &empty, 1, &Console::streammbs);
     if (siz == static_cast<size_t>(-3))
-        Console::in.str(Console::in.str()+c16);
+        Console::in.str(Console::in.str()+wc);
 #endif
     Console::in.seekg(pos);
 };
@@ -1712,8 +1712,9 @@ void Console::XtermMouseAndFocus(void) {
     void cpp::Console::SetTitle(const char_t* title) {
         EscSeqSetTitle(title);
     }
-// Not linux (Probably Posix and Unix)
-mbstate_t Console::streammbs = mbstate_t();
+
+    mbstate_t Console::streammbs = mbstate_t();
+    ofstream Console::real_out = ofstream();
 
 #ifdef __linux__
 // linux
@@ -2129,12 +2130,12 @@ mbstate_t Console::streammbs = mbstate_t();
             // remove files
             if (Console::sub_proc) {
                 FILE* fl;
-                fl = _wfopen((Console::tmp_data+Console::subdir+L"exit.dat").c_str(), L"w");
+                fl = fopen((Console::tmp_data+Console::subdir+"exit.dat").c_str(), "w");
                 fwrite(&Console::ret, sizeof(Console::ret), 1, fl);
                 fclose(fl);
 
                 //if (!System::IsFile((Console::tmp_data+Console::subdir+L"result.dat").c_str()))
-                    fclose(_wfopen((Console::tmp_data+Console::subdir+L"result.dat").c_str(), L"w"));
+                    fclose(fopen((Console::tmp_data+Console::subdir+"result.dat").c_str(), "w"));
 
                 fl = fopen((string("/tmp/.factoryrush/") + Console::subdir + "initialized.dat").c_str(), "w");
                 fwrite("-1", sizeof(char), 2, fl);
@@ -2771,8 +2772,8 @@ mbstate_t Console::streammbs = mbstate_t();
     }
 
     void Console::FillScreen(const vector<vector<Console::Symbol> >& symbols) {
-        if (!Console::screen_lock.try_lock()) return; // it's a slow function so we can't put multiple in a queue
-        string screen = "\033[H";
+        if (!Console::stderr_lock.try_lock()) return; // it's a slow function so we can't put multiple in a queue
+        string screen = "\033[?25l\033[H";
         bool moved = false;
         size_t width = GetWindowWidth(), height = GetWindowHeight();
 
@@ -2821,7 +2822,7 @@ mbstate_t Console::streammbs = mbstate_t();
                 continue;
             }
             if (icounter) screen.append(string("\033[") + to_string(icounter) + "E");
-            else if (i) screen.append("\033[E");
+            else if (i) screen.append("\n");
             icounter = 0;
             if (i >= symbols.size()) {
                 if (width) screen.append("\033[0m");
@@ -2839,25 +2840,21 @@ mbstate_t Console::streammbs = mbstate_t();
                     screen.append(symbols[i][j].character);
                 }
         }
-        if (screen.size() < 4) { 
+        if (screen.size() < 10) { 
             fprintf(stdout, "Terminal chars: ~%d, written none\n", width * height * 10, 0);
             return;
         }
         screen.append("\033[0m");
-        bool old_cursor_visible = Console::cursor_visible;
-        Console::cursor_visible = false;
-        Console::EscSeqSetCursor();
         fwrite(screen.c_str(), sizeof(char), screen.size(), stderr);
-        Console::EscSeqMoveCursor();
-        Console::cursor_visible = old_cursor_visible;
-        Console::EscSeqSetCursor();
-        fprintf(stdout, "Terminal chars: ~%d, written chars: %d", width * height * 10, screen.size());
-        fwrite(screen.c_str(), sizeof(char), screen.size(), stdout);
-        fputc('\n', stdout);
-        fflush(stdout);
         old_scr_size = {width,height};
         old_symbols = symbols;
-        Console::screen_lock.unlock();
+        Console::stderr_lock.unlock();
+        Console::EscSeqMoveCursor();
+        Console::EscSeqSetCursor();
+        //fprintf(stdout, "Terminal chars: ~%d, written chars: %d", width * height * 10, screen.size());
+        //fwrite(screen.c_str(), sizeof(char), screen.size(), stdout);
+        //fputc('\n', stdout);
+        //fflush(stdout);
     }
 
     void SysSleep(int microseconds){
@@ -3026,9 +3023,17 @@ Console::Symbol & Console::Symbol::operator=(const Console::Symbol & src) {
 }
 
 void Console::ClearScreenBuffer(void) {
+#if defined(_WIN32) || defined(__CYGWIN__)
     Console::screen_lock.lock();
+#else
+    Console::stderr_lock.lock();
+#endif
     Console::old_symbols.clear();
+#if defined(_WIN32) || defined(__CYGWIN__)
     Console::screen_lock.unlock();
+#else
+    Console::stderr_lock.unlock();
+#endif
 }
 void Console::Exit(int code) {
     Console::ret = code;
@@ -3061,6 +3066,8 @@ newpidgen:
     #define sep '/'
     #define topen fopen
     #define fgetnc fgetc
+    #define ERROR_PATH_NOT_FOUND ENOENT
+
     char* appdata = getenv("HOME");
     const char* tmppath = "/tmp";
 #endif
@@ -3140,7 +3147,7 @@ contcons:
     while (!System::IsFile((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str()) && ++counter < max_popup_startup_wait)
         SysSleep(1000);
     if (counter >= max_popup_startup_wait) return nullopt;
-    FILE* fl = topen((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str(), L"r");
+    FILE* fl = topen((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str(), N("r"));
     if (!fl) return nullopt;
     pid_t spid;
     fread(&spid, sizeof(pid_t), 1, fl);
@@ -3159,13 +3166,13 @@ contcons:
     for (size_t i = 0; i < popup_pids.size(); i++)
         if (popup_pids[i] == spid) { popup_pids.erase(popup_pids.begin() + i); break; }
 
-    fl = topen((Console::tmp_data + subdir + procdir + N("exit.dat")).c_str(), L"r");
+    fl = topen((Console::tmp_data + subdir + procdir + N("exit.dat")).c_str(), N("r"));
     if (!fl) ThrowMsg(utfstr(N("Couldn't open file: ")) + Console::tmp_data + subdir + procdir + N("exit.dat"));
     int pret;
     fread(&pret, sizeof(int), 1, fl);
     fclose(fl);
 
-    fl = topen((Console::tmp_data + subdir + procdir + N("result.dat")).c_str(), L"r");
+    fl = topen((Console::tmp_data + subdir + procdir + N("result.dat")).c_str(), N("r"));
     if (!fl) return nullopt;
     utfstr result; char_t c;
     while (auto c = fgetnc(fl) && !feof(fl))
@@ -3174,7 +3181,7 @@ contcons:
     if (result.size() && result.back() == '\0') result.pop_back();
 
     if (pret)
-        Console::out << L"Popup exited with code: 0x" << std::hex << pret << L" and result: \"" << result << L"\"\n";
+        Console::out << L"Popup exited with code: 0x" << std::hex << pret << L" and result: \"" << NativeToWstring(result) << L"\"\n";
 
     return { {pret,result} };
 }
@@ -3277,7 +3284,7 @@ contcons:
     while (!System::IsFile((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str()) && ++counter < max_popup_startup_wait)
         SysSleep(1000);
     if (counter >= max_popup_startup_wait) return nullopt;
-    FILE* fl = topen((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str(), L"r");
+    FILE* fl = topen((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str(), N("r"));
     if (!fl) return nullopt;
     pid_t spid;
     fread(&spid, sizeof(pid_t), 1, fl);
@@ -3295,13 +3302,13 @@ contcons:
         for (size_t i = 0; i < pop_pids.size(); i++)
             if (pop_pids[i] == spid) { pop_pids.erase(pop_pids.begin() + i); break; }
 
-        FILE* fl = topen((retdir + N("exit.dat")).c_str(), L"r");
+        FILE* fl = topen((retdir + N("exit.dat")).c_str(), N("r"));
         if (!fl) ThrowMsg(utfstr(N("Couldn't open file: ")) + retdir + N("exit.dat"));
         int pret;
         fread(&pret, sizeof(int), 1, fl);
         fclose(fl);
 
-        fl = topen((retdir + N("result.dat")).c_str(), L"r");
+        fl = topen((retdir + N("result.dat")).c_str(), N("r"));
         if (!fl) return nullopt;
         utfstr result; char_t c;
         while (auto c = fgetnc(fl) && !feof(fl))
@@ -3310,7 +3317,7 @@ contcons:
         if (result.size() && result.back() == '\0') result.pop_back();
 
         if (pret)
-            Console::out << L"Popup exited with code: 0x" << std::hex << pret << L" and result: \"" << result << L"\"\n";
+            Console::out << L"Popup exited with code: 0x" << std::hex << pret << L" and result: \"" << NativeToWstring(result) << L"\"\n";
         
         tstint = 13;
         retx = std::optional<std::pair<int, uniconv::utfstr>>({pret,result});
@@ -3424,7 +3431,7 @@ contcons:
     while (!System::IsFile((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str()) && ++counter < max_popup_startup_wait)
         SysSleep(1000);
     if (counter >= max_popup_startup_wait) return nullopt;
-    FILE* fl = topen((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str(), L"r");
+    FILE* fl = topen((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str(), N("r"));
     if (!fl) return nullopt;
     pid_t spid;
     fread(&spid, sizeof(pid_t), 1, fl);
@@ -3441,13 +3448,13 @@ contcons:
         for (size_t i = 0; i < pop_pids.size(); i++)
             if (pop_pids[i] == spid) { pop_pids.erase(pop_pids.begin() + i); break; }
 
-        FILE* fl = topen((retdir + N("exit.dat")).c_str(), L"r");
+        FILE* fl = topen((retdir + N("exit.dat")).c_str(), N("r"));
         if (!fl) ThrowMsg(utfstr(N("Couldn't open file: ")) + retdir + N("exit.dat"));
         int pret;
         fread(&pret, sizeof(int), 1, fl);
         fclose(fl);
 
-        fl = topen((retdir + N("result.dat")).c_str(), L"r");
+        fl = topen((retdir + N("result.dat")).c_str(), N("r"));
         if (!fl) return nullopt;
         utfstr result; char_t c;
         while (auto c = fgetnc(fl) && !feof(fl))
@@ -3456,7 +3463,7 @@ contcons:
         if (result.size() && result.back() == '\0') result.pop_back();
 
         if (pret)
-            Console::out << L"Popup exited with code: 0x" << std::hex << pret << L" and result: \"" << result << L"\"\n";
+            Console::out << L"Popup exited with code: 0x" << std::hex << pret << L" and result: \"" << NativeToWstring(result) << L"\"\n";
             
         u16string result16 = UnicodeToU16String(Utf8StringToUnicode(result.c_str()));
 

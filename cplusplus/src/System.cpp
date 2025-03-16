@@ -435,6 +435,12 @@ int cpp::System::RemoveFile(utfcstr path) {
     return errno;
 }
 
+bool cpp::System::IsFile(utfcstr path) {
+    struct stat st;
+    if (stat(path, &st) == 0) return S_ISREG(st.st_mode);
+    return false;
+}
+
 int cpp::System::Shell(uniconv::utfcstr command) {
     return System::RunProgram("/bin/sh", "-c", command, nullptr); 
 }

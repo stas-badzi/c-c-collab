@@ -384,6 +384,6 @@ namespace cpp {
     extern __declspec(dllexport) std::basic_ostream<wchar_t>& wout;
 #else
     extern __attribute__((visibility("default"))) std::basic_istream<wchar_t>& win;
-    extern __attribute__((visibility("default"))) std::basic_ofstream<wchar_t>& wout;
+    extern __attribute__((visibility("default"))) std::basic_ostream<wchar_t>& wout;
 #endif
 } // namespace cpp

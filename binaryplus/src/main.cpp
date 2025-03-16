@@ -100,7 +100,8 @@ int Main(void) {
     Console::MouseStatus lastmouse = Console::GetMouseStatus();
     int siz = 0;
     while (1) {
-        Console::Update();
+        Console::HandleMouseAndFocus();
+        Console::HandleOutput();
         wchar_t x;
         Console::Symbol sym = Console::Symbol(L'~',16,16);
         while ((x = win.get()) && win.good())
