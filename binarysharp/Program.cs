@@ -9,7 +9,8 @@ namespace BinarySharp {
         static int Main(string[] args) {
             Terminal.Init();
             var sym = new Terminal.Symbol('▒',16,16);
-            while (true) {
+            bool running = true;
+            while (running) {
                 var width = Terminal.GetWindowWidth();
                 var height = Terminal.GetWindowHeight();
 
@@ -31,8 +32,8 @@ namespace BinarySharp {
                 //if (Terminal.KeyPressed() == Key.Enum.ESC) return 0;
                 switch (Terminal.KeyPressed()) {
                     case Key.Enum.ESC:
-                        Terminal.Fin();
-                        return 0;
+                        running = false;
+                        break;
                     case Key.Enum.a:
                         sym = new Terminal.Symbol('A',15,15);
                         break;
