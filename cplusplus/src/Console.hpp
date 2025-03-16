@@ -44,6 +44,8 @@
     #include <windows/thread_safe/vector>
 #ifndef _MSVC
     #include <windows/quick_exit.h>
+#else
+    typedef int pid_t;
 #endif
     typedef wchar_t char_t;
 #else
