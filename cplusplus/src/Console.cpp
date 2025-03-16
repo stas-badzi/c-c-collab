@@ -2841,7 +2841,7 @@ void Console::XtermMouseAndFocus(void) {
                 }
         }
         if (screen.size() < 10) { 
-            fprintf(stdout, "Terminal chars: ~%d, written none\n", width * height * 10, 0);
+            //fprintf(stdout, "Terminal chars: ~%d, written none\n", width * height * 10, 0);
             return;
         }
         screen.append("\033[0m");

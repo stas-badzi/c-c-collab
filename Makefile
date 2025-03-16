@@ -576,7 +576,7 @@ resources: $(check_arch) source/setkbdmode.c source/killterm.c source/getfd.c so
 
 ifneq ($(msvc),1)
 	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
-	$(staticgen)assets/globals.$(static) objects/globals.o
+	$(staticgen)assets/libglobals.$(static) objects/globals.o
 else
 	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) source/globals.c /Icplusplus\include $(clstd)" > run.bat
 	@cmd.exe /c run.bat

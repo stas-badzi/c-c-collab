@@ -208,6 +208,7 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
                     out.push_back(c8);
             else exit(1);
         }
+        return out;
     }
 
     inline std::string WStringToNative(std::wstring wstr) {

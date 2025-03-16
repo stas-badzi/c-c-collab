@@ -184,7 +184,7 @@ using namespace uniconv;
         System::FreeMemory(argv);
         auto ret = Console::PopupWindow(type, argc, args);
         popwinretval retval;
-        if (retval.val = ret.has_value()) {
+        if ((retval.val = ret.has_value())) {
             retval.code = ret.value().first;
             retval.result = Utf8StringToUnicode(ret.value().second.c_str());
         }
@@ -192,7 +192,12 @@ using namespace uniconv;
         return retval;
     }
 
-    libexport auto Console_PopupWindowAsync(int type, int argc, const char16_t* arg16v[]) {
+#ifdef _WIN32
+    __declspec(dllexport)
+#else
+    __attribute__((visibility("default")))
+#endif
+    auto Console_PopupWindowAsync(int type, int argc, const char16_t* arg16v[]) {
         return Console::PopupWindowAsync(type, argc, arg16v);
     }
 
