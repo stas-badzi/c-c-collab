@@ -1208,7 +1208,11 @@ void Console::XtermMouseAndFocus(void) {
         return csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
     }
 
-    DWORD WINAPI WaitClrScrBuf(__attribute__((unused)) LPVOID lpParam) {
+    DWORD WINAPI WaitClrScrBuf(
+#ifdef __GNUC__
+        __attribute__((unused))
+#endif
+        LPVOID lpParam) {
         ::Sleep(1000);
         Console::ClearScreenBuffer();
         return 0;
