@@ -285,11 +285,11 @@ namespace Utility
             return ret;
         }
 
-        public static char UnicodeToUtf8(UInt32 uni) {
+        public static char UnicodeToNative(UInt32 uni) {
             return Convert.ToChar(uni);
         }
 
-        public static UInt32 Utf8ToUnicode(char utf) {
+        public static UInt32 NativeToUnicode(char utf) {
             return Convert.ToUInt32(utf);
         }
         public static String PtrToString(IntPtr ptr)

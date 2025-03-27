@@ -15,7 +15,7 @@ using namespace uniconv;
 // Console
 
     libexport void ThrowMsg(uniconv::unichar* msg) {
-        cpp::Console::ThrowMsg(uniconv::UnicodeToUtf8String(msg).c_str());
+        cpp::Console::ThrowMsg(uniconv::UnicodeToNativeString(msg).c_str());
     }
 
     libexport void Exit(int code) {
@@ -119,7 +119,7 @@ using namespace uniconv;
     }
 
     libexport void Console_SetResult(unichar* result) {
-        return cpp::Console::SetResult(UnicodeToUtf8String(result).c_str());
+        return cpp::Console::SetResult(UnicodeToNativeString(result).c_str());
     }
 
     libexport void Console_MoveCursor(int x, int y) {
@@ -139,7 +139,7 @@ using namespace uniconv;
     }
 
     libexport void Console_SetTitle(uniconv::unichar* title) {
-        return cpp::Console::SetTitle(uniconv::UnicodeToUtf8String(title).c_str());
+        return cpp::Console::SetTitle(uniconv::UnicodeToNativeString(title).c_str());
     }
 
     libexport void Console_ReverseCursorBlink(void) {
@@ -154,20 +154,8 @@ using namespace uniconv;
         int _argc = cpp::Console::GetArgC();
         utfcstr* _argv = cpp::Console::GetArgV();
         unichar** out = (unichar**)__dllalloc(sizeof(unichar*)*_argc);
-        for (int i = 0; i < _argc; i++) {
-            /*
-            unichar* loc = (unichar*)__dllalloc(sizeof(unichar) * (strlen(_argv[i]) + 1));
-            size_t offset = 0;
-            int num = 0;
-            for (size_t j = 0; j < strlen(_argv[i]); j += offset) {
-                loc[num] = Utf8ToUnicode(ReadUtfChar(_argv[i], j, &offset));
-                ++num;
-            }
-            loc[num] = 0;
-            loc = (unichar*)realloc(loc,sizeof(unichar) * ++num);
-            */
-            out[i] = Utf8StringToUnicode(_argv[i]);;
-        }
+        for (int i = 0; i < _argc; i++)
+            out[i] = NativeStringToUnicode(_argv[i]);;
         return out;
     }
 
@@ -176,17 +164,18 @@ using namespace uniconv;
     libexport popwinretval Console_PopupWindow(int type, int argc, uniconv::unichar* argv[]) {
         uniconv::utfcstr* args = (uniconv::utfcstr*)System::AllocateMemory(sizeof(uniconv::utfcstr)*argc);
         for (int i = 0; i < argc; i++) {
-            uniconv::utfstr arg = UnicodeToUtf8String(argv[i]).c_str();
+            uniconv::utfstr arg = UnicodeToNativeString(argv[i]).c_str();
             args[i] = (uniconv::utfcstr)System::AllocateMemory(sizeof(wchar_t)*arg.size());
             char_t* loc = (char_t*)args[i];
             for (size_t j = 0; j < arg.size(); j++) loc[j] = arg[j];
+            loc[arg.size()] = L'\0';
         }
         System::FreeMemory(argv);
         auto ret = Console::PopupWindow(type, argc, args);
         popwinretval retval;
         if ((retval.val = ret.has_value())) {
             retval.code = ret.value().first;
-            retval.result = Utf8StringToUnicode(ret.value().second.c_str());
+            retval.result = NativeStringToUnicode(ret.value().second.c_str());
         }
         System::FreeMemory(args);
         return retval;
@@ -234,7 +223,7 @@ using namespace uniconv;
         }
 
         libexport void* Console_Symbol_Construct$cfb(unichar character, uint8_t foreground = 7, uint8_t background = 0) {
-            void* out = new cpp::Console::Symbol(UnicodeToUtf8(character), foreground, background);
+            void* out = new cpp::Console::Symbol(UnicodeToNative(character), foreground, background);
         #ifdef _DEBUG
             __save$SYMBOLS(out);
         #endif
@@ -269,14 +258,14 @@ using namespace uniconv;
         #ifdef _DEBUG
             __check$SYMBOLS(smb);
         #endif
-            smb->character = UnicodeToUtf8(character);
+            smb->character = UnicodeToNative(character);
         }
 
         libexport unichar Console_Symbol_character$get(cpp::Console::Symbol* smb) {
         #ifdef _DEBUG
             __check$SYMBOLS(smb);
         #endif
-            return Utf8ToUnicode(smb->character);
+            return NativeToUnicode(smb->character);
         }
 
         libexport void Console_Symbol_foreground$set(cpp::Console::Symbol* smb, uint8_t foreground) {
@@ -336,15 +325,15 @@ using namespace uniconv;
 
 // System
     libexport uniconv::unichar* System_GetRootDir(void) {
-        return uniconv::Utf8StringToUnicode(cpp::System::GetRootDir().c_str());
+        return uniconv::NativeStringToUnicode(cpp::System::GetRootDir().c_str());
     }
 
     libexport uniconv::unichar* System_GetSelfPath(void) {
-        return uniconv::Utf8StringToUnicode(cpp::System::GetSelfPath().c_str());
+        return uniconv::NativeStringToUnicode(cpp::System::GetSelfPath().c_str());
     }
     
     libexport uniconv::unichar* System_ToNativePath(uniconv::unichar* arg1) {
-        return uniconv::Utf8StringToUnicode(cpp::System::ToNativePath(uniconv::UnicodeToUtf8String(arg1)).c_str());
+        return uniconv::NativeStringToUnicode(cpp::System::ToNativePath(uniconv::UnicodeToNativeString(arg1)).c_str());
     }
     
     libexport nint System_AllocateMemory(size_t arg1) {

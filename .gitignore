@@ -6,6 +6,7 @@
 *.lo
 *.o
 *.obj
+*.res
 
 # Precompiled Headers
 *.gch
@@ -76,6 +77,8 @@ all
 dll
 release
 resources
+fixmintty-cygwin
+fixmintty-msys2
 check-arch
 __arch.dat
 run.bat
@@ -95,7 +98,7 @@ run.bat
 !utilities/custom/vsdevscript-x64.bat
 
 # test dir
-test/*
+test*
 
 # test files
 file.tux

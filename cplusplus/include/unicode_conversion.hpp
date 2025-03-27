@@ -60,7 +60,7 @@ namespace uniconv {
     inline constexpr utfstr to_string(utfchar val) { return val; }
 #endif
 
-inline unichar Utf8ToUnicode(utfchar utf8_code) {
+inline unichar NativeToUnicode(utfchar utf8_code) {
 #ifdef _WIN32
     return utf8_code;
 #else
@@ -73,7 +73,7 @@ inline unichar Utf8ToUnicode(utfchar utf8_code) {
 }
 
 
-inline utfchar UnicodeToUtf8(unichar unicode) {
+inline utfchar UnicodeToNative(unichar unicode) {
 #ifdef _WIN32
     return unicode;
 #else
@@ -144,7 +144,7 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         return str[offset];
     }
     
-    inline unichar* Utf8StringToUnicode(utfcstr utf8s) {
+    inline unichar* NativeStringToUnicode(utfcstr utf8s) {
         unichar* out = (unichar*)__dllalloc(sizeof(unichar) * (wcslen(utf8s) + 1));
         size_t offset;
         for (size_t i = 0; i < wcslen(utf8s); i++) out[i] = utf8s[i];
@@ -152,7 +152,7 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         return out;
     }
 
-    inline utfstr UnicodeToUtf8String(unichar* unicodes) {
+    inline utfstr UnicodeToNativeString(unichar* unicodes) {
         utfstr out;
         for (int i = 0; unicodes[i] != 0; ++i) {
             out.push_back(unicodes[i]);
@@ -319,7 +319,7 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         return out;
     }
 
-    inline unichar* Utf8StringToUnicode (utfcstr utf8s) {
+    inline unichar* NativeStringToUnicode (utfcstr utf8s) {
         std::mbstate_t state{};
         size_t length = strlen(utf8s);
         int offset = 0;
@@ -339,7 +339,7 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         return out;
     }
 
-    inline utfstr UnicodeToUtf8String (unichar* unicodes) {
+    inline utfstr UnicodeToNativeString (unichar* unicodes) {
         std::mbstate_t state{};
         
         std::string out;

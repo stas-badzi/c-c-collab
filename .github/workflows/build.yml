@@ -291,6 +291,89 @@ jobs:
         with:
           name: Msys2i686CsBin
           path: bin/Cs.*.zip
+  
+  compile-cs-windows-arm64:
+    name: Compile C# for Windows (arm64)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      - name: Compile c#
+        shell: cmd
+        run: |
+          make cs tgarch=arm64 sudo=0 archchk=0 nodep=1 msvc=1
+          make csbin tgarch=arm64 sudo=0 archchk=0 nodep=1 
+          cd csharp/bin/lib
+      - name: Export dynamic library
+        uses: actions/upload-artifact@v4
+        with:
+          name: CSharpWinx86Dll
+          path: csharp/bin/lib/factoryrushsharp.dll
+      - name: Export dynamic library linkage
+        uses: actions/upload-artifact@v4
+        with:
+          name: CSharpWinx86DllLib
+          path: csharp/bin/lib/factoryrushsharp.lib
+      - name: Export executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: CSharpWinx86Exe
+          path: binarysharp/bin/exe/cs-factoryrush.exe
+
+  build-msys-arm64:
+    name: Build program using MSYS2 (aarch64)
+    needs: compile-cs-windows-arm64
+    runs-on: [self-hosted, windows, arm64]
+    steps:
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: make git zip tree mingw-w64-x86_64-binutils mingw-w64-x86_64-clang mingw-w64-cross-clang
+      - name: Checkout source code
+        uses: actions/checkout@v4
+      - name: Import C# compiled dynamic library
+        uses: actions/download-artifact@v4
+        with:
+          name: CSharpWinx86Dll
+          path: csharp/bin/lib
+      - name: Import C# compiled executable
+        uses: actions/download-artifact@v4
+        with:
+          name: CSharpWinx86Exe
+          path: binarysharp/bin/exe
+      - name: Copy C# where it's needed
+        shell: msys2 {0}
+        run: |
+          touch cs csbin
+          cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
+          cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
+      - name: Compile code
+        shell: msys2 {0}
+        env:
+          CC: gcc
+          CXX: g++
+        run: |
+          cd /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
+          tree
+          export PATH=/mingw64/bin:$PATH
+          make resources cpp cppbin sudo=0 nodep=1 c-compiler="clang --target=aarch64-w64-windows-gnu" cpp-compiler="clang++ --target=aarch64-w64-windows-gnu" archchk=0
+          touch cs cpp cppbin csbin
+          make tgarch=aarch64 archchk=0
+      - name: Upload C++ binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: Msys2aarch64CppBin
+          path: bin/Cpp.*.zip
+      - name: Upload C# binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: Msys2aarch64CsBin
+          path: bin/Cs.*.zip
 
   build-ubuntu:
     name: Build program using Ubuntu
@@ -323,6 +406,38 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: UbuntuCsBin
+          path: bin/Cs.*.tar.gz
+
+  
+
+  build-ubuntu-arm64:
+    name: Build program using Ubuntu
+    runs-on: ubuntu-24.04-arm64
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      - name: Set up Clang
+        uses: egor-tensin/setup-clang@v1
+        with:
+          version: latest
+          platform: arm64
+      - name: Compile code
+        shell: bash
+        run: |
+          make sudo=0 archchk=0 c-compiler=clang cpp-compiler=clang++ tgarch=arm64
+      - name: Upload C++ binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: UbuntuArm64CppBin
+          path: bin/Cpp.*.tar.gz
+      - name: Upload C# binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: UbuntuArm64CsBin
           path: bin/Cs.*.tar.gz
 
   build-debian:

@@ -152,6 +152,7 @@ namespace cpp {
         static void SetCursorSize(uint8_t size) { return cppimp::Console_SetCursorSize(size); }
         static void SetTitle(std::u16string title) { return cppimp::Console_SetTitle(uniconv::U16StringToUnicode(title)); }
     };
+    inline void flush(void) { Console::HandleOutput(); }
 #if defined(_WIN32)
     extern __declspec(dllimport) std::basic_istream<wchar_t>& win;
     extern __declspec(dllimport) std::basic_ostream<wchar_t>& wout;

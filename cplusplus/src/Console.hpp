@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <promise.hpp>
 #include <thread>
+#include <atomic>
 #include "System.hpp"
 
 #ifdef __APPLE__
@@ -35,17 +36,20 @@
     #include <windows.h>
     #include <tlhelp32.h>
     #include <psapi.h>
+    #include <io.h>
+    #include <fcntl.h>
     #include <dbghelp.h>
     #include <process.h>
     #include <windows/key.hpp>
     #include <iostream>
+    #include <unordered_map>
     #include <conio.h>
     #include <windows/thread_safe/queue>
     #include <windows/thread_safe/vector>
-#ifndef _MSVC
+#ifndef _MSC_VER
     #include <windows/quick_exit.h>
 #else
-    typedef int pid_t;
+    typedef DWORD pid_t;
 #endif
     typedef wchar_t char_t;
 #else
@@ -91,6 +95,8 @@
 
 // change to 1 for less cpu usage but less responsiveness (windows keyboard input)
 #define SLEEP_THREAD_INPUT false
+// change to 1 for less cpu usage but less responsiveness (windows popup window switching)
+#define SLEEP_POPUP_CHECK false
 // todo: make it into an cmdline trigger
 
 #define MOUSE_BUTTON_1  1
@@ -197,6 +203,7 @@ namespace cpp {
         static std::pair<int16_t,int16_t> cursorpos;
         static bool cursor_visible;
         static uint8_t cursor_size;
+        static uniconv::utfstr window_title;
         static bool cursor_blink_opposite;
         static uniconv::utfstr user_data;
         static uniconv::utfstr dev_data;
@@ -219,7 +226,11 @@ namespace cpp {
         static HANDLE screen;
         static HANDLE fd;
         static HWND window;
+        static HWND parent_window;
         static HDC device;
+        static HICON old_small_icon;
+        static HICON old_big_icon;
+        static HICON new_icon;
         static DWORD old_console;
         static HANDLE old_buffer;
         static CONSOLE_CURSOR_INFO old_curinf;
@@ -236,6 +247,7 @@ namespace cpp {
         static inline constexpr uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2);
         static DWORD WINAPI MoveCursorThread(LPVOID lpParam);
         static DWORD WINAPI SuperThread(LPVOID lpParam);
+        static std::atomic<bool> tabactive;
         //static std::pair<uint16_t,uint16_t> xyoffset;
         //static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
     #else
@@ -342,10 +354,13 @@ namespace cpp {
         static struct MouseStatus GetMouseStatus(void);
         static std::pair<uint8_t,uint8_t> MouseButtonClicked(void); // returns button ID and whitch consecutive click was it
         static uint8_t MouseButtonReleased(void); // returns button ID
+        static bool IsMouseButtonDown(uint8_t button);
 
         static void HandleOutput(void);
 
         static void Update(void);
+
+        static void Beep(void);
 
         static void Sleep(double seconds = 1.0);
         static void Exit(int code);
@@ -360,7 +375,7 @@ namespace cpp {
         static void SetDoubleClickMaxWait(unsigned short milliseconds);
         static unsigned short GetDoubleClickMaxWait(void);
 
-        static std::optional<std::pair<int,uniconv::utfstr>> PopupWindow(int type, int argc, const char_t* argv[]);
+        static std::optional<std::pair<int,uniconv::utfstr>> PopupWindow(int type, int argc, const char_t* argv[], const uniconv::utfcstr title = nullptr);
         static std::optional<stsb::promise<std::optional<std::pair<int,uniconv::utfstr>>>> PopupWindowAsync(int type, int argc, const char_t* argv[]);
         static std::optional<stsb::promise<std::optional<std::pair<int,std::u16string>>>> PopupWindowAsync(int type, int argc, const char16_t* argv[]);
 
@@ -371,12 +386,15 @@ namespace cpp {
         static void SetTitle(const char_t* title);
         static void ReverseCursorBlink(void);
         static std::basic_istringstream<wchar_t> in;
+        static void out_flush(void) {HandleOutput();}
     #ifdef _WIN32
         static std::basic_ofstream<wchar_t>& out;
     #else
         static std::basic_ostringstream<wchar_t> out;
     #endif
     private:
+        static void FillScreenForce(const std::vector<std::vector<Symbol> >& symbols);
+        static std::atomic<bool> refresh_screen;
         static std::vector<std::vector<Symbol>> old_symbols;
         static std::pair<int16_t,int16_t> old_scr_size;
         

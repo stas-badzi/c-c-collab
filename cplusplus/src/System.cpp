@@ -14,7 +14,7 @@ using namespace uniconv;
 utfstr System::root = System::GetRoot();
 utfstr System::self = utfstr();
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 #ifdef _MSC_VER
     #define PATH_MAX MAX_PATH
 #endif
@@ -95,11 +95,11 @@ utfstr System::self = utfstr();
     }
 
     int cpp::System::Shell(uniconv::utfcstr arg) {
-        return System::RunProgram(L"C:\\Windows\\System32\\cmd.exe", L"/c", arg);
+        return System::RunProgram(L"C:\\Windows\\System32\\cmd.exe", L"/c", arg, nullptr);
     }
 
     bool cpp::System::ShellAsync(uniconv::utfcstr arg) {
-        return System::RunProgramAsync(L"C:\\Windows\\System32\\cmd.exe", L"/c", arg);
+        return System::RunProgramAsync(L"C:\\Windows\\System32\\cmd.exe", L"/c", arg, nullptr);
     }
 
     // instead or runnning conhost.exe, run cmd.exe or another program with RunProgramC
@@ -110,13 +110,16 @@ utfstr System::self = utfstr();
         if (arg == nullptr) goto noargs;
         no_args = false;
         va_start(args, arg);
-        args_v += L" ";
+        args_v += L" \"";
         args_v += arg;
         for (int i = 2; i < 64; i++) {
             const wchar_t* argx = va_arg(args, const wchar_t*);
             if (argx == nullptr) break;
-            args_v += L" ";
-            args_v += argx;
+            wstring argx_w = wstring(argx);
+            wstring argx_vv;
+            for (const wchar_t& c : argx_w)
+                if (c == L'\"') argx_vv += L"\\\""; else argx_vv += c;
+            args_v.append(L"\" \"").append(argx_vv);
         }
         args_v += L"\"";
         va_end(args);
@@ -159,8 +162,11 @@ utfstr System::self = utfstr();
         for (int i = 2; i < 64; i++) {
             const wchar_t* argx = va_arg(args, const wchar_t*);
             if (argx == nullptr) break;
-            args_v += L"\" \"";
-            args_v += argx;
+            wstring argx_w = wstring(argx);
+            wstring argx_vv;
+            for (const wchar_t& c : argx_w)
+                if (c == L'\"') argx_vv += L"\\\""; else argx_vv += c;
+            args_v.append(L"\" \"").append(argx_vv);
         }
         args_v += L"\"";
         va_end(args);
@@ -205,8 +211,11 @@ utfstr System::self = utfstr();
         for (int i = 2; i < 64; i++) {
             const wchar_t* argx = va_arg(args, const wchar_t*);
             if (argx == nullptr) break;
-            args_v += L"\" \"";
-            args_v += argx;
+            wstring argx_w = wstring(argx);
+            wstring argx_vv;
+            for (const wchar_t& c : argx_w)
+                if (c == L'\"') argx_vv += L"\\\""; else argx_vv += c;
+            args_v.append(L"\" \"").append(argx_vv);
         }
         args_v += L"\"";
         va_end(args);
@@ -242,8 +251,11 @@ utfstr System::self = utfstr();
         for (int i = 2; i < 64; i++) {
             const wchar_t* argx = va_arg(args, const wchar_t*);
             if (argx == nullptr) break;
-            args_v += L"\" \"";
-            args_v += argx;
+            wstring argx_w = wstring(argx);
+            wstring argx_vv;
+            for (const wchar_t& c : argx_w)
+                if (c == L'\"') argx_vv += L"\\\""; else argx_vv += c;
+            args_v.append(L"\" \"").append(argx_vv);
         }
         args_v += L"\"";
         va_end(args);
@@ -271,13 +283,16 @@ utfstr System::self = utfstr();
         bool no_args = true;
         if (args[0] == nullptr) goto noargs;
         no_args = false;
-        args_v += L" ";
+        args_v += L" \"";
         args_v += args[0];
         for (int i = 2; i < 64; i++) {
             const wchar_t* argx = args[i-1];
             if (argx == nullptr) break;
-            args_v += L" ";
-            args_v += argx;
+            wstring argx_w = wstring(argx);
+            wstring argx_vv;
+            for (const wchar_t& c : argx_w)
+                if (c == L'\"') argx_vv += L"\\\""; else argx_vv += c;
+            args_v.append(L"\" \"").append(argx_vv);
         }
         args_v += L"\"";
     noargs:
@@ -317,8 +332,11 @@ utfstr System::self = utfstr();
         for (int i = 2; i < 64; i++) {
             const wchar_t* argx = args[i-1];
             if (argx == nullptr) break;
-            args_v += L"\" \"";
-            args_v += argx;
+            wstring argx_w = wstring(argx);
+            wstring argx_vv;
+            for (const wchar_t& c : argx_w)
+                if (c == L'\"') argx_vv += L"\\\""; else argx_vv += c;
+            args_v.append(L"\" \"").append(argx_vv);
         }
         args_v += L"\"";
     noargs:
@@ -360,14 +378,19 @@ utfstr System::self = utfstr();
         for (int i = 2; i < 64; i++) {
             const wchar_t* argx = args[i-1];
             if (argx == nullptr) break;
-            args_v += L"\" \"";
-            args_v += argx;
+            wstring argx_w = wstring(argx);
+            wstring argx_vv;
+            for (const wchar_t& c : argx_w)
+                if (c == L'\"') argx_vv += L"\\\""; else argx_vv += c;
+            args_v.append(L"\" \"").append(argx_vv);
         }
         args_v += L"\"";
     noargs:
         if (!PathFileExists(path) && !PathFileExists((path + wstring(L".exe")).c_str())) {
             return false;
         }
+
+        Console::out << L"RunProgramAsync: " << path << L'\n' << args_v << L'\n' << flush;
 
         PROCESS_INFORMATION pi = PROCESS_INFORMATION();
         STARTUPINFO si = STARTUPINFO();
@@ -394,8 +417,11 @@ utfstr System::self = utfstr();
         for (int i = 2; i < 64; i++) {
             const wchar_t* argx = args[i-1];
             if (argx == nullptr) break;
-            args_v += L"\" \"";
-            args_v += argx;
+            wstring argx_w = wstring(argx);
+            wstring argx_vv;
+            for (const wchar_t& c : argx_w)
+                if (c == L'\"') argx_vv += L"\\\""; else argx_vv += c;
+            args_v.append(L"\" \"").append(argx_vv);
         }
         args_v += L"\"";
     noargs:

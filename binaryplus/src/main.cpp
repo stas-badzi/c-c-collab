@@ -97,6 +97,8 @@ int Main(void) {
     Console::SetTitle(u"FactoryRush");
     Console::SetCursorSize(0);
     std::u16string buf;
+    std::u16string res;
+    std::vector<std::u16string> lines;
     Console::MouseStatus lastmouse = Console::GetMouseStatus();
     int siz = 0;
     while (1) {
@@ -107,6 +109,7 @@ int Main(void) {
         while ((x = win.get()) && win.good())
             if (x == L'\177' || x == '\b') {if (buf.size()) buf.pop_back();}
             else if (x == L'\t') buf.push_back(L' ');
+            else if (x == L'\n' || x == L'\r') {lines.push_back(buf); buf.clear();}
             else buf.push_back(WCharToChar16(x));
         bool focs = Console::IsFocused();
         auto focsym = focs ? Console::Symbol(L'✓',16,16) : Console::Symbol(L'X',16,16);
@@ -115,7 +118,15 @@ int Main(void) {
         if (Console::GetMouseStatus().x == 0 && Console::GetMouseStatus().y == 4) {
             if (Console::GetMouseStatus().primary && !lastmouse.primary) return EXIT_SUCCESS; 
             if (Console::GetMouseStatus().secondary && !lastmouse.secondary) Console::PopupWindow(0,0,nullptr);
-            if (Console::GetMouseStatus().middle && !lastmouse.middle) Console::PopupWindow(1,0,nullptr);
+            if (Console::GetMouseStatus().middle && !lastmouse.middle) {
+                std::vector<const char16_t*> bufs;
+                for (auto&& line : lines) bufs.push_back(line.data());
+                auto ret = Console::PopupWindow(lines.size()+1,lines.size(),bufs.data());
+                if (!ret.has_value()) SoundSystem::PlaySound(System::ToNativePath(System::GetRootDir() + u"\\assets\\illegal-operation.wav"),1);
+                else {
+                    res = ret.value().second;
+                }
+            }
             sym = Console::Symbol(L'@',16,16);
         }
         Console::MoveCursor(Console::GetMouseStatus().x,Console::GetMouseStatus().y);
@@ -135,6 +146,9 @@ int Main(void) {
         screen.back().push_back(focsym);
         screen.push_back(vector<Console::Symbol>());
         screen.back().push_back(sym);
+        screen.push_back(vector<Console::Symbol>());
+        vector<vector<Console::Symbol>> sres = Console::Symbol::CreateTexture(res);
+        for (size_t i = 0; i < sres.size(); i++) screen.push_back(sres[i]);
         Console::FillScreen(screen);
         Console::Sleep(0.03);
     }
@@ -382,6 +396,20 @@ int sub(int type) {
     Console::FillScreen(sym);
     Console::Sleep(10);
     do {Console::HandleMouseAndFocus();} while (!Console::IsFocused());
-    Console::SetResult(to_u16string(type));
+    auto argc = Console::GetArgC();
+    if (argc == 1) Console::SetResult(to_u16string(type));
+    else {
+        auto args = Console::GetArgV();
+        u16string result;
+        wout << L"PopupWindow" << type << L':' << L' ';
+        for (int i = 1; i < argc; ++i) {
+            result.append(args[i]).push_back(u'\n');
+            wout << U16StringToWString(args[i]) << L' ';
+        }
+        wout << L'\n';
+        Console::HandleOutput();
+        wout << U16StringToWString(result) << L'\n';
+        Console::SetResult(result);
+    }
     return type;
 }
