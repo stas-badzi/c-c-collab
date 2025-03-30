@@ -294,6 +294,7 @@ void Console::XtermMouseAndFocus(void) {
     static bool mintty = false;
     static bool wt = false;
     static bool conemu = false;
+    static DWORD conemupid = 0;
     static bool cmder = false;
     static bool good = false;
 
@@ -427,6 +428,112 @@ void Console::XtermMouseAndFocus(void) {
         return TRUE;
     }
 
+    size_t sleepmcs(size_t mcs) {
+        size_t i = 0;
+        auto start = std::chrono::high_resolution_clock::now();
+        while (std::chrono::high_resolution_clock::now() - start < std::chrono::microseconds(mcs)) ++i;
+        return i;
+    }
+
+    struct __conemuhandletabs_arg { atomic<bool>* focused; DWORD pid; };
+
+    DWORD WINAPI ConemuHandleTabs(LPVOID lpParam) {
+        auto args = (__conemuhandletabs_arg*)lpParam;
+        atomic<bool>& focused = *(args->focused);
+        DWORD pid = (args->pid);
+        delete args;
+
+        HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
+        if (hProcess == NULL) {
+            std::cerr << "Failed to open process with ID " << pid << ". Error: " << GetLastError() << std::endl;
+            return 1;
+        }
+        IO_COUNTERS prevIoCounters = {0};
+        if (!GetProcessIoCounters(hProcess, &prevIoCounters)) {
+            std::cerr << "Failed to get IO counters for process with ID " << pid << ". Error: " << GetLastError() << std::endl;
+            exit(3);
+        }
+
+        ULONGLONG old_writeDelta = 0;
+        ULONGLONG old_readDelta = 0;
+        ULONGLONG old_otherOpDelta = 0;
+        ULONGLONG old_readTransferDelta = 0;
+        ULONGLONG old_writeTransferDelta = 0;
+        ULONGLONG old_otherTransferDelta = 0;
+
+        ULONGLONG last_deltas[1'000] = {100};
+        ULONGLONG deltas_sum = 0;
+        size_t deltas_it = 0;
+        ULONGLONG old_delta = 0;
+
+        ULONGLONG last_vals[1'000] = {0};
+        size_t vals_it = 0;
+
+        long double last_percents[1'000] = {0};
+        long double avgpercent = 0;
+        size_t perc_it = 0;
+
+        int oneconter = 0;
+
+        focused = true;
+
+        while (true) {
+            sleepmcs(900);
+            IO_COUNTERS ioCounters;
+            if (GetProcessIoCounters(hProcess, &ioCounters)) {
+                auto calculateDelta = [](ULONGLONG newVal, ULONGLONG oldVal) {
+                    return newVal - oldVal;
+                };
+
+                auto calculatePercentage = [](ULONGLONG delta, ULONGLONG oldVal) {
+                    if (delta == 0 && oldVal == 0) return (long double)0;
+                    return delta < oldVal ? ((static_cast<long double>(delta)-oldVal) / oldVal) * 100 : ((static_cast<long double>(oldVal)-delta) / delta) * -100;
+                };
+
+                ULONGLONG writeDelta = calculateDelta(ioCounters.WriteOperationCount, prevIoCounters.WriteOperationCount);
+                ULONGLONG readDelta = calculateDelta(ioCounters.ReadOperationCount, prevIoCounters.ReadOperationCount);
+                ULONGLONG otherOpDelta = calculateDelta(ioCounters.OtherOperationCount, prevIoCounters.OtherOperationCount);
+                ULONGLONG readTransferDelta = calculateDelta(ioCounters.ReadTransferCount, prevIoCounters.ReadTransferCount);
+                ULONGLONG writeTransferDelta = calculateDelta(ioCounters.WriteTransferCount, prevIoCounters.WriteTransferCount);
+                ULONGLONG this_delta = calculateDelta(ioCounters.OtherTransferCount, prevIoCounters.OtherTransferCount);
+
+                auto delta = deltas_sum;
+                auto percentup = calculatePercentage(delta, last_vals[vals_it]);
+
+                old_writeDelta = writeDelta;
+                old_readDelta = readDelta;
+                old_otherOpDelta = otherOpDelta;
+                old_readTransferDelta = readTransferDelta;
+                old_writeTransferDelta = writeTransferDelta;
+                old_otherTransferDelta = this_delta;
+
+                deltas_sum -= last_deltas[deltas_it];
+                deltas_sum += this_delta;
+                last_deltas[deltas_it] = this_delta;
+
+                avgpercent -= last_percents[perc_it];
+                last_percents[perc_it] = percentup;
+                avgpercent += percentup;
+                last_vals[vals_it] = delta;
+
+                prevIoCounters = ioCounters;
+                deltas_it = (deltas_it + 1) % 1'000;
+                perc_it = (perc_it + 1) % 1'00;
+                vals_it = (vals_it + 1) % 1'000;
+
+
+                if (avgpercent > 70e2) focused = true;
+                else if (avgpercent < -70e2) focused = false;
+
+            } else {
+                cerr << "GetProcessIoCounters failed: " << GetLastError() << endl;
+                exit(1);
+            }
+        }
+
+        CloseHandle(hProcess);
+    }
+
     struct __superthread_arg { bool* dorun; tsvector<HANDLE>* threads; };
 
     DWORD WINAPI Console::SuperThread(LPVOID lpParam) {
@@ -518,6 +625,37 @@ void Console::XtermMouseAndFocus(void) {
         if (!SetConsoleTitle(Console::window_title.c_str())) {
             Console::out << L"SetConsoleTitle failed: " << GetLastError() << endl;
             ThrowMsg("SetConsoleTitle failed");
+        }
+        if (cmder) {
+            wstring conemuc = GetTerminalExecutableName();
+            while (conemuc.back() != L'\\') conemuc.pop_back();
+            conemuc += L"vendor\\conemu-maximus5\\ConEmu\\ConEmuC";
+        #ifdef _WIN64
+            conemuc += L"64";
+        #endif
+            conemuc += L".exe";
+
+            wstring args_v = L"\""; args_v.append(conemuc).append(L"\" -GUIMacro:").append(to_wstring(conemupid)).append(L" Rename(0,\"").append(title).append(L"\")");
+            wcerr << args_v << endl;
+            PROCESS_INFORMATION pi = PROCESS_INFORMATION();
+            STARTUPINFO si = STARTUPINFO();
+            si.cb = sizeof(STARTUPINFO);
+            int status = CreateProcess(conemuc.c_str(), (wchar_t*)args_v.c_str(), nullptr, nullptr, false, CREATE_PRESERVE_CODE_AUTHZ_LEVEL | CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi);
+            
+            if (!status) { cerr << "CreateProcess failed: " << GetLastError() << endl; exit(0x63); }
+            CloseHandle(pi.hThread);
+            WaitForSingleObject(pi.hProcess, INFINITE);
+            bool isdone = false;
+            DWORD exitcode = -1;
+            if (GetExitCodeProcess(pi.hProcess, &exitcode)) {
+                if (exitcode)
+                    wcerr << conemuc << L" exited with code: " << exitcode << endl;
+                CloseHandle(pi.hProcess);
+            } else {
+                CloseHandle(pi.hProcess);
+                cerr << "GetExitCodeProcess failed: " << GetLastError() << endl;
+                exit(0x66);
+            }
         }
     }
 
@@ -671,66 +809,8 @@ void Console::XtermMouseAndFocus(void) {
         return term;
     }
 
-    uniconv::utfstr Console::GetTerminalExecutableName(void) {
-        if (auto conpid = _wgetenv(L"ConEmuServerPID")) {
-            DWORD cpid = _wtol(conpid);
-            auto term = GetProcessExecutableName(cpid);
-            if (mintty) {
-                DWORD pidfound = 0;
-                bool found = false;
-                auto childProcessIds = GetChildProcessIds(cpid);
-                    for (auto&& childProcessId : childProcessIds) {
-                        std::wstring childExeName = GetProcessExecutableName(childProcessId,true);
-                        if (!childExeName.empty() && childExeName.substr(childExeName.size()-12) == L"\\conhost.exe") {
-                            pidfound = childProcessId;
-                            if (found) break;
-                        }
-                        if (!childExeName.empty() && childExeName.substr(childExeName.size()-11) == L"\\mintty.exe") {
-                            cpid = childProcessId;
-                            found = true;
-                        }
-                    }
-                if (found) {
-                    if (pidfound) {
-                    foundpid:
-                        Console::out << L"Found pid: " << pidfound << L'\n' << L'\t' << flush;
-                        cerr << "Found pid: " << pidfound << endl;
-                    } else {
-                        found = false;
-                        auto childMinttyProcessIds = GetChildProcessIds(cpid);
-                            for (auto&& childProcessId : childMinttyProcessIds) {
-                                std::wstring childExeName = GetProcessExecutableName(childProcessId,true);
-                                if (!childExeName.empty() && childExeName.substr(childExeName.size()-12) == L"\\conhost.exe") {
-                                    pidfound = childProcessId;
-                                    break;
-                                }
-                                if (!childExeName.empty() && childExeName.substr(childExeName.size()-11) == L"\\mintty.exe") {
-                                    cpid = childProcessId;
-                                    found = true;
-                                }
-                            }
-                        if (pidfound)
-                            goto foundpid;
-                        if (found) {
-                            auto childMinttyMinttyProcessIds = GetChildProcessIds(cpid);
-                            for (auto childProcessId : childMinttyMinttyProcessIds) {
-                                std::wstring childExeName = GetProcessExecutableName(childProcessId,true);
-                                if (!childExeName.empty() && childExeName.substr(childExeName.size()-12) == L"\\conhost.exe") {
-                                    pidfound = childProcessId;
-                                    break;
-                                }
-                            }
-                            if (pidfound)
-                                goto foundpid;
-                        }
-                    }
-                } else mintty = false;
-            }
-            return term;
-        }
-        auto term = GetWindowExecutableName(Console::window);
-        return term;
-    }
+    uniconv::utfstr Console::GetTerminalExecutableName(void) { return Console::terminal_name; }
+
 
 /*
     vector<vector<COLORREF>> Console::SaveScreen(void) {
@@ -1148,6 +1228,7 @@ void Console::XtermMouseAndFocus(void) {
                     switch (arg[1]) {
                         case L'&':
                             // launched as popup
+                            fixmintty = false;
                             Console::sub_proc = true;
                             if (wcslen(arg) < 3) ThrowMsg("Invalid argument 1");
                             sub_process = 0;
@@ -1198,20 +1279,99 @@ void Console::XtermMouseAndFocus(void) {
             Console::dev_data = tmpdevdata;
             dev_data.append(L"\\Factoryrush\\");
 
-            LPSECURITY_ATTRIBUTES sec_atrs = new SECURITY_ATTRIBUTES();
-            sec_atrs->nLength = sizeof(sec_atrs);
-            sec_atrs->lpSecurityDescriptor = nullptr;
-            sec_atrs->bInheritHandle = false;
-
             Console::pid = _getpid();
             Console::window = GetHwnd();
-            Console::GetTerminalExecutableName(); // for checking the type of terminal
+            Console::terminal_name = GetWindowExecutableName(Console::window); // for checking the type of terminal
+
+            setlocale(LC_ALL, "");
+
+            if (fixmintty) goto dontstartthings;
+
+            Console::input_thread_arg = (void*)new __getinput_arg{Console::input_buf, SLEEP_THREAD_INPUT};
+            Console::input_thread = CreateThread(NULL, 0, InputThread, input_thread_arg, 0, NULL);
+            *Console::super_thread_run = true;
+            Console::super_thread_arg = (void*)new __superthread_arg{Console::super_thread_run, Console::thread_handles};
+            Console::super_thread = CreateThread(NULL, 0, Console::SuperThread, Console::super_thread_arg, 0, NULL);
+
+            if (auto conpid = _wgetenv(L"ConEmuServerPID")) {
+                DWORD cpid = conemupid = _wtol(conpid);
+                Console::terminal_name = GetProcessExecutableName(cpid);
+                auto GetProcExe = [](DWORD processId) {
+                    HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
+                    if (processHandle) {
+                        wchar_t exePath[MAX_PATH];
+                        if (GetModuleFileNameEx(processHandle, NULL, exePath, MAX_PATH)) {
+                            CloseHandle(processHandle);
+                            return wstring(exePath);
+                        }
+                        CloseHandle(processHandle);
+                    }
+                    return wstring();
+                };
+                DWORD tabpid = Console::pid;
+                if (mintty) {
+                    DWORD pidfound = 0;
+                    bool found = false;
+                    auto childProcessIds = GetChildProcessIds(cpid);
+                        for (auto&& childProcessId : childProcessIds) {
+                            std::wstring childExeName = GetProcExe(childProcessId);
+                            if (!childExeName.empty() && childExeName.substr(childExeName.size()-12) == L"\\conhost.exe") {
+                                pidfound = childProcessId;
+                                if (found) break;
+                            } else if (!childExeName.empty() && childExeName.substr(childExeName.size()-11) == L"\\mintty.exe") {
+                                cpid = childProcessId;
+                                found = true;
+                            }
+                        }
+                    if (found) {
+                        if (pidfound) {
+                        foundpid:
+                            tabpid = pidfound;
+                        } else {
+                            found = false;
+                            auto childMinttyProcessIds = GetChildProcessIds(cpid);
+                                for (auto&& childProcessId : childMinttyProcessIds) {
+                                    std::wstring childExeName = GetProcExe(childProcessId);
+                                    if (!childExeName.empty() && childExeName.substr(childExeName.size()-12) == L"\\conhost.exe") {
+                                        pidfound = childProcessId;
+                                        break;
+                                    }
+                                    if (!childExeName.empty() && childExeName.substr(childExeName.size()-11) == L"\\mintty.exe") {
+                                        cpid = childProcessId;
+                                        found = true;
+                                    }
+                                }
+                            if (pidfound)
+                                goto foundpid;
+                            if (found) {
+                                auto childMinttyMinttyProcessIds = GetChildProcessIds(cpid);
+                                for (auto childProcessId : childMinttyMinttyProcessIds) {
+                                    std::wstring childExeName = GetProcExe(childProcessId);
+                                    if (!childExeName.empty() && childExeName.substr(childExeName.size()-12) == L"\\conhost.exe") {
+                                        pidfound = childProcessId;
+                                        break;
+                                    }
+                                }
+                                if (pidfound)
+                                    goto foundpid;
+                            }
+                        }
+                    } else mintty = false;
+                }
+                __conemuhandletabs_arg* tabarg = new __conemuhandletabs_arg();
+                tabarg->pid = tabpid; tabarg->focused = &Console::tabactive;
+
+                HANDLE TabCtrlThread = CreateThread(NULL, 0, ConemuHandleTabs, tabarg, 0, NULL);
+                Console::out << L"Found pid: " << tabpid << L'\n' << L'\t' << flush;
+                cerr << "Found pid: " << tabpid << endl;
+            }
+
             if (mintty || conhost || wt) Console::parent_window = Console::window;
-            if (conemu) {
-                wchar_t* conemuhwnd = _wgetenv(L"ConEmuHWND");
+            if (wchar_t* conemuhwnd = _wgetenv(L"ConEmuHWND")) {
+
                 if (conemuhwnd == nullptr) conemu = false;
                 else {
-                    ++conemuhwnd; ++conemuhwnd; // skip the first two characters `0x`fff
+                    ++conemuhwnd; ++conemuhwnd; // skip the first two characters `0x`
                     static_assert(sizeof(HWND) == sizeof(size_t), "HWND is not the same size as `size_t`");
                     switch (sizeof(HWND)) {
                     case sizeof(long):
@@ -1226,8 +1386,18 @@ void Console::XtermMouseAndFocus(void) {
                     }
                     cerr << "Conemuhwnd: " << std::hex << Console::parent_window << std::dec << endl;
                 }
+                if (!conemu || cmder) {
+                    conemu = cmder = true;
+                    Console::window = Console::parent_window;
+                    good = true;
+                }
             }
 
+        dontstartthings:
+            LPSECURITY_ATTRIBUTES sec_atrs = new SECURITY_ATTRIBUTES();
+            sec_atrs->nLength = sizeof(sec_atrs);
+            sec_atrs->lpSecurityDescriptor = nullptr;
+            sec_atrs->bInheritHandle = false;
 
             if (Console::sub_proc) {
                 FILE* fl = _wfopen((tmp_data+subdir+L"window.dat").c_str(), L"w");
@@ -1318,12 +1488,6 @@ void Console::XtermMouseAndFocus(void) {
             GetConsoleMode(Console::fd, &Console::old_console);
             SetConsoleMode(Console::fd, ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT | ENABLE_WINDOW_INPUT);
 
-            Console::input_thread_arg = (void*)new __getinput_arg{Console::input_buf, SLEEP_THREAD_INPUT};
-            Console::input_thread = CreateThread(NULL, 0, InputThread, input_thread_arg, 0, NULL);
-            *Console::super_thread_run = true;
-            Console::super_thread_arg = (void*)new __superthread_arg{Console::super_thread_run, Console::thread_handles};
-            Console::super_thread = CreateThread(NULL, 0, Console::SuperThread, Console::super_thread_arg, 0, NULL);
-
             Console::device = GetDC(NULL);
             //Console::xyoffset = Console::GetXYCharOffset();
 
@@ -1347,8 +1511,6 @@ void Console::XtermMouseAndFocus(void) {
             
             Console::mouse_status.x = 0;
             Console::mouse_status.y = 0;
-
-            setlocale(LC_ALL, "");
             
             initialised = true;
 
@@ -1406,6 +1568,8 @@ void Console::XtermMouseAndFocus(void) {
             }
 
             delete[] Console::subdir;
+
+            Console::SetTitle(L"");
 
             SendMessage(Console::window, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(Console::old_small_icon));
             SendMessage(Console::window, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(Console::old_big_icon));
@@ -1741,7 +1905,7 @@ void Console::XtermMouseAndFocus(void) {
         }
     }
 
-    void Console::HandleMouseAndFocus(void) {
+    void Console::HandleMouseAndFocus() {
         if (mintty && !conemu && !good) {
             auto file = Console::GetTerminalExecutableName();
             if (file.find(L"mintty") == std::wstring::npos) {
@@ -1750,6 +1914,8 @@ void Console::XtermMouseAndFocus(void) {
             file = Console::GetTerminalExecutableName();
             good = file.find(L"mintty") != std::wstring::npos;
         }
+
+        auto old_focus = Console::focused;
 
         INPUT_RECORD record;
         DWORD evnts=0,numRead;
@@ -1853,8 +2019,8 @@ void Console::XtermMouseAndFocus(void) {
 */
     getinputx:
         if (conemu && mintty)
-            focused = Console::parent_window == GetForegroundWindow();
-
+            Console::focused = Console::parent_window == GetForegroundWindow();
+        
 
         int bytes = Console::input_buf->size();
         if (!bytes) return;
@@ -1924,10 +2090,11 @@ void Console::XtermMouseAndFocus(void) {
     }
 
     void Console::Beep(void) {
-        MessageBeep(0xFFFFFFFF); // Conemu blocks the Beep for some reason
+        if (conemu && !mintty) System::RunProgram0((System::GetRootDir() + L"\\bin\\beep.exe").c_str(), (const wchar_t*)nullptr); // Conemu blocks the Beep for some reason
+        else MessageBeep(0xFFFFFFFF);
     }
 
-    void SysSleep(int microseconds){
+    void SysSleep(int microseconds) {
         Sleep((int)(microseconds/1000));
     }
 
@@ -2409,6 +2576,8 @@ void Console::XtermMouseAndFocus(void) {
 
             locale::global(locale(""));
 
+            Console::terminal_name = FindTerminalEmulator();
+
             initialised = true;
 
             atexit(Fin);
@@ -2761,7 +2930,7 @@ void Console::XtermMouseAndFocus(void) {
     }
 
     utfstr Console::GetTerminalExecutableName(void) {
-        return FindTerminalEmulator();
+        return Console::terminal_name;
     }
 
     struct termios Console::old_fdterm = termios();
@@ -2868,6 +3037,8 @@ void Console::XtermMouseAndFocus(void) {
             setlocale(LC_CTYPE, "UTF-8");
 
             Console::XtermInitTracking();
+
+            Console::terminal_name = GetTerminalName(Console::ppid);
 
             tcgetattr(STDIN_FILENO,&old_termios);
             termios term_ios = old_termios;
@@ -2983,8 +3154,7 @@ void Console::XtermMouseAndFocus(void) {
     }
 
     utfstr Console::GetTerminalExecutableName(void) {
-        auto&& name = GetTerminalName(Console::ppid);
-        return name;
+        return Console::terminal_name;;
     }
 
 
@@ -3427,14 +3597,19 @@ utfstr Console::tmp_data = utfstr();
 utfstr Console::user_data = utfstr();
 utfstr Console::dev_data = utfstr();
 vector<pid_t> Console::popup_pids = vector<pid_t>();
-int Console::max_popup_startup_wait = int(5000);
+wstring Console::terminal_name = wstring();
+int Console::max_popup_startup_wait = int(15000);
 
 struct ToggledKeys Console::KeysToggled(void) {
     return Console::keys_toggled;
 }
 
 bool Console::IsFocused(void) {
-    return Console::focused;
+    return Console::focused
+#ifdef _WIN32
+    && Console::tabactive
+#endif
+    ;
 }
 
 struct Console::MouseStatus Console::GetMouseStatus(void) {
@@ -3575,8 +3750,8 @@ newpidgen:
 
     utfcstr* args = (utfcstr*)System::AllocateMemory(sizeof(void*) * (argc+3
 #ifdef _WIN32
-    + conemu*5 // conemu need 5 more args
-    + cmder // cmder is conemu but need 1 additional arg
+    + conemu*7 // conemu need 7 more args
+    - cmder // cmder uses one less arg than conemu
 #else
     + tabby // tabby need 1 more arg
 #endif
@@ -3614,7 +3789,7 @@ newpidgen:
 
 #ifdef _WIN32
     wstring term2;
-    wstring newconstitle, newconsicon;
+    wstring newconstitle, newconsicon, newwinicon;
     int tabby2 = 0;
 
     if (mintty && !conemu && !good) {
@@ -3730,7 +3905,7 @@ newpidgen:
         goto contcons;
     }
     else if (conemu) {
-        for (int i = argc+2+5+cmder; i >= 5; i--) args[i] = args[i-5-cmder]; // cmder need additional args[5]
+        for (int i = argc+2+7-cmder; i >= 7-cmder; i--) args[i] = args[i-(7-cmder)]; // cmder desn't need args[6]
         args[0] = L"-Title";
         args[1] = title ? title : Console::window_title.c_str();
         args[2] = L"-cmd"; // new versions also support "-run", but old ones don't
@@ -3739,17 +3914,24 @@ newpidgen:
         args[3] = newconstitle.c_str();
         newconsicon = L"-new_console:C:"; newconsicon.append(System::GetRootDir()).append(L"\\assets\\images\\icon.ico");
         args[4] = newconsicon.c_str();
-    }
-    if (cmder) {
-        term2 = term; while (term2.back() != '\\') term2.pop_back(); term2.append(L"vendor\\git-for-windows\\usr\\bin\\mintty.exe");
-        args[5] = term2.c_str();
-        wstring cmdargs;
-        for (int i = 0; i < argc+2+5+1; i++)
-            cmdargs.append(L"\"").append(args[i]).append(L"\" ");
-        cmdargs.pop_back();
-        const wchar_t* realargs[3] = {L"/x", cmdargs.c_str(), nullptr};
-        if (!System::RunProgramAsync(term.c_str(), realargs)) return nullopt;
-        goto contcons;
+        if (cmder) {
+            term2 = term; while (term2.back() != '\\') term2.pop_back(); term2.append(L"vendor\\git-for-windows\\usr\\bin\\mintty.exe");
+            args[5] = term2.c_str();
+            wstring cmdargs;
+            for (int i = 0; i < argc + 2 + 7 - 1; i++)
+                cmdargs.append(L"\"").append(args[i]).append(L"\" ");
+            cmdargs.pop_back();
+            const wchar_t* realargs[3] = { L"/x", cmdargs.c_str(), nullptr };
+            if (!System::RunProgramAsync(term.c_str(), realargs)) return nullopt;
+            goto contcons;
+        } else {
+            args[6] = args[4];
+            args[5] = args[3];
+            args[4] = args[2];
+            args[2] = L"-icon";
+            newwinicon = (System::GetRootDir() + L"\\assets\\images\\icon.ico");
+            args[3] = newwinicon.c_str();
+        }
     }
 #else
     if (tabby) {
@@ -3791,7 +3973,7 @@ contcons:
     auto start = chrono::high_resolution_clock::now();
     while ((!System::IsFile((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str())) && (chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() < max_popup_startup_wait)) {
     #ifdef _WIN32
-        if (chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() + 1000 > max_popup_startup_wait*(tabby2+1) && tabby && tabby2 < 3 && System::IsFile((Console::tmp_data + subdir + L"proc\\" + to_wstring(npid) + L".cmd").c_str())) {
+        if (tabby && tabby2 < 5 && chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() + 1000 > (max_popup_startup_wait/3)*(max(min(2,tabby2),1)) && System::IsFile((Console::tmp_data + subdir + L"proc\\" + to_wstring(npid) + L".cmd").c_str())) {
             Console::out << L"Try again " << ++tabby2 << endl;
             goto runtabby;
         }
@@ -3815,9 +3997,15 @@ contcons:
     HWND swindow;
     fread(&swindow, sizeof(HWND), 1, fl);
     fclose(fl);
-    HWND twindow = 0;
+    cerr << Console::parent_window << ' ' << Console::window << endl;
+    HWND twindow = Console::parent_window;
+    bool correct_window = twindow, notme = true;
     DWORD this_thread = GetCurrentThreadId(), owner_thread;
-    bool correct_window = false, notme = true;
+    if (twindow) {
+        owner_thread = GetWindowThreadProcessId(twindow, nullptr);
+        if ((notme = (this_thread != owner_thread)))
+            AttachThreadInput(owner_thread, this_thread, true);
+    }
 #endif
 
     bool oldfocus = true;
@@ -3827,13 +4015,15 @@ contcons:
         if (SLEEP_POPUP_CHECK) SysSleep(1000);
         Console::FillScreen(olddisplay);
         Console::HandleMouseAndFocus();
+        if (IsFocused() && !oldfocus) Console::Beep();
     #ifdef _WIN32
         if (Console::focused) {
-            if (!oldfocus) Console::Beep();
+            DWORD tmpthread;
             if (!twindow) {
+                Console::out << L'~';
                 twindow = GetForegroundWindow();
                 if (!twindow) continue;
-                if (twindow == Console::window) {
+                if (twindow == Console::window || twindow == Console::parent_window) {
                     correct_window = true;
                     cout << "Correct window" << endl;
                 } else cout << "Wrong window" << endl;
@@ -3841,8 +4031,11 @@ contcons:
                 if ((notme = (this_thread != owner_thread)))
                     AttachThreadInput(owner_thread, this_thread, true);
             } else if (!correct_window) {
-                twindow = GetForegroundWindow();
-                if (twindow == Console::window) {
+                Console::out << L'-';
+                auto tmpwindow = GetForegroundWindow();
+                if (!tmpwindow) continue;
+                twindow = tmpwindow;
+                if (tmpwindow == Console::window || tmpwindow == Console::parent_window) {
                     correct_window = true;
                     cout << "Correct window" << endl;
                     if (notme) AttachThreadInput(owner_thread, this_thread, false);
@@ -3850,6 +4043,17 @@ contcons:
                     if ((notme = (this_thread != owner_thread)))
                         AttachThreadInput(owner_thread, this_thread, true);
                 }
+            } else if (owner_thread != (tmpthread = GetWindowThreadProcessId(twindow, nullptr))) {
+                if (notme) AttachThreadInput(owner_thread, this_thread, false);
+                owner_thread = tmpthread;
+                if ((notme = (this_thread != owner_thread)))
+                    AttachThreadInput(owner_thread, this_thread, true);
+            }
+            if (!Console::tabactive) continue;
+            if (cmder) {
+                SysSleep(10000); // sleep 10ms to let the tab switch
+                Console::HandleMouseAndFocus();
+                if (!Console::tabactive || !Console::focused) continue;
             }
             int style = GetWindowLong(swindow, GWL_STYLE);
             if ((style & WS_MINIMIZE) == WS_MINIMIZE)
@@ -3861,7 +4065,7 @@ contcons:
     #endif
         if (Console::this_mouse_down && Console::this_mouse_button != MOUSE_SCROLL_UP && Console::this_mouse_button != MOUSE_SCROLL_DOWN)
             Console::Beep();
-        oldfocus = Console::focused;
+        oldfocus = IsFocused();
     }
 
 #ifdef _WIN32

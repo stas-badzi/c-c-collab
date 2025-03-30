@@ -463,8 +463,13 @@ check_arch = check-arch
 endif
 
 old_arch = $(shell cat __arch.dat 2> /dev/null || echo > __arch.dat)
-ifneq ($(old_arch),$(arch))
-archfile = $(shell echo $(old_arch) > __oldarch.dat && echo $(arch) > __arch.dat && echo __arch.dat)
+ifeq ($(debug),1)
+new_arch = Debug-$(arch)
+else
+new_arch = Release-$(arch)
+endif
+ifneq ($(old_arch),$(new_arch))
+archfile = $(shell echo $(old_arch) > __arch.dat && echo __arch.dat)
 else
 archfile = __arch.dat
 endif
@@ -472,8 +477,8 @@ endif
 package: release
 
 check-arch: $(archfile)
-	@echo "Architecture changed from $(shell cat __oldarch.dat) to $(arch) - Cleaning"
-	-@rm __oldarch.dat
+	@echo "Architecture changed from $(old_arch) to $(new_arch) - Cleaning"
+	@echo $(new_arch) > __arch.dat
 	@$(MAKE) clean
 	@echo "Version file. Remove to enable recompile" > $@
 
@@ -593,13 +598,14 @@ ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 	@echo "Version file. Remove to enable recompile" > $@
 endif
 
-resources: $(check_arch) source/setkbdmode.c source/killterm.c source/getfd.c source/getfd.h source/keyboard.h source/keyboard.m source/openfile.h source/openfile.m source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h source/killwindow.c source/resources.rc
+resources: $(check_arch) source/setkbdmode.c source/killterm.c source/getfd.c source/getfd.h source/keyboard.h source/keyboard.m source/openfile.h source/openfile.m source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h source/killwindow.c source/resources.rc assets/images/icon.ico source/beep.c
 	@echo MAKE RESOURCES
 
 ifneq ($(msvc),1)
 ifeq ($(binary),exe)
-	$(c-compiler) -c source/killwindow.c -pedantic -Wextra -DUNICODE $(cflags) $(cdb) -std=c2x && mv *.o objects/
+	$(c-compiler) -c source/killwindow.c source/beep.c -pedantic -Wextra -DUNICODE $(cflags) $(cdb) -std=c2x && mv *.o objects/
 	$(c-compiler) -o binaryplus/bin/killwindow.exe objects/killwindow.o
+	$(c-compiler) -o binaryplus/bin/beep.exe objects/beep.o
 endif
 	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(staticgen)assets/libglobals.$(static) objects/globals.o
@@ -607,10 +613,14 @@ else
 	@echo "rc /nologo /fo objects\resources.res source\resources.rc" > run.bat
 	@cmd.exe /c run.bat
 
-	@echo "$(c-compiler) /c /DUNICODE /D_MSVC $(cdb) source/killwindow.c $(clstd)" > run.bat
+	@echo "$(c-compiler) /c /DUNICODE /D_MSVC /D_CRT_SECURE_NO_DEPRECATE $(cdb) source/killwindow.c source/beep.c $(clstd)" > run.bat
 	@cmd.exe /c run.bat
 	@mv *.obj objects/
-	@echo "link /OUT:binaryplus/bin/killwindow.exe objects/killwindow.obj" > run.bat
+
+	@echo "link /OUT:binaryplus/bin/killwindow.exe objects/killwindow.obj USER32.lib" > run.bat
+	@cmd.exe /c run.bat
+
+	@echo "link /OUT:binaryplus/bin/beep.exe objects/beep.obj USER32.lib" > run.bat
 	@cmd.exe /c run.bat
 
 	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) source/globals.c /Icplusplus\include $(clstd)" > run.bat
@@ -694,7 +704,7 @@ endif
 csrun:
 	-cd binarysharp/bin/exe && $(run)$(binfile).$(binary)
 
-cpp:  $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
+cpp: $(resdep) $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
 	@echo MAKE CPP
 
 ifeq ($(msvc),1)
@@ -812,22 +822,21 @@ endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
 
-cppbin: $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc))
+cppbin: $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc)) objects/resources.res
 	@echo MAKE CPPBIN
-
 
 ifeq ($(msvc),1)
 	echo "$(cpp-compiler) /EHsc /c /DUNICODE $(bpdb) source/launcher.cpp $(clstdpp)" > run.bat
 	@cmd.exe /c run.bat
 	@$(movefl) -f launcher.obj objects
-	echo "link /OUT:binaryplus/launcher.exe $(bldb) objects/launcher.obj objects/resources.res" > run.bat
+	echo "link /OUT:binaryplus/launcher.exe /CGTHREADS:8 objects/launcher.obj objects/resources.res" > run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
 
 	echo "$(cpp-compiler) /EHsc /c $(bpdb) $(fbsrc) /Ibinaryplus\include $(clstdpp)" > run.bat
 	@cmd.exe /c run.bat
 	@$(movefl) -f $(subst obj/,$(empty),$(fbobj)) binaryplus/obj
-	echo "cd binaryplus && link /OUT:bin/$(binname).$(binary) $(bldb) $(flib) ../cplusplus/bin/$(name).lib ../csharp/bin/lib/$(filename).lib $(fbobj) USER32.lib objects/resources.res"" > run.bat
+	echo "cd binaryplus && link /OUT:bin/$(binname).$(binary) $(bldb) $(flib) ../cplusplus/bin/$(name).lib ../csharp/bin/lib/$(filename).lib $(fbobj) USER32.lib ../objects/resources.res" > run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
 else

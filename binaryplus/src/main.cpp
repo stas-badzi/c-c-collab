@@ -150,6 +150,8 @@ int Main(void) {
         vector<vector<Console::Symbol>> sres = Console::Symbol::CreateTexture(res);
         for (size_t i = 0; i < sres.size(); i++) screen.push_back(sres[i]);
         Console::FillScreen(screen);
+        Console::HandleKeyboard();
+        if (Console::KeyPressed() == Key::Enum::q && IsCtrlDown()) return EXIT_SUCCESS;
         Console::Sleep(0.03);
     }
     return 0;

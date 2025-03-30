@@ -15,7 +15,7 @@
     #include <shlwapi.h>
     #define N(c) L##c
     #define sep L'\\'
-    #define binary L".cmd"
+    #define binary L".exe"
 #else
     #define N(c) c
     #define sep '/'

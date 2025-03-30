@@ -209,6 +209,7 @@ namespace cpp {
         static uniconv::utfstr dev_data;
         static uniconv::utfstr tmp_data;
         static std::vector<pid_t> popup_pids; // pid_t may differ, but it should be <= int64_t
+        static uniconv::utfstr terminal_name;
     #ifdef _WIN32
         static std::mutex screen_lock;
         static const wchar_t* subdir;

@@ -33,8 +33,9 @@ namespace cpp {
     class System {
     private:
         static uniconv::utfstr GetRoot(void);
-        static uniconv::utfstr root;
+        static uniconv::utfstr GetSelf(void);
         static uniconv::utfstr self;
+        static uniconv::utfstr root;
 #if !defined(_WIN32) && !defined(__CYGWIN__)
         static pid_t tpid;
         static void SendSignal(int signal);
@@ -76,6 +77,7 @@ namespace cpp {
     #ifdef _WIN32
         static int ShellC(uniconv::utfcstr arg);
         static int RunProgramC(uniconv::utfcstr path, uniconv::utfcstr args, ...);
+        static int RunProgram0(uniconv::utfcstr path, uniconv::utfcstr args, ...);
         static int RunProgramSC(uniconv::utfcstr file, uniconv::utfcstr args, ...);
         static int RunProgramC(uniconv::utfcstr path, uniconv::utfcstr const args[]);
         static int RunProgramSC(uniconv::utfcstr file, uniconv::utfcstr const args[]);

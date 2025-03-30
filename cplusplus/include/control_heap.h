@@ -12,6 +12,7 @@ cextern void** SYMBOLS;
 cextern unsigned long __size$SYMBOLS;
 
 inline void __save$ALLOCATIONS(void* start, unsigned long length = 1) {
+    if (length == 0) length = 1;
     if (start == 0x0) throw("pointer is nullptr");
     unsigned long old_size = __size$ALLOCATIONS;
     __size$ALLOCATIONS += length + 1;
