@@ -1610,11 +1610,9 @@ void Console::XtermMouseAndFocus(void) {
 
     DWORD WINAPI WaitClrScrBuf(
 #ifdef __GNUC__
-    __attribute__((unused))
+        __attribute__((unused))
 #endif
-    LPVOID lpParam) {
-        Console::out << L"WaitClrScrBuf" << L'\n';
-        Console::out_flush();
+        LPVOID lpParam) {
         ::Sleep(1000);
         Console::ClearScreenBuffer();
         return 0;
