@@ -193,86 +193,50 @@ namespace cpp {
         static int ret;
         static std::array<bool,UINT16_MAX> used_pids;
         static uint16_t next_pid;
-        static char_t buf[127]; static int8_t buf_it;
-        static std::pair<int16_t,int16_t> cursorpos;
-        static bool cursor_visible;
-        static uint8_t cursor_size;
-        static bool cursor_blink_opposite;
-        static uniconv::utfstr user_data;
-        static uniconv::utfstr dev_data;
-        static uniconv::utfstr tmp_data;
-        static std::vector<pid_t> popup_pids; // pid_t may differ, but it should be <= int64_t
-    #ifdef _WIN32
-        static std::mutex screen_lock;
-        static const wchar_t* subdir;
-        //static std::vector<std::vector<COLORREF>> SaveScreen(void);
-        //static std::pair<std::pair<uint16_t,uint16_t>,std::pair<uint16_t,uint16_t>> GetOffsetSymSize(int color1 = 3, int color2 = 9, int color3 = 1);
-        
-        //static std::pair<uint16_t,uint16_t> scr_offs;
-        //static std::pair<uint16_t,uint16_t> sym_size;
-        //static bool auto_size_updates;
-        //static int16_t old_width;
-        //static int16_t old_height;
-        //static RECT old_rect;
-        static uint8_t default_fcol;
-        static uint8_t default_bcol;
-        static HANDLE screen;
-        static HANDLE fd;
-        static HWND window;
-        static HDC device;
-        static DWORD old_console;
-        static HANDLE old_buffer;
-        static CONSOLE_CURSOR_INFO old_curinf;
-        static tsqueue<wchar_t>* input_buf;
-        static HANDLE input_thread;
-        static void* input_thread_arg;
-        static HANDLE super_thread;
-        static bool* super_thread_run;
-        static void* super_thread_arg;
-        static bool* is_setting_cursor;
-        static tsvector<HANDLE>* thread_handles;
-        static std::wofstream real_out;
-        static inline wchar_t getnch(void);
-        static inline constexpr uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2);
-        static DWORD WINAPI MoveCursorThread(LPVOID lpParam);
-        static DWORD WINAPI SuperThread(LPVOID lpParam);
-        //static std::pair<uint16_t,uint16_t> xyoffset;
-        //static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
-    #else
-        static std::ofstream real_out;
-        static const char* subdir;
-        static struct termios old_termios;
-        static struct winsize window_size;
-        static mbstate_t streammbs;
-    #ifdef __linux__
-        static struct termios old_fdterm;
-        static int old_kbdmode;
-        static int fd;
-        static int fb_fd;
-        static std::pair<uint32_t,uint32_t> pixelpos; 
-        static input_event events[255]; static uint8_t evnts_siz;
-        static int mouse_fd;
-        static bool discard_mouse;
-        static bool no_gpm;
-        static bool parent;
-        static uint8_t root_type;
-        static Key::Enum key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX];
-    #endif
-    #ifdef __APPLE__
-        static pid_t ppid;
-    #endif
-    #endif
         static uniconv::utfstr GetTerminalExecutableName();
-        static inline char_t GetChar(void);
-        static void PushChar(char_t c);
-        static void XtermMouseAndFocus(void);
-        static void XtermInitTracking(void);
-        static void XtermFinishTracking(void);
-        static void EscSeqSetTitle(const char_t* title);
-        static void EscSeqMoveCursor(void);
-        static void EscSeqSetCursor(void);
-        static void EscSeqSetCursorSize(void);
-        static void EscSeqRestoreCursor(void);
+        #ifdef _WIN32
+            static const wchar_t* subdir;
+            //static std::vector<std::vector<COLORREF>> SaveScreen(void);
+            //static std::pair<std::pair<uint16_t,uint16_t>,std::pair<uint16_t,uint16_t>> GetOffsetSymSize(int color1 = 3, int color2 = 9, int color3 = 1);
+            
+            //static std::pair<uint16_t,uint16_t> scr_offs;
+            //static std::pair<uint16_t,uint16_t> sym_size;
+            //static bool auto_size_updates;
+            //static int16_t old_width;
+            //static int16_t old_height;
+            //static RECT old_rect;
+            static uint8_t default_fcol;
+            static uint8_t default_bcol;
+            static HANDLE screen;
+            static HANDLE fd;
+            static HWND window;
+            static HDC device;
+            static DWORD old_console;
+            static HANDLE old_buffer;
+            static inline constexpr uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2);
+            //static std::pair<uint16_t,uint16_t> xyoffset;
+            //static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
+        #else
+            static const char* subdir;
+            static struct termios old_termios;
+            static struct winsize window_size;
+            static char buf[127]; static int8_t buf_it;
+        #ifdef __linux__
+            static inline char GetChar(void);
+            static struct termios old_fdterm;
+            static int old_kbdmode;
+            static int fd;
+            static int fb_fd;
+            static std::pair<uint32_t,uint32_t> pixelpos; 
+            static input_event events[255]; static uint8_t evnts_siz;
+            static int mouse_fd;
+            static bool discard_mouse;
+            static bool no_gpm;
+            static bool parent;
+            static uint8_t root_type;
+            static Key::Enum key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX];
+        #endif
+        #endif
     public:
         static void Init(void);
         static void Fin(void);
