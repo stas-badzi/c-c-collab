@@ -2280,7 +2280,7 @@ void Console::XtermMouseAndFocus(void) {
             Console::emulator = !(getenv("DISPLAY") == nullptr);
 
             char path[256];
-            readlink( "/proc/self/exe", path, 256);
+            size_t sizt = readlink("/proc/self/exe" , path, 256);
             
             if (Console::emulator) {
                 fwrite("\033[?1049h", sizeof(char), 8, stderr);
@@ -2923,6 +2923,10 @@ void Console::XtermMouseAndFocus(void) {
         //if (micmute) fprintf(stderr, "mic mute\n");
 
         return;
+    }
+
+    uniconv::utfstr Console::GetTerminalExecutableName() {
+        if (!emulator) return ""; // later maybe handle tmux & similar
     }
 
     bool Console::IsKeyDown(Key::Enum key) {
