@@ -104,12 +104,17 @@ namespace Cs
         }
 
         public static void DrawTextureToScreen(int x, int y, Texture texture, Texture screen) {
-            int? width = texture[0].Count;
-            int? scrWidth = screen[0].Count;
             int? height = texture.Count;
             int? scrHeight = screen.Count;
 
             for (int i = 0; i < height; i++) {
+                if (y + i < 0) {
+                    i = -(y + 1);
+                    continue;
+                }
+                else if (y + i > scrHeight) break;
+                int? width = texture[i].Count;
+                int? scrWidth = screen[y + i].Count;
                 for (int j = 0; j < width; j++) {
                     if (y+i >= 0 && y+i < scrHeight && x+j >= 0 && x+j < scrWidth) {
                         var elem = texture[i][j];

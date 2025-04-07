@@ -23,6 +23,10 @@ namespace cpp {
         }
         T pop(void) {
             if (WaitForSingleObject(m,INFINITE) != WAIT_OBJECT_0) { printf("WaitForSingleObject error: %lu\n", GetLastError()); exit(1); }
+            if (q.empty()) {
+                if (!ReleaseMutex(m)) { printf("ReleaseMutex error: %lu\n", GetLastError()); exit(1); }
+                throw std::out_of_range("Queue is empty");
+            }
             T val = q.front();
             q.pop();
             if (!ReleaseMutex(m)) { printf("ReleaseMutex error: %lu\n", GetLastError()); exit(1); }

@@ -26,7 +26,7 @@ sources = Console.cpp TextureSystem.cpp System.cpp Game.cpp dllexport.cpp SoundS
 #> header files
 headers = Console.hpp TextureSystem.hpp TextureSystem.ipp Game.hpp dllimport.hpp System.hpp System.ipp smart_ref.hpp smart_ref.ipp SoundSystem.hpp
 #> include files
-includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp apple/keyboard.h apple/openfile.h linux/ledctrl.h linux/mousefd.h promise.hpp
+includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp apple/keyboard.h apple/openfile.h linux/ledctrl.h linux/mousefd.h windows/thread_safe/queue windows/thread_safe/vector promise.hpp
 #> name the dynamic library
 name = factoryrushplus
 # *******************************
@@ -823,7 +823,13 @@ endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
 
-cppbin: $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc)) objects/resources.res
+ifeq ($(msvc),1)
+resources = objects/resources.res
+else
+resources =
+endif
+
+cppbin: $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc)) $(resources)
 	@echo MAKE CPPBIN
 
 ifeq ($(msvc),1)

@@ -61,41 +61,40 @@ wchar_t getChar(wchar_t current) {
     
 
 u16string getPath(u16string current) {
-    return current;
-    do {
-        Console::HandleKeyboard();
-    } while (!( // Waiting for a key to be pressed
-        Console::IsKeyDown(Key::Enum::ONE) || 
-        Console::IsKeyDown(Key::Enum::TWO) || 
-        Console::IsKeyDown(Key::Enum::THREE) || 
-        Console::IsKeyDown(Key::Enum::FOUR) || 
-        Console::IsKeyDown(Key::Enum::FIVE) || 
-        Console::IsKeyDown(Key::Enum::SIX) || 
-        Console::IsKeyDown(Key::Enum::SEVEN) || 
-        Console::IsKeyDown(Key::Enum::EIGHT) || 
-        Console::IsKeyDown(Key::Enum::NINE) ||
-        Console::IsKeyDown(Key::Enum::ZERO) || 
-        Console::IsKeyDown(Key::Enum::ESC)));
-
-    // Parsing the key pressed into a path
-    u16string a = System::GetRootDir();
-    if (Console::IsKeyDown(Key::Enum::ONE)) return a.append(u"/assets/one.tux");
-    if (Console::IsKeyDown(Key::Enum::TWO)) return a.append(u"/assets/two.tux");
-    if (Console::IsKeyDown(Key::Enum::THREE)) return a.append(u"/assets/three.tux");
-    if (Console::IsKeyDown(Key::Enum::FOUR)) return a.append(u"/assets/four.tux");
-    if (Console::IsKeyDown(Key::Enum::FIVE)) return a.append(u"/assets/five.tux");
-    if (Console::IsKeyDown(Key::Enum::SIX)) return a.append(u"/assets/six.tux");
-    if (Console::IsKeyDown(Key::Enum::SEVEN)) return a.append(u"/assets/seven.tux");
-    if (Console::IsKeyDown(Key::Enum::EIGHT)) return a.append(u"/assets/eight.tux");
-    if (Console::IsKeyDown(Key::Enum::NINE)) return a.append(u"/assets/nine.tux");
-    if (Console::IsKeyDown(Key::Enum::ZERO)) return a.append(u"/assets/zero.tux");
-    return current;
+tryagain:
+    const char16_t* argument[1] = {current.c_str()};
+    auto res = Console::PopupWindow(7,1,argument,u"Open File");
+    if (res.has_value())
+        if (res.value().first == 0)
+            return res.value().second;
+        else {
+            u16string arrmsg = u"\n  Popup Exited with code: " + to_u16string(res.value().first) +u"  \n";
+            auto siz = arrmsg.size()-2;
+            for (int i = 0; i < siz; i++) arrmsg = u' ' + arrmsg;
+            for (int i = 0; i < siz; i++) arrmsg.push_back(u' ');
+            argument[0] = arrmsg.c_str();
+            auto res = Console::PopupWindow(1,1,argument,u"Error");
+            if (!res.has_value() || res.value().first != 0)
+                ThrowMsg(u"Error popup has not launched or exited properly");
+        }
+    else {
+        u16string errmsg = u"Popup has not launched or exited properly";
+        argument[0] = errmsg.c_str();
+        auto res = Console::PopupWindow(1,1,argument,u"Error");
+        if (!res.has_value() || res.value().first != 0)
+            ThrowMsg(u"Error popup has not launched or exited properly");
+    }
+    goto tryagain;
 }
+
+pair<int,u16string> ErrorPopup(int argc, const char16_t* argv[]);
 
 int Main(void) {
     Console::Init();
     Console::SetTitle(u"FactoryRush");
     Console::SetCursorSize(0);
+    
+    /*
     std::u16string buf;
     std::u16string res;
     std::vector<std::u16string> lines;
@@ -155,6 +154,7 @@ int Main(void) {
         Console::Sleep(0.03);
     }
     return 0;
+    */
 
     bool edit = false, bop = true, a3 = true;
 
@@ -230,12 +230,11 @@ int Main(void) {
 
     u16string a = System::GetRootDir();
     a.append(u"/assets/a.tux");
-    u16string file = (argc < 2) ? System::ToNativePath(getPath(System::GetRootDir() + u"/assets/a.tux")) : System::ToNativePath(u16string(argv[1])); // Load the texture to edit
+    u16string file = (argc < 2) ? System::ToNativePath(getPath(u".")) : System::ToNativePath(u16string(argv[1])); // Load the texture to edit
     auto texture = TextureSystem::TextureFromFile(file); // Load the texture to edit
     char16_t symchar = getChar(L'~');
     uint8_t symback = 16;
     uint8_t symfore = 16;
-
     // START
     while (true) {
         // Get window area
@@ -287,7 +286,8 @@ int Main(void) {
             // NEW
             for (int i = 15; i < 20; ++i) menu[0][i].ReverseColors();
             if (mouse.primary) {
-                texture = Console::Symbol::CreateTexture(u"                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n");
+                //auto res = Console::PopupWindow(6,0,nullptr);
+                texture = Console::Symbol::CreateTexture(u"                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                \n                ");
                 file = System::ToNativePath(getPath(u"./file.tux"));
             }
         } else if (mouse.x > 20 && mouse.y == 0 && mouse.x < 27) {
@@ -392,26 +392,203 @@ endminput:
     return EXIT_FAILURE;
 }
 
+pair<int,u16string> ErrorPopup(int argc, const char16_t* argv[]) {
+    Console::SetTitle(u"Error");
+    u16string err = (argc < 2) ? u"Unkown Error" : u16string(argv[1]);
+    wout << U16StringToWString(err) << L'\n'; flush();
+    auto lastmouse = Console::GetMouseStatus();
+    auto old_width = Console::GetWindowWidth();
+    auto old_height = Console::GetWindowHeight();
+    int nothingticks = 0;
+    while (1) {
+        auto height = Console::GetWindowHeight(); auto width = Console::GetWindowWidth();
+        if (height < 3 || width < 3) {
+            Console::Sleep(0.1);
+            continue;
+        }
+        vector<vector<Console::Symbol>> scr;
+        int i; for (i = 0; i < (height*2/3); i++)
+            scr.push_back(vector<Console::Symbol>());
+        for (int j = 0; j < (width/2)-1; j++) {
+            scr.back().push_back(Console::Symbol(L' ',16,16));
+            scr[i-2].push_back(Console::Symbol(L' ',16,16));
+        }
+        scr[i-2].push_back(Console::Symbol(L' ',16,16));
+        scr[i-2].push_back(Console::Symbol(L'_',16,16));
+        scr[i-2].push_back(Console::Symbol(L'_',16,16));
+        scr.back().push_back(Console::Symbol(L'|',16,16));
+        pair<uint8_t,uint8_t> OK = { scr.back().size(), scr.size()-1 };
+        scr.back().push_back(Console::Symbol(L'O',15,0));
+        scr.back().push_back(Console::Symbol(L'K',15,0));
+        scr.back().push_back(Console::Symbol(L'|',16,16));
+        
+        scr.push_back(vector<Console::Symbol>());
+        for (int j = 0; j < (width/2); j++)
+            scr.back().push_back(Console::Symbol(L' ',16,16));
+        scr.back().push_back(Console::Symbol(L'‾',16,16));
+        scr.back().push_back(Console::Symbol(L'‾',16,16));
+        while (++i < height)
+            scr.push_back(vector<Console::Symbol>());
+
+        uint8_t* back = new uint8_t[err.size()];
+        for (int j = 0; j < err.size(); j++)
+            back[j] = 9;
+        uint8_t* fore = new uint8_t[err.size()];
+        for (int j = 0; j < err.size(); j++)
+            fore[j] = 15;
+        auto sym = Console::Symbol::CreateTexture(err,back,fore);
+        for (int j = height/3; j < height; j++)
+            while (scr[j].size() < (uint16_t)width)
+                scr[j].push_back(Console::Symbol());
+        TextureSystem::DrawTextureToScreen((width/2)+1-(sym[0].size()/2),height/3,sym,scr);
+
+        Console::HandleMouseAndFocus();
+        if (Console::IsFocused()) Console::HandleKeyboard();
+        else Console::DontHandleKeyboard();
+        if (Console::KeyPressed() == Key::Enum::q && IsCtrlDown()) break;
+        if (Console::KeyPressed() == Key::Enum::ENTER) break;
+        if (Console::KeyPressed() == Key::Enum::ESC) return {EXIT_FAILURE,u""};
+        auto mouse = Console::GetMouseStatus();
+        if ( (mouse.x == OK.first || mouse.x == OK.first + 1 ) && mouse.y == OK.second) {
+            scr[OK.second][OK.first].ReverseColors();
+            scr[OK.second][OK.first+1].ReverseColors();
+            if (Console::MouseButtonClicked().first == MOUSE_BUTTON_PRIMARY)
+                break;
+        }
+        Console::FillScreen(scr);
+        Console::MoveCursor(mouse.x,mouse.y);
+        if (width != Console::GetWindowWidth() || height != Console::GetWindowHeight()) {
+            old_width = Console::GetWindowWidth();
+            old_height = Console::GetWindowHeight();
+            lastmouse = mouse;
+            nothingticks = 0;
+            continue;
+        }
+        if ((Console::MouseButtonClicked().first == 0 && Console::MouseButtonReleased() == 0 && Console::KeyPressed() == Key::Enum::NONE && old_width == width && old_height == height)) 
+            nothingticks++;
+        else
+            nothingticks = 0;
+        seeifsleep:
+        if (!Console::IsFocused() || nothingticks > 100) {
+        yessleep:
+            lastmouse = mouse;
+            old_width = width;
+            old_height = height;
+            Console::Sleep(0.1,true);
+            Console::HandleMouseAndFocus();
+            if (!Console::IsFocused()) {
+                Console::DontHandleKeyboard();
+                goto yessleep;
+            }
+            Console::HandleKeyboard();
+            if (Console::KeyPressed() != Key::Enum::NONE) continue;
+            goto seeifsleep;
+        } else {
+            Console::Sleep(0.01);
+            lastmouse = mouse;
+            old_width = width;
+            old_height = height;
+        }
+    }
+    return {EXIT_SUCCESS,u""};
+}
+
+pair<int,u16string> GetFilePopup(int argc, const char16_t* argv[]) {
+    Console::SetTitle(u"Open File");
+
+    u16string path = (argc < 2) ? u"./" : u16string(argv[1]);
+
+    vector<vector<Console::Symbol>> scr;
+    int last_width = 0;
+    int last_height = 0;
+    while (1) {
+        bool newscr = false;
+
+        Console::HandleMouseAndFocus();
+        if (Console::IsFocused()) Console::HandleKeyboard();
+        else Console::DontHandleKeyboard();
+        if (Console::KeyPressed() == Key::Enum::q && IsCtrlDown()) return {EXIT_FAILURE,(argc < 2) ? u"." : u16string(argv[1])};
+        if (Console::KeyPressed() == Key::Enum::ESC) return {EXIT_FAILURE,(argc < 2) ? u"." : u16string(argv[1])};
+
+        wchar_t x;
+        while ((x = win.get()) && win.good()) {
+            newscr = true;
+            if (x == L'\177' || x == L'\b') {if (path.size()) path.pop_back();}
+            else if (x == L'\n' || x == L'\r') return {EXIT_SUCCESS,path};
+            else path.push_back(WCharToChar16(x));
+        }
+
+        if (last_width != Console::GetWindowWidth() || last_height != Console::GetWindowHeight()) {
+            last_width = Console::GetWindowWidth();
+            last_height = Console::GetWindowHeight();
+            newscr = true;
+        }
+        if (last_height < 3 || last_width < 3) {
+            Console::Sleep(0.1);
+            continue;
+        }
+        if (newscr) {
+            scr.clear();
+            int i;
+            for (i = 0; i < (last_height/2); i++) {
+                scr.push_back(vector<Console::Symbol>());
+            }
+            int j;
+            for (j = 0; j <= (last_width/10); j++)
+                scr.back().push_back(Console::Symbol(L' ',16,16));
+            while (++j < last_width - (last_width/10))
+                scr.back().push_back(Console::Symbol(L' ',Color::DEFAULT,Color::LIGHT_BLACK));
+            
+            scr.push_back(vector<Console::Symbol>());
+            for (j = 0; j <= (last_width/10); j++)
+                scr.back().push_back(Console::Symbol(L' ',16,16));
+
+            auto ppath = path;
+            if (path.size() > (size_t)last_width - 2*((size_t)(last_width/10))) {
+                while (ppath.size() + 3 > (size_t)last_width - 2*((size_t)(last_width/10)))
+                    ppath = ppath.substr(1);
+                ppath = u"..." + ppath;
+            }
+
+            while (++j <= (last_width/10) + (((size_t)last_width - 2*((size_t)(last_width/10)) - path.size())/2))
+                scr.back().push_back(Console::Symbol(L' ',Color::DEFAULT,Color::LIGHT_BLACK));
+
+            --j; for (auto&& c : ppath) {
+                scr.back().push_back({ c,Color::DEFAULT,Color::LIGHT_BLACK });
+                ++j;
+            }
+
+            while (++j < last_width - (last_width/10))
+                scr.back().push_back(Console::Symbol(L' ',Color::DEFAULT,Color::LIGHT_BLACK));
+
+            scr.push_back(vector<Console::Symbol>());
+            for (j = 0; j <= (last_width/10); j++)
+                scr.back().push_back(Console::Symbol(L' ',16,16));
+            while (++j < last_width - (last_width/10))
+                scr.back().push_back(Console::Symbol(L' ',Color::DEFAULT,Color::LIGHT_BLACK));
+
+            Console::FillScreen(scr);
+        }
+        Console::Sleep(0.01);
+    }
+}
+
 int sub(int type) {
     assert(type != 0);
-    auto&& sym = Console::Symbol::CreateTexture(u"▒frfjyyjyjt\n");
-    Console::FillScreen(sym);
-    Console::Sleep(10);
-    do {Console::HandleMouseAndFocus();} while (!Console::IsFocused());
     auto argc = Console::GetArgC();
-    if (argc == 1) Console::SetResult(to_u16string(type));
-    else {
-        auto args = Console::GetArgV();
-        u16string result;
-        wout << L"PopupWindow" << type << L':' << L' ';
-        for (int i = 1; i < argc; ++i) {
-            result.append(args[i]).push_back(u'\n');
-            wout << U16StringToWString(args[i]) << L' ';
-        }
-        wout << L'\n';
-        Console::HandleOutput();
-        wout << U16StringToWString(result) << L'\n';
-        Console::SetResult(result);
+    auto argv = (const char16_t**)Console::GetArgV();
+    wout << L"sub: " << type << L'\n' << "argc: " << argc << L'\n';
+    for (int i = 0; i < argc; i++) wout << L"argv[" << i << L"]: " << U16StringToWString(argv[i]) << L'\n';
+    flush();
+    pair<int,u16string> res;
+    switch (type) { 
+        case 1:
+            res = ErrorPopup(argc,argv);
+            return res.first;
+        case 7:
+            res = GetFilePopup(argc,argv);
+            Console::SetResult(res.second);
+            return res.first;
     }
-    return type;
+    return EXIT_FAILURE;
 }

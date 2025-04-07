@@ -131,7 +131,7 @@ namespace cpp {
             bool primary; // is down
             bool secondary; // is down
             bool middle; // is down
-            std::pair<bool,bool> scroll; // (is scrolling),(up or down)[windows/linux/freebsd - scroll up == move scroll whell (fingers on touchbad) down; down == move up | macos scroll like tablet/phone]
+            std::pair<bool,bool> scroll; // (is scrolling),(up or down)[windows/linux/freebsd - scroll up == move scroll whell (fingers on touchbad) up; down == move down | macos scroll like tablet/phone (opposite)]
             unsigned int x; // in console chracters
             unsigned int y; // in console chracters
             MouseStatus(void);
@@ -236,12 +236,8 @@ namespace cpp {
         static HANDLE old_buffer;
         static CONSOLE_CURSOR_INFO old_curinf;
         static tsqueue<wchar_t>* input_buf;
-        static HANDLE input_thread;
-        static void* input_thread_arg;
         static HANDLE super_thread;
-        static bool* super_thread_run;
-        static void* super_thread_arg;
-        static bool* is_setting_cursor;
+        static std::atomic<bool>* super_thread_run;
         static tsvector<HANDLE>* thread_handles;
         static std::wofstream real_out;
         static inline wchar_t getnch(void);
@@ -363,7 +359,7 @@ namespace cpp {
 
         static void Beep(void);
 
-        static void Sleep(double seconds = 1.0);
+        static void Sleep(double seconds = 1.0, bool sleep_input_thread = false);
         static void Exit(int code);
         static void QuickExit(int code);
         static void SetResult(uniconv::utfcstr result);
@@ -376,9 +372,9 @@ namespace cpp {
         static void SetDoubleClickMaxWait(unsigned short milliseconds);
         static unsigned short GetDoubleClickMaxWait(void);
 
-        static std::optional<std::pair<int,uniconv::utfstr>> PopupWindow(int type, int argc, const char_t* argv[], const uniconv::utfcstr title = nullptr);
-        static std::optional<stsb::promise<std::optional<std::pair<int,uniconv::utfstr>>>> PopupWindowAsync(int type, int argc, const char_t* argv[]);
-        static std::optional<stsb::promise<std::optional<std::pair<int,std::u16string>>>> PopupWindowAsync(int type, int argc, const char16_t* argv[]);
+        static std::optional<std::pair<int,uniconv::utfstr>> PopupWindow(int type, int argc, const char_t* argv[], uniconv::utfcstr title = nullptr);
+        static std::optional<stsb::promise<std::optional<std::pair<int,uniconv::utfstr>>>> PopupWindowAsync(int type, int argc, const char_t* argv[], uniconv::utfcstr title = nullptr);
+        static std::optional<stsb::promise<std::optional<std::pair<int,std::u16string>>>> PopupWindowAsync(int type, int argc, const char16_t* argv[], const char16_t* u16title = nullptr);
 
         static void MoveCursor(int x, int y);
         static void ShowCursor(void);
@@ -388,11 +384,8 @@ namespace cpp {
         static void ReverseCursorBlink(void);
         static std::basic_istringstream<wchar_t> in;
         static void out_flush(void) {HandleOutput();}
-    #ifdef _WIN32
-        static std::basic_ofstream<wchar_t>& out;
-    #else
+        static void out_endl(void) {Console::out.put(L'\n'); HandleOutput();}
         static std::basic_ostringstream<wchar_t> out;
-    #endif
     private:
         static void FillScreenForce(const std::vector<std::vector<Symbol> >& symbols);
         static std::atomic<bool> refresh_screen;

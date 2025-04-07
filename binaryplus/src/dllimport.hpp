@@ -31,7 +31,7 @@ namespace cppimp {
 
     libimport void Console_Fin(void);
 
-    libimport void Console_Sleep(double seconds);
+    libimport void Console_Sleep(double seconds, bool sleep_input_thread);
 
     libimport void Console_HandleKeyboard(void);
 
@@ -88,12 +88,12 @@ namespace cppimp {
     libimport uniconv::unichar** Console_GetArgV(void);
 
     struct popwinretval { bool val; int code; uniconv::unichar* result; };
-    libimport popwinretval Console_PopupWindow(int type, int argc, uniconv::unichar* argv[]);
+    libimport popwinretval Console_PopupWindow(int type, int argc, uniconv::unichar* argv[], uniconv::unichar* title);
 
 #ifdef _WIN32
     __declspec(dllimport)
 #endif
-    std::optional<stsb::promise<std::optional<std::pair<int,std::u16string>>>> Console_PopupWindowAsync(int type, int argc, const char16_t* arg16v[]);
+    std::optional<stsb::promise<std::optional<std::pair<int,std::u16string>>>> Console_PopupWindowAsync(int type, int argc, const char16_t* arg16v[], const char16_t u16title[]);
 
     libimport void Main$define(int (*arg1)(void));
 

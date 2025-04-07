@@ -52,7 +52,7 @@ using namespace std;
         wstring out = wstring(edit);
         return out;
     }
-    int RunProgram(const wchar_t* path, int argc, char* argv[]) {
+    int RunProgram(const wchar_t* path) {
         PROCESS_INFORMATION pi = PROCESS_INFORMATION();
         STARTUPINFO si = STARTUPINFO();
         si.cb = sizeof(STARTUPINFO);
@@ -207,10 +207,10 @@ static int RunProgram(const char* path, int argc, char* argv[]) {
 #endif
 
 
-int main(int argc, char* argv[]) {
+int main(void) {
     auto root = GetExeDir() + N("bin");
     root.push_back(sep);
     root.append(N("cpp-factoryrush")).append(binary);
-    int ret = RunProgram(root.c_str(), argc, argv);
+    int ret = RunProgram(root.c_str());
     return ret;
 }

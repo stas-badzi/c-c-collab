@@ -34,8 +34,8 @@ using namespace uniconv;
         cpp::Console::Fin();
     }
 
-    libexport void Console_Sleep(double seconds) {
-        cpp::Console::Sleep(seconds);
+    libexport void Console_Sleep(double seconds, bool sleep_input_thread) {
+        cpp::Console::Sleep(seconds, sleep_input_thread);
     }
 
     libexport void Console_HandleKeyboard(void) {
@@ -81,7 +81,7 @@ using namespace uniconv;
         std::pair<uint8_t, uint8_t> func = cpp::Console::MouseButtonClicked();
         nint ret = (uint8_t*)System::AllocateMemory(sizeof(uint8_t)*2);
         System::WritePointer(ret,func.first);
-        System::WritePointer(ret,sizeof(uint16_t),func.first);
+        System::WritePointer(ret,sizeof(uint8_t),func.first);
         return (uint8_t*)ret;
     }
 
@@ -161,7 +161,7 @@ using namespace uniconv;
 
     struct popwinretval { bool val; int code; uniconv::unichar* result; };
 
-    libexport popwinretval Console_PopupWindow(int type, int argc, uniconv::unichar* argv[]) {
+    libexport popwinretval Console_PopupWindow(int type, int argc, uniconv::unichar* argv[], uniconv::unichar* title) {
         uniconv::utfcstr* args = (uniconv::utfcstr*)System::AllocateMemory(sizeof(uniconv::utfcstr)*argc);
         for (int i = 0; i < argc; i++) {
             uniconv::utfstr arg = UnicodeToNativeString(argv[i]).c_str();
@@ -171,7 +171,7 @@ using namespace uniconv;
             loc[arg.size()] = L'\0';
         }
         System::FreeMemory(argv);
-        auto ret = Console::PopupWindow(type, argc, args);
+        auto ret = Console::PopupWindow(type, argc, args, (title ? UnicodeToNativeString(title).c_str() : nullptr));
         popwinretval retval;
         if ((retval.val = ret.has_value())) {
             retval.code = ret.value().first;
@@ -186,8 +186,8 @@ using namespace uniconv;
 #else
     __attribute__((visibility("default")))
 #endif
-    auto Console_PopupWindowAsync(int type, int argc, const char16_t* arg16v[]) {
-        return Console::PopupWindowAsync(type, argc, arg16v);
+    auto Console_PopupWindowAsync(int type, int argc, const char16_t* arg16v[], const char16_t u16title[]) {
+        return Console::PopupWindowAsync(type, argc, arg16v, u16title);
     }
 
     struct popwinasyncretval { bool val; void* promise; };

@@ -208,7 +208,6 @@ jobs:
           name: WindowsCsBin
           path: bin/Cs.*.zip
 
-
   compile-cs-windows-x86:
     name: Compile C# for Windows (x86)
     runs-on: windows-latest
@@ -311,17 +310,17 @@ jobs:
       - name: Export dynamic library
         uses: actions/upload-artifact@v4
         with:
-          name: CSharpWinx86Dll
+          name: CSharpWinArm64Dll
           path: csharp/bin/lib/factoryrushsharp.dll
       - name: Export dynamic library linkage
         uses: actions/upload-artifact@v4
         with:
-          name: CSharpWinx86DllLib
+          name: CSharpWinArm64DllLib
           path: csharp/bin/lib/factoryrushsharp.lib
       - name: Export executable
         uses: actions/upload-artifact@v4
         with:
-          name: CSharpWinx86Exe
+          name: CSharpWinArm64Exe
           path: binarysharp/bin/exe/cs-factoryrush.exe
 
   build-msys-arm64:
@@ -339,12 +338,12 @@ jobs:
       - name: Import C# compiled dynamic library
         uses: actions/download-artifact@v4
         with:
-          name: CSharpWinx86Dll
+          name: CSharpWinArm64Dll
           path: csharp/bin/lib
       - name: Import C# compiled executable
         uses: actions/download-artifact@v4
         with:
-          name: CSharpWinx86Exe
+          name: CSharpWinArm64Exe
           path: binarysharp/bin/exe
       - name: Copy C# where it's needed
         shell: msys2 {0}
