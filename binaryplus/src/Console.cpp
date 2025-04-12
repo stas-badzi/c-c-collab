@@ -46,9 +46,9 @@ enum Key::Enum Console::KeyReleased(void) {
     return Console_KeyReleased();
 }
 
-void Console::FillScreen(vector<vector<Console::Symbol> > symbols) {
+void Console::FillScreen(const vector<vector<Console::Symbol> >& symbols) {
 
-    void* voidsyms = TextureToPtr(symbols);
+    void* voidsyms = TextureToPtr((vector<vector<Console::Symbol> >&)symbols); // won't be edited so no problemq
 
     Console_FillScreen(voidsyms);
 }
@@ -106,12 +106,8 @@ char16_t** Console::GetArgV(void) {
     return out;
 }
 
-void Console::Sleep(double seconds){
-    Console_Sleep(seconds);
-}
-
 Console::Symbol::Symbol(void) {
-    symbol = Console_Symbol_Construct$cfb(0x0020, 0x10, 0x10);
+    symbol = Console_Symbol_Construct$cfb(u' ', Color::DEFAULT, Color::DEFAULT);
 }
 
 Console::Symbol::Symbol(const Symbol &cp) {
@@ -138,7 +134,7 @@ Console::Symbol Console::Symbol::operator=(const Console::Symbol &src) {
     return *this;
 }
 
-vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(u16string characters, uint8_t backgrounds[], uint8_t foregrounds[]) {
+vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(u16string characters, const uint8_t backgrounds[], const uint8_t foregrounds[]) {
     size_t count = 0;
     vector<u16string> out;
     out.push_back(u16string());
@@ -168,7 +164,7 @@ vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(u16string charac
     return Console::Symbol::CreateTexture(out.data(), ++count); 
 }
 
-vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(u16string characters[], uint8_t backgrounds[], uint8_t foregrounds[]) {
+vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(u16string characters[], const uint8_t backgrounds[], const uint8_t foregrounds[]) {
     size_t count = 0;
     while (characters[count].size()) ++count;
     return Console::Symbol::CreateTexture(characters, count, backgrounds, foregrounds); 
@@ -192,14 +188,14 @@ vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(u16string charac
     return out;
 }
 
-vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(u16string characters[], size_t size, uint8_t backgrounds[], uint8_t foregrounds[]) {
+vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(u16string characters[], size_t size, const uint8_t backgrounds[], const uint8_t foregrounds[]) {
     vector<vector<Console::Symbol> > out;
     int count = 0;
     for (size_t i = 0; i < size; i++) {
         out.push_back(vector<Console::Symbol>());
         u16string &str = characters[i];
-        uint8_t *bkg = backgrounds + count;
-        uint8_t *frg = foregrounds + count;
+        const uint8_t *bkg = backgrounds + count;
+        const uint8_t *frg = foregrounds + count;
         for (size_t j = 0; j < str.size(); j++) {
             out.back().push_back(Console::Symbol(str[j],frg[j],bkg[j]));
             ++count;

@@ -26,7 +26,7 @@ sources = Console.cpp TextureSystem.cpp System.cpp Game.cpp dllexport.cpp SoundS
 #> header files
 headers = Console.hpp TextureSystem.hpp TextureSystem.ipp Game.hpp dllimport.hpp System.hpp System.ipp smart_ref.hpp smart_ref.ipp SoundSystem.hpp
 #> include files
-includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp apple/keyboard.h apple/openfile.h linux/ledctrl.h linux/mousefd.h promise.hpp
+includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp apple/keyboard.h apple/openfile.h linux/ledctrl.h linux/mousefd.h windows/thread_safe/queue windows/thread_safe/vector promise.hpp
 #> name the dynamic library
 name = factoryrushplus
 # *******************************
@@ -199,8 +199,8 @@ endif
 ifeq ($(msvc),1)
 ifeq ($(findstring clang, $(c-compiler)),clang)
 ifeq ($(arch),x86)
-	archarg = --target=$(arch)
-	archarg = --target=$(arch)
+	archarg = 
+	archarg = 
 endif
 	clstd = /std:c17 $(archarg)
 	clstdpp = /std:c++latest $(archarg)
@@ -254,10 +254,20 @@ fbobj = $(foreach file,$(binsources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .c
 endif
 
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
-os = $(subst $(space),-,$(shell echo $$(uname -s)_$$(uname -r)))
+os1 = $(subst $(space),-,$(shell echo $$(uname -s)_$$(uname -r)))
+ifeq ($(tgarch),i686)
+os = $(shell echo $(os1) | sed 's/x86_64/i686/g')
+else
+os = $(os1)
+endif
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
-os = $(subst $(space),-,$(shell echo $$(uname -s)_$$(uname -r)))
+os1 = $(subst $(space),-,$(shell echo $$(uname -s)_$$(uname -r)))
+ifeq ($(tgarch),i686)
+os = $(shell echo $(os1) | sed 's/x86_64/i686/g')
+else
+os = $(os1)
+endif
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 os = $(subst $(space),-,$(shell echo $$(uname -s)_$$(uname -r)))
@@ -357,7 +367,7 @@ endif
 endif
 #non-cygwin 'NT'
 binary = exe
-static = lib
+static = a
 prefix = $(empty)
 dynamic = dll
 libdir = $(msyslib)
@@ -446,6 +456,12 @@ ifeq ($(copylibs),1)
 flibdir = $(libdir)
 endif
 
+ifeq ($(debug),1)
+build-type = Debug-$(arch)
+else
+build-type = Release-$(arch)
+endif
+
 ifeq ($(archchk),0)
 check_arch =
 else
@@ -453,8 +469,8 @@ check_arch = check-arch
 endif
 
 old_arch = $(shell cat __arch.dat 2> /dev/null || echo > __arch.dat)
-ifneq ($(old_arch),$(arch))
-archfile = $(shell echo $(old_arch) > __oldarch.dat && echo $(arch) > __arch.dat && echo __arch.dat)
+ifneq ($(old_arch),$(build-type))
+archfile = $(shell echo $(old_arch) > __oldarch.dat && echo $(build-type) > __arch.dat && echo __arch.dat)
 else
 archfile = __arch.dat
 endif
@@ -462,7 +478,7 @@ endif
 package: release
 
 check-arch: $(archfile)
-	@echo "Architecture changed from $(shell cat __oldarch.dat) to $(arch) - Cleaning"
+	@echo "Build type changed from $(shell cat __oldarch.dat) to $(build-type) - Cleaning"
 	-@rm __oldarch.dat
 	@$(MAKE) clean
 	@echo "Version file. Remove to enable recompile" > $@
@@ -492,8 +508,8 @@ endif
 
 	@cd bin && powershell Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/raw/master/bin/zip.exe" -OutFile "zip.exe" -Verbose
 
-	@cd bin && zip -r Cpp.$(release).$(os).zip Cpp.$(release)
-	@cd bin && zip -r Cs.$(release).$(os).zip Cs.$(release)
+	@zip -r bin/Cpp.$(release).$(os).zip bin/Cpp.$(release)
+	@zip -r bin/Cs.$(release).$(os).zip bin/Cs.$(release)
 
 else
 ifeq ($(wildcard release),release)
@@ -513,16 +529,16 @@ endif
 	@cd bin && mv cs Cs.$(release)
 
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
-	cd bin && zip -r Cpp.$(release).$(os).zip Cpp.$(release)
-	cd bin && zip -r Cs.$(release).$(os).zip Cs.$(release)
+	zip -r bin/Cpp.$(release).$(os).zip bin/Cpp.$(release)
+	zip -r bin/Cs.$(release).$(os).zip bin/Cs.$(release)
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
-	cd bin && zip -r Cpp.$(release).$(os).zip Cpp.$(release)
-	cd bin && zip -r Cs.$(release).$(os).zip Cs.$(release)
+	zip -r bin/Cpp.$(release).$(os).zip bin/Cpp.$(release)
+	zip -r bin/Cs.$(release).$(os).zip bin/Cs.$(release)
 else
 ifeq ($(findstring NT, $(shell uname -s)),NT)
-	cd bin && zip -r Cpp.$(release).$(os).zip Cpp.$(release)
-	cd bin && zip -r Cs.$(release).$(os).zip Cs.$(release)
+	zip -r bin/Cpp.$(release).$(os).zip bin/Cpp.$(release)
+	zip -r bin/Cs.$(release).$(os).zip bin/Cs.$(release)
 else
 ifeq ($(shell uname -s),Darwin)
 	cd bin && tar -czvf Cpp.$(release).$(os).tgz Cpp.$(release)
@@ -537,7 +553,7 @@ endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
 
-all: dll cppbin csbin
+all: resources dll cppbin csbin fixmintty-cygwin fixmintty-msys2
 	@echo "Version file. Remove to enable recompile" > $@
 
 dll: cs cpp
@@ -571,13 +587,43 @@ else
 	@rm -f objects/*
 endif
 
-resources: $(check_arch) source/setkbdmode.c source/killterm.c source/getfd.c source/getfd.h source/keyboard.h source/keyboard.m source/openfile.h source/openfile.m source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h
+fixmintty-cygwin: source/fixmintty.c
+ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
+	gcc -o binaryplus/bin/fixmintty/cygwin.exe source/fixmintty.c
+	@echo "Version file. Remove to enable recompile" > $@
+endif
+
+fixmintty-msys2: source/fixmintty.c
+ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
+	gcc -o binaryplus/bin/fixmintty/msys2.exe source/fixmintty.c
+	@echo "Version file. Remove to enable recompile" > $@
+endif
+
+resources: $(check_arch) source/setkbdmode.c source/killterm.c source/getfd.c source/getfd.h source/keyboard.h source/keyboard.m source/openfile.h source/openfile.m source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h source/killwindow.c source/resources.rc assets/images/icon.ico source/beep.c
 	@echo MAKE RESOURCES
 
 ifneq ($(msvc),1)
+ifeq ($(binary),exe)
+	$(c-compiler) -c source/killwindow.c source/beep.c -pedantic -Wextra -DUNICODE $(cflags) $(cdb) -std=c2x && mv *.o objects/
+	$(c-compiler) -o binaryplus/bin/killwindow.exe objects/killwindow.o
+	$(c-compiler) -o binaryplus/bin/beep.exe objects/beep.o
+endif
 	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(staticgen)assets/libglobals.$(static) objects/globals.o
 else
+	@echo "rc /nologo /fo objects\resources.res source\resources.rc" > run.bat
+	@cmd.exe /c run.bat
+
+	@echo "$(c-compiler) /c /DUNICODE /D_MSVC /D_CRT_SECURE_NO_DEPRECATE $(cdb) source/killwindow.c source/beep.c $(clstd)" > run.bat
+	@cmd.exe /c run.bat
+	@mv *.obj objects/
+
+	@echo "link /OUT:binaryplus/bin/killwindow.exe objects/killwindow.obj USER32.lib" > run.bat
+	@cmd.exe /c run.bat
+
+	@echo "link /OUT:binaryplus/bin/beep.exe objects/beep.obj USER32.lib" > run.bat
+	@cmd.exe /c run.bat
+
 	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) source/globals.c /Icplusplus\include $(clstd)" > run.bat
 	@cmd.exe /c run.bat
 	@dir
@@ -659,7 +705,7 @@ endif
 csrun:
 	-cd binarysharp/bin/exe && $(run)$(binfile).$(binary)
 
-cpp: resources $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
+cpp: $(resdep) $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
 	@echo MAKE CPP
 
 ifeq ($(msvc),1)
@@ -777,18 +823,35 @@ endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
 
-cppbin: $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc))
+ifeq ($(msvc),1)
+resources = objects/resources.res
+else
+resources =
+endif
+
+cppbin: $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc)) $(resources)
 	@echo MAKE CPPBIN
 
 ifeq ($(msvc),1)
+	echo "$(cpp-compiler) /EHsc /c /DUNICODE $(bpdb) source/launcher.cpp $(clstdpp)" > run.bat
+	@cmd.exe /c run.bat
+	@$(movefl) -f launcher.obj objects
+	echo "link /OUT:binaryplus/launcher.exe /CGTHREADS:8 objects/launcher.obj objects/resources.res" > run.bat
+	@cmd.exe /c run.bat
+	@rm run.bat
+
 	echo "$(cpp-compiler) /EHsc /c $(bpdb) $(fbsrc) /Ibinaryplus\include $(clstdpp)" > run.bat
 	@cmd.exe /c run.bat
 	@$(movefl) -f $(subst obj/,$(empty),$(fbobj)) binaryplus/obj
-	echo "cd binaryplus && link /OUT:bin/$(binname).$(binary) $(bldb) $(flib) ../cplusplus/bin/$(name).lib ../csharp/bin/lib/$(filename).lib $(fbobj) USER32.lib" > run.bat
+	echo "cd binaryplus && link /OUT:bin/$(binname).$(binary) $(bldb) $(flib) ../cplusplus/bin/$(name).lib ../csharp/bin/lib/$(filename).lib $(fbobj) USER32.lib ../objects/resources.res" > run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
 else
 #all
+	$(cpp-compiler) -c -pedantic -Wextra $(cxxflags) -DUNICODE $(bpdb) source/launcher.cpp -std=c++2b
+	@$(movefl) -f launcher.o objects
+	$(cpp-compiler) -o binaryplus/launcher.exe objects/launcher.o $(static-libc++) $(static-libc) $(ldarg)
+
 	$(cpp-compiler) -c -pedantic -Wextra $(cxxflags) $(bpdb) $(fbsrc) -I binaryplus/include -std=c++2b
 	@$(movefl) -f $(subst obj/,$(empty),$(fbobj)) binaryplus/obj
 	cd binaryplus && $(cpp-compiler) -o bin/$(binname).$(binary) $(binflags) $(fbobj) -L$(flibdir) -l$(name) $(flib) $(static-libc++) $(static-libc) $(ldarg)

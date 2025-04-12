@@ -9,15 +9,15 @@ extern int Main(void);
 
 namespace cpp {
 #if defined(_WIN32)
-    __declspec(dllexport) std::basic_istream<char16_t>& u16in = *((std::basic_istream<char16_t>*)&Console::in);
-    __declspec(dllexport) std::basic_ostream<char16_t>& u16out = *((std::basic_ostream<char16_t>*)&Console::out);
+    __declspec(dllexport) std::basic_istream<wchar_t>& win = *((std::basic_istream<wchar_t>*)&Console::in);
+    __declspec(dllexport) std::basic_ostream<wchar_t>& wout = *((std::basic_ostream<wchar_t>*)&Console::out);
 #define getnch() Console::input_buf->pop()
 #define ncerr wcerr
 #else
 #define getnch() getc(stdin)
 #define ncerr cerr
-    __attribute__((visibility("default"))) std::basic_istream<char16_t>& u16in = *((std::basic_istream<char16_t>*)&Console::in);
-    __attribute__((visibility("default"))) std::basic_ostream<char16_t>& u16out = *((std::basic_ostream<char16_t>*)&Console::out);
+    __attribute__((visibility("default"))) std::basic_istream<wchar_t>& win = *((std::basic_istream<wchar_t>*)&Console::in);
+    __attribute__((visibility("default"))) std::basic_ostream<wchar_t>& wout = *((std::basic_ostream<wchar_t>*)&Console::out);
 #endif
 }
 
@@ -26,27 +26,29 @@ using namespace uniconv;
 using namespace std;
 using namespace std::chrono;
 
+Console::config_t& Console::GetConfigRef(void) { return Console::config; }
+
 void Console::ThrowMsg(const char* msg) {
     Console::Fin();
-    cerr << msg << endl;
+    fwrite(msg, sizeof(char), strlen(msg), stderr);
     exit(1);
 }
 
 void Console::ThrowMsg(const wchar_t* msg) {
     Console::Fin();
-    wcerr << msg << endl;
+    fwrite(msg, sizeof(wchar_t), wcslen(msg), stderr);
     exit(0x100);
 }
 
 void Console::ThrowMsg(const string msg) {
     Console::Fin();
-    cerr << msg << endl;
+    fwrite(msg.c_str(), sizeof(char), msg.size(), stderr);
     exit(0x100);
 }
 
 void Console::ThrowMsg(const wstring msg) {
     Console::Fin();
-    wcerr << msg << endl;
+    fwrite(msg.c_str(), sizeof(wchar_t), msg.size(), stderr);
     exit(0x100);
 }
 
@@ -56,36 +58,79 @@ char_t Console::GetChar(void) {
     return Console::buf[buf_it-1];
 };
 
-void Console::HandleOutput(void) {
-    auto str = Console::out.str();
-    Console::out.str(std::u16string());
-    Console::real_out << U16StringToNative(str);
-    Console::real_out.flush();
-}
-
 void Console::PushChar(char_t c) {
     Console::in.clear();
     auto pos = Console::in.tellg();
 #ifdef _WIN32
-    Console::in.str(Console::in.str()+(char16_t)c);
+    Console::in.str(Console::in.str()+c);
 #else
     //write(fileno(stdout), &c, 1);
-    char16_t c16 = 0;
-    size_t siz = mbrtoc16(&c16, &c, 1, &Console::streammbs);
+    wchar_t wc = 0;
+    size_t siz = mbrtowc(&wc, &c, 1, &Console::streammbs);
     switch (siz) {
     case static_cast<size_t>(-1):
-        ThrowMsg("mbrtoc16 error");
+        ThrowMsg("mbrtowc error");
     case static_cast<size_t>(-2):
         return;
     }
-    Console::in.str(Console::in.str()+c16);
+    Console::in.str(Console::in.str()+wc);
     char empty = 0;
-    size_t siz =  mbrtoc16(&c16, &empty, 1, &Console::streammbs);
+    siz =  mbrtowc(&wc, &empty, 1, &Console::streammbs);
     if (siz == static_cast<size_t>(-3))
-        Console::in.str(Console::in.str()+c16);
+        Console::in.str(Console::in.str()+wc);
 #endif
     Console::in.seekg(pos);
 };
+
+void Console::EscSeqSetTitle(const char_t* title) {
+    if (title) Console::window_title = title;
+    utfstr str;
+    str.append(N("\033]30;")).append(window_title).append(N("\a\033]0;")).append(window_title).push_back(N('\a'));
+    stderr_lock.lock();
+    fwrite(str.c_str(), sizeof(char_t), str.size(), stderr);
+    stderr_lock.unlock();
+}
+
+void Console::EscSeqMoveCursor(void) {
+    utfstr str;
+    str.append(N("\033[")).append(to_nstring(Console::cursorpos.second+1)).append(N(";")).append(to_nstring(Console::cursorpos.first+1)).push_back(N('H'));
+    stderr_lock.lock();
+    fwrite(str.c_str(), sizeof(char_t), str.size(), stderr);
+    stderr_lock.unlock();
+}
+
+void Console::EscSeqSetCursor(void) {
+    utfstr str = N("\033[?25");
+    if (Console::cursor_visible) str.push_back(N('h'));
+    else str.push_back(N('l'));
+    stderr_lock.lock();
+    fwrite(str.c_str(), sizeof(char_t), str.size(), stderr);
+    stderr_lock.unlock();
+}
+
+void cpp::Console::ReverseCursorBlink(void) {
+    Console::cursor_blink_opposite = !Console::cursor_blink_opposite;
+    Console::EscSeqSetCursorSize();
+}
+
+void Console::EscSeqSetCursorSize(void) {
+    short val;
+    if (Console::cursor_size > 60) val = 2;
+    else if (Console::cursor_size > 30) val = 6;
+    else val = 4;
+    val -= Console::cursor_blink_opposite;
+    utfstr str = N("\033[");
+    str.append(to_nstring(val));
+    str.push_back(N(' '));
+    str.push_back(N('q'));
+    stderr_lock.lock();
+    fwrite(str.c_str(), sizeof(char_t), str.size(), stderr);
+    stderr_lock.unlock();
+}
+
+void Console::EscSeqRestoreCursor(void) {
+    fwrite(N("\033[?25h\033[0 q"), sizeof(char_t), 11, stderr);
+}
 
 void Console::XtermInitTracking(void) {
     fwrite("\033[?1049h", sizeof(char), 8, stderr);
@@ -101,6 +146,7 @@ void Console::XtermFinishTracking(void) {
     fwrite("\033[?1003l", sizeof(char), 8, stderr);
     fwrite("\033[?1015l", sizeof(char), 8, stderr);
     fwrite("\033[?1006l", sizeof(char), 8, stderr);
+    Console::Sleep(0.01);
     Console::XtermMouseAndFocus(); // read all input so it doesn't get pushed to the terminal
 
     fwrite("\033[?1049l", sizeof(char), 8, stderr);
@@ -110,20 +156,17 @@ void Console::XtermMouseAndFocus(void) {
     Console::this_mouse_button = -1;
     Console::this_mouse_down = false;
     Console::this_mouse_combo = 0;
-    Console::mouse_buttons_down[3] = false;
-    Console::mouse_buttons_down[4] = false;
+    Console::mouse_buttons_down[MOUSE_SCROLL_UP] = false;
+    Console::mouse_buttons_down[MOUSE_SCROLL_DOWN] = false;
     Console::mouse_status.scroll = {false,false};
     bool mousedown = false;
     int bytes;
 
 #ifdef _WIN32
-    while (_kbhit()) Console::input_buf->push(_getwch());
     bytes = Console::input_buf->size();
 #define nstrlen wcslen
-#define decbytes() --bytes
 #else
 #define nstrlen strlen
-#define decbytes() (--bytes)
     ioctl(STDIN_FILENO, FIONREAD, &bytes);
 #endif
     if (!bytes) return;
@@ -132,20 +175,20 @@ void Console::XtermMouseAndFocus(void) {
 
     while (bytes > 0) {
         buf_it = 0;
-        char_t c = GetChar(); decbytes();
+        char_t c = GetChar(); --bytes;
         if (c != N('\033')) {
             Console::PushChar(c);
             buf[0] = N('\0');
             continue;
         } else if (bytes == 0) break;
-        c = GetChar(); decbytes();
+        c = GetChar(); --bytes;
         if (c != N('[')) {
             Console::PushChar('\033');
             Console::PushChar(c);
             buf[0] = N('\0');
             continue;
         } else if (bytes == 0) break;
-        c = GetChar(); decbytes();
+        c = GetChar(); --bytes;
         switch (c) {
         case N('I'):
             //fprintf(stderr, "gained focus\n");
@@ -163,7 +206,7 @@ void Console::XtermMouseAndFocus(void) {
             int it = 2;
             while (++it) {
                 if (bytes == 0) return;
-                char byte = GetChar(); decbytes();
+                char byte = GetChar(); --bytes;
 
                 if (byte == N(';')) { ++pos; continue; }
                 
@@ -227,10 +270,10 @@ void Console::XtermMouseAndFocus(void) {
                 Console::mouse_status.secondary = mousedown;
                 break;
             case 4:
-                Console::mouse_status.scroll = {1,true};
+                Console::mouse_status.scroll = {true,true};
                 break;
             case 5:
-                Console::mouse_status.scroll = {1,false};
+                Console::mouse_status.scroll = {true,false};
                 break;
             }
             buf[0] = N('\0');
@@ -243,9 +286,14 @@ void Console::XtermMouseAndFocus(void) {
     }
 }
 
+    static bool tabby = false;
 #ifdef _WIN32
+    static bool conhost = false;
     static bool mintty = false;
     static bool wt = false;
+    static bool conemu = false;
+    static DWORD conemupid = 0;
+    static bool cmder = false;
     static bool good = false;
 
     inline constexpr uint8_t Console::GenerateAtrVal(uint8_t i1, uint8_t i2) {
@@ -338,20 +386,160 @@ void Console::XtermMouseAndFocus(void) {
         __getinput_arg* arg = (__getinput_arg*)pvarg;
         tsqueue<wchar_t>& buf = *(arg->buf);
         bool dowait = arg->dowait;
+        delete arg;
         while(1) {
-            while (_kbhit())
-                buf.push(_getwch());
-            if (dowait) Sleep(1);
+            while (_kbhit()) {
+                wchar_t wc = _getwch();
+                if (!wc) { if (_kbhit()) {
+                    wc = _getwch();
+                    switch (wc) {
+                    }
+                } else {
+                    wc = _getwch();
+                    switch (wc) {
+                    }
+                    continue;
+                } }
+
+                if (wc == 0xe0) { if (_kbhit()) {
+                    wc = _getwch();
+                    switch (wc) {
+                    case 0x48: wcerr << L'↑'; continue;
+                    case 0x50: wcerr << L'↓'; continue;
+                    case 0x4b: wcerr << L'←'; continue;
+                    case 0x4d: wcerr << L'→'; continue;
+                    default: buf.push('\xe0'); break;
+                    }
+                } else {
+                    wc = _getwch();
+                    switch (wc) {
+                        case 0x48: wcerr << L'↑'; break;
+                        case 0x50: wcerr << L'↓'; break;
+                        case 0x4b: wcerr << L'←'; break;
+                        case 0x4d: wcerr << L'→'; break;
+                    }
+                    continue;
+                } }
+                buf.push(wc);
+            }
+            if (dowait) ::Sleep(1);
         }
         return TRUE;
     }
 
-    struct __superthread_arg { bool* dorun; tsvector<HANDLE>* threads; };
+    size_t sleepmcs(size_t mcs) {
+        size_t i = 0;
+        auto start = std::chrono::high_resolution_clock::now();
+        while (std::chrono::high_resolution_clock::now() - start < std::chrono::microseconds(mcs)) ++i;
+        return i;
+    }
+
+    struct __conemuhandletabs_arg { atomic<bool>* focused; DWORD pid; };
+
+    DWORD WINAPI ConemuHandleTabs(LPVOID lpParam) {
+        auto args = (__conemuhandletabs_arg*)lpParam;
+        atomic<bool>& focused = *(args->focused);
+        DWORD pid = (args->pid);
+        delete args;
+
+        HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
+        if (hProcess == NULL) {
+            std::cerr << "Failed to open process with ID " << pid << ". Error: " << GetLastError() << std::endl;
+            return 1;
+        }
+        IO_COUNTERS prevIoCounters = {};
+        if (!GetProcessIoCounters(hProcess, &prevIoCounters)) {
+            std::cerr << "Failed to get IO counters for process with ID " << pid << ". Error: " << GetLastError() << std::endl;
+            exit(3);
+        }
+
+        ULONGLONG old_writeDelta = 0;
+        ULONGLONG old_readDelta = 0;
+        ULONGLONG old_otherOpDelta = 0;
+        ULONGLONG old_readTransferDelta = 0;
+        ULONGLONG old_writeTransferDelta = 0;
+        ULONGLONG old_otherTransferDelta = 0;
+
+        ULONGLONG last_deltas[1'000] = {100};
+        ULONGLONG deltas_sum = 0;
+        size_t deltas_it = 0;
+        ULONGLONG old_delta = 0;
+
+        ULONGLONG last_vals[1'000] = {0};
+        size_t vals_it = 0;
+
+        long double last_percents[1'000] = {0};
+        long double avgpercent = 0;
+        size_t perc_it = 0;
+
+        int oneconter = 0;
+
+        focused = true;
+
+        while (true) {
+            sleepmcs(900);
+            IO_COUNTERS ioCounters;
+            if (GetProcessIoCounters(hProcess, &ioCounters)) {
+                auto calculateDelta = [](ULONGLONG newVal, ULONGLONG oldVal) {
+                    return newVal - oldVal;
+                };
+
+                auto calculatePercentage = [](ULONGLONG delta, ULONGLONG oldVal) {
+                    if (delta == 0 && oldVal == 0) return (long double)0;
+                    return delta < oldVal ? ((static_cast<long double>(delta)-oldVal) / oldVal) * 100 : ((static_cast<long double>(oldVal)-delta) / delta) * -100;
+                };
+
+                ULONGLONG writeDelta = calculateDelta(ioCounters.WriteOperationCount, prevIoCounters.WriteOperationCount);
+                ULONGLONG readDelta = calculateDelta(ioCounters.ReadOperationCount, prevIoCounters.ReadOperationCount);
+                ULONGLONG otherOpDelta = calculateDelta(ioCounters.OtherOperationCount, prevIoCounters.OtherOperationCount);
+                ULONGLONG readTransferDelta = calculateDelta(ioCounters.ReadTransferCount, prevIoCounters.ReadTransferCount);
+                ULONGLONG writeTransferDelta = calculateDelta(ioCounters.WriteTransferCount, prevIoCounters.WriteTransferCount);
+                ULONGLONG this_delta = calculateDelta(ioCounters.OtherTransferCount, prevIoCounters.OtherTransferCount);
+
+                auto delta = deltas_sum;
+                auto percentup = calculatePercentage(delta, last_vals[vals_it]);
+
+                old_writeDelta = writeDelta;
+                old_readDelta = readDelta;
+                old_otherOpDelta = otherOpDelta;
+                old_readTransferDelta = readTransferDelta;
+                old_writeTransferDelta = writeTransferDelta;
+                old_otherTransferDelta = this_delta;
+
+                deltas_sum -= last_deltas[deltas_it];
+                deltas_sum += this_delta;
+                last_deltas[deltas_it] = this_delta;
+
+                avgpercent -= last_percents[perc_it];
+                last_percents[perc_it] = percentup;
+                avgpercent += percentup;
+                last_vals[vals_it] = delta;
+
+                prevIoCounters = ioCounters;
+                deltas_it = (deltas_it + 1) % 1'000;
+                perc_it = (perc_it + 1) % 1'00;
+                vals_it = (vals_it + 1) % 1'000;
+
+
+                if (avgpercent > 70e2) focused = true;
+                else if (avgpercent < -70e2) focused = false;
+
+            } else {
+                cerr << "GetProcessIoCounters failed: " << GetLastError() << endl;
+                exit(1);
+            }
+        }
+
+        CloseHandle(hProcess);
+    }
+
+    struct __superthread_arg { atomic<bool>* dorun; tsvector<HANDLE>* threads; };
 
     DWORD WINAPI Console::SuperThread(LPVOID lpParam) {
         auto args = (__superthread_arg*)lpParam;
-        bool& run = *(args->dorun);
+        atomic<bool>& run = *(args->dorun);
         tsvector<HANDLE>& threads = *(args->threads);
+        delete args;
         while (run) {
             for (size_t i = 0; i < threads.size(); i++) {
                 auto res = WaitForSingleObject(threads[i], 0);
@@ -360,7 +548,7 @@ void Console::XtermMouseAndFocus(void) {
                     threads.erase(i);
                 }
                 else if (res != WAIT_TIMEOUT) {
-                    Console::out << u"WaitForSingleObject failed: " << GetLastError() << u'\n';
+                    Console::out << L"WaitForSingleObject failed: " << GetLastError(); out_endl();
                     return FALSE;
                 }
             }
@@ -382,7 +570,7 @@ void Console::XtermMouseAndFocus(void) {
         issetting = true;
         if (!SetConsoleCursorPosition(Console::screen, {cursorpos.first, cursorpos.second})) {
             issetting = false;
-            Console::out << u"SetCursorPos failed: " << GetLastError() << u'\n';
+            Console::out << L"SetCursorPos failed: " << GetLastError(); out_endl();
             return FALSE;
         }
         issetting = false;
@@ -392,8 +580,11 @@ void Console::XtermMouseAndFocus(void) {
     void cpp::Console::MoveCursor(int x, int y) {
         Console::cursorpos.first = x;
         Console::cursorpos.second = y;
-        HANDLE hThread = CreateThread(NULL, 0, MoveCursorThread, Console::is_setting_cursor, 0, NULL);
-        thread_handles->push_back(hThread);
+        //HANDLE hThread = CreateThread(NULL, 0, MoveCursorThread, Console::is_setting_cursor, 0, NULL);
+        //thread_handles->push_back(hThread);
+        screen_lock.lock();
+        SetConsoleCursorPosition(Console::screen, {cursorpos.first, cursorpos.second});
+        screen_lock.unlock();
     }
 
     void cpp::Console::ShowCursor(void) {
@@ -402,7 +593,9 @@ void Console::XtermMouseAndFocus(void) {
         CONSOLE_CURSOR_INFO cci;
         cci.bVisible = Console::cursor_visible;
         cci.dwSize = Console::cursor_size;
+        screen_lock.lock();
         SetConsoleCursorInfo(Console::screen, &cci);
+        screen_lock.unlock();
     }
 
     void cpp::Console::HideCursor(void) {
@@ -411,7 +604,9 @@ void Console::XtermMouseAndFocus(void) {
         CONSOLE_CURSOR_INFO cci;
         cci.bVisible = Console::cursor_visible;
         cci.dwSize = Console::cursor_size;
+        screen_lock.lock();
         SetConsoleCursorInfo(Console::screen, &cci);
+        screen_lock.unlock();
     }
 
     void cpp::Console::SetCursorSize(uint8_t size) {
@@ -420,13 +615,46 @@ void Console::XtermMouseAndFocus(void) {
         CONSOLE_CURSOR_INFO cci;
         cci.bVisible = Console::cursor_visible;
         cci.dwSize = Console::cursor_size;
+        screen_lock.lock();
         SetConsoleCursorInfo(Console::screen, &cci);
+        screen_lock.unlock();
     }
 
     void cpp::Console::SetTitle(const wchar_t* title) {
-        if (!SetConsoleTitle(title)) {
-            Console::out << u"SetConsoleTitle failed: " << GetLastError() << u'\n';
+        if (title) Console::window_title = title;
+        if (!SetConsoleTitle(Console::window_title.c_str())) {
+            Console::out << L"SetConsoleTitle failed: " << GetLastError(); out_endl();
             ThrowMsg("SetConsoleTitle failed");
+        }
+        if (cmder) {
+            wstring conemuc = GetTerminalExecutableName();
+            while (conemuc.back() != L'\\') conemuc.pop_back();
+            conemuc += L"vendor\\conemu-maximus5\\ConEmu\\ConEmuC";
+        #ifdef _WIN64
+            conemuc += L"64";
+        #endif
+            conemuc += L".exe";
+
+            wstring args_v = L"\""; args_v.append(conemuc).append(L"\" -GUIMacro:").append(to_wstring(conemupid)).append(L" Rename(0,\"").append(title).append(L"\")");
+            PROCESS_INFORMATION pi = PROCESS_INFORMATION();
+            STARTUPINFO si = STARTUPINFO();
+            si.cb = sizeof(STARTUPINFO);
+            int status = CreateProcess(conemuc.c_str(), (wchar_t*)args_v.c_str(), nullptr, nullptr, false, CREATE_PRESERVE_CODE_AUTHZ_LEVEL | CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi);
+            
+            if (!status) { cerr << "CreateProcess failed: " << GetLastError() << endl; exit(0x63); }
+            CloseHandle(pi.hThread);
+            WaitForSingleObject(pi.hProcess, INFINITE);
+            bool isdone = false;
+            DWORD exitcode = -1;
+            if (GetExitCodeProcess(pi.hProcess, &exitcode)) {
+                if (exitcode)
+                    wcerr << conemuc << L" exited with code: " << exitcode << endl;
+                CloseHandle(pi.hProcess);
+            } else {
+                CloseHandle(pi.hProcess);
+                cerr << "GetExitCodeProcess failed: " << GetLastError() << endl;
+                exit(0x66);
+            }
         }
     }
 
@@ -461,30 +689,90 @@ void Console::XtermMouseAndFocus(void) {
         return 0;
     }
 
+    #define popback(str, n) str.erase(str.size()-n)
+
+    std::wstring ModifyExecutableName(std::wstring term) {
+        if (term.size() > 10 && term.substr(term.size()-10) == L"\\Tabby.exe") {
+            wt = false;
+            tabby = true; // todo - do it for linux
+        }
+        if (term.size() > 19 && term.substr(term.size()-19) == L"\\ConEmu\\ConEmuC.exe") {
+            term = term.substr(0,term.size()-19);
+            term.append(L"ConEmu64.exe");
+            wt = false;
+            conemu = true;
+        }
+        if (term.size() > 21 && term.substr(term.size()-21) == L"\\ConEmu\\ConEmuC64.exe") {
+            term = term.substr(0,term.size()-20);
+            term.append(L"ConEmu64.exe");
+            wt = false;
+            conemu = true;
+        }
+        if (term.size() > 34 && term.substr(term.size()-34) == L"\\vendor\\conemu-maximus5\\ConEmu.exe") {
+            term = term.substr(0,term.size()-33);
+            term.append(L"Cmder.exe");
+            wt = false;
+            cmder = true;
+            conemu = true;
+        }
+        if (term.size() > 36 && term.substr(term.size()-36) == L"\\vendor\\conemu-maximus5\\ConEmu64.exe") {
+            term = term.substr(0,term.size()-35);
+            term.append(L"Cmder.exe");
+            wt = false;
+            cmder = true;
+            conemu = true;
+        }
+        return term;
+    }
+
+    bool FocusWindow(HWND hwnd) {
+        int style = GetWindowLong(hwnd, GWL_STYLE);
+        if ((style & WS_MINIMIZE) == WS_MINIMIZE)
+            ShowWindow(hwnd, SW_RESTORE);
+
+        DWORD focused_thread = GetWindowThreadProcessId(GetForegroundWindow(), nullptr);
+        DWORD this_thread = GetCurrentThreadId();
+
+        if (focused_thread != this_thread)
+        {
+            AttachThreadInput(focused_thread, this_thread, true);
+            BringWindowToTop(hwnd);
+            auto res = ShowWindow(hwnd, SW_SHOW);
+            AttachThreadInput(focused_thread, this_thread, false);
+            return res;
+        } else {
+            BringWindowToTop(hwnd);
+            return ShowWindow(hwnd, SW_SHOW);
+        }
+    }
+
     std::wstring GetProcessExecutableName(DWORD processId, bool ischild = false, bool isparent = false) {
-        Console::out << u"Process: " << processId << u'\n' << u'\t';
+        Console::out << L"Process: " << processId << L'\n' << L'\t';
         HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
         if (processHandle) {
             wchar_t exePath[MAX_PATH];
             if (GetModuleFileNameEx(processHandle, NULL, exePath, MAX_PATH)) {
-                Console::out << u"Found name: " << WStringToU16String(exePath) << u'\n' << u'\t';
+                Console::out << L"Found name: " << exePath << L'\n' << L'\t';
                 CloseHandle(processHandle);
-                HMODULE moduleHandle = LoadLibrary(exePath);
+                auto path = ModifyExecutableName(exePath);
+                Console::out << L"Modified name: " << path << L'\n' << L'\t' << flush;
+
+                HMODULE moduleHandle = LoadLibrary(path.c_str());
                 if (!moduleHandle) {
                     int err = GetLastError();
-                    Console::out << u"Failed to load module: " << err << u'\n';
-                    if (err == ERROR_ACCESS_DENIED) {
-                        Console::out << u"Access denied" << u'\n' << u'\t';
-                        return exePath;
+                    Console::out << L"Failed to load module: " << err; Console::out_endl();
+                    if (err == ERROR_ACCESS_DENIED || err == ERROR_BAD_EXE_FORMAT) {
+                        Console::out << L"Access denied" << L'\n' << L'\t' << flush;
+                        return path;
                     }
                     return std::wstring();
                 }
-                //cerr << "Handle: " << moduleHandle << u'\n' << '\t';
+                //cerr << "Handle: " << moduleHandle << L'\n' << '\t';
                 PIMAGE_NT_HEADERS nth = ImageNtHeader((PVOID)moduleHandle);
                 if (!nth) return std::wstring();
-                //cerr << "Image NT Header: " << nth << u'\n' << '\t';
+                //cerr << "Image NT Header: " << nth << L'\n' << '\t';
                 if (nth->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI || nth->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_OS2_CUI || nth->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_POSIX_CUI) {  
-                    Console::out << u"Subsystem: Console" << u'\n' << u'\t';
+                    Console::out << L"Subsystem: Console" << L'\n' << L'\t' << flush;
                     // Check child processes
                     auto childProcessIds = GetChildProcessIds(processId);
                     if (!isparent)
@@ -500,11 +788,11 @@ void Console::XtermMouseAndFocus(void) {
                         if (!parentExeName.empty())
                             return parentExeName;
                     }
-                    Console::out << u"None Found" << u'\n';
-                    return (ischild || isparent) ? std::wstring() : exePath;
+                    Console::out << L"None Found"; Console::out_endl();
+                    return (ischild || isparent) ? std::wstring() : path;
                 }
-                Console::out << u"Subsystem: GUI" << u'\n' << u'\t';
-                return std::wstring(exePath);
+                Console::out << L"Subsystem: GUI" << L'\n' << L'\t' << flush;
+                return path;
             }
             CloseHandle(processHandle);
         }
@@ -512,15 +800,16 @@ void Console::XtermMouseAndFocus(void) {
     }
 
     std::wstring GetWindowExecutableName(HWND hwnd) {
-        Console::out << u"Window: " << hwnd << u'\n';
+        Console::out << L"Window: " << hwnd << L'\n';
         DWORD processId;
         GetWindowThreadProcessId(hwnd, &processId);
-        return GetProcessExecutableName(processId);
+        auto term = GetProcessExecutableName(processId);
+        conhost = term.size() > 12 && term.substr(term.size()-12) == L"\\conhost.exe";
+        return term;
     }
 
-    uniconv::utfstr Console::GetTerminalExecutableName() {
-        return GetWindowExecutableName(Console::window);
-    }
+    uniconv::utfstr Console::GetTerminalExecutableName(void) { return Console::terminal_name; }
+
 
 /*
     vector<vector<COLORREF>> Console::SaveScreen(void) {
@@ -899,11 +1188,11 @@ void Console::XtermMouseAndFocus(void) {
             if (mintty) {
                 NameHwnd namehwnd = {pszNewWindowTitle, 0};
                 BOOL ret = EnumWindows(FindWindowBegin, (LPARAM)&namehwnd);
-                Console::out << u"EnumWindows: " << ret << u'\n';
+                Console::out << L"EnumWindows: " << ret << L'\n';
                 if (!ret) {
                     good = true;
                     hwndFound = namehwnd.hwnd;
-                    Console::out << u"Window: " << hwndFound << u" good: " << good << u'\n';
+                    Console::out << L"Window: " << hwndFound << L" good: " << good << L'\n';
                     return hwndFound;
                 }
             }
@@ -913,14 +1202,22 @@ void Console::XtermMouseAndFocus(void) {
             pszWindowTitle[siz] = L'\0';
             if (wcscmp(pszWindowTitle, pszNewWindowTitle) == 0) good = true;
         }
-        Console::out << u"Window: " << hwndFound << u" good: " << good << u'\n';
+        Console::out << L"Window: " << hwndFound << L" good: " << good << L'\n';
         return hwndFound;
     }
     void Console::Init(void) {
         if (!initialised) {
-            
+            auto term_prog = _wgetenv(L"TERM_PROGRAM");
+            mintty = term_prog && wstring(term_prog) == L"mintty";
+            wt = _wgetenv(L"WT_SESSION") != NULL;
+            cmder = _wgetenv(L"CMDER_ROOT") != NULL;
+            conemu = _wgetenv(L"ConEmuBuild") != NULL;
+
+
+            bool fixmintty = mintty;
             int sub_process = 0;
-            auto winargv = (const wchar_t**)CommandLineToArgvW(GetCommandLine(), &Console::argc);
+            auto cmdline = GetCommandLine();
+            auto winargv = (const wchar_t**)CommandLineToArgvW(cmdline, &Console::argc);
             Console::argv = (const wchar_t**)malloc(sizeof(wchar_t*) * Console::argc);
             int j = 0;
             for (int i = 0; i < Console::argc; i++) {
@@ -930,6 +1227,7 @@ void Console::XtermMouseAndFocus(void) {
                     switch (arg[1]) {
                         case L'&':
                             // launched as popup
+                            fixmintty = false;
                             Console::sub_proc = true;
                             if (wcslen(arg) < 3) ThrowMsg("Invalid argument 1");
                             sub_process = 0;
@@ -951,12 +1249,17 @@ void Console::XtermMouseAndFocus(void) {
                         case L'\\':
                             ThrowMsg("IDK Argument");
                             break;
+                        case L'#':
+                            fixmintty = false;
+                            ++j; --i; --Console::argc;
+                            break;
                         default:
                             Console::argv[i] = arg;
                             break;
                     }
                 } else Console::argv[i] = arg;
             }
+            Console::out << "Argc: " << Console::argc << std::endl;
 
             auto _temp = realloc(Console::argv, sizeof(wchar_t*) * Console::argc);
             if (_temp) Console::argv = (const wchar_t**)_temp;
@@ -977,15 +1280,136 @@ void Console::XtermMouseAndFocus(void) {
             Console::dev_data = tmpdevdata;
             dev_data.append(L"\\Factoryrush\\");
 
+            Console::pid = _getpid();
+            Console::window = GetHwnd();
+            Console::terminal_name = GetWindowExecutableName(Console::window); // for checking the type of terminal
+
+            setlocale(LC_ALL, "");
+
+            if (fixmintty) goto dontstartthings;
+
+            {
+                auto input_thread_arg = new __getinput_arg{Console::input_buf, SLEEP_THREAD_INPUT};
+                HANDLE input_thread = CreateThread(NULL, 0, InputThread, input_thread_arg, 0, NULL);
+                Console::thread_handles->push_back(input_thread);
+                *Console::super_thread_run = true;
+                auto super_thread_arg = new __superthread_arg{Console::super_thread_run, Console::thread_handles};
+                Console::super_thread = CreateThread(NULL, 0, Console::SuperThread, super_thread_arg, 0, NULL);
+            }
+
+            if (auto conpid = _wgetenv(L"ConEmuServerPID")) {
+                DWORD cpid = conemupid = _wtol(conpid);
+                Console::terminal_name = GetProcessExecutableName(cpid);
+                auto GetProcExe = [](DWORD processId) {
+                    HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
+                    if (processHandle) {
+                        wchar_t exePath[MAX_PATH];
+                        if (GetModuleFileNameEx(processHandle, NULL, exePath, MAX_PATH)) {
+                            CloseHandle(processHandle);
+                            return wstring(exePath);
+                        }
+                        CloseHandle(processHandle);
+                    }
+                    return wstring();
+                };
+                DWORD tabpid = Console::pid;
+                if (mintty) {
+                    DWORD pidfound = 0;
+                    bool found = false;
+                    auto childProcessIds = GetChildProcessIds(cpid);
+                        for (auto&& childProcessId : childProcessIds) {
+                            std::wstring childExeName = GetProcExe(childProcessId);
+                            if (!childExeName.empty() && childExeName.substr(childExeName.size()-12) == L"\\conhost.exe") {
+                                pidfound = childProcessId;
+                                if (found) break;
+                            } else if (!childExeName.empty() && childExeName.substr(childExeName.size()-11) == L"\\mintty.exe") {
+                                cpid = childProcessId;
+                                found = true;
+                            }
+                        }
+                    if (found) {
+                        if (pidfound) {
+                        foundpid:
+                            tabpid = pidfound;
+                        } else {
+                            found = false;
+                            auto childMinttyProcessIds = GetChildProcessIds(cpid);
+                                for (auto&& childProcessId : childMinttyProcessIds) {
+                                    std::wstring childExeName = GetProcExe(childProcessId);
+                                    if (!childExeName.empty() && childExeName.substr(childExeName.size()-12) == L"\\conhost.exe") {
+                                        pidfound = childProcessId;
+                                        break;
+                                    }
+                                    if (!childExeName.empty() && childExeName.substr(childExeName.size()-11) == L"\\mintty.exe") {
+                                        cpid = childProcessId;
+                                        found = true;
+                                    }
+                                }
+                            if (pidfound)
+                                goto foundpid;
+                            if (found) {
+                                auto childMinttyMinttyProcessIds = GetChildProcessIds(cpid);
+                                for (auto childProcessId : childMinttyMinttyProcessIds) {
+                                    std::wstring childExeName = GetProcExe(childProcessId);
+                                    if (!childExeName.empty() && childExeName.substr(childExeName.size()-12) == L"\\conhost.exe") {
+                                        pidfound = childProcessId;
+                                        break;
+                                    }
+                                }
+                                if (pidfound)
+                                    goto foundpid;
+                            }
+                        }
+                    } else mintty = false;
+                }
+                __conemuhandletabs_arg* tabarg = new __conemuhandletabs_arg();
+                tabarg->pid = tabpid; tabarg->focused = &Console::tabactive;
+
+                HANDLE TabCtrlThread = CreateThread(NULL, 0, ConemuHandleTabs, tabarg, 0, NULL);
+                Console::thread_handles->push_back(TabCtrlThread);
+                Console::out << L"Found pid: " << tabpid << L'\n' << L'\t' << flush;
+                cerr << "Found pid: " << tabpid << endl;
+            }
+
+            if (mintty || conhost || wt) Console::parent_window = Console::window;
+            if (wchar_t* conemuhwnd = _wgetenv(L"ConEmuHWND")) {
+
+                if (conemuhwnd == nullptr) conemu = false;
+                else {
+                    ++conemuhwnd; ++conemuhwnd; // skip the first two characters `0x`
+                    static_assert(sizeof(HWND) == sizeof(size_t), "HWND is not the same size as `size_t`");
+                    switch (sizeof(HWND)) {
+                    case sizeof(long):
+                        Console::parent_window = bit_cast<HWND>(static_cast<size_t>(wcstoul(conemuhwnd,NULL,16)));
+                        break;
+                    case sizeof(long long):
+                        Console::parent_window = bit_cast<HWND>(static_cast<size_t>(wcstoull(conemuhwnd,NULL,16)));
+                        break;
+                    default:
+                        cerr << "Unacceptable HWND size: " << sizeof(HWND) << endl;
+                        exit(0xE9);
+                    }
+                    //cerr << "Conemuhwnd: " << std::hex << Console::parent_window << std::dec << endl;
+                }
+                if (!conemu || cmder) {
+                    conemu = cmder = true;
+                    Console::window = Console::parent_window;
+                    good = true;
+                }
+            }
+
+        dontstartthings:
             LPSECURITY_ATTRIBUTES sec_atrs = new SECURITY_ATTRIBUTES();
             sec_atrs->nLength = sizeof(sec_atrs);
             sec_atrs->lpSecurityDescriptor = nullptr;
             sec_atrs->bInheritHandle = false;
 
-            Console::pid = _getpid();
-
             if (Console::sub_proc) {
-                FILE* fl = _wfopen((tmp_data+subdir+L"pid.dat").c_str(), L"w");
+                FILE* fl = _wfopen((tmp_data+subdir+L"window.dat").c_str(), L"w");
+                if (Console::parent_window) fwrite(&Console::parent_window, sizeof(HWND), 1, fl);
+                else fwrite(&Console::window, sizeof(HWND), 1, fl);
+                fclose(fl);
+                fl = _wfopen((tmp_data+subdir+L"pid.dat").c_str(), L"w");
                 fwrite(&Console::pid, sizeof(Console::pid), 1, fl);
                 fclose(fl);
                 goto subdirset;
@@ -1002,6 +1426,31 @@ void Console::XtermMouseAndFocus(void) {
             Console::subdir = new const wchar_t[to_wstring(Console::pid).size() + 2]{0};
             wcscpy((wchar_t*)Console::subdir, to_wstring(Console::pid).c_str());
             ((wchar_t*)Console::subdir)[to_wstring(Console::pid).size()] = L'\\';
+
+            if (fixmintty) {
+                wstring cmdpath = tmp_data + subdir;
+                cmdpath.pop_back();
+                auto ps1path = cmdpath + L".ps1";
+                cmdpath.append(L".cmd");
+                FILE* file = _wfopen(ps1path.c_str(), L"w");
+                _setmode(_fileno(file),  _O_WTEXT); wint_t x = 0xfeff; fwrite(&x, sizeof(wint_t), 1, file);
+                fwrite(L"& ", sizeof(wchar_t), 2, file);
+                for (int i = 0; i < argc; i++)
+                    fwprintf(file, L"\"%ls\" ", argv[i]);
+                fwrite(L"\"\033#\"\nexit $LASTEXITCODE\n", sizeof(wchar_t), 24, file);
+                fclose(file);
+
+                file = _wfopen(cmdpath.c_str(), L"w");
+                fwrite("@echo off\npowershell -NoProfile -ExecutionPolicy Bypass -Command \"%~dp0", sizeof(char), 71, file);
+                fwrite(to_string(Console::pid).c_str(), sizeof(char), to_string(Console::pid).size(), file);
+                fwrite(".ps1\nexit %ERRORLEVEL%\n", sizeof(char), 23, file);
+                fclose(file);
+
+                auto ret = System::RunProgram(cmdpath.c_str(), nullptr, nullptr);
+                System::RemoveFile(cmdpath.c_str());
+                System::RemoveFile(ps1path.c_str());
+                exit(ret);
+            }
             
         subdirset:
 
@@ -1027,7 +1476,7 @@ void Console::XtermMouseAndFocus(void) {
                     sstr = ss.str() + L"-" + to_wstring(++filenum);
                     goto logfile;
                 }
-                Console::out << u"Couldn't create log file: " << NativeToU16String(out_file.native()) << u", with error: " << err << '\n';
+                Console::out << L"Couldn't create log file: " << out_file.native() << L", with error: " << err << '\n';
                 exit(0xC2);
             }
             CloseHandle(logfl);
@@ -1044,18 +1493,20 @@ void Console::XtermMouseAndFocus(void) {
             GetConsoleMode(Console::fd, &Console::old_console);
             SetConsoleMode(Console::fd, ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT | ENABLE_WINDOW_INPUT);
 
-            //Console::input_thread_arg = (void*)new __getinput_arg{Console::input_buf, SLEEP_THREAD_INPUT};
-            //Console::input_thread = CreateThread(NULL, 0, InputThread, input_thread_arg, 0, NULL);
-            *Console::super_thread_run = true;
-            Console::super_thread_arg = (void*)new __superthread_arg{Console::super_thread_run, Console::thread_handles};
-            Console::super_thread = CreateThread(NULL, 0, Console::SuperThread, Console::super_thread_arg, 0, NULL);
-
-            auto term_prog = _wgetenv(L"TERM_PROGRAM");
-            mintty = term_prog && wstring(term_prog) == L"mintty";
-            wt = _wgetenv(L"WT_SESSION") != NULL;
-            Console::window = GetHwnd();
             Console::device = GetDC(NULL);
             //Console::xyoffset = Console::GetXYCharOffset();
+
+            Console::old_small_icon = reinterpret_cast<HICON>(SendMessage(Console::window, WM_GETICON, ICON_SMALL, 0));
+            Console::old_big_icon = reinterpret_cast<HICON>(SendMessage(Console::window, WM_GETICON, ICON_BIG, 0));
+
+        #ifdef _MSC_VER
+            Console::new_icon = reinterpret_cast<HICON>(LoadImage(GetModuleHandle(NULL), L"MAINICON", IMAGE_ICON, 0, 0, 0));
+        #else
+            Console::new_icon = reinterpret_cast<HICON>(LoadImage(NULL, (System::GetRootDir() + L"\\assets\\images\\icon.ico").c_str(), IMAGE_ICON, 0, 0, LR_LOADFROMFILE));
+        #endif
+
+            SendMessage(Console::window, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(Console::new_icon));
+            SendMessage(Console::window, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(Console::new_icon));
 
             CONSOLE_SCREEN_BUFFER_INFO csbi;
             GetConsoleScreenBufferInfo(Console::screen, &csbi);
@@ -1085,27 +1536,22 @@ void Console::XtermMouseAndFocus(void) {
 
             if (sub_process) {
                 Console::ret = sub(sub_process);
+                Console::out << L"Console::ret: " << Console::ret; Console::out_endl();
                 Console::Fin();
-                exit(Console::ret);
+                exit(0);
             } else if (sub_proc) {
                 Console::ret = Main();
                 Console::Fin();
-                exit(Console::ret);
+                exit(0);
             }
         }
     }
 
     void Console::Fin(void) {
         if (initialised) {
-            //TerminateThread(Console::input_thread, 0);
-            //WaitForSingleObject(Console::input_thread, INFINITE);
-            //CloseHandle(Console::input_thread);
-            //delete (__getinput_arg*)Console::input_thread_arg;
-
             *Console::super_thread_run = false;
             WaitForSingleObject(Console::super_thread, INFINITE);
             CloseHandle(Console::super_thread);
-            delete (__superthread_arg*)Console::super_thread_arg;
 
             for (size_t i = 0; i < Console::popup_pids.size(); i++) {
                 const auto proc = OpenProcess(PROCESS_TERMINATE, false, popup_pids[i]);
@@ -1118,20 +1564,41 @@ void Console::XtermMouseAndFocus(void) {
                 System::DeleteDirectory((Console::tmp_data+Console::subdir).c_str());
             } else {
                 FILE* fl;
+                Console::out << "Console::ret: " << Console::ret; Console::out_endl();
                 fl = _wfopen((Console::tmp_data+Console::subdir+L"exit.dat").c_str(), L"w");
                 fwrite(&Console::ret, sizeof(Console::ret), 1, fl);
                 fclose(fl);
                 if (!System::IsFile((Console::tmp_data+Console::subdir+L"result.dat").c_str()))
-                    fclose(_wfopen((Console::tmp_data+Console::subdir+L"result.dat").c_str(), L"w"));
+                    Console::SetResult(nullptr);
             }
 
             delete[] Console::subdir;
 
+            Console::SetTitle(L"");
+
+            HICON term_icon;
+            Console::out << "Console::old_small_icon: " << Console::old_small_icon; Console::out_endl();
+            Console::out << "Console::old_big_icon: " << Console::old_big_icon; Console::out_endl();
+            if (!Console::old_small_icon || !Console::old_big_icon) {
+                auto term = Console::GetTerminalExecutableName();
+                term_icon = reinterpret_cast<HICON>(LoadImage(GetModuleHandle(term.c_str()), L"MAINICON", IMAGE_ICON, 0, 0, 0));
+                if (!term_icon) cerr << "Couldn't load icon" << endl;
+            }
+
+            if (Console::old_small_icon) SendMessage(Console::window, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(Console::old_small_icon));
+            else SendMessage(Console::window, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(term_icon));
+            if (Console::old_big_icon) SendMessage(Console::window, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(Console::old_big_icon));
+            else SendMessage(Console::window, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(term_icon));
+            DestroyIcon(Console::new_icon);
+
             SetConsoleCursorInfo(Console::screen, &Console::old_curinf);
 
-            SetConsoleMode(Console::fd, old_console);
+            SetConsoleMode(Console::fd, Console::old_console);
+
             ReleaseDC(0, device);
             CloseHandle(Console::screen);
+
+            Console::real_out.close();
 
             initialised = false;
         }
@@ -1139,7 +1606,9 @@ void Console::XtermMouseAndFocus(void) {
 
     void cpp::Console::SetResult(const wchar_t* result) {
         FILE* fl = _wfopen((Console::tmp_data+subdir+L"result.dat").c_str(), L"w");
-        fwrite(result, sizeof(wchar_t), wcslen(result), fl);
+        size_t len = result ? wcslen(result) : 0;
+        fwrite(&len, sizeof(size_t), 1, fl);
+        if (len) fwrite(result, sizeof(wchar_t), len, fl);
         fclose(fl);
     }
 
@@ -1155,51 +1624,280 @@ void Console::XtermMouseAndFocus(void) {
         return csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
     }
 
-    void Console::FillScreen(vector<vector<Symbol> > symbols) {
+    DWORD WINAPI WaitClrScrBuf(
+#ifdef __GNUC__
+        __attribute__((unused))
+#endif
+        LPVOID lpParam) {
+        ::Sleep(1000);
+        Console::ClearScreenBuffer();
+        return 0;
+    }
+
+    void Console::FillScreenForce(const vector<vector<Symbol> >& symbols) {
+        try {
+            Symbol empty_sym = Symbol(L' ', 16, 16);
+            const size_t win_width = GetWindowWidth(), win_height = GetWindowHeight(), height = symbols.size();
+            if (win_width == 0 || win_height == 0) return;
+    
+            wchar_t* screen = new wchar_t[win_height*win_width];
+            WORD* attributes = new WORD[win_height*win_width];
+    
+            for (size_t i = 0; i < win_height; i++) {
+                if (i < height) {
+                    const size_t width = symbols[i].size();
+                    for (size_t j = 0; j < win_width; j++) {
+                        if (i >= height || j >= width) {
+                            screen[ i*win_width + j ] =  empty_sym.character;
+                            attributes[ i*win_width + j ] = empty_sym.GetAttribute();
+                            continue;
+                        }
+                        screen[ i*win_width + j ] = symbols[i][j].character;
+                        attributes[ i*win_width + j ] = symbols[i][j].GetAttribute();
+                    }
+                } else {
+                    for (size_t j = 0; j < win_width; j++) {
+                        screen[ i*win_width + j ] =  empty_sym.character;
+                        attributes[ i*win_width + j ] = empty_sym.GetAttribute();
+                    }
+                }
+            }
+    
+            array<DWORD,2> written;
+            BOOL out = WriteConsoleOutputCharacter(Console::screen, screen, win_width*win_height, { 0,0 }, &(written[0]) );
+            if (out == 0) { exit(GetLastError()); }
+            out = WriteConsoleOutputAttribute(Console::screen, attributes, win_width*win_height, { 0,0 }, &(written[1]) );
+            if (out == 0) { exit(GetLastError()); }
+            
+            delete[] screen;
+            delete[] attributes;
+    
+            CONSOLE_CURSOR_INFO cci;
+            cci.bVisible = Console::cursor_visible;
+            cci.dwSize = Console::cursor_size;
+            SetConsoleCursorInfo(Console::screen, &cci);
+            } catch (exception e) {
+                cout << e.what() << endl;
+            }
+    }
+
+    void Console::FillScreen(const vector<vector<Symbol> >& symbols) {
+        if (!Console::screen_lock.try_lock()) return; // it's a slow function so we can't put multiple in a queue
         try {
         Symbol empty_sym = Symbol(L' ', 16, 16);
         const size_t win_width = GetWindowWidth(), win_height = GetWindowHeight(), height = symbols.size();
         if (win_width == 0 || win_height == 0) return;
 
-        wchar_t* screen = new wchar_t[win_height*win_width];
-        WORD* attributes = new WORD[win_height*win_width];
+        bool resize;
+        if ((resize = ((int16_t)win_width != Console::old_scr_size.first || (int16_t)win_height != Console::old_scr_size.second)) || Console::refresh_screen) {
+            Console::out << L"Resize: " << resize << L'\n';
+            Console::out_flush();
+            Console::old_symbols.clear();
+            Console::FillScreenForce(symbols);
+            if (Console::refresh_screen)
+                Console::refresh_screen = false;
+            if (resize) {
+                HANDLE hThread = CreateThread(NULL,0,WaitClrScrBuf,NULL,0,NULL);
+                thread_handles->push_back(hThread);
+            }
+            old_scr_size = {win_width,win_height};
+            old_symbols = symbols;
+            Console::screen_lock.unlock();
+            return;
+        }
+
+        wstring now_screen; vector<WORD> now_attrs;
+        COORD scr_lastcoord = {-1,-1}, atr_lastcoord = {-1,-1};
+        bool scr_lastmatch = true, atr_lastmatch = true;
+
+        array<DWORD,2> written;
 
 		for (size_t i = 0; i < win_height; i++) {
+            if (i < Console::old_symbols.size()) {
+                if (i >= symbols.size())
+                    for (size_t j = 0; j < win_width; j++) {
+                        if (j >= Console::old_symbols[i].size()) {
+                            if (!scr_lastmatch) {
+                                //wcerr << L"WriteConsoleOutputCharacter: " << now_screen.size() << L' ' << L'+' << L' ' << L'{' << scr_lastcoord.X << L' ' << scr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                                BOOL out = WriteConsoleOutputCharacter(Console::screen, now_screen.c_str(), now_screen.size(), scr_lastcoord, &(written[0]) );
+                                if (out == 0) { Console::out << GetLastError() << endl; return; }
+                                now_screen.clear();
+                                scr_lastmatch = true;
+                            }
+                            if (!atr_lastmatch) {
+                                //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                                BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
+                                if (out == 0) { Console::out << GetLastError() << endl; return; }
+                                now_attrs.clear();
+                                atr_lastmatch = true;
+                            }
+                            break;
+                        }
+                        if (Console::old_symbols[i][j].character != L' ') {
+                            if (scr_lastmatch) { scr_lastcoord = {(SHORT)j,(SHORT)i}; }
+                            scr_lastmatch = false;
+                            now_screen.push_back(L' ');
+                        } else if (!scr_lastmatch) {
+                            //wcerr << L"WriteConsoleOutputCharacter: " << now_screen.size() << L' ' << L'+' << L' ' << L'{' << scr_lastcoord.X << L' ' << scr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                            BOOL out = WriteConsoleOutputCharacter(Console::screen, now_screen.c_str(), now_screen.size(), scr_lastcoord, &(written[0]) );
+                            if (out == 0) { Console::out << GetLastError() << endl; return; }
+                            now_screen.clear();
+                            scr_lastmatch = true;
+                        }
+                        if (Console::old_symbols[i][j].foreground != 16 || Console::old_symbols[i][j].background != 16) {
+                            if (atr_lastmatch) { atr_lastcoord = {(SHORT)j,(SHORT)i}; }
+                            atr_lastmatch = false;
+                            now_attrs.push_back(Console::GenerateAtrVal(Console::old_symbols[i][j].foreground,Console::old_symbols[i][j].background));
+                        } else if (!atr_lastmatch) {
+                            //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                            BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
+                            if (out == 0) { Console::out << GetLastError() << endl; return; }
+                            now_attrs.clear();
+                            atr_lastmatch = true;
+                        }
+                    }
+                else {
+                    for (size_t j = 0; j < win_width; j++) {
+                        if (j >= symbols[i].size())
+                            for (;j < win_width; ++j) {
+                                if (j >= Console::old_symbols[i].size()) {
+                                    if (!scr_lastmatch) {
+                                        //wcerr << L"WriteConsoleOutputCharacter: " << now_screen.size() << L' ' << L'+' << L' ' << L'{' << scr_lastcoord.X << L' ' << scr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                                        BOOL out = WriteConsoleOutputCharacter(Console::screen, now_screen.c_str(), now_screen.size(), scr_lastcoord, &(written[0]) );
+                                        if (out == 0) { Console::out << GetLastError() << endl; return; }
+                                        now_screen.clear();
+                                        scr_lastmatch = true;
+                                    }
+                                    if (!atr_lastmatch) {
+                                        //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                                        BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
+                                        if (out == 0) { Console::out << GetLastError() << endl; return; }
+                                        now_attrs.clear();
+                                        atr_lastmatch = true;
+                                    }
+                                    break;
+                                }
+                                if (Console::old_symbols[i][j].character != L' ') {
+                                    if (scr_lastmatch) { scr_lastcoord = {(SHORT)j,(SHORT)i}; }
+                                    scr_lastmatch = false;
+                                    now_screen.push_back(L' ');
+                                } else if (!scr_lastmatch) {
+                                    //wcerr << L"WriteConsoleOutputCharacter: " << now_screen.size() << L' ' << L'+' << L' ' << L'{' << scr_lastcoord.X << L' ' << scr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                                    BOOL out = WriteConsoleOutputCharacter(Console::screen, now_screen.c_str(), now_screen.size(), scr_lastcoord, &(written[0]) );
+                                    if (out == 0) { Console::out << GetLastError() << endl; return; }
+                                    now_screen.clear();
+                                    scr_lastmatch = true;
+                                }
+                                if (Console::old_symbols[i][j].foreground != 16 || Console::old_symbols[i][j].background != 16) {
+                                    if (atr_lastmatch) { atr_lastcoord = {(SHORT)j,(SHORT)i}; }
+                                    atr_lastmatch = false;
+                                    now_attrs.push_back(Console::GenerateAtrVal(Console::old_symbols[i][j].foreground,Console::old_symbols[i][j].background));
+                                } else if (!atr_lastmatch) {
+                                    //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                                    BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
+                                    if (out == 0) { Console::out << GetLastError() << endl; return; }
+                                    now_attrs.clear();
+                                    atr_lastmatch = true;
+                                }
+                            }
+                        else {
+                            if ((j >= Console::old_symbols[i].size() && symbols[i][j].character != L' ') || (j < Console::old_symbols[i].size() && Console::old_symbols[i][j].character != symbols[i][j].character)) {
+                                if (scr_lastmatch) { scr_lastcoord = {(SHORT)j,(SHORT)i}; }
+                                scr_lastmatch = false;
+                                now_screen.push_back(symbols[i][j].character);
+                            } else if (!scr_lastmatch) {
+                                //wcerr << L"WriteConsoleOutputCharacter: " << now_screen.size() << L' ' << L'+' << L' ' << L'{' << scr_lastcoord.X << L' ' << scr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                                BOOL out = WriteConsoleOutputCharacter(Console::screen, now_screen.c_str(), now_screen.size(), scr_lastcoord, &(written[0]) );
+                                if (out == 0) { Console::out << GetLastError() << endl; return; }
+                                now_screen.clear();
+                                scr_lastmatch = true;
+                            }
+                            if ((j >= Console::old_symbols[i].size() && (symbols[i][j].foreground != 16 || symbols[i][j].background != 16)) || (j < Console::old_symbols[i].size() && (Console::old_symbols[i][j].foreground != symbols[i][j].foreground || Console::old_symbols[i][j].background != symbols[i][j].background))) {
+                                if (atr_lastmatch) { atr_lastcoord = {(SHORT)j,(SHORT)i}; }
+                                atr_lastmatch = false;
+                                now_attrs.push_back(Console::GenerateAtrVal(symbols[i][j].foreground,symbols[i][j].background));
+                            } else if (!atr_lastmatch) {
+                                //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                                BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
+                                if (out == 0) { Console::out << GetLastError() << endl; return; }
+                                now_attrs.clear();
+                                atr_lastmatch = true;
+                            }
+                        }
+                    }
+                }
+                continue;
+            }
             if (i < height) {
                 const size_t width = symbols[i].size();
                 for (size_t j = 0; j < win_width; j++) {
-                    if (i >= height || j >= width) {
-                        screen[ i*win_width + j ] =  empty_sym.character;
-                        attributes[ i*win_width + j ] = empty_sym.GetAttribute();
-                        continue;
+                    if (j >= width) {
+                        if (!scr_lastmatch) {
+                            //wcerr << L"WriteConsoleOutputCharacter: " << now_screen.size() << L' ' << L'+' << L' ' << L'{' << scr_lastcoord.X << L' ' << scr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                            BOOL out = WriteConsoleOutputCharacter(Console::screen, now_screen.c_str(), now_screen.size(), scr_lastcoord, &(written[0]) );
+                            if (out == 0) { Console::out << GetLastError() << endl; return; }
+                            now_screen.clear();
+                            scr_lastmatch = true;
+                        }
+                        if (!atr_lastmatch) {
+                            //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                            BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
+                            if (out == 0) { Console::out << GetLastError() << endl; return; }
+                            now_attrs.clear();
+                            atr_lastmatch = true;
+                        }
+                        break;
                     }
-                    screen[ i*win_width + j ] = symbols[i][j].character;
-                    attributes[ i*win_width + j ] = symbols[i][j].GetAttribute();
+                    if (symbols[i][j].character != L' ') {
+                        if (scr_lastmatch) { scr_lastcoord = {(SHORT)j,(SHORT)i}; }
+                        scr_lastmatch = false;
+                        now_screen.push_back(symbols[i][j].character);
+                    } else if (!scr_lastmatch) {
+                        //wcerr << L"WriteConsoleOutputCharacter: " << now_screen.size() << L' ' << L'+' << L' ' << L'{' << scr_lastcoord.X << L' ' << scr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                        BOOL out = WriteConsoleOutputCharacter(Console::screen, now_screen.c_str(), now_screen.size(), scr_lastcoord, &(written[0]) );
+                        if (out == 0) { Console::out << GetLastError() << endl; return; }
+                        now_screen.clear();
+                        scr_lastmatch = true;
+                    }
+                    if (!(symbols[i][j].background == 16 && symbols[i][j].foreground == 16)) {
+                        if (atr_lastmatch) { atr_lastcoord = {(SHORT)j,(SHORT)i}; }
+                        atr_lastmatch = false;
+                        now_attrs.push_back(symbols[i][j].GetAttribute());
+                    } else if (!atr_lastmatch) {
+                        //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                        BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
+                        if (out == 0) { Console::out << GetLastError() << endl; return; }
+                        now_attrs.clear();
+                        atr_lastmatch = true;
+                    }
                 }
-            } else {
-                for (size_t j = 0; j < win_width; j++) {
-                    screen[ i*win_width + j ] =  empty_sym.character;
-                    attributes[ i*win_width + j ] = empty_sym.GetAttribute();
-                }
-            }
+            } else break;
 		}
 
-        array<DWORD,2> written;
-		BOOL out = WriteConsoleOutputCharacter(Console::screen, screen, win_width*win_height, { 0,0 }, &(written[0]) );
-        if (out == 0) { exit(GetLastError()); }
-		out = WriteConsoleOutputAttribute(Console::screen, attributes, win_width*win_height, { 0,0 }, &(written[1]) );
-        if (out == 0) { exit(GetLastError()); }
-        
-		delete[] screen;
-		delete[] attributes;
+        if (!scr_lastmatch) {
+            //wcerr << L"WriteConsoleOutputCharacter: " << now_screen.size() << L' ' << L'+' << L' ' << L'{' << scr_lastcoord.X << L' ' << scr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+            BOOL out = WriteConsoleOutputCharacter(Console::screen, now_screen.c_str(), now_screen.size(), scr_lastcoord, &(written[0]) );
+            if (out == 0) { Console::out << GetLastError() << endl; return; }
+        }
+        if (!atr_lastmatch) {
+            //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+            BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
+            if (out == 0) { Console::out << GetLastError() << endl; return; }
+        }
 
         CONSOLE_CURSOR_INFO cci;
         cci.bVisible = Console::cursor_visible;
         cci.dwSize = Console::cursor_size;
         SetConsoleCursorInfo(Console::screen, &cci);
+
+        old_scr_size = {win_width,win_height};
+        old_symbols = symbols;
+
         } catch (exception e) {
-            cout << e.what() << endl;
+            cerr << e.what() << endl;
+            exit(1);
         }
+        Console::screen_lock.unlock();
     }
 
     void Console::HandleKeyboard(void) {
@@ -1221,16 +1919,17 @@ void Console::XtermMouseAndFocus(void) {
         }
     }
 
-    void Console::HandleMouseAndFocus(void) {
-        if (mintty && !good) {
+    void Console::HandleMouseAndFocus() {
+        if (mintty && !conemu && !good) {
             auto file = Console::GetTerminalExecutableName();
             if (file.find(L"mintty") == std::wstring::npos) {
                 Console::window = GetForegroundWindow();
             }
             file = Console::GetTerminalExecutableName();
-            good = focused = file.find(L"mintty") != std::wstring::npos;
-        } else
-            Console::focused = (Console::window == GetForegroundWindow());
+            good = file.find(L"mintty") != std::wstring::npos;
+        }
+
+        auto old_focus = Console::focused;
 
         INPUT_RECORD record;
         DWORD evnts=0,numRead;
@@ -1238,15 +1937,16 @@ void Console::XtermMouseAndFocus(void) {
         Console::this_mouse_button = -1;
         Console::this_mouse_down = false;
         Console::this_mouse_combo = 0;
-        Console::mouse_buttons_down[3] = false;
-        Console::mouse_buttons_down[4] = false;
+        Console::mouse_buttons_down[MOUSE_SCROLL_UP] = false;
+        Console::mouse_buttons_down[MOUSE_SCROLL_DOWN] = false;
         Console::mouse_status.scroll = {false,false};
         GetNumberOfConsoleInputEvents(Console::fd, &evnts);
-        if (!evnts) goto getinputx;
+        auto oldmouse = Console::mouse_buttons_down;
+        if (evnts == 0) goto getinputx;
         for (unsigned i = 0; i < evnts; ++i) {
         
             if(!ReadConsoleInput(Console::fd, &record, 1, &numRead)) {
-                Console::out << u"ReadConsoleInput";
+                Console::out << L"ReadConsoleInput";
                 int err = GetLastError();
                 exit(0x82);
             }
@@ -1261,23 +1961,40 @@ void Console::XtermMouseAndFocus(void) {
                 auto mouse = record.Event.MouseEvent;
                 bitset<4> flags(mouse.dwEventFlags);
 
-                if (flags[0]) {
+                if (mouse.dwEventFlags & MOUSE_MOVED) {
                     Console::mouse_status.x = mouse.dwMousePosition.X;
                     Console::mouse_status.y = mouse.dwMousePosition.Y;
                 }
-                Console::mouse_status.primary = GetKeyState(VK_LBUTTON) & 0x8000;
-                Console::mouse_status.secondary = GetKeyState(VK_RBUTTON) & 0x8000;
-                Console::mouse_status.middle = GetKeyState(VK_MBUTTON) & 0x8000;
-                Console::mouse_status.scroll = { flags[2], flags[2] && ((mouse.dwButtonState & 0b11111111100000000000000000000000) != 0b11111111100000000000000000000000) }; // weird number but work [not like the official documented way], it's even a bit opposite to the documented one
-                Console::mouse_buttons_down[0] = mouse_status.primary;
-                Console::mouse_buttons_down[1] = mouse_status.middle;
-                Console::mouse_buttons_down[2] = mouse_status.secondary;
-                Console::mouse_buttons_down[3] = flags[2] && ((mouse.dwButtonState & 0b11111111100000000000000000000000) != 0b11111111100000000000000000000000);
-                Console::mouse_buttons_down[4] = flags[2] && ((mouse.dwButtonState & 0b11111111100000000000000000000000) == 0b11111111100000000000000000000000);
-                //if (mouse.dwButtonState & 0b11111) Console::out << u'0' << u'x' << std::hex << mouse.dwButtonState << u'\n';
-                Console::mouse_buttons_down[5] = GetKeyState(VK_XBUTTON1) & 0x8000;
-                Console::mouse_buttons_down[6] = GetKeyState(VK_XBUTTON2) & 0x8000;
-                Console::this_mouse_combo = (flags[1] ? this_mouse_combo : 0) + 1; 
+                Console::mouse_status.primary = mouse.dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED;
+                Console::mouse_status.secondary = mouse.dwButtonState & RIGHTMOST_BUTTON_PRESSED;
+                Console::mouse_status.middle = mouse.dwButtonState & FROM_LEFT_2ND_BUTTON_PRESSED;
+                Console::mouse_buttons_down[6] = mouse.dwButtonState & FROM_LEFT_3RD_BUTTON_PRESSED;
+                Console::mouse_buttons_down[7] = mouse.dwButtonState & FROM_LEFT_4TH_BUTTON_PRESSED;
+                Console::mouse_status.scroll = { (mouse.dwEventFlags & MOUSE_WHEELED), (mouse.dwEventFlags & MOUSE_WHEELED && !(mouse.dwButtonState & 0xFF000000)) }; // weird number but work [not like the official documented way], it's even a bit opposite to the documented one
+                Console::mouse_buttons_down[1] = mouse_status.primary;
+                Console::mouse_buttons_down[2] = mouse_status.middle;
+                Console::mouse_buttons_down[3] = mouse_status.secondary;
+                Console::mouse_buttons_down[4] = mouse_status.scroll.second;
+                Console::mouse_buttons_down[5] = mouse_status.scroll.first && !mouse_status.scroll.second;
+                /*
+                if (mouse_buttons_down[4]) {
+                    cerr << "^";
+                } else if (mouse_buttons_down[5]) {
+                    cerr << "v";
+                }//*/
+                //if (mouse.dwButtonState & 0b11111) Console::out << L'0' << L'x' << std::hex << mouse.dwButtonState << L'\n';
+                Console::this_mouse_combo = (flags[1] ? this_mouse_combo : 0) + 1;
+                for (int i = 1; i <= 7; i++) if (mouse_buttons_down[i] && !oldmouse[i]) {
+                    Console::this_mouse_down = true;
+                    Console::this_mouse_combo = (mouse.dwEventFlags & DOUBLE_CLICK) ? 2 : 1;
+                    Console::this_mouse_button = i;
+                    break;
+                }
+                for (int i = 1; i <= 7; i++) if (!mouse_buttons_down[i] && oldmouse[i]) {
+                    Console::this_mouse_down = false;
+                    Console::this_mouse_button = i;
+                    break;
+                }
             }
 
             if (event[2]) {
@@ -1291,9 +2008,10 @@ void Console::XtermMouseAndFocus(void) {
             if (event[4]) {
                 // FOCUS_EVENT
                 // reserved for some reason
+                // I don't quacking care
+                Console::focused = record.Event.FocusEvent.bSetFocus;
             }
         }
-
 /*
         Console::focused = (Console::window == GetForegroundWindow());
 
@@ -1326,57 +2044,57 @@ void Console::XtermMouseAndFocus(void) {
         Console::mouse_status.y = mouse.y;
 */
     getinputx:
-        wchar_t wc;
+        if (conemu && mintty)
+            Console::focused = Console::parent_window == GetForegroundWindow();
+        
+
         int bytes = Console::input_buf->size();
+        if (bytes == 0) return;
         bytes += nstrlen(Console::buf);
-        if (!bytes) return;
-    
-        while (bytes) {
+
+        wchar_t wc;
+        while (bytes > 0) {
             buf_it = 0;
-            switch ((wc = GetChar())) {
+            wc = GetChar(); --bytes;
+            switch (wc) {
                 case L'\033':
-                    if (decbytes()) {
-                        wc = GetChar();
+                    if (bytes == 0) return;
+                    wc = GetChar(); --bytes;
+                    switch (wc) {
+                    case L'[':
+                        if (bytes == 0) return;
+                        wc = GetChar(); --bytes;
                         switch (wc) {
-                        case L'[':
-                            if (decbytes())
-                            wc = GetChar();
-                            switch (wc) {
-                                case L'O':
-                                case L'I':
-                                    break;
-                                case L'M':
-                                    if (decbytes()) {
-                                        wc = GetChar();
-                                        if (decbytes()) {
-                                            wc = GetChar();
-                                            if (decbytes()) {
-                                                wc = GetChar();
-                                                buf[0] = L'\0';
-                                            }
-                                        }
-                                    }
-                                    break;
-                                case L'<':
-                                    while (decbytes() && wc != L'M')
-                                        wc = GetChar();
-                                    if (wc == L'M')
-                                        buf[0] = L'\0';
-                                    break;
-                                default:
-                                    Console::PushChar('\033');
-                                    Console::PushChar('[');
-                                    Console::PushChar(wc);
-                                    buf[0] = L'\0';
-                                    break;
-                            }
-                            break;
-                        default:
-                            Console::PushChar('\033');
-                            Console::PushChar(wc);
-                            buf[0] = L'\0';
-                            break;
+                            case L'O':
+                            case L'I':
+                                break;
+                            case L'M':
+                                if (bytes == 0) return;
+                                wc = GetChar(); --bytes;
+                                if (bytes == 0) return;
+                                wc = GetChar(); --bytes;
+                                if (bytes == 0) return;
+                                wc = GetChar();
+                                buf[0] = L'\0';
+                                break;
+                            case L'<':
+                                while (--bytes > 0 && wc != L'M')
+                                    wc = GetChar();
+                                if (bytes == 0) return;
+                                buf[0] = L'\0';
+                            default:
+                                Console::PushChar('\033');
+                                Console::PushChar('[');
+                                Console::PushChar(wc);
+                                buf[0] = L'\0';
+                                break;
                         }
+                        break;
+                    default:
+                        Console::PushChar('\033');
+                        Console::PushChar(wc);
+                        buf[0] = L'\0';
+                        break;
                     }
                     break;
                 default:
@@ -1384,12 +2102,25 @@ void Console::XtermMouseAndFocus(void) {
                     buf[0] = L'\0';
                     break;
             }
-            decbytes();
         }
         return;
     }
 
-    void SysSleep(int microseconds){
+    void Console::HandleOutput(void) {
+        auto str = Console::out.str();
+        Console::out.clear();
+        if (str.empty()) return;
+        Console::out.str(wstring());
+        Console::real_out.write(str.c_str(), str.size());
+        Console::real_out.flush();
+    }
+
+    void Console::Beep(void) {
+        if (conemu && !mintty) System::RunProgram0((System::GetRootDir() + L"\\bin\\beep.exe").c_str(), (const wchar_t*)nullptr); // Conemu blocks the Beep for some reason
+        else MessageBeep(0xFFFFFFFF);
+    }
+
+    void SysSleep(int microseconds) {
         Sleep((int)(microseconds/1000));
     }
 
@@ -1411,7 +2142,7 @@ void Console::XtermMouseAndFocus(void) {
         return static_cast<Key::Enum>(Console::key_released);
     }
 
-    uint8_t Console::Symbol::GetAttribute(void) {
+    uint8_t Console::Symbol::GetAttribute(void) const {
         return GenerateAtrVal(this->foreground,this->background);
     }
 
@@ -1425,18 +2156,20 @@ void Console::XtermMouseAndFocus(void) {
         this->SetAttribute(attribute);
     }
 
+    
+    mutex Console::screen_lock = {};
     tsqueue<wchar_t>* Console::input_buf = new tsqueue<wchar_t>();
     HANDLE Console::super_thread = HANDLE();
-    bool* Console::super_thread_run = new bool();
-    void* Console::super_thread_arg = nullptr;
-    bool* Console::is_setting_cursor = new bool();
+    atomic<bool>* Console::super_thread_run = new atomic<bool>();
     tsvector<HANDLE>* Console::thread_handles = new tsvector<HANDLE>();
-    HANDLE Console::input_thread = HANDLE();
-    void* Console::input_thread_arg = nullptr;
     HANDLE Console::screen = HANDLE();
     HANDLE Console::fd = HANDLE();
     HWND Console::window = HWND();
+    HWND Console::parent_window = HWND();
     HDC Console::device = HDC();
+    HICON Console::old_small_icon = HICON();
+    HICON Console::old_big_icon = HICON();
+    HICON Console::new_icon = HICON();
     CONSOLE_CURSOR_INFO Console::old_curinf = CONSOLE_CURSOR_INFO();
     DWORD Console::old_console = DWORD();
     uint8_t Console::default_fcol = uint8_t();
@@ -1446,34 +2179,54 @@ void Console::XtermMouseAndFocus(void) {
     //pair<uint16_t,uint16_t> Console::xyoffset = pair<uint16_t,uint16_t>();
 
 #else
+    // Not windows (Probably Posix and/or Unix)
 
+    void Console::HandleOutput(void) {
+        auto str = Console::out.str();
+        Console::out.clear();
+        if (str.empty()) return;
+        Console::out.str(wstring());
+        Console::real_out.write(str.c_str(), str.size());
+        Console::real_out.flush();
+    }
+    
     void cpp::Console::SetResult(const char* result) {
         FILE* fl = fopen((Console::tmp_data+subdir+"result.dat").c_str(), "w");
-        fwrite(result, sizeof(char), strlen(result), fl);
+        size_t len = result ? strlen(result) : 0;
+        fwrite(&len, sizeof(size_t), 1, fl);
+        if (len) fwrite(result, sizeof(char), strlen(result), fl);
         fclose(fl);
     }
 
     void cpp::Console::MoveCursor(int x, int y) {
         Console::cursorpos.first = x;
         Console::cursorpos.second = y;
+        Console::EscSeqMoveCursor();
     }
 
     void cpp::Console::ShowCursor(void) {
         Console::cursor_visible = true;
+        Console::EscSeqSetCursor();
     }
 
     void cpp::Console::HideCursor(void) {
         Console::cursor_visible = false;
+        Console::EscSeqSetCursor();
     }
 
     void cpp::Console::SetCursorSize(uint8_t size) {
         Console::cursor_size = size;
+        Console::EscSeqSetCursorSize();
     }
 
     void cpp::Console::SetTitle(const char_t* title) {
-      
+        EscSeqSetTitle(title);
     }
-    
+
+    void cpp::Console::Beep(void) {
+        csimp::SoundSystem_PlaySound(uniconv::NativeStringToUnicode((System::GetRootDir() + sep + N("assets") + sep + N("illegal-operation.wav")).c_str()), 0);
+    }
+
     mbstate_t Console::streammbs = mbstate_t();
     ofstream Console::real_out = ofstream();
 
@@ -1526,12 +2279,13 @@ void Console::XtermMouseAndFocus(void) {
 
     void Console::Init(void) {
         if (!initialised) {
-            if (setuid(0) == -1) exit(0xf0);
+            if (setuid(0) == -1)
+                exit(0xf0);
             
             Console::emulator = !(getenv("DISPLAY") == nullptr);
 
             char path[256];
-            readlink( "/proc/self/exe", path, 256);
+            size_t sizt = readlink("/proc/self/exe" , path, 256);
             
             if (Console::emulator) {
                 fwrite("\033[?1049h", sizeof(char), 8, stderr);
@@ -1844,6 +2598,8 @@ void Console::XtermMouseAndFocus(void) {
 
             locale::global(locale(""));
 
+            Console::terminal_name = FindTerminalEmulator();
+
             initialised = true;
 
             atexit(Fin);
@@ -1890,12 +2646,12 @@ void Console::XtermMouseAndFocus(void) {
             // remove files
             if (Console::sub_proc) {
                 FILE* fl;
-                fl = _wfopen((Console::tmp_data+Console::subdir+L"exit.dat").c_str(), L"w");
+                fl = fopen((Console::tmp_data+Console::subdir+"exit.dat").c_str(), "w");
                 fwrite(&Console::ret, sizeof(Console::ret), 1, fl);
                 fclose(fl);
 
                 //if (!System::IsFile((Console::tmp_data+Console::subdir+L"result.dat").c_str()))
-                    fclose(_wfopen((Console::tmp_data+Console::subdir+L"result.dat").c_str(), L"w"));
+                    SetResult(nullptr);
 
                 fl = fopen((string("/tmp/.factoryrush/") + Console::subdir + "initialized.dat").c_str(), "w");
                 fwrite("-1", sizeof(char), 2, fl);
@@ -1911,6 +2667,7 @@ void Console::XtermMouseAndFocus(void) {
 
             if (Console::emulator) {
                 Console::XtermFinishTracking();
+                Console::EscSeqRestoreCursor();
             } else {
                 close(fb_fd);
                 close(mouse_fd);
@@ -2173,6 +2930,10 @@ void Console::XtermMouseAndFocus(void) {
         return;
     }
 
+    uniconv::utfstr Console::GetTerminalExecutableName() {
+        if (!emulator) return ""; // later maybe handle tmux & similar
+    }
+
     bool Console::IsKeyDown(Key::Enum key) {
         for (auto i = 0; i < KEYBOARD_MAX; ++i)
             if (Console::key_states[i] && Console::key_chart[0][i] == key)
@@ -2194,8 +2955,8 @@ void Console::XtermMouseAndFocus(void) {
         return Console::key_chart[0][Console::key_released];
     }
 
-    utfstr Console::GetTerminalExecutableName() {
-        return FindTerminalEmulator();
+    utfstr Console::GetTerminalExecutableName(void) {
+        return Console::terminal_name;
     }
 
     struct termios Console::old_fdterm = termios();
@@ -2232,7 +2993,7 @@ void Console::XtermMouseAndFocus(void) {
                     switch (arg[1]) {
                         case '&':
                             // launched as popup
-                            Console::out << "launched as popup" << u'\n';
+                            Console::out << L"launched as popup" << L'\n';
                             Console::sub_proc = true;
                             if (strlen(arg) < 3) exit(0x31);
                             sub_process = 0;
@@ -2302,6 +3063,8 @@ void Console::XtermMouseAndFocus(void) {
             setlocale(LC_CTYPE, "UTF-8");
 
             Console::XtermInitTracking();
+
+            Console::terminal_name = GetTerminalName(Console::ppid);
 
             tcgetattr(STDIN_FILENO,&old_termios);
             termios term_ios = old_termios;
@@ -2416,9 +3179,8 @@ void Console::XtermMouseAndFocus(void) {
         return name;
     }
 
-    utfstr Console::GetTerminalExecutableName() {
-        auto&& name = GetTerminalName(Console::ppid);
-        return name;
+    utfstr Console::GetTerminalExecutableName(void) {
+        return Console::terminal_name;;
     }
 
 
@@ -2437,7 +3199,188 @@ void Console::XtermMouseAndFocus(void) {
     }
 
     pid_t Console::ppid = 0;
+#elif __CYGWIN__
+void Console::Init(void) {
+    if (!initialised) {
+        
+        int sub_process = 0;
+        auto winargv = (const wchar_t**)CommandLineToArgvW(GetCommandLine(), &Console::argc);
+        Console::argv = (const wchar_t**)malloc(sizeof(wchar_t*) * Console::argc);
+        int j = 0;
+        for (int i = 0; i < Console::argc; i++) {
+            auto&& arg = winargv[i+j];
+            if (wcslen(arg) > 1 && arg[0] == L'\033') {
+                wstring sdir; const wchar_t* narg;
+                switch (arg[1]) {
+                    case L'&':
+                        // launched as popup
+                        Console::sub_proc = true;
+                        if (wcslen(arg) < 3) ThrowMsg("Invalid argument 1");
+                        sub_process = 0;
+                        narg = arg + 2;
+                        while (narg[0] != L'~') {
+                            if (narg[0] < L'0' || narg[0] > L'9') ThrowMsg("Invalid argument 2");
+                            sub_process *= 10;
+                            sub_process += narg[0] - L'0';
+                            ++narg;
+                        }
+                        for (size_t i = 1; narg[i] != L'~'; i++){
+                            if (narg[i] == L'\0') ThrowMsg("Invalid argument 3");
+                            sdir.push_back(narg[i]);
+                        }
+                        Console::subdir = new const wchar_t[wcslen(sdir.c_str())+1]{0};
+                        wcscpy((wchar_t*)Console::subdir, sdir.c_str());
+                        ++j; --i; --Console::argc;
+                        break;
+                    case L'\\':
+                        ThrowMsg("IDK Argument");
+                        break;
+                    default:
+                        Console::argv[i] = arg;
+                        break;
+                }
+            } else Console::argv[i] = arg;
+        }
+
+        auto _temp = realloc(Console::argv, sizeof(wchar_t*) * Console::argc);
+        if (_temp) Console::argv = (const wchar_t**)_temp;
+        else exit(0x73);
+
+        wchar_t* tmpappdata = _wgetenv(L"APPDATA");
+        if (!tmpappdata) ThrowMsg("\"APPDATA\" env variable not set");
+        Console::user_data = tmpappdata;
+        user_data.append(L"\\.factoryrush\\");
+
+        wchar_t* tmptmpdata = _wgetenv(L"TEMP");
+        if (!tmptmpdata) ThrowMsg("\"TEMP\" env variable not set");
+        Console::tmp_data = tmptmpdata;
+        tmp_data.append(L"\\.factoryrush\\");
+
+        wchar_t* tmpdevdata = _wgetenv(L"ProgramData");
+        if (!tmpdevdata) ThrowMsg("\"ProgramData\" env variable not set");
+        Console::dev_data = tmpdevdata;
+        dev_data.append(L"\\Factoryrush\\");
+
+        LPSECURITY_ATTRIBUTES sec_atrs = new SECURITY_ATTRIBUTES();
+        sec_atrs->nLength = sizeof(sec_atrs);
+        sec_atrs->lpSecurityDescriptor = nullptr;
+        sec_atrs->bInheritHandle = false;
+
+        Console::pid = _getpid();
+
+        if (Console::sub_proc) {
+            FILE* fl = _wfopen((tmp_data+subdir+L"pid.dat").c_str(), L"w");
+            fwrite(&Console::pid, sizeof(Console::pid), 1, fl);
+            fclose(fl);
+            goto subdirset;
+        }
+        
+        if (System::MakeDirectory(tmp_data.c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + tmp_data + L"\"");
+
+        if (System::MakeDirectory(user_data.c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + user_data + L"\"");
+
+        if (System::MakeDirectory(dev_data.c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + dev_data + L"\"");
+
+        if (System::MakeDirectory((dev_data+L"logs").c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + (dev_data+L"logs") + L"\"");
+
+        Console::subdir = new const wchar_t[to_wstring(Console::pid).size() + 2]{0};
+        wcscpy((wchar_t*)Console::subdir, to_wstring(Console::pid).c_str());
+        ((wchar_t*)Console::subdir)[to_wstring(Console::pid).size()] = L'\\';
+        
+    subdirset:
+
+        if (System::MakeDirectory((tmp_data+subdir).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + (tmp_data+subdir) + L"\"");
+
+        if (System::MakeDirectory((tmp_data+subdir+L"proc").c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + (tmp_data+subdir+L"proc") + L"\"");
+        
+        delete sec_atrs;
+
+        auto t = std::time(nullptr);
+        auto tm = *std::localtime(&t);
+        wstringstream ss; ss << dev_data << L"logs\\";
+        if (Console::sub_proc) ss << sub_process << L'\\';
+        ss << std::put_time(&tm, L"%Y-%m-%d_%H\'%M\'%S");
+        unsigned int filenum = 0;
+        auto sstr = ss.str();
+    logfile:
+        filesystem::path out_file = filesystem::path(sstr + L".log");
+        HANDLE logfl = CreateFile(out_file.c_str(), GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (logfl == (void*)-1) {
+            auto err = GetLastError();
+            if (err == ERROR_ALREADY_EXISTS) {
+                sstr = ss.str() + L"-" + to_wstring(++filenum);
+                goto logfile;
+            }
+            Console::out << L"Couldn't create log file: " << out_file.native() << L", with error: " << err << '\n';
+            exit(0xC2);
+        }
+        CloseHandle(logfl);
+        Console::real_out.open(out_file,ios::out);
+        if (!Console::real_out.is_open()) {
+            wcerr << L"Couldn't open log file: " << out_file.native() << L", with error: " << GetLastError() << '\n'; 
+            exit(0xC1);
+        }
+
+        Console::screen = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
+        SetConsoleActiveScreenBuffer(Console::screen);
+        
+        Console::fd = GetStdHandle(STD_INPUT_HANDLE);
+        GetConsoleMode(Console::fd, &Console::old_console);
+        SetConsoleMode(Console::fd, ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT | ENABLE_WINDOW_INPUT);
+
+        Console::input_thread_arg = (void*)new __getinput_arg{Console::input_buf, SLEEP_THREAD_INPUT};
+        Console::input_thread = CreateThread(NULL, 0, InputThread, input_thread_arg, 0, NULL);
+        *Console::super_thread_run = true;
+        Console::super_thread_arg = (void*)new __superthread_arg{Console::super_thread_run, Console::thread_handles};
+        Console::super_thread = CreateThread(NULL, 0, Console::SuperThread, Console::super_thread_arg, 0, NULL);
+
+        auto term_prog = _wgetenv(L"TERM_PROGRAM");
+        mintty = term_prog && wstring(term_prog) == L"mintty";
+        wt = _wgetenv(L"WT_SESSION") != NULL;
+        Console::window = GetHwnd();
+        Console::device = GetDC(NULL);
+        //Console::xyoffset = Console::GetXYCharOffset();
+
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        GetConsoleScreenBufferInfo(Console::screen, &csbi);
+        auto val = AtrValToColors(csbi.wAttributes);
+        Console::default_fcol = val.first;
+        Console::default_bcol = val.second;
+
+        GetConsoleCursorInfo(Console::screen, &Console::old_curinf);
+        Console::cursor_size = old_curinf.dwSize;
+        Console::cursor_visible = old_curinf.bVisible;
+        
+        Console::mouse_status.x = 0;
+        Console::mouse_status.y = 0;
+        
+        initialised = true;
+
+        atexit(Console::Fin);
+        at_quick_exit(Console::Fin);
+
+        signal(SIGINT, quick_exit);
+        signal(SIGILL, quick_exit);
+        signal(SIGABRT, quick_exit);
+        signal(SIGFPE, quick_exit);
+        signal(SIGSEGV, quick_exit);
+        signal(SIGTERM, quick_exit);
+        signal(SIGBREAK, quick_exit);
+
+        if (sub_process) {
+            Console::ret = sub(sub_process);
+            Console::Fin();
+            exit(Console::ret);
+        } else if (sub_proc) {
+            Console::ret = Main();
+            Console::Fin();
+            exit(Console::ret);
+        }
+    }
+}
+
 #else
+
 // NO APPLE NO LINUX
 #error "Not implemented... yet"
     void Console::Init(void) {
@@ -2530,26 +3473,90 @@ void Console::XtermMouseAndFocus(void) {
         return Console::window_size.ws_row;
     }
 
-    void Console::FillScreen(vector<vector<Console::Symbol> > symbols) {
-        string screen = "\033[H";
+    void Console::FillScreen(const vector<vector<Console::Symbol> >& symbols) {
+        if (!Console::stderr_lock.try_lock()) return; // it's a slow function so we can't put multiple in a queue
+        string screen = "\033[?25l\033[H";
+        bool moved = false;
         size_t width = GetWindowWidth(), height = GetWindowHeight();
+
+        if ((int16_t)width != Console::old_scr_size.first || (int16_t)height != Console::old_scr_size.second) {
+            Console::old_symbols.clear();
+        }
+
+        int icounter = 0;
         for (size_t i = 0; i < height; i++) {
-            screen.append("\033[0m");
-            if (i >= symbols.size()) 
+            if (i < Console::old_symbols.size()) {
+                int jcounter = 0;
+                if (i >= symbols.size()) {
+                    bool reset = false;
+                    for (size_t j = 0; j < width; j++)
+                        if (j < old_symbols[i].size() && (old_symbols[i][j].character[0] != ' ' ||  old_symbols[i][j].foreground != 16 || old_symbols[i][j].background != 16)) {
+                            if (icounter) screen.append(string("\033[") + to_string(icounter) + "E");
+                            if (jcounter) screen.append(string("\033[") + to_string(jcounter) + "C");
+                            if (!reset) screen.append("\033[0m");
+                            screen.push_back(' ');
+                            icounter = jcounter = !(reset = true);
+                        } else ++jcounter;
+                } else {
+                    for (size_t j = 0; j < width; j++) {
+                        if (j >= symbols[i].size()) {
+                            bool reset = false; --j;
+                            while (++j < width)
+                                if (j < old_symbols[i].size() && (old_symbols[i][j].character[0] != ' ' ||  old_symbols[i][j].foreground != 16 || old_symbols[i][j].background != 16)) {
+                                    if (icounter) screen.append(string("\033[") + to_string(icounter) + "E");
+                                    if (jcounter) screen.append(string("\033[") + to_string(jcounter) + "C");
+                                    if (!reset) screen.append("\033[0m");
+                                    screen.push_back(' ');
+                                    icounter = jcounter = !(reset = true);
+                                } else ++jcounter;
+                        }
+                        else if ((j >= old_symbols[i].size() && (symbols[i][j].character[0] != ' ' ||  symbols[i][j].foreground != 16 || symbols[i][j].background != 16)) || (old_symbols[i][j].character != symbols[i][j].character || old_symbols[i][j].foreground != symbols[i][j].foreground || old_symbols[i][j].background != symbols[i][j].background)) {
+                            if (icounter) screen.append(string("\033[") + to_string(icounter) + "E");
+                            if (jcounter) screen.append(string("\033[") + to_string(jcounter) + "C");
+                            screen.append( GenerateEscapeSequence(symbols[i][j].foreground, symbols[i][j].background) );
+                            screen.append(symbols[i][j].character);
+                            icounter = jcounter = 0;
+                        } else ++jcounter;
+                    }
+                }
+                if (jcounter) ++icounter;
+                else screen.append("\033[E");
+                continue;
+            }
+            if (icounter) screen.append(string("\033[") + to_string(icounter) + "E");
+            else if (i) screen.append("\n");
+            icounter = 0;
+            if (i >= symbols.size()) {
+                if (width) screen.append("\033[0m");
                 for (size_t j = 0; j < width; j++)
                     screen.push_back(' ');
-            for (size_t j = 0; j < width; j++) {
-                if (j >= symbols[i].size()) {
-                    screen.append("\033[0m ");
-                    while (++j < width) screen.push_back(' ');
-                    break;
-                }
-                screen.append( GenerateEscapeSequence(symbols[i][j].foreground, symbols[i][j].background) );
-                screen.append(symbols[i][j].character);
             }
+            else
+                for (size_t j = 0; j < width; j++) {
+                    if (j >= symbols[i].size()) {
+                        screen.append("\033[0m ");
+                        while (++j < width) screen.push_back(' ');
+                        break;
+                    }
+                    screen.append( GenerateEscapeSequence(symbols[i][j].foreground, symbols[i][j].background) );
+                    screen.append(symbols[i][j].character);
+                }
+        }
+        if (screen.size() < 10) { 
+            //fprintf(stdout, "Terminal chars: ~%d, written none\n", width * height * 10, 0);
+            return;
         }
         screen.append("\033[0m");
         fwrite(screen.c_str(), sizeof(char), screen.size(), stderr);
+        old_scr_size = {width,height};
+        old_symbols = symbols;
+        Console::stderr_lock.unlock();
+        Console::EscSeqMoveCursor();
+        Console::EscSeqSetCursor();
+        //fprintf(stdout, "Terminal chars: ~%d, written chars: %d", width * height * 10, screen.size());
+        //fwrite(screen.c_str(), sizeof(char), screen.size(), stdout);
+        //fputc('\n', stdout);
+        //fflush(stdout);
     }
 
     void SysSleep(int microseconds){
@@ -2564,14 +3571,20 @@ void Console::XtermMouseAndFocus(void) {
     const char* Console::subdir = nullptr;
 #endif
 
-basic_istringstream<char16_t> Console::in = basic_istringstream<char16_t>(std::ios_base::ate|std::ios_base::in);
-basic_ostringstream<char16_t> Console::out = basic_ostringstream<char16_t>();
+basic_istringstream<wchar_t> Console::in = basic_istringstream<wchar_t>(std::ios_base::ate|std::ios_base::in);
+
+#ifdef _WIN32
+    basic_ostringstream<wchar_t> Console::out = basic_ostringstream<wchar_t>();
+#else
+    basic_ostringstream<wchar_t> Console::out = basic_ostringstream<wchar_t>();
+#endif
 
 int Console::argc = 0;
 utfcstr* Console::argv = (utfcstr*)malloc(sizeof(utfcstr));
 
 bool Console::emulator = false;
 bool Console::initialised = false;
+mutex Console::stderr_lock = {};
 bitset<KEYBOARD_MAX> Console::key_states = bitset<KEYBOARD_MAX>(0);
 struct ToggledKeys Console::keys_toggled = ToggledKeys();
 bitset<16> Console::mouse_buttons_down = bitset<16>(0);
@@ -2586,6 +3599,9 @@ bool Console::this_mouse_down = bool(false);
 uint8_t Console::last_mouse_button = uint8_t(-1);
 uint8_t Console::last_mouse_combo = uint8_t(0);
 bool Console::focused = bool(true);
+#ifdef _WIN32
+    atomic<bool> Console::tabactive = bool(true);
+#endif
 unsigned short Console::double_click_max = (unsigned short)(500);
 pid_t Console::pid = pid_t(-1); 
 int Console::ret = int(-1);
@@ -2596,19 +3612,31 @@ uint16_t Console::next_pid = uint16_t(10000);
 array<bool,UINT16_MAX> Console::used_pids = array<bool,UINT16_MAX>{0};
 pair<int16_t,int16_t> Console::cursorpos = pair<uint16_t,uint16_t>(0,0);
 uint8_t Console::cursor_size = uint8_t(100);
+utfstr Console::window_title = utfstr(N(" "));
 bool Console::cursor_visible = bool(true);
+bool Console::cursor_blink_opposite = bool(false);
+Console::config_t Console::config = Console::config_t();
+std::atomic<bool> Console::refresh_screen = bool(false);
+vector<vector<Console::Symbol>> Console::old_symbols = vector<vector<Console::Symbol>>();
+pair<int16_t,int16_t> Console::old_scr_size = pair<int16_t,int16_t>(0,0);
 utfstr Console::tmp_data = utfstr();
 utfstr Console::user_data = utfstr();
 utfstr Console::dev_data = utfstr();
 vector<pid_t> Console::popup_pids = vector<pid_t>();
-int Console::max_popup_startup_wait = int(10000);
+wstring Console::terminal_name = wstring();
+int Console::max_popup_startup_wait = int(15000);
 
 struct ToggledKeys Console::KeysToggled(void) {
     return Console::keys_toggled;
 }
 
 bool Console::IsFocused(void) {
-    return Console::focused;
+    return Console::focused
+#ifdef _WIN32
+    && (!Console::parent_window || (GetForegroundWindow() == Console::parent_window))
+    && Console::tabactive
+#endif
+    ;
 }
 
 struct Console::MouseStatus Console::GetMouseStatus(void) {
@@ -2616,14 +3644,23 @@ struct Console::MouseStatus Console::GetMouseStatus(void) {
 }
 
 pair<uint8_t, uint8_t> Console::MouseButtonClicked(void) {
-    return !Console::this_mouse_down ? pair<uint8_t, uint8_t>(-1,0) : pair<uint8_t, uint8_t>(Console::this_mouse_button, Console::this_mouse_combo);
+    return Console::this_mouse_down ? pair<uint8_t, uint8_t>(Console::this_mouse_button, Console::this_mouse_combo) : pair<uint8_t, uint8_t>(-1,0);
 }
 
 uint8_t Console::MouseButtonReleased(void) {
     return !Console::this_mouse_down ? Console::this_mouse_button : -1;
 }
 
-void Console::Sleep(double seconds) {
+bool Console::IsMouseButtonDown(uint8_t button) {
+    return Console::mouse_buttons_down[button];
+}
+
+void Console::Sleep(double seconds, bool sleep_input_thread) {
+#ifdef _WIN32
+    HANDLE Hinput_thread = Console::thread_handles->front(); // input thread was added first
+    if (sleep_input_thread)
+        SuspendThread(Hinput_thread);
+#endif
 
     static double estimate = 5e-3;
     static double mean = 5e-3;
@@ -2648,6 +3685,11 @@ void Console::Sleep(double seconds) {
 
     auto start = high_resolution_clock::now();
     while ((high_resolution_clock::now() - start).count() / 1e9 < seconds);
+
+#ifdef _WIN32
+    if (sleep_input_thread)
+        ResumeThread(Hinput_thread);
+#endif
 }
 
 void Console::SetDoubleClickMaxWait(unsigned short milliseconds) {
@@ -2693,11 +3735,7 @@ Console::Symbol::Symbol(const Symbol& sym) {
     this->background = sym.background;
 }
 
-Console::Symbol::~Symbol(void) {
-    this->character = -1;
-    this->foreground = -1;
-    this->background = -1;
-}
+Console::Symbol::~Symbol(void) {}
 
 void Console::Symbol::ReverseColors(void) {
     cppimp::Console_Symbol_ReverseColors(this);
@@ -2711,6 +3749,11 @@ Console::Symbol & Console::Symbol::operator=(const Console::Symbol & src) {
     return *this;
 }
 
+void Console::ClearScreenBuffer(void) {
+    Console::out << L"ClearScreenBuffer" << L'\n';
+    Console::out_flush();
+    Console::refresh_screen = true;
+}
 void Console::Exit(int code) {
     Console::ret = code;
     Console::Fin();
@@ -2723,8 +3766,14 @@ void Console::QuickExit(int code) {
     quick_exit(code);
 }
 
-optional<pair<int,utfstr>> cpp::Console::PopupWindow(int type, int argc, const char_t* argv[]) {
+optional<pair<int,utfstr>> cpp::Console::PopupWindow(int type, int argc, const char_t* argv[], const char_t* title) {
     auto term = Console::GetTerminalExecutableName();
+
+#ifdef _WIN32
+    HANDLE Hinput_thread = Console::thread_handles->front(); // input thread was added first
+    SuspendThread(Hinput_thread);
+#endif
+
     int pc = 0;
 newpidgen:
     if (++pc > UINT16_MAX) exit(0xF1); // no pid left
@@ -2733,7 +3782,15 @@ newpidgen:
     if (Console::used_pids[npid]) goto newpidgen;
     Console::used_pids[npid] = true;
 
-    utfcstr* args = (utfcstr*)System::AllocateMemory(sizeof(void*) * (argc+3));
+    utfcstr* args = (utfcstr*)System::AllocateMemory(sizeof(void*) * (argc+3
+#ifdef _WIN32
+    + conemu*7 // conemu need 7 more args
+    - cmder // cmder uses one less arg than conemu
+#else
+    + tabby // tabby need 1 more arg
+#endif
+    ));
+
 #if defined(_WIN32) || defined(__CYGWIN__)
     #define sep L'\\'
     #define topen _wfopen
@@ -2742,6 +3799,8 @@ newpidgen:
     #define sep '/'
     #define topen fopen
     #define fgetnc fgetc
+    #define ERROR_PATH_NOT_FOUND ENOENT
+
     char* appdata = getenv("HOME");
     const char* tmppath = "/tmp";
 #endif
@@ -2752,10 +3811,22 @@ newpidgen:
     info.append(to_nstring(type)).push_back(N('~'));
     info.append(subdir).append(procdir).push_back(N('~'));
     utfstr root_pth = System::GetSelfPath();
+#ifdef __linux__
+    auto termchk = term;
+#else
+    // ".exe", ".app"
+    auto termchk = term; termchk.pop_back(); termchk.pop_back(); termchk.pop_back(); termchk.pop_back();
+#endif
+    // Hyper doesn't have a cli option to run a program, so we have to use the default term
+    if (termchk[termchk.size()-1] == N('r') && termchk[termchk.size()-2] == N('e') && termchk[termchk.size()-3] == N('p') && termchk[termchk.size()-4] == N('y') && termchk[termchk.size()-5] == N('H'))
+        term.clear();
 
 #ifdef _WIN32
     wstring term2;
-    if (mintty && !good) {
+    wstring newconstitle, newconsicon, newwinicon;
+    int tabby2 = 0;
+
+    if (mintty && !conemu && !good) {
         if (term.find(L"mintty") == std::wstring::npos) {
             Console::window = GetForegroundWindow();
         }
@@ -2778,18 +3849,146 @@ newpidgen:
         term.append("/usr/bin/gnome-terminal"); // todo - find default terminal emulator
     }
 #else
-    return -1;
+    if (!term.size()) {
+        return nullopt;
+    }
 #endif
     args[0] = root_pth.c_str();
     args[1] = info.c_str();
     for (int i = 1; i <= argc; i++) args[i+1] = argv[i-1];
     args[argc+2] = nullptr;
 #ifdef _WIN32 // for some reason, WindowsTerminal.exe doesn't work, but wt.exe does
-    term2 = term; while (term2.back() != '\\') term2.pop_back(); term2.append(L"wt.exe");
-    if (System::RunProgramAsync(term2.c_str(), args)) goto contcons;
+    if (wt) {
+        term2 = term; while (term2.back() != '\\') term2.pop_back(); term2.append(L"wt.exe");
+        if (System::RunProgramAsync(term2.c_str(), args)) goto contcons;
+    }
+    if (tabby) {
+        /* need to close the window after the popup exits
+         * so this creates a powershell script that run's the popup and kill the parent process
+         * and creates a batch file that runs the powershell script
+         * than runs the `term` to create a new window
+         * and after launch runs the batch file with the `term`
+        */
+       {
+            wstring runps = Console::tmp_data + subdir + L"proc\\" + to_wstring(npid) + L".ps1";
+            auto file = _wfopen(runps.c_str(), L"w");
+            _setmode(_fileno(file),  _O_WTEXT); wint_t x = 0xfeff; fwrite(&x, sizeof(wint_t), 1, file);
+
+            fwrite(L"del ($MyInvocation.MyCommand).Path\ndel \"$(Split-Path -Parent -Path $($MyInvocation.MyCommand).Path)\\", sizeof(wchar_t), 100, file);
+            fwrite(to_wstring(npid).c_str(), sizeof(wchar_t), to_wstring(npid).size(), file);
+            fwrite(L".cmd\"\n& ", sizeof(wchar_t), 8, file);
+            for (int i = 0; args[i]; i++)
+                fwprintf(file, L"\"%ls\" ", args[i]);
+            fwprintf(file, L"\n%ls\\bin\\killwindow.exe", System::GetRootDir().c_str());
+            fclose(file);
+
+            wstring runpth = Console::tmp_data + subdir + L"proc\\" + to_wstring(npid) + L".cmd";
+            file = _wfopen(runpth.c_str(), L"w");
+            fwrite("@echo off\npowershell -NoProfile -ExecutionPolicy Bypass -Command \"%~dp0", sizeof(char), 71, file);
+            fwrite(to_string(npid).c_str(), sizeof(char), to_string(npid).size(), file);
+            fwrite(".ps1\"\n", sizeof(char), 5, file);
+            fclose(file);
+
+            if (!System::RunProgramAsync(term.c_str(), (const wchar_t*)nullptr)) /* Run to launch new window */ {
+                ResumeThread(Hinput_thread);
+                return nullopt;
+            }
+            DWORD processId;
+            GetWindowThreadProcessId(Console::window, &processId);
+            unordered_map<DWORD, bool> processes;
+            {
+                auto prcs = GetChildProcessIds(processId);
+                for (auto&& prc : prcs) {
+                    processes[prc] = true;
+                }
+            }
+            while (1) {
+                SysSleep(1000);
+                auto prcs = GetChildProcessIds(processId);
+                for (auto&& prc : prcs) {
+                    if (processes[prc]) continue;
+                    HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
+                    if (processHandle) {
+                        wchar_t exePath[MAX_PATH];
+                        if (GetModuleFileNameEx(processHandle, NULL, exePath, MAX_PATH)) {
+                            Console::out << L"New child process: " << exePath; out_endl();
+                            tabby = false;
+                            ModifyExecutableName(exePath);
+                            if (tabby) {
+                                Console::out << L"Tabby process\n"; out_endl();
+                                auto thiswin = GetForegroundWindow();
+                                while (thiswin == GetForegroundWindow()) SysSleep(1000);
+                                Console::Sleep(0.9);
+                                goto runtabby;
+                            } else tabby = true;
+                        }
+                    }
+                    processes[prc] = true;
+                }
+            }
+        }
+    runtabby:
+        wstring runpth = Console::tmp_data + subdir + L"proc\\" + to_wstring(npid) + L".cmd";
+        const wchar_t** realargs = (const wchar_t**)System::AllocateMemory(sizeof(void*) * (5));
+        realargs[0] = L"run";
+        realargs[1] = runpth.c_str();
+        realargs[2] = L";";
+        realargs[3] = L"exit";
+        realargs[4] = nullptr;
+        Console::out << L"Running: " << term << L" " << runpth; out_endl();
+        if (!System::RunProgramAsync(term.c_str(), realargs)) {
+            ResumeThread(Hinput_thread);
+            return nullopt;
+        }
+        Console::out << L"Started: " << term << L" " << runpth; out_endl();
+        System::FreeMemory(realargs);
+        goto contcons;
+    }
+    else if (conemu) {
+        for (int i = argc+2+7-cmder; i >= 7-cmder; i--) args[i] = args[i-(7-cmder)]; // cmder desn't need args[6]
+        args[0] = L"-Title";
+        args[1] = title ? title : Console::window_title.c_str();
+        args[2] = L"-cmd"; // new versions also support "-run", but old ones don't
+        // (when new vesions stop supporting '-cmd' I'll have to get the version somehow)
+        newconstitle = L"-new_console:t:"; newconstitle.append(args[1]);
+        args[3] = newconstitle.c_str();
+        newconsicon = L"-new_console:C:"; newconsicon.append(System::GetRootDir()).append(L"\\assets\\images\\icon.ico");
+        args[4] = newconsicon.c_str();
+        if (cmder) {
+            term2 = term; while (term2.back() != '\\') term2.pop_back(); term2.append(L"vendor\\git-for-windows\\usr\\bin\\mintty.exe");
+            args[5] = term2.c_str();
+            wstring cmdargs;
+            for (int i = 0; i < argc + 2 + 7 - 1; i++)
+                cmdargs.append(L"\"").append(args[i]).append(L"\" ");
+            cmdargs.pop_back();
+            const wchar_t* realargs[3] = { L"/x", cmdargs.c_str(), nullptr };
+            if (!System::RunProgramAsync(term.c_str(), realargs)) {
+                ResumeThread(Hinput_thread);
+                return nullopt;
+            }
+            goto contcons;
+        } else {
+            args[6] = args[4];
+            args[5] = args[3];
+            args[4] = args[2];
+            args[2] = L"-icon";
+            newwinicon = (System::GetRootDir() + L"\\assets\\images\\icon.ico");
+            args[3] = newwinicon.c_str();
+        }
+    }
+#else
+    if (tabby) {
+        for (int i = argc+2; i > 0; i--) args[i] = args[i-1];
+        args[0] = L"run";
+    }
 #endif
 #ifndef __APPLE__
-    if (!System::RunProgramAsync(term.c_str(), args)) return nullopt;
+    if (!System::RunProgramAsync(term.c_str(), args)) {
+    #ifdef _WIN32
+        ResumeThread(Hinput_thread);
+    #endif
+        return nullopt;
+    }
 #else
     string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".command";
     auto file = fopen(runpth.c_str(), "w");
@@ -2803,7 +4002,7 @@ newpidgen:
     fwrite("\n", sizeof(char), 1, file);
     fchmod(fileno(file), 0755);
     fclose(file);
-    if (openFileInApp(runpth.c_str(), term.c_str()) != 0) return -1;
+    if (openFileInApp(runpth.c_str(), term.c_str()) != 0) return nullopt;
 #endif
 #ifdef _WIN32
     goto contcons;
@@ -2811,57 +4010,184 @@ console:
     for (int i = 0; i < argc; i++) args[i] = argv[i];
     args[argc] = info.c_str();
     args[argc+1] = nullptr;
-    if (!System::RunProgramAsyncC(root_pth.c_str(), args)) return nullopt;
+    if (!System::RunProgramAsyncC(root_pth.c_str(), args)) {
+        ResumeThread(Hinput_thread);
+        return nullopt;
+    }
 contcons:
+    if (!tabby2)
 #endif
     System::FreeMemory(args);
-    int counter = 0;
 
     // maybe don't wait or do it on a thread [?]
-    while (!System::IsFile((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str()) && ++counter < max_popup_startup_wait)
+    Console::out << L"Waiting for popup to start until: " << max_popup_startup_wait; out_endl();
+    auto start = chrono::high_resolution_clock::now();
+    while ((!System::IsFile((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str())) && (chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() < max_popup_startup_wait)) {
+    #ifdef _WIN32
+        if (tabby && tabby2 < 5 && chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() + 1000 > (max_popup_startup_wait/3)*(max(min(2,tabby2),1)) && System::IsFile((Console::tmp_data + subdir + L"proc\\" + to_wstring(npid) + L".cmd").c_str())) {
+            Console::out << L"Try again " << ++tabby2; out_endl();
+            goto runtabby;
+        }
+    #endif
         SysSleep(1000);
-    if (counter >= max_popup_startup_wait) return nullopt;
-    FILE* fl = topen((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str(), L"r");
-    if (!fl) return nullopt;
-    pid_t spid;
+        Console::out << L"Waiting for popup to start: " << chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count(); out_endl();
+    }
+    if (chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() >= max_popup_startup_wait) {
+    #ifdef _WIN32
+        ResumeThread(Hinput_thread);
+    #endif
+        return nullopt;
+    }
+    Console::out << L"Popup launched successfully" << L'\n';
+    Console::HandleOutput();
+    FILE* fl = topen((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str(), N("r"));
+    if (!fl) {
+    #ifdef _WIN32
+        ResumeThread(Hinput_thread);
+    #endif
+        return nullopt;
+    }
+    pid_t spid = 0;
     fread(&spid, sizeof(pid_t), 1, fl);
     fclose(fl);
     Console::popup_pids.push_back(spid);
 
-    bool oldfocus = false;
-    while (!System::IsFile((Console::tmp_data + subdir + procdir + N("exit.dat")).c_str())) {
-        SysSleep(1000);
-        Console::HandleMouseAndFocus();
-        if (Console::focused && !oldfocus)
-            csimp::SoundSystem_PlaySound(uniconv::Utf8StringToUnicode((System::GetRootDir() + sep + N("assets") + sep + N("illegal-operation.wav")).c_str()), 0);
-        oldfocus = Console::focused;
+#ifdef _WIN32
+    fl = topen((Console::tmp_data + subdir + procdir + N("window.dat")).c_str(), N("r"));
+    if (!fl) {
+        ResumeThread(Hinput_thread);
+        return nullopt;
     }
+    HWND swindow = 0;
+    fread(&swindow, sizeof(HWND), 1, fl);
+    fclose(fl);
+    //cerr << Console::parent_window << ' ' << Console::window; out_endl();
+    HWND twindow = Console::parent_window;
+    bool correct_window = twindow, notme = true;
+    DWORD this_thread = GetCurrentThreadId(), owner_thread;
+    if (twindow) {
+        owner_thread = GetWindowThreadProcessId(twindow, nullptr);
+        if ((notme = (this_thread != owner_thread)))
+            AttachThreadInput(owner_thread, this_thread, true);
+    }
+#endif
+
+    bool oldfocus = true;
+    int setwindow = 0;
+    auto olddisplay = Console::old_symbols;
+    while (!System::IsFile((Console::tmp_data + subdir + procdir + N("exit.dat")).c_str())) {
+        if (SLEEP_POPUP_CHECK) SysSleep(1000);
+        Console::FillScreen(olddisplay);
+        Console::HandleMouseAndFocus();
+        if (IsFocused() && !oldfocus) Console::Beep();
+    #ifdef _WIN32
+        if (Console::focused) {
+            DWORD tmpthread;
+            if (!twindow) {
+                Console::out << L'~';
+                twindow = GetForegroundWindow();
+                if (!twindow) continue;
+                if (twindow == Console::window || twindow == Console::parent_window) {
+                    correct_window = true;
+                    cout << "Correct window"; out_endl();
+                } else cout << "Wrong window"; out_endl();
+                owner_thread = GetWindowThreadProcessId(twindow, nullptr);
+                if ((notme = (this_thread != owner_thread)))
+                    AttachThreadInput(owner_thread, this_thread, true);
+            } else if (!correct_window) {
+                Console::out << L'-';
+                auto tmpwindow = GetForegroundWindow();
+                if (!tmpwindow) continue;
+                twindow = tmpwindow;
+                if (tmpwindow == Console::window || tmpwindow == Console::parent_window) {
+                    correct_window = true;
+                    cout << "Correct window"; out_endl();
+                    if (notme) AttachThreadInput(owner_thread, this_thread, false);
+                    owner_thread = GetWindowThreadProcessId(twindow, nullptr);
+                    if ((notme = (this_thread != owner_thread)))
+                        AttachThreadInput(owner_thread, this_thread, true);
+                }
+            } else if (owner_thread != (tmpthread = GetWindowThreadProcessId(twindow, nullptr))) {
+                if (notme) AttachThreadInput(owner_thread, this_thread, false);
+                owner_thread = tmpthread;
+                if ((notme = (this_thread != owner_thread)))
+                    AttachThreadInput(owner_thread, this_thread, true);
+            }
+            if (!Console::tabactive) continue;
+            if (cmder) {
+                SysSleep(10000); // sleep 10ms to let the tab switch
+                Console::HandleMouseAndFocus();
+                if (!Console::tabactive || !Console::focused) continue;
+            }
+            int style = GetWindowLong(swindow, GWL_STYLE);
+            if ((style & WS_MINIMIZE) == WS_MINIMIZE)
+                ShowWindow(swindow, SW_RESTORE);
+            BringWindowToTop(swindow);
+            SetForegroundWindow(swindow);
+            ShowWindow(swindow, SW_SHOW);
+        }
+    #endif
+        if (Console::this_mouse_down && Console::this_mouse_button != MOUSE_SCROLL_UP && Console::this_mouse_button != MOUSE_SCROLL_DOWN)
+            Console::Beep();
+        oldfocus = IsFocused();
+    }
+
+#ifdef _WIN32
+    if (twindow && notme)
+        AttachThreadInput(owner_thread, this_thread, false);
+#endif
 
     for (size_t i = 0; i < popup_pids.size(); i++)
         if (popup_pids[i] == spid) { popup_pids.erase(popup_pids.begin() + i); break; }
 
-    fl = topen((Console::tmp_data + subdir + procdir + N("exit.dat")).c_str(), L"r");
+    fl = topen((Console::tmp_data + subdir + procdir + N("exit.dat")).c_str(), N("r"));
     if (!fl) ThrowMsg(utfstr(N("Couldn't open file: ")) + Console::tmp_data + subdir + procdir + N("exit.dat"));
-    int pret;
+    int pret = 0;
     fread(&pret, sizeof(int), 1, fl);
     fclose(fl);
 
-    fl = topen((Console::tmp_data + subdir + procdir + N("result.dat")).c_str(), L"r");
-    if (!fl) return nullopt;
-    utfstr result; char_t c;
-    while (auto c = fgetnc(fl) && !feof(fl))
-        result.push_back(c);
-    fclose(fl);
-    if (result.size() && result.back() == '\0') result.pop_back();
+    utfstr result;
+    fl = topen((Console::tmp_data + subdir + procdir + N("result.dat")).c_str(), N("r"));
+    if (!fl) {
+    #ifdef _WIN32
+        ResumeThread(Hinput_thread);
+    #endif
+        return nullopt;
+    }
+    unsigned long long len = 0;
+    fread(&len, sizeof(unsigned long long), 1, fl);
+    if (len) {
+        char_t* buf = new char_t[len+1];
+        fread(buf, sizeof(char_t), len, fl);
+        buf[len] = 0;
+        result = buf;
+        delete[] buf;
+    }
 
+    System::RemoveFile((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str());
+    System::RemoveFile((Console::tmp_data + subdir + procdir + N("exit.dat")).c_str());
+    System::RemoveFile((Console::tmp_data + subdir + procdir + N("result.dat")).c_str());
+
+    System::DeleteDirectory((Console::tmp_data + subdir + procdir).c_str());
+    
     if (pret)
-        Console::out << u"Popup exited with code: 0x" << std::hex << pret << u" and result: \"" << NativeToU16String(result) << u"\"\n";
+        Console::out << L"Popup exited with code: 0x" << std::hex << pret << L" and result: \"" << NativeToWString(result) << L"\"\n";
 
+
+#ifdef _WIN32
+    ResumeThread(Hinput_thread);
+#endif
     return { {pret,result} };
 }
 
-std::optional<stsb::promise<std::optional<std::pair<int, uniconv::utfstr>>>> cpp::Console::PopupWindowAsync(int type, int argc, const char_t *argv[]) {
+std::optional<stsb::promise<std::optional<std::pair<int, uniconv::utfstr>>>> cpp::Console::PopupWindowAsync(int type, int argc, const char_t *argv[], const char_t *title) {
     auto term = Console::GetTerminalExecutableName();
+
+#ifdef _WIN32
+    HANDLE Hinput_thread = Console::thread_handles->front(); // input thread was added first
+    SuspendThread(Hinput_thread);
+#endif
+
     int pc = 0;
 newpidgen:
     if (++pc > UINT16_MAX) exit(0xF1); // no pid left
@@ -2870,7 +4196,15 @@ newpidgen:
     if (Console::used_pids[npid]) goto newpidgen;
     Console::used_pids[npid] = true;
 
-    utfcstr* args = (utfcstr*)System::AllocateMemory(sizeof(void*) * (argc+3));
+    utfcstr* args = (utfcstr*)System::AllocateMemory(sizeof(void*) * (argc+3
+#ifdef _WIN32
+    + conemu*7 // conemu need 7 more args
+    - cmder // cmder uses one less arg than conemu
+#else
+    + tabby // tabby need 1 more arg
+#endif
+    ));
+
 #if defined(_WIN32) || defined(__CYGWIN__)
     #define sep L'\\'
     #define topen _wfopen
@@ -2879,6 +4213,8 @@ newpidgen:
     #define sep '/'
     #define topen fopen
     #define fgetnc fgetc
+    #define ERROR_PATH_NOT_FOUND ENOENT
+
     char* appdata = getenv("HOME");
     const char* tmppath = "/tmp";
 #endif
@@ -2889,10 +4225,22 @@ newpidgen:
     info.append(to_nstring(type)).push_back(N('~'));
     info.append(subdir).append(procdir).push_back(N('~'));
     utfstr root_pth = System::GetSelfPath();
+#ifdef __linux__
+    auto termchk = term;
+#else
+    // ".exe", ".app"
+    auto termchk = term; termchk.pop_back(); termchk.pop_back(); termchk.pop_back(); termchk.pop_back();
+#endif
+    // Hyper doesn't have a cli option to run a program, so we have to use the default term
+    if (termchk[termchk.size()-1] == N('r') && termchk[termchk.size()-2] == N('e') && termchk[termchk.size()-3] == N('p') && termchk[termchk.size()-4] == N('y') && termchk[termchk.size()-5] == N('H'))
+        term.clear();
 
 #ifdef _WIN32
     wstring term2;
-    if (mintty && !good) {
+    wstring newconstitle, newconsicon, newwinicon;
+    int tabby2 = 0;
+
+    if (mintty && !conemu && !good) {
         if (term.find(L"mintty") == std::wstring::npos) {
             Console::window = GetForegroundWindow();
         }
@@ -2915,18 +4263,146 @@ newpidgen:
         term.append("/usr/bin/gnome-terminal"); // todo - find default terminal emulator
     }
 #else
-    return -1;
+    if (!term.size()) {
+        return nullopt;
+    }
 #endif
     args[0] = root_pth.c_str();
     args[1] = info.c_str();
     for (int i = 1; i <= argc; i++) args[i+1] = argv[i-1];
     args[argc+2] = nullptr;
-#ifdef _WIN32 // for some reason, WindowsTerminal.exe doesn't work, but wt.exe does
-    term2 = term; while (term2.back() != '\\') term2.pop_back(); term2.append(L"wt.exe");
-    if (System::RunProgramAsync(term2.c_str(), args)) goto contcons;
+    #ifdef _WIN32 // for some reason, WindowsTerminal.exe doesn't work, but wt.exe does
+    if (wt) {
+        term2 = term; while (term2.back() != '\\') term2.pop_back(); term2.append(L"wt.exe");
+        if (System::RunProgramAsync(term2.c_str(), args)) goto contcons;
+    }
+    if (tabby) {
+        /* need to close the window after the popup exits
+         * so this creates a powershell script that run's the popup and kill the parent process
+         * and creates a batch file that runs the powershell script
+         * than runs the `term` to create a new window
+         * and after launch runs the batch file with the `term`
+        */
+       {
+            wstring runps = Console::tmp_data + subdir + L"proc\\" + to_wstring(npid) + L".ps1";
+            auto file = _wfopen(runps.c_str(), L"w");
+            _setmode(_fileno(file),  _O_WTEXT); wint_t x = 0xfeff; fwrite(&x, sizeof(wint_t), 1, file);
+
+            fwrite(L"del ($MyInvocation.MyCommand).Path\ndel \"$(Split-Path -Parent -Path $($MyInvocation.MyCommand).Path)\\", sizeof(wchar_t), 100, file);
+            fwrite(to_wstring(npid).c_str(), sizeof(wchar_t), to_wstring(npid).size(), file);
+            fwrite(L".cmd\"\n& ", sizeof(wchar_t), 8, file);
+            for (int i = 0; args[i]; i++)
+                fwprintf(file, L"\"%ls\" ", args[i]);
+            fwprintf(file, L"\n%ls\\bin\\killwindow.exe", System::GetRootDir().c_str());
+            fclose(file);
+
+            wstring runpth = Console::tmp_data + subdir + L"proc\\" + to_wstring(npid) + L".cmd";
+            file = _wfopen(runpth.c_str(), L"w");
+            fwrite("@echo off\npowershell -NoProfile -ExecutionPolicy Bypass -Command \"%~dp0", sizeof(char), 71, file);
+            fwrite(to_string(npid).c_str(), sizeof(char), to_string(npid).size(), file);
+            fwrite(".ps1\"\n", sizeof(char), 5, file);
+            fclose(file);
+
+            if (!System::RunProgramAsync(term.c_str(), (const wchar_t*)nullptr)) {
+                ResumeThread(Hinput_thread);
+                return nullopt; // Run to launch new window
+            }
+            DWORD processId;
+            GetWindowThreadProcessId(Console::window, &processId);
+            unordered_map<DWORD, bool> processes;
+            {
+                auto prcs = GetChildProcessIds(processId);
+                for (auto&& prc : prcs) {
+                    processes[prc] = true;
+                }
+            }
+            while (1) {
+                SysSleep(1000);
+                auto prcs = GetChildProcessIds(processId);
+                for (auto&& prc : prcs) {
+                    if (processes[prc]) continue;
+                    HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
+                    if (processHandle) {
+                        wchar_t exePath[MAX_PATH];
+                        if (GetModuleFileNameEx(processHandle, NULL, exePath, MAX_PATH)) {
+                            Console::out << L"New child process: " << exePath; out_endl();
+                            tabby = false;
+                            ModifyExecutableName(exePath);
+                            if (tabby) {
+                                Console::out << L"Tabby process\n"; out_endl();
+                                auto thiswin = GetForegroundWindow();
+                                while (thiswin == GetForegroundWindow()) SysSleep(1000);
+                                Console::Sleep(0.9);
+                                goto runtabby;
+                            } else tabby = true;
+                        }
+                    }
+                    processes[prc] = true;
+                }
+            }
+        }
+    runtabby:
+        wstring runpth = Console::tmp_data + subdir + L"proc\\" + to_wstring(npid) + L".cmd";
+        const wchar_t** realargs = (const wchar_t**)System::AllocateMemory(sizeof(void*) * (5));
+        realargs[0] = L"run";
+        realargs[1] = runpth.c_str();
+        realargs[2] = L";";
+        realargs[3] = L"exit";
+        realargs[4] = nullptr;
+        Console::out << L"Running: " << term << L" " << runpth; out_endl();
+        if (!System::RunProgramAsync(term.c_str(), realargs)) {
+            ResumeThread(Hinput_thread);
+            return nullopt;
+        }
+        Console::out << L"Started: " << term << L" " << runpth; out_endl();
+        System::FreeMemory(realargs);
+        goto contcons;
+    }
+    else if (conemu) {
+        for (int i = argc+2+7-cmder; i >= 7-cmder; i--) args[i] = args[i-(7-cmder)]; // cmder desn't need args[6]
+        args[0] = L"-Title";
+        args[1] = title ? title : Console::window_title.c_str();
+        args[2] = L"-cmd"; // new versions also support "-run", but old ones don't
+        // (when new vesions stop supporting '-cmd' I'll have to get the version somehow)
+        newconstitle = L"-new_console:t:"; newconstitle.append(args[1]);
+        args[3] = newconstitle.c_str();
+        newconsicon = L"-new_console:C:"; newconsicon.append(System::GetRootDir()).append(L"\\assets\\images\\icon.ico");
+        args[4] = newconsicon.c_str();
+        if (cmder) {
+            term2 = term; while (term2.back() != '\\') term2.pop_back(); term2.append(L"vendor\\git-for-windows\\usr\\bin\\mintty.exe");
+            args[5] = term2.c_str();
+            wstring cmdargs;
+            for (int i = 0; i < argc + 2 + 7 - 1; i++)
+                cmdargs.append(L"\"").append(args[i]).append(L"\" ");
+            cmdargs.pop_back();
+            const wchar_t* realargs[3] = { L"/x", cmdargs.c_str(), nullptr };
+            if (!System::RunProgramAsync(term.c_str(), realargs)) {
+                ResumeThread(Hinput_thread);
+                return nullopt;
+            }
+            goto contcons;
+        } else {
+            args[6] = args[4];
+            args[5] = args[3];
+            args[4] = args[2];
+            args[2] = L"-icon";
+            newwinicon = (System::GetRootDir() + L"\\assets\\images\\icon.ico");
+            args[3] = newwinicon.c_str();
+        }
+    }
+#else
+    if (tabby) {
+        for (int i = argc+2; i > 0; i--) args[i] = args[i-1];
+        args[0] = L"run";
+    }
 #endif
 #ifndef __APPLE__
-    if (!System::RunProgramAsync(term.c_str(), args)) return nullopt;
+    if (!System::RunProgramAsync(term.c_str(), args)) {
+    #ifdef _WIN32
+        ResumeThread(Hinput_thread);
+    #endif
+        return nullopt;
+    }
 #else
     string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".command";
     auto file = fopen(runpth.c_str(), "w");
@@ -2940,7 +4416,7 @@ newpidgen:
     fwrite("\n", sizeof(char), 1, file);
     fchmod(fileno(file), 0755);
     fclose(file);
-    if (openFileInApp(runpth.c_str(), term.c_str()) != 0) return -1;
+    if (openFileInApp(runpth.c_str(), term.c_str()) != 0) return nullopt;
 #endif
 #ifdef _WIN32
     goto contcons;
@@ -2948,19 +4424,44 @@ console:
     for (int i = 0; i < argc; i++) args[i] = argv[i];
     args[argc] = info.c_str();
     args[argc+1] = nullptr;
-    if (!System::RunProgramAsyncC(root_pth.c_str(), args)) return nullopt;
+    if (!System::RunProgramAsyncC(root_pth.c_str(), args)) {
+        ResumeThread(Hinput_thread);
+        return nullopt;
+    }
 contcons:
+    if (!tabby2)
 #endif
     System::FreeMemory(args);
-    int counter = 0;
 
     // maybe don't wait or do it on a thread [?]
-    while (!System::IsFile((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str()) && ++counter < max_popup_startup_wait)
+    Console::out << L"Waiting for popup to start until: " << max_popup_startup_wait; out_endl();
+    auto start = chrono::high_resolution_clock::now();
+    while ((!System::IsFile((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str())) && (chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() < max_popup_startup_wait)) {
+    #ifdef _WIN32
+        if (tabby && tabby2 < 5 && chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() + 1000 > (max_popup_startup_wait/3)*(max(min(2,tabby2),1)) && System::IsFile((Console::tmp_data + subdir + L"proc\\" + to_wstring(npid) + L".cmd").c_str())) {
+            Console::out << L"Try again " << ++tabby2; out_endl();
+            goto runtabby;
+        }
+    #endif
         SysSleep(1000);
-    if (counter >= max_popup_startup_wait) return nullopt;
-    FILE* fl = topen((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str(), L"r");
-    if (!fl) return nullopt;
-    pid_t spid;
+        Console::out << L"Waiting for popup to start: " << chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count(); out_endl();
+    }
+    if (chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() >= max_popup_startup_wait) {
+    #ifdef _WIN32
+        ResumeThread(Hinput_thread);
+    #endif
+        return nullopt;
+    }
+    Console::out << L"Popup launched successfully" << L'\n';
+    Console::HandleOutput();
+    FILE* fl = topen((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str(), N("r"));
+    if (!fl) {
+    #ifdef _WIN32
+        ResumeThread(Hinput_thread);
+    #endif
+        return nullopt;
+    }
+    pid_t spid = 0;
     fread(&spid, sizeof(pid_t), 1, fl);
     fclose(fl);
     Console::popup_pids.push_back(spid);
@@ -2972,42 +4473,64 @@ contcons:
     thread waitthr = thread([retx, retdir, tstint, pop_pids, spid]() mutable {
         bool oldfocus = false;
         while (!System::IsFile((retdir + N("exit.dat")).c_str())) SysSleep(1000);
-        
-        for (size_t i = 0; i < pop_pids.size(); i++)
-            if (pop_pids[i] == spid) { pop_pids.erase(pop_pids.begin() + i); break; }
 
-        FILE* fl = topen((retdir + N("exit.dat")).c_str(), L"r");
+        for (size_t i = 0; i < popup_pids.size(); i++)
+            if (popup_pids[i] == spid) { popup_pids.erase(popup_pids.begin() + i); break; }
+
+        FILE* fl = topen((retdir + N("exit.dat")).c_str(), N("r"));
         if (!fl) ThrowMsg(utfstr(N("Couldn't open file: ")) + retdir + N("exit.dat"));
-        int pret;
+        int pret = 0;
         fread(&pret, sizeof(int), 1, fl);
         fclose(fl);
 
-        fl = topen((retdir + N("result.dat")).c_str(), L"r");
+        utfstr result;
+        fl = topen((retdir + N("result.dat")).c_str(), N("r"));
         if (!fl) return nullopt;
-        utfstr result; char_t c;
-        while (auto c = fgetnc(fl) && !feof(fl))
-            result.push_back(c);
-        fclose(fl);
-        if (result.size() && result.back() == '\0') result.pop_back();
+
+        unsigned long long len = 0;
+        fread(&len, sizeof(unsigned long long), 1, fl);
+        if (len) {
+            char_t* buf = new char_t[len+1];
+            fread(buf, sizeof(char_t), len, fl);
+            buf[len] = 0;
+            result = buf;
+            delete[] buf;
+        }
+
+        System::RemoveFile((retdir + N("pid.dat")).c_str());
+        System::RemoveFile((retdir + N("exit.dat")).c_str());
+        System::RemoveFile((retdir + N("result.dat")).c_str());
+
+        System::DeleteDirectory(retdir.c_str());
 
         if (pret)
-            Console::out << u"Popup exited with code: 0x" << std::hex << pret << u" and result: \"" << NativeToU16String(result) << u"\"\n";
+            Console::out << L"Popup exited with code: 0x" << std::hex << pret << L" and result: \"" << NativeToWString(result) << L"\"\n";
         
-        tstint = 13;
         retx = std::optional<std::pair<int, uniconv::utfstr>>({pret,result});
         return nullopt;
     });
     waitthr.detach();
+#ifdef _WIN32
+    ResumeThread(Hinput_thread);
+#endif
     return retx;
 }
 
-std::optional<stsb::promise<std::optional<std::pair<int, std::u16string>>>> cpp::Console::PopupWindowAsync(int type, int argc, const char16_t *arg16v[]) {
+std::optional<stsb::promise<std::optional<std::pair<int, std::u16string>>>> cpp::Console::PopupWindowAsync(int type, int argc, const char16_t *arg16v[], const char16_t *u16title) {
     vector<utfstr> argv;
     argv.reserve(argc);
     for (int i = 0; i < argc; i++)
-        argv.push_back(UnicodeToUtf8String(U16StringToUnicode(arg16v[i])));
+        argv.push_back(UnicodeToNativeString(U16StringToUnicode(arg16v[i])));
+    auto strtitle = u16title ? UnicodeToNativeString(U16StringToUnicode(u16title)) : utfstr();
+    auto title = u16title ? strtitle.c_str() : nullptr;
     
     auto term = Console::GetTerminalExecutableName();
+
+#ifdef _WIN32
+    HANDLE Hinput_thread = Console::thread_handles->front(); // input thread was added first
+    SuspendThread(Hinput_thread);
+#endif
+
     int pc = 0;
 newpidgen:
     if (++pc > UINT16_MAX) exit(0xF1); // no pid left
@@ -3016,7 +4539,15 @@ newpidgen:
     if (Console::used_pids[npid]) goto newpidgen;
     Console::used_pids[npid] = true;
 
-    utfcstr* args = (utfcstr*)System::AllocateMemory(sizeof(void*) * (argc+3));
+    utfcstr* args = (utfcstr*)System::AllocateMemory(sizeof(void*) * (argc+3
+#ifdef _WIN32
+    + conemu*7 // conemu need 7 more args
+    - cmder // cmder uses one less arg than conemu
+#else
+    + tabby // tabby need 1 more arg
+#endif
+    ));
+
 #if defined(_WIN32) || defined(__CYGWIN__)
     #define sep L'\\'
     #define topen _wfopen
@@ -3025,6 +4556,8 @@ newpidgen:
     #define sep '/'
     #define topen fopen
     #define fgetnc fgetc
+    #define ERROR_PATH_NOT_FOUND ENOENT
+
     char* appdata = getenv("HOME");
     const char* tmppath = "/tmp";
 #endif
@@ -3035,10 +4568,22 @@ newpidgen:
     info.append(to_nstring(type)).push_back(N('~'));
     info.append(subdir).append(procdir).push_back(N('~'));
     utfstr root_pth = System::GetSelfPath();
+#ifdef __linux__
+    auto termchk = term;
+#else
+    // ".exe", ".app"
+    auto termchk = term; termchk.pop_back(); termchk.pop_back(); termchk.pop_back(); termchk.pop_back();
+#endif
+    // Hyper doesn't have a cli option to run a program, so we have to use the default term
+    if (termchk[termchk.size()-1] == N('r') && termchk[termchk.size()-2] == N('e') && termchk[termchk.size()-3] == N('p') && termchk[termchk.size()-4] == N('y') && termchk[termchk.size()-5] == N('H'))
+        term.clear();
 
 #ifdef _WIN32
     wstring term2;
-    if (mintty && !good) {
+    wstring newconstitle, newconsicon, newwinicon;
+    int tabby2 = 0;
+
+    if (mintty && !conemu && !good) {
         if (term.find(L"mintty") == std::wstring::npos) {
             Console::window = GetForegroundWindow();
         }
@@ -3061,19 +4606,147 @@ newpidgen:
         term.append("/usr/bin/gnome-terminal"); // todo - find default terminal emulator
     }
 #else
-    return -1;
+    if (!term.size()) {
+        return nullopt;
+    }
 #endif
     args[0] = root_pth.c_str();
     args[1] = info.c_str();
     for (int i = 1; i <= argc; i++) args[i+1] = argv[i-1].c_str();
     args[argc+2] = nullptr;
 #ifdef _WIN32 // for some reason, WindowsTerminal.exe doesn't work, but wt.exe does
-    term2 = term; while (term2.back() != '\\') term2.pop_back(); term2.append(L"wt.exe");
-    if (System::RunProgramAsync(term2.c_str(), args)) goto contcons;
+    if (wt) {
+        term2 = term; while (term2.back() != '\\') term2.pop_back(); term2.append(L"wt.exe");
+        if (System::RunProgramAsync(term2.c_str(), args)) goto contcons;
+    }
+    if (tabby) {
+        /* need to close the window after the popup exits
+         * so this creates a powershell script that run's the popup and kill the parent process
+         * and creates a batch file that runs the powershell script
+         * than runs the `term` to create a new window
+         * and after launch runs the batch file with the `term`
+        */
+       {
+            wstring runps = Console::tmp_data + subdir + L"proc\\" + to_wstring(npid) + L".ps1";
+            auto file = _wfopen(runps.c_str(), L"w");
+            _setmode(_fileno(file),  _O_WTEXT); wint_t x = 0xfeff; fwrite(&x, sizeof(wint_t), 1, file);
+
+            fwrite(L"del ($MyInvocation.MyCommand).Path\ndel \"$(Split-Path -Parent -Path $($MyInvocation.MyCommand).Path)\\", sizeof(wchar_t), 100, file);
+            fwrite(to_wstring(npid).c_str(), sizeof(wchar_t), to_wstring(npid).size(), file);
+            fwrite(L".cmd\"\n& ", sizeof(wchar_t), 8, file);
+            for (int i = 0; args[i]; i++)
+                fwprintf(file, L"\"%ls\" ", args[i]);
+            fwprintf(file, L"\n%ls\\bin\\killwindow.exe", System::GetRootDir().c_str());
+            fclose(file);
+
+            wstring runpth = Console::tmp_data + subdir + L"proc\\" + to_wstring(npid) + L".cmd";
+            file = _wfopen(runpth.c_str(), L"w");
+            fwrite("@echo off\npowershell -NoProfile -ExecutionPolicy Bypass -Command \"%~dp0", sizeof(char), 71, file);
+            fwrite(to_string(npid).c_str(), sizeof(char), to_string(npid).size(), file);
+            fwrite(".ps1\"\n", sizeof(char), 5, file);
+            fclose(file);
+
+            if (!System::RunProgramAsync(term.c_str(), (const wchar_t*)nullptr)) {
+                ResumeThread(Hinput_thread);
+                return nullopt; // Run to launch new window
+            }
+            DWORD processId;
+            GetWindowThreadProcessId(Console::window, &processId);
+            unordered_map<DWORD, bool> processes;
+            {
+                auto prcs = GetChildProcessIds(processId);
+                for (auto&& prc : prcs) {
+                    processes[prc] = true;
+                }
+            }
+            while (1) {
+                SysSleep(1000);
+                auto prcs = GetChildProcessIds(processId);
+                for (auto&& prc : prcs) {
+                    if (processes[prc]) continue;
+                    HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
+                    if (processHandle) {
+                        wchar_t exePath[MAX_PATH];
+                        if (GetModuleFileNameEx(processHandle, NULL, exePath, MAX_PATH)) {
+                            Console::out << L"New child process: " << exePath; out_endl();
+                            tabby = false;
+                            ModifyExecutableName(exePath);
+                            if (tabby) {
+                                Console::out << L"Tabby process\n"; out_endl();
+                                auto thiswin = GetForegroundWindow();
+                                while (thiswin == GetForegroundWindow()) SysSleep(1000);
+                                
+                                Console::Sleep(0.9);
+                                goto runtabby;
+                            } else tabby = true;
+                        }
+                    }
+                    processes[prc] = true;
+                }
+            }
+        }
+    runtabby:
+        wstring runpth = Console::tmp_data + subdir + L"proc\\" + to_wstring(npid) + L".cmd";
+        const wchar_t** realargs = (const wchar_t**)System::AllocateMemory(sizeof(void*) * (5));
+        realargs[0] = L"run";
+        realargs[1] = runpth.c_str();
+        realargs[2] = L";";
+        realargs[3] = L"exit";
+        realargs[4] = nullptr;
+        Console::out << L"Running: " << term << L" " << runpth; out_endl();
+        if (!System::RunProgramAsync(term.c_str(), realargs)) {
+            ResumeThread(Hinput_thread);
+            return nullopt;
+        }
+        Console::out << L"Started: " << term << L" " << runpth; out_endl();
+        System::FreeMemory(realargs);
+        goto contcons;
+    }
+    else if (conemu) {
+        for (int i = argc+2+7-cmder; i >= 7-cmder; i--) args[i] = args[i-(7-cmder)]; // cmder desn't need args[6]
+        args[0] = L"-Title";
+        args[1] = title ? title : Console::window_title.c_str();
+        args[2] = L"-cmd"; // new versions also support "-run", but old ones don't
+        // (when new vesions stop supporting '-cmd' I'll have to get the version somehow)
+        newconstitle = L"-new_console:t:"; newconstitle.append(args[1]);
+        args[3] = newconstitle.c_str();
+        newconsicon = L"-new_console:C:"; newconsicon.append(System::GetRootDir()).append(L"\\assets\\images\\icon.ico");
+        args[4] = newconsicon.c_str();
+        if (cmder) {
+            term2 = term; while (term2.back() != '\\') term2.pop_back(); term2.append(L"vendor\\git-for-windows\\usr\\bin\\mintty.exe");
+            args[5] = term2.c_str();
+            wstring cmdargs;
+            for (int i = 0; i < argc + 2 + 7 - 1; i++)
+                cmdargs.append(L"\"").append(args[i]).append(L"\" ");
+            cmdargs.pop_back();
+            const wchar_t* realargs[3] = { L"/x", cmdargs.c_str(), nullptr };
+            if (!System::RunProgramAsync(term.c_str(), realargs)) {
+                ResumeThread(Hinput_thread);
+                return nullopt;
+            }
+            goto contcons;
+        } else {
+            args[6] = args[4];
+            args[5] = args[3];
+            args[4] = args[2];
+            args[2] = L"-icon";
+            newwinicon = (System::GetRootDir() + L"\\assets\\images\\icon.ico");
+            args[3] = newwinicon.c_str();
+        }
+    }
+#else
+    if (tabby) {
+        for (int i = argc+2; i > 0; i--) args[i] = args[i-1];
+        args[0] = L"run";
+    }
 #endif
 #ifndef __APPLE__
-    if (!System::RunProgramAsync(term.c_str(), args))
+    if (!System::RunProgramAsync(term.c_str(), args)) {
+#ifdef _WIN32
+        ResumeThread(Hinput_thread);
+#endif
         return nullopt;
+    }
 #else
     string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".command";
     auto file = fopen(runpth.c_str(), "w");
@@ -3087,7 +4760,7 @@ newpidgen:
     fwrite("\n", sizeof(char), 1, file);
     fchmod(fileno(file), 0755);
     fclose(file);
-    if (openFileInApp(runpth.c_str(), term.c_str()) != 0) return -1;
+    if (openFileInApp(runpth.c_str(), term.c_str()) != 0) return nullopt;
 #endif
 #ifdef _WIN32
     goto contcons;
@@ -3095,57 +4768,96 @@ console:
     for (int i = 0; i < argc; i++) args[i] = argv[i].c_str();
     args[argc] = info.c_str();
     args[argc+1] = nullptr;
-    if (!System::RunProgramAsyncC(root_pth.c_str(), args)) return nullopt;
+    if (!System::RunProgramAsyncC(root_pth.c_str(), args)) {
+        ResumeThread(Hinput_thread);
+        return nullopt;
+    }
 contcons:
+    if (!tabby2)
 #endif
     System::FreeMemory(args);
-    int counter = 0;
 
     // maybe don't wait or do it on a thread [?]
-    while (!System::IsFile((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str()) && ++counter < max_popup_startup_wait)
+    Console::out << L"Waiting for popup to start until: " << max_popup_startup_wait; out_endl();
+    auto start = chrono::high_resolution_clock::now();
+    while ((!System::IsFile((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str())) && (chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() < max_popup_startup_wait)) {
+    #ifdef _WIN32
+        if (tabby && tabby2 < 5 && chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() + 1000 > (max_popup_startup_wait/3)*(max(min(2,tabby2),1)) && System::IsFile((Console::tmp_data + subdir + L"proc\\" + to_wstring(npid) + L".cmd").c_str())) {
+            Console::out << L"Try again " << ++tabby2; out_endl();
+            goto runtabby;
+        }
+    #endif
         SysSleep(1000);
-    if (counter >= max_popup_startup_wait) return nullopt;
-    FILE* fl = topen((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str(), L"r");
-    if (!fl) return nullopt;
-    pid_t spid;
+        Console::out << L"Waiting for popup to start: " << chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count(); out_endl();
+    }
+    if (chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() >= max_popup_startup_wait) {
+    #ifdef _WIN32
+        ResumeThread(Hinput_thread);
+    #endif
+        return nullopt;
+    }
+    Console::out << L"Popup launched successfully" << L'\n';
+    Console::HandleOutput();
+    FILE* fl = topen((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str(), N("r"));
+    if (!fl) {
+    #ifdef _WIN32
+        ResumeThread(Hinput_thread);
+    #endif
+        return nullopt;
+    }
+    pid_t spid = 0;
     fread(&spid, sizeof(pid_t), 1, fl);
     fclose(fl);
     Console::popup_pids.push_back(spid);
 
     auto& pop_pids = Console::popup_pids;
-    auto retx = stsb::promise<std::optional<std::pair<int, u16string>>>();
+    auto retx = stsb::promise<std::optional<std::pair<int, std::u16string>>>();
+    stsb::promise<int> tstint = stsb::promise<int>();
     auto retdir = Console::tmp_data + subdir + procdir;
-    thread waitthr = thread([retx, retdir, pop_pids, spid]() mutable {
+    thread waitthr = thread([retx, retdir, tstint, pop_pids, spid]() mutable {
+
         bool oldfocus = false;
         while (!System::IsFile((retdir + N("exit.dat")).c_str())) SysSleep(1000);
 
-        for (size_t i = 0; i < pop_pids.size(); i++)
-            if (pop_pids[i] == spid) { pop_pids.erase(pop_pids.begin() + i); break; }
+        for (size_t i = 0; i < popup_pids.size(); i++)
+            if (popup_pids[i] == spid) { popup_pids.erase(popup_pids.begin() + i); break; }
 
-        FILE* fl = topen((retdir + N("exit.dat")).c_str(), L"r");
+        FILE* fl = topen((retdir + N("exit.dat")).c_str(), N("r"));
         if (!fl) ThrowMsg(utfstr(N("Couldn't open file: ")) + retdir + N("exit.dat"));
-        int pret;
+        int pret = 0;
         fread(&pret, sizeof(int), 1, fl);
         fclose(fl);
 
-        fl = topen((retdir + N("result.dat")).c_str(), L"r");
+        utfstr result;
+        fl = topen((retdir + N("result.dat")).c_str(), N("r"));
         if (!fl) return nullopt;
-        utfstr result; char_t c;
-        while (auto c = fgetnc(fl) && !feof(fl))
-            result.push_back(c);
-        fclose(fl);
-        if (result.size() && result.back() == '\0') result.pop_back();
+        unsigned long long len = 0;
+        fread(&len, sizeof(unsigned long long), 1, fl);
+        if (len) {
+            char_t* buf = new char_t[len+1];
+            fread(buf, sizeof(char_t), len, fl);
+            buf[len] = 0;
+            result = buf;
+            delete[] buf;
+        }
+
+        System::RemoveFile((retdir + N("pid.dat")).c_str());
+        System::RemoveFile((retdir + N("exit.dat")).c_str());
+        System::RemoveFile((retdir + N("result.dat")).c_str());
+
+        System::DeleteDirectory(retdir.c_str());
 
         if (pret)
-            Console::out << u"Popup exited with code: 0x" << std::hex << pret << u" and result: \"" << NativeToU16String(result) << u"\"\n";
-            
-        u16string result16 = UnicodeToU16String(Utf8StringToUnicode(result.c_str()));
-
-        retx = std::optional<std::pair<int, u16string>>({pret,result16});
+            Console::out << L"Popup exited with code: 0x" << std::hex << pret << L" and result: \"" << NativeToWString(result) << L"\"\n";
+        
+        retx = std::optional<std::pair<int, u16string>>({pret,UnicodeToU16String(NativeStringToUnicode(result.c_str()))});
         return nullopt;
     });
     waitthr.detach();
-    return retx;
+#ifdef _WIN32
+    ResumeThread(Hinput_thread);
+#endif
+    return { retx };
 }
 
 void Console::DontHandleKeyboard(void) {
@@ -3161,7 +4873,7 @@ void Console::ResetKeyboard(void) {
 }
 
 void Console::Update(void) {
-    Console::HandleOutput();
     Console::HandleKeyboard();
     Console::HandleMouseAndFocus();
+    Console::HandleOutput();
 }

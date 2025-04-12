@@ -1,12 +1,12 @@
 #ifdef _WIN32
-#ifndef _MSVC
+#ifndef _MSC_VER
     #include <windows/quick_exit/defines.h>
 
     void null(void) { return; }
 
     int atquickexit__iterator = 0;
     void (*atquickexit__funcs[_AT_QUICK_EXIT_MAX]) (void) = { null };
-#endif // _MSVC
+#endif // MSVC
 #else
 int __global = 1; // file cannot be empty
 #endif // _WIN32

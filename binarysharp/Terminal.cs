@@ -159,7 +159,7 @@ namespace Cpp
 
             public void Set(char character, byte foreground = 7, byte background = 0) {
                 this.Destruct();
-                this.symbol = CppImp.Console.Symbol.Construct(TypeConvert.Utf8ToUnicode(character),foreground,background);
+                this.symbol = CppImp.Console.Symbol.Construct(TypeConvert.NativeToUnicode(character),foreground,background);
                 this.ArmPointer();
             }
         #if _WIN32
@@ -199,7 +199,7 @@ namespace Cpp
         #endif
 
             public Symbol(char character, byte foreground = 7, byte background = 0) {
-                symbol = CppImp.Console.Symbol.Construct(TypeConvert.Utf8ToUnicode(character),foreground,background);
+                symbol = CppImp.Console.Symbol.Construct(TypeConvert.NativeToUnicode(character),foreground,background);
                 this.ArmPointer();
             }
 
@@ -207,11 +207,11 @@ namespace Cpp
                 // too.Destruct(); too = new Symbol(from);
            
             public char character() {
-                return TypeConvert.UnicodeToUtf8(CppImp.Console.Symbol.character(symbol));
+                return TypeConvert.UnicodeToNative(CppImp.Console.Symbol.character(symbol));
             }
 
             public void character(char val) {
-                CppImp.Console.Symbol.character(symbol, TypeConvert.Utf8ToUnicode(val));
+                CppImp.Console.Symbol.character(symbol, TypeConvert.NativeToUnicode(val));
             }
 
             public byte foreground() {

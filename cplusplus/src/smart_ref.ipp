@@ -1,3 +1,7 @@
+#ifndef SMART_REF_HPP
+#error "smart_ref.ipp must be included from smart_ref.hpp"
+#endif
+
 namespace {
     template<typename T> smart_ref<T>::smart_ref(T* pointer) : alloc(0), ref(*pointer) {}
     template<typename T> smart_ref<T>::smart_ref(T& lvalue) : alloc(0), ref(lvalue) {}

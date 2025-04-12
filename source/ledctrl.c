@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <dirent.h>
 
-inline int getledpath(const char *find, int fsize, char* buffer, int size) {
+static int getledpath(const char *find, int fsize, char* buffer, int size) {
     DIR *dir;
     struct dirent *ent;
     if ((dir = opendir("/sys/class/leds")) != NULL) {
@@ -57,7 +57,7 @@ int getled(const char* led) {
         return -1;
     }
     int brightness = 0;
-    fscanf(fp, "%d", &brightness);
+    int siz = fscanf(fp, "%d", &brightness);
     fclose(fp);
     return brightness;
 }
@@ -72,7 +72,7 @@ int getledmax(const char* led) {
         return -1;
     }
     int max_brightness = 0;
-    fscanf(fp, "%d", &max_brightness);
+    int siz = fscanf(fp, "%d", &max_brightness);
     fclose(fp);
     return max_brightness;
 }

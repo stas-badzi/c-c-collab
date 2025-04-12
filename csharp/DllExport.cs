@@ -14,7 +14,7 @@ using _ = Cpp._;
 namespace CsExp {
 
     public class TextureSystem {
-        [UnmanagedCallersOnly(EntryPoint = "TextureSystem_ImportText")]
+        [UnmanagedCallersOnly(EntryPoint = "TextureSystem_ImportText", CallConvs = new[] { typeof(CallConvCdecl) })]
         public static IntPtr ImportText(IntPtr file)
         {
             int intptr_size = IntPtr.Size;
@@ -29,7 +29,7 @@ namespace CsExp {
 
             return output;
         }
-        [UnmanagedCallersOnly(EntryPoint = "TextureSystem_ExportText")]
+        [UnmanagedCallersOnly(EntryPoint = "TextureSystem_ExportText", CallConvs = new[] { typeof(CallConvCdecl) })]
         public static void ExportText(IntPtr path, IntPtr content) {
             if (path == IntPtr.Zero) {
                 _.ThrowMsg("Intptr $path Empty");
@@ -51,7 +51,7 @@ namespace CsExp {
 
             Cs.TextureSystem.ExportText(TypeConvert.PtrToString(path), text);
         }
-        [UnmanagedCallersOnly(EntryPoint = "TextureSystem_TextureFromFile")]
+        [UnmanagedCallersOnly(EntryPoint = "TextureSystem_TextureFromFile", CallConvs = new[] { typeof(CallConvCdecl) })]
         public static nint TextureFromFile(nint filepathPtr)
         {
             if (filepathPtr == IntPtr.Zero)
@@ -62,7 +62,7 @@ namespace CsExp {
 
             return TypeConvert.TextureToPtr(func);
         }
-        [UnmanagedCallersOnly(EntryPoint = "TextureSystem_FileFromTexture")]
+        [UnmanagedCallersOnly(EntryPoint = "TextureSystem_FileFromTexture", CallConvs = new[] { typeof(CallConvCdecl) })]
         public static void FileFromTexture(nint filepathPtr, nint texturePtr, bool recycle = false)
         {
             if (filepathPtr == IntPtr.Zero)
@@ -76,7 +76,7 @@ namespace CsExp {
 
             Cs.TextureSystem.FileFromTexture(filepath, texture, recycle);
         }
-        [UnmanagedCallersOnly(EntryPoint = "TextureSystem_DrawTextureToScreen")]
+        [UnmanagedCallersOnly(EntryPoint = "TextureSystem_DrawTextureToScreen", CallConvs = new[] { typeof(CallConvCdecl) })]
         public static void DrawTextureToScreen(int x, int y, nint texturePtr, nint screenPtr)
         {
             if (texturePtr == IntPtr.Zero)
@@ -92,7 +92,7 @@ namespace CsExp {
     }
 
     public class Control {
-        [UnmanagedCallersOnly(EntryPoint = "Control_CleanMemory")]
+        [UnmanagedCallersOnly(EntryPoint = "Control_CleanMemory", CallConvs = new[] { typeof(CallConvCdecl) })]
         public static void CleanMemory() {
             Cs.Control.CleanMemory();
         }
@@ -100,7 +100,7 @@ namespace CsExp {
 
     public class Console {
         public class Symbol {
-            [UnmanagedCallersOnly(EntryPoint = "Console_Symbol_ReverseColors")]
+            [UnmanagedCallersOnly(EntryPoint = "Console_Symbol_ReverseColors", CallConvs = new[] { typeof(CallConvCdecl) })]
             public static void ReverseColors(nint sym) {
                 Cs.Console.Symbol.ReverseColors(new Terminal.Symbol(sym, true));
             }
@@ -108,7 +108,7 @@ namespace CsExp {
     }
 
     public class SoundSystem {
-        [UnmanagedCallersOnly(EntryPoint = "SoundSystem_PlaySound")]
+        [UnmanagedCallersOnly(EntryPoint = "SoundSystem_PlaySound", CallConvs = new[] { typeof(CallConvCdecl) })]
         public static void PlaySound(IntPtr filepathPtr, bool wait = false) {
             if (filepathPtr == IntPtr.Zero)
                 _.ThrowMsg("Intptr $filepathPtr Empty");

@@ -21,7 +21,7 @@ namespace cppimp {
 
 
         inline void* Console_Symbol_Construct$cfb(uniconv::unichar character, uint8_t foreground = 7, uint8_t background = 0) {
-            void* out = new cpp::Console::Symbol(uniconv::UnicodeToUtf8(character), foreground, background);
+            void* out = new cpp::Console::Symbol(uniconv::UnicodeToNative(character), foreground, background);
         #ifdef _DEBUG
             __save$SYMBOLS(out);
         #endif
@@ -56,14 +56,14 @@ namespace cppimp {
         #ifdef _DEBUG
             __check$SYMBOLS(smb);
         #endif
-            smb->character = uniconv::UnicodeToUtf8(character);
+            smb->character = uniconv::UnicodeToNative(character);
         }
 
         inline uniconv::unichar Console_Symbol_character$get(cpp::Console::Symbol* smb) {
         #ifdef _DEBUG
             __check$SYMBOLS(smb);
         #endif
-            return uniconv::Utf8ToUnicode(smb->character);
+            return uniconv::NativeToUnicode(smb->character);
         }
 
         inline void Console_Symbol_foreground$set(cpp::Console::Symbol* smb, uint8_t foreground) {

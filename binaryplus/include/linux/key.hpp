@@ -44,6 +44,10 @@ public:
         NONE = 0xffff, /* only in KeyPressed when no key is pressed */
 
         // KT_LATIN is always 0 so it's just the values
+        // most of these values are locale-dependent
+        // generally they 0-255 represent '\x00'-'\xFF' and the key is what it prints in the terminal
+        // So ex. ToEnum('ą') works in latin-2, but fails with most other charsets because it doesn't exist in them and in UTF-8 it doesn't fit in 1 byte has to be ("ą")
+        // the ones here are from the latin-1 charset (whose values 0-127 are the same in ASCII and most other charsets)
         NUL = 0, /* ␀ */
         CTRL_A = 1, /* Ctrl + A */
         CTRL_B = 2, /* Ctrl + B */
@@ -172,102 +176,135 @@ public:
         BRACERIGHT = 125, /* } */
         ASCIITILDE = 126, /* ~ */
         DELETE = 127, /* ␡ */
-        NOBREAKSPACE = 128, /* ⍽ */
-        EXCLAMDOWN = 129, /* ¡ */
-        CENT = 130, /* ¢ */
-        STERLING = 131, /* £ */
-        CURRENCY = 132, /* ¤ */
-        YEN = 133, /* ¥ */
-        BROKENBAR = 134, /* ¦ */
-        SECTION = 135, /* § */
-        DIAERESIS = 136, /* ¨ */
-        COPYRIGHT = 137, /* © */
-        ORDFEMININE = 138, /* ª */
-        GUILLEMOTLEFT = 139, /* « */
-        NOTSIGN = 140, /* ¬ */
-        HYPHEN = 141, /* - */
-        REGISTERED = 142, /* ® */
-        MACRON = 143, /* ¯ */
-        DEGREE = 144, /* ° */
-        PLUSMINUS = 145, /* ± */
-        TWOSUPERIOR = 146, /* ² */
-        THREESUPERIOR = 147, /* ³ */
-        ACUTE = 148, /* ´ */
-        MU = 149, /* μ */
-        PARAGRAPH = 150, /* ¶ */
-        PERIODCENTERED = 151, /* · */
-        CEDILLA = 152, /* ç */
-        ONESUPERIOR = 153, /* ¹ */
-        MASCULINE = 154, /* ♂ */
-        GUILLEMOTRIGHT = 155, /* » */
-        ONEQUARTER = 156, /* ¼ */
-        ONEHALF = 157, /* ½ */
-        THREEQUARTERS = 158, /* ¾ */
-        QUESTIONDOWN = 159, /* ¿ */
-        A_GRAVE = 160, /* À */
-        A_ACUTE = 161, /* Á */
-        A_CIRCUMFLEX = 162, /* Â */
-        A_TILDE = 163, /* Ã */
-        A_DIAERESIS = 164, /* Ä */
-        A_RING = 165, /* Å */
-        AE = 166, /* Æ */
-        C_CEDILLA = 167, /* Ç */
-        E_GRAVE = 168, /* È */
-        E_ACUTE = 169, /* É */
-        E_CIRCUMFLEX = 170, /* Ê */
-        E_DIAERESIS = 171, /* Ë */
-        I_GRAVE = 172, /* Ì */
-        I_ACUTE = 173, /* Í */
-        I_CIRCUMFLEX = 174, /* Î */
-        I_DIAERESIS = 175, /* Ï */
-        ETH = 176, /* Ð */
-        N_TILDE = 177, /* Ñ */
-        O_GRAVE = 178, /* Ò */
-        O_ACUTE = 179, /* Ó */
-        O_CIRCUMFLEX = 180, /* Ô */
-        O_TILDE = 181, /* Õ */
-        O_DIAERESIS = 182, /* Ö */
-        MULTIPLY = 183, /* × */
-        O_SLASH = 184, /* Ø */
-        U_GRAVE = 185, /* Ù */
-        U_ACUTE = 186, /* Ú */
-        U_CIRCUMFLEX = 187, /* Û */
-        U_DIAERESIS = 188, /* Ü */
-        Y_ACUTE = 189, /* Ý */
-        THORN = 190, /* Þ */
-        SHARP_S = 191, /* ß */
-        a_grave = 192, /* à */
-        a_acute = 193, /* á */
-        a_circumflex = 194, /* â */
-        a_tilde = 195, /* ã */
-        a_diaeresis = 196, /* ä */
-        a_ring = 197, /* å */
-        ae = 198, /* æ */
-        c_cedilla = 199, /* ç */
-        e_grave = 200, /* è */
-        e_acute = 201, /* é */
-        e_circumflex = 202, /* ê */
-        e_diaeresis = 203, /* ë */
-        i_grave = 204, /* ì */
-        i_acute = 205, /* í */
-        i_circumflex = 206, /* î */
-        i_diaeresis = 207, /* ï */
-        eth = 208, /* ð */
-        n_tilde = 209, /* ñ */
-        o_grave = 210, /* ò */
-        o_acute = 211, /* ó */
-        o_circumflex = 212, /* ô */
-        o_tilde = 213, /* õ */
-        o_diaeresis = 214, /* ö */
-        DIVISION = 215, /* ÷ */
-        o_slash = 216, /* ø */
-        u_grave = 217, /* ù */
-        u_acute = 218, /* ú */
-        u_circumflex = 219, /* û */
-        u_diaeresis = 220, /* ü */
-        y_acute = 221, /* ý */
-        thorn = 222, /* þ */
-        y_diaeresis = 223, /* ÿ */
+        // generally from now on the values will differ in most charsets, the one's before only differ one's like cyrillic, greek, etc.
+        EMPTY_1, // in ISO-8859-* (latin-*) charsets chars 128-159 are invisable control chars, so they don't represent any key
+        EMPTY_2, // we include them here to so that they don't get tured into Key::Enum::HOLE when using Key::ToEnum('') with them
+        EMPTY_3,
+        EMPTY_4,
+        EMPTY_5,
+        EMPTY_6,
+        EMPTY_7,
+        EMPTY_8,
+        EMPTY_9,
+        EMPTY_10,
+        EMPTY_11,
+        EMPTY_12,
+        EMPTY_13,
+        EMPTY_14,
+        EMPTY_15,
+        EMPTY_16,
+        EMPTY_17,
+        EMPTY_18,
+        EMPTY_19,
+        EMPTY_20,
+        EMPTY_21,
+        EMPTY_22,
+        EMPTY_23,
+        EMPTY_24,
+        EMPTY_25,
+        EMPTY_26,
+        EMPTY_27,
+        EMPTY_28,
+        EMPTY_29,
+        EMPTY_30,
+        EMPTY_31,
+        EMPTY_32,
+        NOBREAKSPACE = 160, /* ⍽ */
+        EXCLAMDOWN = 161, /* ¡ */
+        CENT = 162, /* ¢ */
+        STERLING = 163, /* £ */
+        CURRENCY = 164, /* ¤ */
+        YEN = 165, /* ¥ */
+        BROKENBAR = 166, /* ¦ */
+        SECTION = 167, /* § */
+        DIAERESIS = 168, /* ¨ */
+        COPYRIGHT = 169, /* © */
+        ORDFEMININE = 170, /* ª */
+        GUILLEMOTLEFT = 171, /* « */
+        NOTSIGN = 172, /* ¬ */
+        HYPHEN = 173, /* - */
+        REGISTERED = 174, /* ® */
+        MACRON = 175, /* ¯ */
+        DEGREE = 176, /* ° */
+        PLUSMINUS = 177, /* ± */
+        TWOSUPERIOR = 178, /* ² */
+        THREESUPERIOR = 179, /* ³ */
+        ACUTE = 180, /* ´ */
+        MU = 181, /* µ */
+        PARAGRAPH = 182, /* ¶ */
+        PERIODCENTERED = 183, /* · */
+        CEDILLA = 184, /* ç */
+        ONESUPERIOR = 185, /* ¹ */
+        MASCULINE = 186, /* ♂ */
+        GUILLEMOTRIGHT = 187, /* » */
+        ONEQUARTER = 188, /* ¼ */
+        ONEHALF = 189, /* ½ */
+        THREEQUARTERS = 190, /* ¾ */
+        QUESTIONDOWN = 191, /* ¿ */
+        A_GRAVE = 192, /* À */
+        A_ACUTE = 193, /* Á */
+        A_CIRCUMFLEX = 194, /* Â */
+        A_TILDE = 195, /* Ã */
+        A_DIAERESIS = 196, /* Ä */
+        A_RING = 197, /* Å */
+        AE = 198, /* Æ */
+        C_CEDILLA = 199, /* Ç */
+        E_GRAVE = 200, /* È */
+        E_ACUTE = 201, /* É */
+        E_CIRCUMFLEX = 202, /* Ê */
+        E_DIAERESIS = 203, /* Ë */
+        I_GRAVE = 204, /* Ì */
+        I_ACUTE = 205, /* Í */
+        I_CIRCUMFLEX = 206, /* Î */
+        I_DIAERESIS = 207, /* Ï */
+        ETH = 208, /* Ð */
+        N_TILDE = 209, /* Ñ */
+        O_GRAVE = 210, /* Ò */
+        O_ACUTE = 211, /* Ó */
+        O_CIRCUMFLEX = 212, /* Ô */
+        O_TILDE = 213, /* Õ */
+        O_DIAERESIS = 214, /* Ö */
+        MULTIPLY = 215, /* × */
+        O_SLASH = 216, /* Ø */
+        U_GRAVE = 217, /* Ù */
+        U_ACUTE = 218, /* Ú */
+        U_CIRCUMFLEX = 219, /* Û */
+        U_DIAERESIS = 220, /* Ü */
+        Y_ACUTE = 221, /* Ý */
+        THORN = 222, /* Þ */
+        SHARP_S = 223, /* ß */
+        a_grave = 224, /* à */
+        a_acute = 225, /* á */
+        a_circumflex = 226, /* â */
+        a_tilde = 227, /* ã */
+        a_diaeresis = 228, /* ä */
+        a_ring = 229, /* å */
+        ae = 230, /* æ */
+        c_cedilla = 231, /* ç */
+        e_grave = 232, /* è */
+        e_acute = 233, /* é */
+        e_circumflex = 234, /* ê */
+        e_diaeresis = 235, /* ë */
+        i_grave = 236, /* ì */
+        i_acute = 237, /* í */
+        i_circumflex = 238, /* î */
+        i_diaeresis = 239, /* ï */
+        eth = 240, /* ð */
+        n_tilde = 241, /* ñ */
+        o_grave = 242, /* ò */
+        o_acute = 243, /* ó */
+        o_circumflex = 244, /* ô */
+        o_tilde = 245, /* õ */
+        o_diaeresis = 246, /* ö */
+        DIVISION = 247, /* ÷ */
+        o_slash = 248, /* ø */
+        u_grave = 249, /* ù */
+        u_acute = 250, /* ú */
+        u_circumflex = 251, /* û */
+        u_diaeresis = 252, /* ü */
+        y_acute = 253, /* ý */
+        thorn = 254, /* þ */
+        y_diaeresis = 255, /* ÿ */
 
         // KT_FN
         F1 = K_F1, /* F1 */
@@ -827,5 +864,5 @@ public:
         EISU , /* Eisu (on JIS keyboards) */
         FN , /* Function key */
         };
-    using Class = EnumCheck<Enum, Enum::HOLE, Enum::NONE, Enum::NUL, Enum::CTRL_A, Enum::CTRL_B, Enum::CTRL_C, Enum::CTRL_D, Enum::CTRL_E, Enum::CTRL_F, Enum::CTRL_G, Enum::BACKSPACE, Enum::TAB, Enum::LINEFEED, Enum::CTRL_K, Enum::CTRL_L, Enum::CTRL_M, Enum::CTRL_N, Enum::CTRL_O, Enum::CTRL_P, Enum::CTRL_Q, Enum::CTRL_R, Enum::CTRL_S, Enum::CTRL_T, Enum::CTRL_U, Enum::CTRL_V, Enum::CTRL_W, Enum::CTRL_X, Enum::CTRL_Y, Enum::CTRL_Z, Enum::ESC, Enum::CTRL_BACKSLASH, Enum::CTRL_BRACKETRIGHT, Enum::CTRL_ASCIICIRCUM, Enum::CTRL_UNDERSCORE, Enum::SPACE, Enum::ESCLAM, Enum::DBLQUOTE, Enum::NUMBERSIGN, Enum::DOLLAR, Enum::PERCENT, Enum::AMPERSAND, Enum::APOSTROPHE, Enum::PARENLEFT, Enum::PARENRIGHT, Enum::ASTERISK, Enum::PLUS, Enum::COMMA, Enum::MINUS, Enum::PERIOD, Enum::SLASH, Enum::/*$0*/ZERO, Enum::/*$1*/ONE, Enum::/*$2*/TWO, Enum::/*$3*/THREE, Enum::/*$4*/FOUR, Enum::/*$5*/FIVE, Enum::/*$6*/SIX, Enum::/*$7*/SEVEN, Enum::/*$8*/EIGHT, Enum::/*$9*/NINE, Enum::COLON, Enum::SEMICOLON, Enum::LESS, Enum::EQUAL, Enum::GREATER, Enum::QUESTION, Enum::AT, Enum::A, Enum::B, Enum::C, Enum::D, Enum::E, Enum::F, Enum::G, Enum::H, Enum::I, Enum::J, Enum::K, Enum::L, Enum::M, Enum::N, Enum::O, Enum::P, Enum::Q, Enum::R, Enum::S, Enum::T, Enum::U, Enum::V, Enum::W, Enum::X, Enum::Y, Enum::Z, Enum::BRACKETLEFT, Enum::BACKSLASH, Enum::BRACKETRIGHT, Enum::ASCIICIRCUM, Enum::UNDERSCORE, Enum::GRAVE, Enum::a, Enum::b, Enum::c, Enum::d, Enum::e, Enum::f, Enum::g, Enum::h, Enum::i, Enum::j, Enum::k, Enum::l, Enum::m, Enum::n, Enum::o, Enum::p, Enum::q, Enum::r, Enum::s, Enum::t, Enum::u, Enum::v, Enum::w, Enum::x, Enum::y, Enum::z, Enum::BRACELEFT, Enum::BAR, Enum::BRACERIGHT, Enum::ASCIITILDE, Enum::DELETE, Enum::NOBREAKSPACE, Enum::EXCLAMDOWN, Enum::CENT, Enum::STERLING, Enum::CURRENCY, Enum::YEN, Enum::BROKENBAR, Enum::SECTION, Enum::DIAERESIS, Enum::COPYRIGHT, Enum::ORDFEMININE, Enum::GUILLEMOTLEFT, Enum::NOTSIGN, Enum::HYPHEN, Enum::REGISTERED, Enum::MACRON, Enum::DEGREE, Enum::PLUSMINUS, Enum::TWOSUPERIOR, Enum::THREESUPERIOR, Enum::ACUTE, Enum::MU, Enum::PARAGRAPH, Enum::PERIODCENTERED, Enum::CEDILLA, Enum::ONESUPERIOR, Enum::MASCULINE, Enum::GUILLEMOTRIGHT, Enum::ONEQUARTER, Enum::ONEHALF, Enum::THREEQUARTERS, Enum::QUESTIONDOWN, Enum::A_GRAVE, Enum::A_ACUTE, Enum::A_CIRCUMFLEX, Enum::A_TILDE, Enum::A_DIAERESIS, Enum::A_RING, Enum::AE, Enum::C_CEDILLA, Enum::E_GRAVE, Enum::E_ACUTE, Enum::E_CIRCUMFLEX, Enum::E_DIAERESIS, Enum::I_GRAVE, Enum::I_ACUTE, Enum::I_CIRCUMFLEX, Enum::I_DIAERESIS, Enum::ETH, Enum::N_TILDE, Enum::O_GRAVE, Enum::O_ACUTE, Enum::O_CIRCUMFLEX, Enum::O_TILDE, Enum::O_DIAERESIS, Enum::MULTIPLY, Enum::O_SLASH, Enum::U_GRAVE, Enum::U_ACUTE, Enum::U_CIRCUMFLEX, Enum::U_DIAERESIS, Enum::Y_ACUTE, Enum::THORN, Enum::SHARP_S, Enum::a_grave, Enum::a_acute, Enum::a_circumflex, Enum::a_tilde, Enum::a_diaeresis, Enum::a_ring, Enum::ae, Enum::c_cedilla, Enum::e_grave, Enum::e_acute, Enum::e_circumflex, Enum::e_diaeresis, Enum::i_grave, Enum::i_acute, Enum::i_circumflex, Enum::i_diaeresis, Enum::eth, Enum::n_tilde, Enum::o_grave, Enum::o_acute, Enum::o_circumflex, Enum::o_tilde, Enum::o_diaeresis, Enum::DIVISION, Enum::o_slash, Enum::u_grave, Enum::u_acute, Enum::u_circumflex, Enum::u_diaeresis, Enum::y_acute, Enum::thorn, Enum::y_diaeresis, Enum::F1, Enum::F2, Enum::F3, Enum::F4, Enum::F5, Enum::F6, Enum::F7, Enum::F8, Enum::F9, Enum::F10, Enum::F11, Enum::F12, Enum::F13, Enum::F14, Enum::F15, Enum::F16, Enum::F17, Enum::F18, Enum::F19, Enum::F20, Enum::FIND, Enum::INSERT, Enum::REMOVE, Enum::END, Enum::SELECT, Enum::PGUP, Enum::PGDN, Enum::MACRO, Enum::HELP, Enum::DO, Enum::PAUSE, Enum::F21, Enum::F22, Enum::F23, Enum::F24, Enum::F25, Enum::F26, Enum::F27, Enum::F28, Enum::F29, Enum::F30, Enum::F31, Enum::F32, Enum::F33, Enum::F34, Enum::F35, Enum::F36, Enum::F37, Enum::F38, Enum::F39, Enum::F40, Enum::F41, Enum::F42, Enum::F43, Enum::F44, Enum::F45, Enum::F46, Enum::F47, Enum::F48, Enum::F49, Enum::F50, Enum::F51, Enum::F52, Enum::F53, Enum::F54, Enum::F55, Enum::F56, Enum::F57, Enum::F58, Enum::F59, Enum::F60, Enum::F61, Enum::F62, Enum::F63, Enum::F64, Enum::F65, Enum::F66, Enum::F67, Enum::F68, Enum::F69, Enum::F70, Enum::F71, Enum::F72, Enum::F73, Enum::F74, Enum::F75, Enum::F76, Enum::F77, Enum::F78, Enum::F79, Enum::F80, Enum::F81, Enum::F82, Enum::F83, Enum::F84, Enum::F85, Enum::F86, Enum::F87, Enum::F88, Enum::F89, Enum::F90, Enum::F91, Enum::F92, Enum::F93, Enum::F94, Enum::F95, Enum::F96, Enum::F97, Enum::F98, Enum::F99, Enum::F100, Enum::F101, Enum::F102, Enum::F103, Enum::F104, Enum::F105, Enum::F106, Enum::F107, Enum::F108, Enum::F109, Enum::F110, Enum::F111, Enum::F112, Enum::F113, Enum::F114, Enum::F115, Enum::F116, Enum::F117, Enum::F118, Enum::F119, Enum::F120, Enum::F121, Enum::F122, Enum::F123, Enum::F124, Enum::F125, Enum::F126, Enum::F127, Enum::F128, Enum::F129, Enum::F130, Enum::F131, Enum::F132, Enum::F133, Enum::F134, Enum::F135, Enum::F136, Enum::F137, Enum::F138, Enum::F139, Enum::F140, Enum::F141, Enum::F142, Enum::F143, Enum::F144, Enum::F145, Enum::F146, Enum::F147, Enum::F148, Enum::F149, Enum::F150, Enum::F151, Enum::F152, Enum::F153, Enum::F154, Enum::F155, Enum::F156, Enum::F157, Enum::F158, Enum::F159, Enum::F160, Enum::F161, Enum::F162, Enum::F163, Enum::F164, Enum::F165, Enum::F166, Enum::F167, Enum::F168, Enum::F169, Enum::F170, Enum::F171, Enum::F172, Enum::F173, Enum::F174, Enum::F175, Enum::F176, Enum::F177, Enum::F178, Enum::F179, Enum::F180, Enum::F181, Enum::F182, Enum::F183, Enum::F184, Enum::F185, Enum::F186, Enum::F187, Enum::F188, Enum::F189, Enum::F190, Enum::F191, Enum::F192, Enum::F193, Enum::F194, Enum::F195, Enum::F196, Enum::F197, Enum::F198, Enum::F199, Enum::F200, Enum::F201, Enum::F202, Enum::F203, Enum::F204, Enum::F205, Enum::F206, Enum::F207, Enum::F208, Enum::F209, Enum::F210, Enum::F211, Enum::F212, Enum::F213, Enum::F214, Enum::F215, Enum::F216, Enum::F217, Enum::F218, Enum::F219, Enum::F220, Enum::F221, Enum::F222, Enum::F223, Enum::F224, Enum::F225, Enum::F226, Enum::F227, Enum::F228, Enum::F229, Enum::F230, Enum::F231, Enum::F232, Enum::F233, Enum::F234, Enum::F235, Enum::F236, Enum::F237, Enum::F238, Enum::F239, Enum::F240, Enum::F241, Enum::F242, Enum::F243, Enum::F244, Enum::F245, Enum::UNDO, Enum::HOLE, Enum::ENTER, Enum::SH_REGS, Enum::SH_MEM, Enum::SH_STAT, Enum::BREAK, Enum::CONS, Enum::CAPS, Enum::NUM, Enum::HOLD, Enum::SCROLLFORW, Enum::SCROLLBACK, Enum::BOOT, Enum::CAPSON, Enum::COMPOSE, Enum::SAK, Enum::DECRCONSOLE, Enum::INCRCONSOLE, Enum::SPAWNCONSOLE, Enum::BARENUMLOCK, Enum::KP0, Enum::KP1, Enum::KP2, Enum::KP3, Enum::KP4, Enum::KP5, Enum::KP6, Enum::KP7, Enum::KP8, Enum::KP9, Enum::KPPLUS, Enum::KPMINUS, Enum::KPSTAR, Enum::KPSLASH, Enum::KPENTER, Enum::KPCOMMA, Enum::KPDOT, Enum::KPPLUSMINUS, Enum::KPPARENL, Enum::KPPARENR, Enum::DGRAVE, Enum::DACUTE, Enum::DCIRCM, Enum::DTILDE, Enum::DDIERE, Enum::DCEDIL, Enum::DMACRON, Enum::DBREVE, Enum::DABDOT, Enum::DABRING, Enum::DDBACUTE, Enum::DCARON, Enum::DOGONEK, Enum::DIOTA, Enum::DVOICED, Enum::DSEMVOICED, Enum::DBEDOT, Enum::DHOOK, Enum::DHORN, Enum::DSTROKE, Enum::DABCOMMA, Enum::DABREVCOMMA, Enum::DDBGRAVE, Enum::DINVBREVE, Enum::DBECOMMA, Enum::DCURRENCY, Enum::DGREEK, Enum::ARROW_DOWN, Enum::ARROW_LEFT, Enum::ARROW_RIGHT, Enum::ARROW_UP, Enum::SHIFT, Enum::CTRL, Enum::ALT, Enum::ALTGR, Enum::SHIFTL, Enum::SHIFTR, Enum::CTRLL, Enum::CTRLR, Enum::CAPSSHIFT, Enum::ASC0, Enum::ASC1, Enum::ASC2, Enum::ASC3, Enum::ASC4, Enum::ASC5, Enum::ASC6, Enum::ASC7, Enum::ASC8, Enum::ASC9, Enum::HEX0, Enum::HEX1, Enum::HEX2, Enum::HEX3, Enum::HEX4, Enum::HEX5, Enum::HEX6, Enum::HEX7, Enum::HEX8, Enum::HEX9, Enum::HEXa, Enum::HEXb, Enum::HEXc, Enum::HEXd, Enum::HEXe, Enum::HEXf, Enum::SHIFTLOCK, Enum::CTRLLOCK, Enum::ALTLOCK, Enum::ALTGRLOCK, Enum::SHIFTLLOCK, Enum::SHIFTRLOCK, Enum::CTRLLLOCK, Enum::CTRLRLOCK, Enum::CAPSSHIFTLOCK, Enum::SHIFT_SLOCK, Enum::CTRL_SLOCK, Enum::ALT_SLOCK, Enum::ALTGR_SLOCK, Enum::SHIFTL_SLOCK, Enum::SHIFTR_SLOCK, Enum::CTRLL_SLOCK, Enum::CTRLR_SLOCK, Enum::CAPSSHIFT_SLOCK, Enum::BRL_BLANK, Enum::BRL_DOT1, Enum::BRL_DOT2, Enum::BRL_DOT3, Enum::BRL_DOT4, Enum::BRL_DOT5, Enum::BRL_DOT6, Enum::BRL_DOT7, Enum::BRL_DOT8, Enum::BRL_DOT9, Enum::BRL_DOT10, Enum::CONSOLE1, Enum::CONSOLE2, Enum::CONSOLE3, Enum::CONSOLE4, Enum::CONSOLE5, Enum::CONSOLE6, Enum::CONSOLE7, Enum::CONSOLE8, Enum::CONSOLE9, Enum::CONSOLE10, Enum::CONSOLE11, Enum::CONSOLE12, Enum::CONSOLE13, Enum::CONSOLE14, Enum::CONSOLE15, Enum::CONSOLE16, Enum::CONSOLE17, Enum::CONSOLE18, Enum::CONSOLE19, Enum::CONSOLE20, Enum::CONSOLE21, Enum::CONSOLE22, Enum::CONSOLE23, Enum::CONSOLE24, Enum::CONSOLE25, Enum::CONSOLE26, Enum::CONSOLE27, Enum::CONSOLE28, Enum::CONSOLE29, Enum::CONSOLE30, Enum::CONSOLE31, Enum::CONSOLE32, Enum::CONSOLE33, Enum::CONSOLE34, Enum::CONSOLE35, Enum::CONSOLE36, Enum::CONSOLE37, Enum::CONSOLE38, Enum::CONSOLE39, Enum::CONSOLE40, Enum::CONSOLE41, Enum::CONSOLE42, Enum::CONSOLE43, Enum::CONSOLE44, Enum::CONSOLE45, Enum::CONSOLE46, Enum::CONSOLE47, Enum::CONSOLE48, Enum::CONSOLE49, Enum::CONSOLE50, Enum::CONSOLE51, Enum::CONSOLE52, Enum::CONSOLE53, Enum::CONSOLE54, Enum::CONSOLE55, Enum::CONSOLE56, Enum::CONSOLE57, Enum::CONSOLE58, Enum::CONSOLE59, Enum::CONSOLE60, Enum::CONSOLE61, Enum::CONSOLE62, Enum::CONSOLE63, Enum::CANCEL, Enum::KPCLEAR, Enum::KANA, Enum::HANGUL, Enum::IME_ON, Enum::JUNJA, Enum::FINAL, Enum::HANJA, Enum::KANJI, Enum::IME_OFF, Enum::CONVERT, Enum::NONCONVERT, Enum::ACCEPT, Enum::MODECHANGE, Enum::PRINT, Enum::EXECUTE, Enum::SNAPSHOT, Enum::SUPERL, Enum::SUPERR, Enum::MENU, Enum::SLEEP, Enum::AALT, Enum::BROWSER_BACK, Enum::BROWSER_FORWARD, Enum::BROWSER_REFRESH, Enum::BROWSER_STOP, Enum::BROWSER_SEARCH, Enum::BROWSER_FAVORITES, Enum::BROWSER_HOME, Enum::VOLUME_MUTE, Enum::VOLUME_DOWN, Enum::VOLUME_UP, Enum::NEXT_TRACK, Enum::PREV_TRACK, Enum::STOP, Enum::PLAY_PAUSE, Enum::LAUNCH_MAIL, Enum::LAUNCH_MEDIA_SELECT, Enum::LAUNCH_APP1, Enum::LAUNCH_APP2, Enum::MISC, Enum::PROCCESS, Enum::ATTN, Enum::CRSEL, Enum::EXSEL, Enum::EREOF, Enum::PLAY, Enum::ZOOM, Enum::PA1, Enum::CLEAR, Enum::KPEQUAL, Enum::DICTIONARY, Enum::UNREGISTER, Enum::REGISTERE, Enum::OYAYUBIL, Enum::OYAYUBIR, Enum::AX, Enum::HELP_ICO, Enum::_00_ICO, Enum::CLEAR_ICO, Enum::RESET, Enum::JUMP, Enum::PA1_2, Enum::PA2, Enum::PA3, Enum::WSCTRL, Enum::CUSEL, Enum::ATTN2, Enum::FINISH, Enum::COPY, Enum::AUTO, Enum::ENLW, Enum::BACKTAB, Enum::EISU, Enum::FN>;
+    using Class = EnumCheck<Enum, Enum::HOLE, Enum::NONE, Enum::NUL, Enum::CTRL_A, Enum::CTRL_B, Enum::CTRL_C, Enum::CTRL_D, Enum::CTRL_E, Enum::CTRL_F, Enum::CTRL_G, Enum::BACKSPACE, Enum::TAB, Enum::LINEFEED, Enum::CTRL_K, Enum::CTRL_L, Enum::CTRL_M, Enum::CTRL_N, Enum::CTRL_O, Enum::CTRL_P, Enum::CTRL_Q, Enum::CTRL_R, Enum::CTRL_S, Enum::CTRL_T, Enum::CTRL_U, Enum::CTRL_V, Enum::CTRL_W, Enum::CTRL_X, Enum::CTRL_Y, Enum::CTRL_Z, Enum::ESC, Enum::CTRL_BACKSLASH, Enum::CTRL_BRACKETRIGHT, Enum::CTRL_ASCIICIRCUM, Enum::CTRL_UNDERSCORE, Enum::SPACE, Enum::ESCLAM, Enum::DBLQUOTE, Enum::NUMBERSIGN, Enum::DOLLAR, Enum::PERCENT, Enum::AMPERSAND, Enum::APOSTROPHE, Enum::PARENLEFT, Enum::PARENRIGHT, Enum::ASTERISK, Enum::PLUS, Enum::COMMA, Enum::MINUS, Enum::PERIOD, Enum::SLASH, Enum::/*$0*/ZERO, Enum::/*$1*/ONE, Enum::/*$2*/TWO, Enum::/*$3*/THREE, Enum::/*$4*/FOUR, Enum::/*$5*/FIVE, Enum::/*$6*/SIX, Enum::/*$7*/SEVEN, Enum::/*$8*/EIGHT, Enum::/*$9*/NINE, Enum::COLON, Enum::SEMICOLON, Enum::LESS, Enum::EQUAL, Enum::GREATER, Enum::QUESTION, Enum::AT, Enum::A, Enum::B, Enum::C, Enum::D, Enum::E, Enum::F, Enum::G, Enum::H, Enum::I, Enum::J, Enum::K, Enum::L, Enum::M, Enum::N, Enum::O, Enum::P, Enum::Q, Enum::R, Enum::S, Enum::T, Enum::U, Enum::V, Enum::W, Enum::X, Enum::Y, Enum::Z, Enum::BRACKETLEFT, Enum::BACKSLASH, Enum::BRACKETRIGHT, Enum::ASCIICIRCUM, Enum::UNDERSCORE, Enum::GRAVE, Enum::a, Enum::b, Enum::c, Enum::d, Enum::e, Enum::f, Enum::g, Enum::h, Enum::i, Enum::j, Enum::k, Enum::l, Enum::m, Enum::n, Enum::o, Enum::p, Enum::q, Enum::r, Enum::s, Enum::t, Enum::u, Enum::v, Enum::w, Enum::x, Enum::y, Enum::z, Enum::BRACELEFT, Enum::BAR, Enum::BRACERIGHT, Enum::ASCIITILDE, Enum::DELETE, Enum::EMPTY_1, Enum::EMPTY_2, Enum::EMPTY_3, Enum::EMPTY_4, Enum::EMPTY_5, Enum::EMPTY_6, Enum::EMPTY_7, Enum::EMPTY_8, Enum::EMPTY_9, Enum::EMPTY_10, Enum::EMPTY_11, Enum::EMPTY_12, Enum::EMPTY_13, Enum::EMPTY_14, Enum::EMPTY_15, Enum::EMPTY_16, Enum::EMPTY_17, Enum::EMPTY_18, Enum::EMPTY_19, Enum::EMPTY_20, Enum::EMPTY_21, Enum::EMPTY_22, Enum::EMPTY_23, Enum::EMPTY_24, Enum::EMPTY_25, Enum::EMPTY_26, Enum::EMPTY_27, Enum::EMPTY_28, Enum::EMPTY_29, Enum::EMPTY_30, Enum::EMPTY_31, Enum::EMPTY_32, Enum::NOBREAKSPACE, Enum::EXCLAMDOWN, Enum::CENT, Enum::STERLING, Enum::CURRENCY, Enum::YEN, Enum::BROKENBAR, Enum::SECTION, Enum::DIAERESIS, Enum::COPYRIGHT, Enum::ORDFEMININE, Enum::GUILLEMOTLEFT, Enum::NOTSIGN, Enum::HYPHEN, Enum::REGISTERED, Enum::MACRON, Enum::DEGREE, Enum::PLUSMINUS, Enum::TWOSUPERIOR, Enum::THREESUPERIOR, Enum::ACUTE, Enum::MU, Enum::PARAGRAPH, Enum::PERIODCENTERED, Enum::CEDILLA, Enum::ONESUPERIOR, Enum::MASCULINE, Enum::GUILLEMOTRIGHT, Enum::ONEQUARTER, Enum::ONEHALF, Enum::THREEQUARTERS, Enum::QUESTIONDOWN, Enum::A_GRAVE, Enum::A_ACUTE, Enum::A_CIRCUMFLEX, Enum::A_TILDE, Enum::A_DIAERESIS, Enum::A_RING, Enum::AE, Enum::C_CEDILLA, Enum::E_GRAVE, Enum::E_ACUTE, Enum::E_CIRCUMFLEX, Enum::E_DIAERESIS, Enum::I_GRAVE, Enum::I_ACUTE, Enum::I_CIRCUMFLEX, Enum::I_DIAERESIS, Enum::ETH, Enum::N_TILDE, Enum::O_GRAVE, Enum::O_ACUTE, Enum::O_CIRCUMFLEX, Enum::O_TILDE, Enum::O_DIAERESIS, Enum::MULTIPLY, Enum::O_SLASH, Enum::U_GRAVE, Enum::U_ACUTE, Enum::U_CIRCUMFLEX, Enum::U_DIAERESIS, Enum::Y_ACUTE, Enum::THORN, Enum::SHARP_S, Enum::a_grave, Enum::a_acute, Enum::a_circumflex, Enum::a_tilde, Enum::a_diaeresis, Enum::a_ring, Enum::ae, Enum::c_cedilla, Enum::e_grave, Enum::e_acute, Enum::e_circumflex, Enum::e_diaeresis, Enum::i_grave, Enum::i_acute, Enum::i_circumflex, Enum::i_diaeresis, Enum::eth, Enum::n_tilde, Enum::o_grave, Enum::o_acute, Enum::o_circumflex, Enum::o_tilde, Enum::o_diaeresis, Enum::DIVISION, Enum::o_slash, Enum::u_grave, Enum::u_acute, Enum::u_circumflex, Enum::u_diaeresis, Enum::y_acute, Enum::thorn, Enum::y_diaeresis, Enum::F1, Enum::F2, Enum::F3, Enum::F4, Enum::F5, Enum::F6, Enum::F7, Enum::F8, Enum::F9, Enum::F10, Enum::F11, Enum::F12, Enum::F13, Enum::F14, Enum::F15, Enum::F16, Enum::F17, Enum::F18, Enum::F19, Enum::F20, Enum::FIND, Enum::INSERT, Enum::REMOVE, Enum::END, Enum::SELECT, Enum::PGUP, Enum::PGDN, Enum::MACRO, Enum::HELP, Enum::DO, Enum::PAUSE, Enum::F21, Enum::F22, Enum::F23, Enum::F24, Enum::F25, Enum::F26, Enum::F27, Enum::F28, Enum::F29, Enum::F30, Enum::F31, Enum::F32, Enum::F33, Enum::F34, Enum::F35, Enum::F36, Enum::F37, Enum::F38, Enum::F39, Enum::F40, Enum::F41, Enum::F42, Enum::F43, Enum::F44, Enum::F45, Enum::F46, Enum::F47, Enum::F48, Enum::F49, Enum::F50, Enum::F51, Enum::F52, Enum::F53, Enum::F54, Enum::F55, Enum::F56, Enum::F57, Enum::F58, Enum::F59, Enum::F60, Enum::F61, Enum::F62, Enum::F63, Enum::F64, Enum::F65, Enum::F66, Enum::F67, Enum::F68, Enum::F69, Enum::F70, Enum::F71, Enum::F72, Enum::F73, Enum::F74, Enum::F75, Enum::F76, Enum::F77, Enum::F78, Enum::F79, Enum::F80, Enum::F81, Enum::F82, Enum::F83, Enum::F84, Enum::F85, Enum::F86, Enum::F87, Enum::F88, Enum::F89, Enum::F90, Enum::F91, Enum::F92, Enum::F93, Enum::F94, Enum::F95, Enum::F96, Enum::F97, Enum::F98, Enum::F99, Enum::F100, Enum::F101, Enum::F102, Enum::F103, Enum::F104, Enum::F105, Enum::F106, Enum::F107, Enum::F108, Enum::F109, Enum::F110, Enum::F111, Enum::F112, Enum::F113, Enum::F114, Enum::F115, Enum::F116, Enum::F117, Enum::F118, Enum::F119, Enum::F120, Enum::F121, Enum::F122, Enum::F123, Enum::F124, Enum::F125, Enum::F126, Enum::F127, Enum::F128, Enum::F129, Enum::F130, Enum::F131, Enum::F132, Enum::F133, Enum::F134, Enum::F135, Enum::F136, Enum::F137, Enum::F138, Enum::F139, Enum::F140, Enum::F141, Enum::F142, Enum::F143, Enum::F144, Enum::F145, Enum::F146, Enum::F147, Enum::F148, Enum::F149, Enum::F150, Enum::F151, Enum::F152, Enum::F153, Enum::F154, Enum::F155, Enum::F156, Enum::F157, Enum::F158, Enum::F159, Enum::F160, Enum::F161, Enum::F162, Enum::F163, Enum::F164, Enum::F165, Enum::F166, Enum::F167, Enum::F168, Enum::F169, Enum::F170, Enum::F171, Enum::F172, Enum::F173, Enum::F174, Enum::F175, Enum::F176, Enum::F177, Enum::F178, Enum::F179, Enum::F180, Enum::F181, Enum::F182, Enum::F183, Enum::F184, Enum::F185, Enum::F186, Enum::F187, Enum::F188, Enum::F189, Enum::F190, Enum::F191, Enum::F192, Enum::F193, Enum::F194, Enum::F195, Enum::F196, Enum::F197, Enum::F198, Enum::F199, Enum::F200, Enum::F201, Enum::F202, Enum::F203, Enum::F204, Enum::F205, Enum::F206, Enum::F207, Enum::F208, Enum::F209, Enum::F210, Enum::F211, Enum::F212, Enum::F213, Enum::F214, Enum::F215, Enum::F216, Enum::F217, Enum::F218, Enum::F219, Enum::F220, Enum::F221, Enum::F222, Enum::F223, Enum::F224, Enum::F225, Enum::F226, Enum::F227, Enum::F228, Enum::F229, Enum::F230, Enum::F231, Enum::F232, Enum::F233, Enum::F234, Enum::F235, Enum::F236, Enum::F237, Enum::F238, Enum::F239, Enum::F240, Enum::F241, Enum::F242, Enum::F243, Enum::F244, Enum::F245, Enum::UNDO, Enum::HOLE, Enum::ENTER, Enum::SH_REGS, Enum::SH_MEM, Enum::SH_STAT, Enum::BREAK, Enum::CONS, Enum::CAPS, Enum::NUM, Enum::HOLD, Enum::SCROLLFORW, Enum::SCROLLBACK, Enum::BOOT, Enum::CAPSON, Enum::COMPOSE, Enum::SAK, Enum::DECRCONSOLE, Enum::INCRCONSOLE, Enum::SPAWNCONSOLE, Enum::BARENUMLOCK, Enum::KP0, Enum::KP1, Enum::KP2, Enum::KP3, Enum::KP4, Enum::KP5, Enum::KP6, Enum::KP7, Enum::KP8, Enum::KP9, Enum::KPPLUS, Enum::KPMINUS, Enum::KPSTAR, Enum::KPSLASH, Enum::KPENTER, Enum::KPCOMMA, Enum::KPDOT, Enum::KPPLUSMINUS, Enum::KPPARENL, Enum::KPPARENR, Enum::DGRAVE, Enum::DACUTE, Enum::DCIRCM, Enum::DTILDE, Enum::DDIERE, Enum::DCEDIL, Enum::DMACRON, Enum::DBREVE, Enum::DABDOT, Enum::DABRING, Enum::DDBACUTE, Enum::DCARON, Enum::DOGONEK, Enum::DIOTA, Enum::DVOICED, Enum::DSEMVOICED, Enum::DBEDOT, Enum::DHOOK, Enum::DHORN, Enum::DSTROKE, Enum::DABCOMMA, Enum::DABREVCOMMA, Enum::DDBGRAVE, Enum::DINVBREVE, Enum::DBECOMMA, Enum::DCURRENCY, Enum::DGREEK, Enum::ARROW_DOWN, Enum::ARROW_LEFT, Enum::ARROW_RIGHT, Enum::ARROW_UP, Enum::SHIFT, Enum::CTRL, Enum::ALT, Enum::ALTGR, Enum::SHIFTL, Enum::SHIFTR, Enum::CTRLL, Enum::CTRLR, Enum::CAPSSHIFT, Enum::ASC0, Enum::ASC1, Enum::ASC2, Enum::ASC3, Enum::ASC4, Enum::ASC5, Enum::ASC6, Enum::ASC7, Enum::ASC8, Enum::ASC9, Enum::HEX0, Enum::HEX1, Enum::HEX2, Enum::HEX3, Enum::HEX4, Enum::HEX5, Enum::HEX6, Enum::HEX7, Enum::HEX8, Enum::HEX9, Enum::HEXa, Enum::HEXb, Enum::HEXc, Enum::HEXd, Enum::HEXe, Enum::HEXf, Enum::SHIFTLOCK, Enum::CTRLLOCK, Enum::ALTLOCK, Enum::ALTGRLOCK, Enum::SHIFTLLOCK, Enum::SHIFTRLOCK, Enum::CTRLLLOCK, Enum::CTRLRLOCK, Enum::CAPSSHIFTLOCK, Enum::SHIFT_SLOCK, Enum::CTRL_SLOCK, Enum::ALT_SLOCK, Enum::ALTGR_SLOCK, Enum::SHIFTL_SLOCK, Enum::SHIFTR_SLOCK, Enum::CTRLL_SLOCK, Enum::CTRLR_SLOCK, Enum::CAPSSHIFT_SLOCK, Enum::BRL_BLANK, Enum::BRL_DOT1, Enum::BRL_DOT2, Enum::BRL_DOT3, Enum::BRL_DOT4, Enum::BRL_DOT5, Enum::BRL_DOT6, Enum::BRL_DOT7, Enum::BRL_DOT8, Enum::BRL_DOT9, Enum::BRL_DOT10, Enum::CONSOLE1, Enum::CONSOLE2, Enum::CONSOLE3, Enum::CONSOLE4, Enum::CONSOLE5, Enum::CONSOLE6, Enum::CONSOLE7, Enum::CONSOLE8, Enum::CONSOLE9, Enum::CONSOLE10, Enum::CONSOLE11, Enum::CONSOLE12, Enum::CONSOLE13, Enum::CONSOLE14, Enum::CONSOLE15, Enum::CONSOLE16, Enum::CONSOLE17, Enum::CONSOLE18, Enum::CONSOLE19, Enum::CONSOLE20, Enum::CONSOLE21, Enum::CONSOLE22, Enum::CONSOLE23, Enum::CONSOLE24, Enum::CONSOLE25, Enum::CONSOLE26, Enum::CONSOLE27, Enum::CONSOLE28, Enum::CONSOLE29, Enum::CONSOLE30, Enum::CONSOLE31, Enum::CONSOLE32, Enum::CONSOLE33, Enum::CONSOLE34, Enum::CONSOLE35, Enum::CONSOLE36, Enum::CONSOLE37, Enum::CONSOLE38, Enum::CONSOLE39, Enum::CONSOLE40, Enum::CONSOLE41, Enum::CONSOLE42, Enum::CONSOLE43, Enum::CONSOLE44, Enum::CONSOLE45, Enum::CONSOLE46, Enum::CONSOLE47, Enum::CONSOLE48, Enum::CONSOLE49, Enum::CONSOLE50, Enum::CONSOLE51, Enum::CONSOLE52, Enum::CONSOLE53, Enum::CONSOLE54, Enum::CONSOLE55, Enum::CONSOLE56, Enum::CONSOLE57, Enum::CONSOLE58, Enum::CONSOLE59, Enum::CONSOLE60, Enum::CONSOLE61, Enum::CONSOLE62, Enum::CONSOLE63, Enum::CANCEL, Enum::KPCLEAR, Enum::KANA, Enum::HANGUL, Enum::IME_ON, Enum::JUNJA, Enum::FINAL, Enum::HANJA, Enum::KANJI, Enum::IME_OFF, Enum::CONVERT, Enum::NONCONVERT, Enum::ACCEPT, Enum::MODECHANGE, Enum::PRINT, Enum::EXECUTE, Enum::SNAPSHOT, Enum::SUPERL, Enum::SUPERR, Enum::MENU, Enum::SLEEP, Enum::AALT, Enum::BROWSER_BACK, Enum::BROWSER_FORWARD, Enum::BROWSER_REFRESH, Enum::BROWSER_STOP, Enum::BROWSER_SEARCH, Enum::BROWSER_FAVORITES, Enum::BROWSER_HOME, Enum::VOLUME_MUTE, Enum::VOLUME_DOWN, Enum::VOLUME_UP, Enum::NEXT_TRACK, Enum::PREV_TRACK, Enum::STOP, Enum::PLAY_PAUSE, Enum::LAUNCH_MAIL, Enum::LAUNCH_MEDIA_SELECT, Enum::LAUNCH_APP1, Enum::LAUNCH_APP2, Enum::MISC, Enum::PROCCESS, Enum::ATTN, Enum::CRSEL, Enum::EXSEL, Enum::EREOF, Enum::PLAY, Enum::ZOOM, Enum::PA1, Enum::CLEAR, Enum::KPEQUAL, Enum::DICTIONARY, Enum::UNREGISTER, Enum::REGISTERE, Enum::OYAYUBIL, Enum::OYAYUBIR, Enum::AX, Enum::HELP_ICO, Enum::_00_ICO, Enum::CLEAR_ICO, Enum::RESET, Enum::JUMP, Enum::PA1_2, Enum::PA2, Enum::PA3, Enum::WSCTRL, Enum::CUSEL, Enum::ATTN2, Enum::FINISH, Enum::COPY, Enum::AUTO, Enum::ENLW, Enum::BACKTAB, Enum::EISU, Enum::FN>;
 };
