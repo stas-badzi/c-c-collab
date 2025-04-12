@@ -70,8 +70,8 @@ tryagain:
         else {
             u16string arrmsg = u"\n  Popup Exited with code: " + to_u16string(res.value().first) +u"  \n";
             auto siz = arrmsg.size()-2;
-            for (int i = 0; i < siz; i++) arrmsg = u' ' + arrmsg;
-            for (int i = 0; i < siz; i++) arrmsg.push_back(u' ');
+            for (size_t i = 0; i < siz; i++) arrmsg = u' ' + arrmsg;
+            for (size_t i = 0; i < siz; i++) arrmsg.push_back(u' ');
             argument[0] = arrmsg.c_str();
             auto res = Console::PopupWindow(1,1,argument,u"Error");
             if (!res.has_value() || res.value().first != 0)
@@ -458,13 +458,13 @@ pair<int,u16string> ErrorPopup(int argc, const char16_t* argv[]) {
             scr.push_back(vector<Console::Symbol>());
 
         uint8_t* back = new uint8_t[err.size()];
-        for (int j = 0; j < err.size(); j++)
+        for (size_t j = 0; j < err.size(); j++)
             back[j] = 9;
         uint8_t* fore = new uint8_t[err.size()];
-        for (int j = 0; j < err.size(); j++)
+        for (size_t j = 0; j < err.size(); j++)
             fore[j] = 15;
         auto sym = Console::Symbol::CreateTexture(err,back,fore);
-        for (int j = height/3; j < height; j++)
+        for (size_t j = height/3; j < (unsigned short)height; j++)
             while (scr[j].size() < (uint16_t)width)
                 scr[j].push_back(Console::Symbol());
         TextureSystem::DrawTextureToScreen((width/2)+1-(sym[0].size()/2),height/3,sym,scr);
@@ -476,7 +476,7 @@ pair<int,u16string> ErrorPopup(int argc, const char16_t* argv[]) {
         if (Console::KeyPressed() == Key::Enum::ENTER) break;
         if (Console::KeyPressed() == Key::Enum::ESC) return {EXIT_FAILURE,u""};
         auto mouse = Console::GetMouseStatus();
-        if ( (mouse.x == OK.first || mouse.x == OK.first + 1 ) && mouse.y == OK.second) {
+        if ( (mouse.x == OK.first || mouse.x == OK.first + 1u ) && mouse.y == OK.second) {
             scr[OK.second][OK.first].ReverseColors();
             scr[OK.second][OK.first+1].ReverseColors();
             if (Console::MouseButtonClicked().first == MOUSE_BUTTON_PRIMARY)
@@ -560,14 +560,14 @@ pair<int,u16string> GetFilePopup(int argc, const char16_t* argv[]) {
             for (i = 0; i < (last_height/2); i++) {
                 scr.push_back(vector<Console::Symbol>());
             }
-            int j;
-            for (j = 0; j <= (last_width/10); j++)
+            size_t j;
+            for (j = 0; j <= (unsigned short)(last_width/10); j++)
                 scr.back().push_back(Console::Symbol(L' ',16,16));
-            while (++j < last_width - (last_width/10))
+            while (++j < (unsigned short)(last_width - (last_width/10)))
                 scr.back().push_back(Console::Symbol(L' ',Color::DEFAULT,Color::LIGHT_BLACK));
             
             scr.push_back(vector<Console::Symbol>());
-            for (j = 0; j <= (last_width/10); j++)
+            for (j = 0; j <= (unsigned short)(last_width/10); j++)
                 scr.back().push_back(Console::Symbol(L' ',16,16));
 
             auto ppath = path;
@@ -585,13 +585,13 @@ pair<int,u16string> GetFilePopup(int argc, const char16_t* argv[]) {
                 ++j;
             }
 
-            while (++j < last_width - (last_width/10))
+            while (++j < (unsigned short)(last_width - (last_width/10)))
                 scr.back().push_back(Console::Symbol(L' ',Color::DEFAULT,Color::LIGHT_BLACK));
 
             scr.push_back(vector<Console::Symbol>());
-            for (j = 0; j <= (last_width/10); j++)
+            for (j = 0; j <= (unsigned short)(last_width/10); j++)
                 scr.back().push_back(Console::Symbol(L' ',16,16));
-            while (++j < last_width - (last_width/10))
+            while (++j < (unsigned short)(last_width - (last_width/10)))
                 scr.back().push_back(Console::Symbol(L' ',Color::DEFAULT,Color::LIGHT_BLACK));
 
             Console::FillScreen(scr);
@@ -696,18 +696,18 @@ pair<int,u16string> NewFilePopup(int argc, const char16_t* argv[]) {
         auto wbegin = max<size_t>(0,width/2-wistr.size()/2);
         auto hbegin = max<size_t>(0,height/2-hestr.size()/2);
 
-        for (int j = 0; j < wbegin; j++)
+        for (size_t j = 0; j < wbegin; j++)
             scr[height/4].push_back(Console::Symbol());
   
         pair<uint16_t,uint16_t> wbeg = { scr[height/4].size(), height/4 };
-        for (int j = 0; j < wistr.size(); j++)
+        for (size_t j = 0; j < wistr.size(); j++)
             scr[height/4].push_back(Console::Symbol(wistr[j],15,0));
 
-        for (int j = 0; j < hbegin; j++)
+        for (size_t j = 0; j < hbegin; j++)
             scr[height/2].push_back(Console::Symbol());
         
         pair<uint16_t,uint16_t> hbeg = { scr[height/2].size(), height/2 };
-        for (int j = 0; j < hestr.size(); j++)
+        for (size_t j = 0; j < hestr.size(); j++)
             scr[height/2].push_back(Console::Symbol(hestr[j],15,0));
 
         Console::HandleMouseAndFocus();
@@ -725,7 +725,7 @@ pair<int,u16string> NewFilePopup(int argc, const char16_t* argv[]) {
             if (first) --flwidth;
             else --flheight;
         }
-        if ( (mouse.x == OK.first || mouse.x == OK.first + 1 || mouse.x == OK.first + 2 || mouse.x == OK.first + 3) && mouse.y == OK.second) {
+        if ( (mouse.x == OK.first || mouse.x == OK.first + 1u || mouse.x == OK.first + 2u || mouse.x == OK.first + 3u) && mouse.y == OK.second) {
             scr[OK.second][OK.first].ReverseColors();
             scr[OK.second][OK.first+1].ReverseColors();
             scr[OK.second][OK.first+2].ReverseColors();
@@ -733,7 +733,7 @@ pair<int,u16string> NewFilePopup(int argc, const char16_t* argv[]) {
             if (Console::MouseButtonClicked().first == MOUSE_BUTTON_PRIMARY)
                 break;
         }
-        if ( (mouse.x == CANCEL.first || mouse.x == CANCEL.first + 1 || mouse.x == CANCEL.first + 2 || mouse.x == CANCEL.first + 3 || mouse.x == CANCEL.first + 4 || mouse.x == CANCEL.first + 5 || mouse.x == CANCEL.first + 6 || mouse.x == CANCEL.first + 7) && mouse.y == CANCEL.second) {
+        if ( (mouse.x == CANCEL.first || mouse.x == CANCEL.first + 1u || mouse.x == CANCEL.first + 2u || mouse.x == CANCEL.first + 3u || mouse.x == CANCEL.first + 4u || mouse.x == CANCEL.first + 5u || mouse.x == CANCEL.first + 6u || mouse.x == CANCEL.first + 7u) && mouse.y == CANCEL.second) {
             scr[CANCEL.second][CANCEL.first].ReverseColors();
             scr[CANCEL.second][CANCEL.first+1].ReverseColors();
             scr[CANCEL.second][CANCEL.first+2].ReverseColors();

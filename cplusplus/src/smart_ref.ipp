@@ -1,6 +1,6 @@
 #ifndef SMART_REF_HPP
 #error "smart_ref.ipp must be included from smart_ref.hpp"
-#endif
+#else
 
 namespace {
     template<typename T> smart_ref<T>::smart_ref(T* pointer) : alloc(0), ref(*pointer) {}
@@ -29,3 +29,4 @@ namespace {
     template <typename T> smart_ref<T>::operator T() const { return this->ref; }
     template <typename T> smart_ref<T>::~smart_ref() {if (alloc) delete &ref;}
 }
+#endif // SMART_REF_HPP

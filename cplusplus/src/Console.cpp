@@ -1576,7 +1576,7 @@ void Console::XtermMouseAndFocus(void) {
 
             Console::SetTitle(L"");
 
-            HICON term_icon;
+            HICON term_icon = nullptr;
             Console::out << "Console::old_small_icon: " << Console::old_small_icon; Console::out_endl();
             Console::out << "Console::old_big_icon: " << Console::old_big_icon; Console::out_endl();
             if (!Console::old_small_icon || !Console::old_big_icon) {
@@ -2082,6 +2082,7 @@ void Console::XtermMouseAndFocus(void) {
                                     wc = GetChar();
                                 if (bytes == 0) return;
                                 buf[0] = L'\0';
+                                break;
                             default:
                                 Console::PushChar('\033');
                                 Console::PushChar('[');
@@ -4064,7 +4065,7 @@ contcons:
     //cerr << Console::parent_window << ' ' << Console::window; out_endl();
     HWND twindow = Console::parent_window;
     bool correct_window = twindow, notme = true;
-    DWORD this_thread = GetCurrentThreadId(), owner_thread;
+    DWORD this_thread = GetCurrentThreadId(), owner_thread = 0;
     if (twindow) {
         owner_thread = GetWindowThreadProcessId(twindow, nullptr);
         if ((notme = (this_thread != owner_thread)))
