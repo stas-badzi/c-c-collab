@@ -55,6 +55,8 @@ namespace cppimp {
 
     libimport uint8_t Console_MouseButtonReleased(void);
 
+    libimport bool Console_IsMouseButtonDown(uint8_t button);
+
     libimport bool Console_IsFocused(void);
 
     libimport void Console_FillScreen(void* symbols);
@@ -143,6 +145,20 @@ namespace cppimp {
     libimport uniconv::unichar* System_GetSelfPath(void);
     
     libimport uniconv::unichar* System_ToNativePath(uniconv::unichar* arg1);
+
+    libimport int System_MakeDirectory(uniconv::unichar* arg1);
+
+    libimport int System_ClearDirectory(uniconv::unichar* arg1);
+
+    libimport int System_DeleteDirectory(uniconv::unichar* arg1);
+
+    libimport int System_RemoveFile(uniconv::unichar* arg1);
+
+    libimport bool System_IsFile(uniconv::unichar* arg1);
+
+    libimport bool System_IsDirectory(uniconv::unichar* arg1);
+
+    libimport bool System_DoesPathExist(uniconv::unichar* arg1);
     
     libimport nint System_AllocateMemory(size_t arg1);
 

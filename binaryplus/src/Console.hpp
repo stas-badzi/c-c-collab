@@ -166,6 +166,7 @@ namespace cpp {
         static struct MouseStatus GetMouseStatus(void);
         static std::pair<uint8_t,uint8_t> MouseButtonClicked(void); // returns button ID and whitch consecutive click was it
         static uint8_t MouseButtonReleased(void); // returns button ID
+        static bool IsMouseButtonDown(uint8_t button) { return cppimp::Console_IsMouseButtonDown(button); }
         static void HandleOutput(void) { return cppimp::Console_HandleOutput(); }
         static void Update(void) { return cppimp::Console_Update(); }
         static void SetResult(std::u16string result) { return cppimp::Console_SetResult(uniconv::U16StringToUnicode(result)); }

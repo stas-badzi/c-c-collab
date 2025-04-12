@@ -89,6 +89,10 @@ using namespace uniconv;
         return cpp::Console::MouseButtonReleased();
     }
 
+    libexport bool Console_IsMouseButtonDown(uint8_t button) {
+        return cpp::Console::IsMouseButtonDown(button);
+    }
+
     libexport bool Console_IsFocused(void) {
         return cpp::Console::IsFocused();
     }
@@ -330,6 +334,34 @@ using namespace uniconv;
 
     libexport uniconv::unichar* System_GetSelfPath(void) {
         return uniconv::NativeStringToUnicode(cpp::System::GetSelfPath().c_str());
+    }
+
+    libexport int System_MakeDirectory(uniconv::unichar* arg1) {
+        return cpp::System::MakeDirectory(uniconv::UnicodeToNativeString(arg1).c_str());
+    }
+
+    libexport int System_ClearDirectory(uniconv::unichar* arg1) {
+        return cpp::System::ClearDirectory(uniconv::UnicodeToNativeString(arg1).c_str());
+    }
+
+    libexport int System_DeleteDirectory(uniconv::unichar* arg1) {
+        return cpp::System::DeleteDirectory(uniconv::UnicodeToNativeString(arg1).c_str());
+    }
+
+    libexport int System_RemoveFile(uniconv::unichar* arg1) {
+        return cpp::System::RemoveFile(uniconv::UnicodeToNativeString(arg1).c_str());
+    }
+
+    libexport bool System_IsFile(uniconv::unichar* arg1) {
+        return cpp::System::IsFile(uniconv::UnicodeToNativeString(arg1).c_str());
+    }
+
+    libexport bool System_IsDirectory(uniconv::unichar* arg1) {
+        return cpp::System::IsDirectory(uniconv::UnicodeToNativeString(arg1).c_str());
+    }
+
+    libexport bool System_DoesPathExist(uniconv::unichar* arg1) {
+        return cpp::System::DoesPathExist(uniconv::UnicodeToNativeString(arg1).c_str());
     }
     
     libexport uniconv::unichar* System_ToNativePath(uniconv::unichar* arg1) {

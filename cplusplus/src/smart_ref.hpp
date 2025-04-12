@@ -1,3 +1,6 @@
+#ifndef SMART_REF_HPP
+#define SMART_REF_HPP
+
 namespace {
     template<typename T>
     class smart_ref {
@@ -19,3 +22,4 @@ namespace {
 }
 
 #include "smart_ref.ipp"
+#endif // SMART_REF_HPP

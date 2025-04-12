@@ -1389,7 +1389,7 @@ void Console::XtermMouseAndFocus(void) {
                         cerr << "Unacceptable HWND size: " << sizeof(HWND) << endl;
                         exit(0xE9);
                     }
-                    cerr << "Conemuhwnd: " << std::hex << Console::parent_window << std::dec << endl;
+                    //cerr << "Conemuhwnd: " << std::hex << Console::parent_window << std::dec << endl;
                 }
                 if (!conemu || cmder) {
                     conemu = cmder = true;
@@ -1536,12 +1536,13 @@ void Console::XtermMouseAndFocus(void) {
 
             if (sub_process) {
                 Console::ret = sub(sub_process);
+                Console::out << L"Console::ret: " << Console::ret; Console::out_endl();
                 Console::Fin();
-                exit(Console::ret);
+                exit(0);
             } else if (sub_proc) {
                 Console::ret = Main();
                 Console::Fin();
-                exit(Console::ret);
+                exit(0);
             }
         }
     }
@@ -1563,6 +1564,7 @@ void Console::XtermMouseAndFocus(void) {
                 System::DeleteDirectory((Console::tmp_data+Console::subdir).c_str());
             } else {
                 FILE* fl;
+                Console::out << "Console::ret: " << Console::ret; Console::out_endl();
                 fl = _wfopen((Console::tmp_data+Console::subdir+L"exit.dat").c_str(), L"w");
                 fwrite(&Console::ret, sizeof(Console::ret), 1, fl);
                 fclose(fl);
@@ -1575,9 +1577,12 @@ void Console::XtermMouseAndFocus(void) {
             Console::SetTitle(L"");
 
             HICON term_icon;
+            Console::out << "Console::old_small_icon: " << Console::old_small_icon; Console::out_endl();
+            Console::out << "Console::old_big_icon: " << Console::old_big_icon; Console::out_endl();
             if (!Console::old_small_icon || !Console::old_big_icon) {
                 auto term = Console::GetTerminalExecutableName();
                 term_icon = reinterpret_cast<HICON>(LoadImage(GetModuleHandle(term.c_str()), L"MAINICON", IMAGE_ICON, 0, 0, 0));
+                if (!term_icon) cerr << "Couldn't load icon" << endl;
             }
 
             if (Console::old_small_icon) SendMessage(Console::window, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(Console::old_small_icon));
@@ -4042,7 +4047,7 @@ contcons:
     #endif
         return nullopt;
     }
-    pid_t spid;
+    pid_t spid = 0;
     fread(&spid, sizeof(pid_t), 1, fl);
     fclose(fl);
     Console::popup_pids.push_back(spid);
@@ -4053,10 +4058,10 @@ contcons:
         ResumeThread(Hinput_thread);
         return nullopt;
     }
-    HWND swindow;
+    HWND swindow = 0;
     fread(&swindow, sizeof(HWND), 1, fl);
     fclose(fl);
-    cerr << Console::parent_window << ' ' << Console::window; out_endl();
+    //cerr << Console::parent_window << ' ' << Console::window; out_endl();
     HWND twindow = Console::parent_window;
     bool correct_window = twindow, notme = true;
     DWORD this_thread = GetCurrentThreadId(), owner_thread;
@@ -4137,7 +4142,7 @@ contcons:
 
     fl = topen((Console::tmp_data + subdir + procdir + N("exit.dat")).c_str(), N("r"));
     if (!fl) ThrowMsg(utfstr(N("Couldn't open file: ")) + Console::tmp_data + subdir + procdir + N("exit.dat"));
-    int pret;
+    int pret = 0;
     fread(&pret, sizeof(int), 1, fl);
     fclose(fl);
 
@@ -4456,7 +4461,7 @@ contcons:
     #endif
         return nullopt;
     }
-    pid_t spid;
+    pid_t spid = 0;
     fread(&spid, sizeof(pid_t), 1, fl);
     fclose(fl);
     Console::popup_pids.push_back(spid);
@@ -4474,7 +4479,7 @@ contcons:
 
         FILE* fl = topen((retdir + N("exit.dat")).c_str(), N("r"));
         if (!fl) ThrowMsg(utfstr(N("Couldn't open file: ")) + retdir + N("exit.dat"));
-        int pret;
+        int pret = 0;
         fread(&pret, sizeof(int), 1, fl);
         fclose(fl);
 
@@ -4800,7 +4805,7 @@ contcons:
     #endif
         return nullopt;
     }
-    pid_t spid;
+    pid_t spid = 0;
     fread(&spid, sizeof(pid_t), 1, fl);
     fclose(fl);
     Console::popup_pids.push_back(spid);
@@ -4819,7 +4824,7 @@ contcons:
 
         FILE* fl = topen((retdir + N("exit.dat")).c_str(), N("r"));
         if (!fl) ThrowMsg(utfstr(N("Couldn't open file: ")) + retdir + N("exit.dat"));
-        int pret;
+        int pret = 0;
         fread(&pret, sizeof(int), 1, fl);
         fclose(fl);
 

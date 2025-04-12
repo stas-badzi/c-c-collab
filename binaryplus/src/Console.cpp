@@ -107,7 +107,7 @@ char16_t** Console::GetArgV(void) {
 }
 
 Console::Symbol::Symbol(void) {
-    symbol = Console_Symbol_Construct$cfb(0x0020, 0x10, 0x10);
+    symbol = Console_Symbol_Construct$cfb(u' ', Color::DEFAULT, Color::DEFAULT);
 }
 
 Console::Symbol::Symbol(const Symbol &cp) {
