@@ -590,17 +590,17 @@ using namespace uniconv;
         return ret;
     }
 
-    libexport void* Game_Camera_ViewportCenter(cpp::Game::Camera* cameraptr) {
+    libexport void* Game_Camera_ViewportCenter(void* cameraptr) {
         auto ret = (cpp::Game::MatrixPosition*)System::AllocateMemory(sizeof(cpp::Game::MatrixPosition));
-        *ret = &cameraptr->ViewportCenter();
+        *ret = ((cpp::Game::Camera*)cameraptr)->ViewportCenter();
         return ret;
     }
 
-    libexport void Game_Camera_DrawTexture(void* textureptr, cpp::Game::MatrixPosition* centerptr, cpp::Game::Camera* cameraptr) {
+    libexport void Game_Camera_DrawTexture(void* textureptr, void* centerptr, void* cameraptr) {
         const auto& texture = cs::PtrToTexture(textureptr, true);
-        cpp::Game::MatrixPosition center = *centerptr;
+        auto center = *(cpp::Game::MatrixPosition*)centerptr;
         const auto& real_texture = cs::Convert2dVector<Console::Symbol>(texture);
-        cameraptr->DrawTexture(real_texture,center);
+        ((cpp::Game::Camera*)cameraptr)->DrawTexture(real_texture,center);
     }
 #ifdef _DEBUG
 // control_heap
