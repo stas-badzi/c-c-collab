@@ -109,6 +109,13 @@ pair<int,u16string> ErrorPopup(int argc, const char16_t* argv[]);
 int _Main(void) {
     Console::Init();
     Console::SetTitle(u"FactoryRush");
+
+    return EXIT_SUCCESS;
+}
+
+int Main_(void) {
+    Console::Init();
+    Console::SetTitle(u"FactoryRush");
     Console::SetCursorSize(0);
     auto ret = Console::PopupWindowAsync(4,0,nullptr,u"Message Client");
     if (!ret.has_value()) return 1;

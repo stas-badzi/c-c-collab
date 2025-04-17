@@ -269,8 +269,8 @@ namespace cppimp {
 
     // Camera
         libimport void* Game_Camera_Construct(int height, int width, void* symptr);
-        libimport void* Game_Camera_ViewportCenter(cpp::Game::Camera* cameraptr);
-        libimport void Game_Camera_DrawTexture(void* textureptr, cpp::Game::MatrixPosition* centerptr, cpp::Game::Camera* cameraptr);
+        libimport void* Game_Camera_ViewportCenter(void* cameraptr);
+        libimport void Game_Camera_DrawTexture(void* textureptr, void* centerptr, void* cameraptr);
 
 } // namespace CppImp
 
