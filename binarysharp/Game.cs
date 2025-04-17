@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+/*using System.Runtime.InteropServices;
 using Utility;
 using Cpp;
 
@@ -52,4 +52,4 @@ namespace Cs {
             private List<List<Terminal.Symbol>> buffer;
         }
     }
-}
+}*/

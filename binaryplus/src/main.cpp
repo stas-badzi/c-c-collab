@@ -92,6 +92,13 @@ pair<int,u16string> ErrorPopup(int argc, const char16_t* argv[]);
 int Main(void) {
     Console::Init();
     Console::SetTitle(u"FactoryRush");
+
+    return EXIT_SUCCESS;
+}
+
+int Main_(void) {
+    Console::Init();
+    Console::SetTitle(u"FactoryRush");
     Console::SetCursorSize(0);
     
     /*
