@@ -590,6 +590,12 @@ using namespace uniconv;
         return ret;
     }
 
+    libexport void* Game_Camera_ViewportCenter(cpp::Game::Camera* cameraptr) {
+        auto ret = (cpp::Game::MatrixPosition*)System::AllocateMemory(sizeof(cpp::Game::MatrixPosition));
+        *ret = &cameraptr->ViewportCenter();
+        return ret;
+    }
+
     libexport void Game_Camera_DrawTexture(void* textureptr, cpp::Game::MatrixPosition* centerptr, cpp::Game::Camera* cameraptr) {
         const auto& texture = cs::PtrToTexture(textureptr, true);
         cpp::Game::MatrixPosition center = *centerptr;

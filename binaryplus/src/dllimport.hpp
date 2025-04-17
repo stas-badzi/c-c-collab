@@ -266,7 +266,11 @@ namespace cppimp {
 
     // actually from c# but who cares
         libimport void Console_Symbol_ReverseColors(nint sym);
-    //
+
+    // Camera
+        libimport void* Game_Camera_Construct(int height, int width, void* symptr);
+        libimport void* Game_Camera_ViewportCenter(cpp::Game::Camera* cameraptr);
+        libimport void Game_Camera_DrawTexture(void* textureptr, cpp::Game::MatrixPosition* centerptr, cpp::Game::Camera* cameraptr);
 
 } // namespace CppImp
 
