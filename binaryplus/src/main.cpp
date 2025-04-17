@@ -92,7 +92,7 @@ pair<int,u16string> ErrorPopup(int argc, const char16_t* argv[]);
 int Main(void) {
     Console::Init();
     Console::SetTitle(u"FactoryRush");
-
+    Console::Sleep(10.0);
     return EXIT_SUCCESS;
 }
 
