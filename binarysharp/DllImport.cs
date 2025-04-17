@@ -288,4 +288,17 @@ namespace CppImp {
             public static extern void Inspect(IntPtr sym);
         }
     }
+
+    public class Game {
+        private const string DllSource = @"" + DllHandle.Prefix + "factoryrushplus" + DllHandle.Suffix;
+        public class Camera {
+            [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "System_Camera_Construct", CharSet = CharSet.Unicode)]
+            public static extern nint Construct(int height, int width, nint symptr);
+            [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Game_Camera_ViewportCenter", CharSet = CharSet.Unicode)]
+            public static extern nint ViewportCenter(nint cameraptr);
+            [DllImport(DllSource, CallingConvention = CallingConvention.Cdecl, EntryPoint = "Game_Camera_DrawTexture", CharSet = CharSet.Unicode)]
+            public static extern void DrawTexture(nint textureptr, nint centerptr, nint cameraptr);
+
+        }
+    }
 }
