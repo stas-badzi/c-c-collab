@@ -573,14 +573,14 @@ using namespace uniconv;
     }
 
     libexport void Game_Camera_DrawTexture(int x, int y, void* textureptr, void* cameraptr) {
-        const auto& texture = cs::PtrToTexture(textureptr, true);
-        const auto& real_texture = cs::Convert2dVector<Console::Symbol>(texture);
+        const auto texture = cs::PtrToTexture(textureptr, true);
+        const auto real_texture = cs::Convert2dVector<Console::Symbol>(texture);
         ((cpp::Game::Camera*)cameraptr)->DrawTexture(x, y, real_texture);
     }
 
     libexport void Game_Camera_DrawToScreen(int x, int y, void* screenptr, void* cameraptr) {
-        auto& screen = cs::PtrToTexture(screenptr, true);
-        auto& real_screen = cs::Convert2dVector<Console::Symbol>(screen);
+        auto screen = cs::PtrToTexture(screenptr, true);
+        auto real_screen = cs::Convert2dVector<Console::Symbol>(screen);
         ((cpp::Game::Camera*)cameraptr)->DrawTexture(x, y, real_screen);
     }
 #ifdef _DEBUG
