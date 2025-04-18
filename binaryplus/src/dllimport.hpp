@@ -268,9 +268,11 @@ namespace cppimp {
         libimport void Console_Symbol_ReverseColors(nint sym);
 
     // Camera
+        libimport void* Game_MartixPosition_Construct(int iIndex, int jIndex);
         libimport void* Game_Camera_Construct(int height, int width, void* symptr);
         libimport void* Game_Camera_ViewportCenter(void* cameraptr);
-        libimport void Game_Camera_DrawTexture(void* textureptr, void* centerptr, void* cameraptr);
+        libimport void Game_Camera_DrawTexture(int x, int y, void* textureptr, void* cameraptr);
+        libimport void Game_Camera_DrawToScreen(int x, int y, void* screenptr, void* cameraptr);
 
 } // namespace CppImp
 

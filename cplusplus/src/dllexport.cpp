@@ -582,10 +582,16 @@ using namespace uniconv;
 // ~System
 
 // Camera
+    libexport void* Game_MartixPosition_Construct(int iIndex, int jIndex) {
+        cpp::Game::MatrixPosition vpc(iIndex, jIndex);
+        auto ret = (cpp::Game::MatrixPosition*)System::AllocateMemory(sizeof(cpp::Game::MatrixPosition));
+        *ret = vpc;
+        return ret;
+    }
+
     libexport void* Game_Camera_Construct(int height, int width, void* symptr) {
         cpp::Game::Camera cam(height, width, *(cpp::Console::Symbol*)symptr);
-        // nie mozna zwracac pointera do zmiennej lokalnej, więc:
-        auto ret = (cpp::Game::Camera*)System::AllocateMemory(sizeof(cpp::Game::Camera)); // jak malloc, tylko że z kontrolą pamięci przy `debug=1`
+        auto ret = (cpp::Game::Camera*)System::AllocateMemory(sizeof(cpp::Game::Camera));
         *ret = cam;
         return ret;
     }
@@ -596,11 +602,16 @@ using namespace uniconv;
         return ret;
     }
 
-    libexport void Game_Camera_DrawTexture(void* textureptr, void* centerptr, void* cameraptr) {
+    libexport void Game_Camera_DrawTexture(int x, int y, void* textureptr, void* cameraptr) {
         const auto& texture = cs::PtrToTexture(textureptr, true);
-        auto center = *(cpp::Game::MatrixPosition*)centerptr;
         const auto& real_texture = cs::Convert2dVector<Console::Symbol>(texture);
-        ((cpp::Game::Camera*)cameraptr)->DrawTexture(real_texture,center);
+        ((cpp::Game::Camera*)cameraptr)->DrawTexture(x, y, real_texture);
+    }
+
+    libexport void Game_Camera_DrawToScreen(int x, int y, void* screenptr, void* cameraptr) {
+        auto& screen = cs::PtrToTexture(screenptr, true);
+        auto& real_screen = cs::Convert2dVector<Console::Symbol>(screen);
+        ((cpp::Game::Camera*)cameraptr)->DrawTexture(x, y, real_screen);
     }
 #ifdef _DEBUG
 // control_heap

@@ -8,14 +8,18 @@ namespace cpp {
     class Game {
         public: 
             struct MatrixPosition {
-                int iIndex;
-                int jIndex;
+                public:
+                    int iIndex;
+                    int jIndex;
+
+                    MatrixPosition(int iIndex, int jIndex);
             };
             struct Camera {
                 public:
                     Camera(int height, int width, cpp::Console::Symbol sym);
                     MatrixPosition ViewportCenter();
-                    void DrawTexture(std::vector<std::vector<Console::Symbol>> texture, MatrixPosition center);
+                    void DrawTexture(int x, int y, std::vector<std::vector<Console::Symbol>> texture);
+                    void DrawToScreen(int x, int y, std::vector<std::vector<Console::Symbol>> screen);
                 private:
                     std::vector<std::vector<cpp::Console::Symbol>> buffer;
             };
