@@ -92,6 +92,23 @@ pair<int,u16string> ErrorPopup(int argc, const char16_t* argv[]);
 int Main(void) {
     Console::Init();
     Console::SetTitle(u"FactoryRush");
+
+    while (true) {
+
+        auto width = Console::GetWindowWidth();
+        auto height = Console::GetWindowHeight();
+
+        vector<vector<Console::Symbol>> screen;
+
+        for (int16_t l = 0; l < height; l++) {
+            screen.push_back(vector<Console::Symbol>());
+            for (int16_t i = 0; i < width; i++) {
+                auto sym = Console::Symbol(L'▒',(uint8_t)16,(uint8_t)16);
+                screen.back().push_back(sym);
+            }
+        }
+    }
+
     Console::Sleep(10.0);
     return EXIT_SUCCESS;
 }
