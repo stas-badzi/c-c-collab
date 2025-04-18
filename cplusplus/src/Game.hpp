@@ -16,7 +16,7 @@ namespace cpp {
             };
             struct Camera {
                 public:
-                    Camera(int height, int width, cpp::Console::Symbol sym);
+                    Camera(int height, int width, Console::Symbol sym);
                     MatrixPosition ViewportCenter();
                     void DrawTexture(int x, int y, std::vector<std::vector<Console::Symbol>> texture);
                     void DrawToScreen(int x, int y, std::vector<std::vector<Console::Symbol>> screen);

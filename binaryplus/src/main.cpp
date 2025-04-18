@@ -3,6 +3,7 @@
 #include "SoundSystem.hpp"
 #include "System.hpp"
 #include "Control.hpp"
+#include "Game.hpp"
 
 #include <iostream>
 #include <string>
@@ -107,6 +108,11 @@ int Main(void) {
                 screen.back().push_back(sym);
             }
         }
+
+        Game::Camera camera(9,9, Console::Symbol(L'a',(uint8_t)16,(uint8_t)16));
+        camera.DrawToScreen(0, 0, screen);
+
+        Console::FillScreen(screen);
     }
 
     Console::Sleep(10.0);
