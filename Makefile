@@ -33,9 +33,9 @@ name = factoryrushplus
 
 #******** c++ binary config *****
 #> source files
-binsources = main.cpp Console.cpp TextureSystem.cpp System.cpp Control.cpp dllexport.cpp SoundSystem.cpp
+binsources = main.cpp Console.cpp TextureSystem.cpp System.cpp Control.cpp dllexport.cpp SoundSystem.cpp Game.cpp
 #> header files
-binheaders = dllimport.hpp Console.hpp TextureSystem.hpp System.hpp defines.h Control.hpp SoundSystem.hpp
+binheaders = dllimport.hpp Console.hpp TextureSystem.hpp System.hpp defines.h Control.hpp SoundSystem.hpp Game.hpp
 #> include files
 binincludes = dynamic_library.h unicode_conversion.hpp control_heap.h utils/cextern.h control_heap.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp
 #> name the binary file

@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <vector>
+#include "Console.hpp"
 
 namespace cpp {
     class Game {
@@ -19,8 +20,6 @@ namespace cpp {
                     MatrixPosition ViewportCenter();
                     void DrawTexture(int x, int y, std::vector<std::vector<Console::Symbol>> texture);
                     void DrawToScreen(int x, int y, std::vector<std::vector<Console::Symbol>> screen);
-                private:
-                    std::vector<std::vector<cpp::Console::Symbol>> buffer;
             };
     };
 }
