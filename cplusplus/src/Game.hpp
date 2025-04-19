@@ -20,8 +20,9 @@ namespace cpp {
                     MatrixPosition ViewportCenter();
                     void DrawTexture(int x, int y, std::vector<std::vector<Console::Symbol>> texture);
                     void DrawToScreen(int x, int y, std::vector<std::vector<Console::Symbol>> screen);
+                    std::vector<std::vector<cpp::Console::Symbol>> buffer();
                 private:
-                    std::vector<std::vector<cpp::Console::Symbol>> buffer;
+                    std::vector<std::vector<cpp::Console::Symbol>> buffer_;
             };
         private:
             static void ValidateViewport(MatrixPosition vpc);

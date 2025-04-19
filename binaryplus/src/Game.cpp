@@ -10,8 +10,10 @@ using namespace cpp;
 // public:
 
 Game::MatrixPosition::MatrixPosition(int iIndex, int jIndex) {
-    auto imp = (Game::MatrixPosition*)(cppimp::Game_MartixPosition_Construct(iIndex, jIndex));
-    return imp*;
+    auto imp = (Game::MatrixPosition*)cppimp::Game_MartixPosition_Construct(iIndex, jIndex);
+
+    this->iIndex = imp->iIndex;
+    this->jIndex = imp->jIndex;
 }
 
 Game::Camera::Camera(int height, int width, Console::Symbol sym) {
@@ -20,8 +22,8 @@ Game::Camera::Camera(int height, int width, Console::Symbol sym) {
 }
 
 Game::MatrixPosition Game::Camera::ViewportCenter() {
-    auto imp = (Game::MatrixPosition*)(cppimp::Game_Camera_ViewportCenter(this));
-    return imp*;
+    auto imp = (Game::MatrixPosition*) cppimp::Game_Camera_ViewportCenter(this);
+    return Game::MatrixPosition(imp->iIndex, imp->jIndex);
 }
 
 void Game::Camera::DrawTexture(int x, int y, std::vector<std::vector<Console::Symbol>> texture) {
