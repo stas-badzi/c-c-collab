@@ -20,6 +20,8 @@ namespace cpp {
                     MatrixPosition ViewportCenter();
                     void DrawTexture(int x, int y, std::vector<std::vector<Console::Symbol>> texture);
                     void DrawToScreen(int x, int y, std::vector<std::vector<Console::Symbol>> screen);
+                private:
+                    void* internal;
             };
     };
 }
