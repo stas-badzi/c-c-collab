@@ -1,8 +1,12 @@
+#pragma once
 #include <queue>
 #include <windows.h>
 namespace cpp {
     template<typename T>
-    struct tsqueue {
+    class tsqueue {
+    public:
+        tsqueue(const tsqueue&) = delete;
+        tsqueue& operator= (const tsqueue&) = delete;
         tsqueue() {
             m = CreateMutex(NULL,FALSE,NULL);
             if (!m) {

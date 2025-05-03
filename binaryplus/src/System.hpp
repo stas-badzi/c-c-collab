@@ -12,6 +12,7 @@
 #include "dllimport.hpp"
 
 namespace cpp {
+
     class System {
     public:
         static std::u16string GetRootDir(void);

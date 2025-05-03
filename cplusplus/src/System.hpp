@@ -11,7 +11,11 @@
 #ifdef _WIN32
     #include <windows.h>
     #include <shlwapi.h>
+    #include <unordered_map>
+    #include <windows/thread_safe/queue>
 #else
+    #define INVALID_HANDLE_VALUE ((int)-1)
+    #define ERROR_ACCESS_DENIED EACCES
     #include <unistd.h>
     #include <pthread.h>
     #include <sys/stat.h>
@@ -27,23 +31,51 @@
 #endif
 #endif
 
-#define nint void*
+typedef void* nint;
 
 namespace cpp {
+    #ifdef _WIN32
+        typedef HANDLE fd_t;
+    #else
+        typedef int fd_t;
+    #endif
+
+    typedef struct rw_pipe {
+        fd_t read;
+        fd_t write;
+        rw_pipe(void) : read(0),write(0) {}
+        rw_pipe(fd_t r, fd_t w) : read(r), write(w) {}
+    } rw_pipe_t;
+
+    struct message_head {
+        size_t msg_size;
+    };
+
+    typedef struct message {
+        message_head head;
+    #ifdef _WIN32
+        wchar_t* msg;
+    #else
+        char* msg;
+    #endif
+    } message_t;
+
     class System {
     private:
-        static uniconv::utfstr GetRoot(void);
-        static uniconv::utfstr GetSelf(void);
-        static uniconv::utfstr self;
-        static uniconv::utfstr root;
+        static uniconv::nstring GetRoot(void);
+        static uniconv::nstring GetSelf(void);
+        static uniconv::nstring self;
+        static uniconv::nstring root;
 #if !defined(_WIN32) && !defined(__CYGWIN__)
         static pid_t tpid;
         static void SendSignal(int signal);
+#else
+        static std::unordered_map<fd_t, std::pair<std::pair<HANDLE, tsqueue<std::wstring>>, std::wstring>> pipes; // pipe handle -> { { pipe thread , write queue } , symlink path } 
 #endif
     public:
-        static uniconv::utfstr GetRootDir(void);
-        static uniconv::utfstr GetSelfPath(void);
-        static uniconv::utfstr ToNativePath(uniconv::utfstr path);
+        static uniconv::nstring GetRootDir(void);
+        static uniconv::nstring GetSelfPath(void);
+        static uniconv::nstring ToNativePath(uniconv::nstring path);
 
         static nint AllocateMemory(size_t bytes);
         static void FreeMemory(nint pointer);
@@ -57,6 +89,17 @@ namespace cpp {
         static bool IsFile(uniconv::utfcstr path);
         static bool IsDirectory(uniconv::utfcstr path);
         static bool DoesPathExist(uniconv::utfcstr path);
+
+        static fd_t CreatePipe(uniconv::utfcstr subpath); // the cre
+        static fd_t OpenPipe(uniconv::utfcstr subpath); // read == false -> write
+        static void ClosePipe(fd_t pipe);
+        static void ClosePipe(rw_pipe_t pipe) { ClosePipe(pipe.read); ClosePipe(pipe.write); }
+        // Non-blocking
+        static int SendMessagePipe(fd_t pipe, uniconv::nstring msg);
+        static int SendMessagePipe(rw_pipe_t pipe, uniconv::nstring msg) { return SendMessagePipe(pipe.write, msg); }
+        // Blocking
+        static uniconv::nstring ReadMessagePipe(fd_t pipe);
+        static uniconv::nstring ReadMessagePipe(rw_pipe_t pipe) { return ReadMessagePipe(pipe.read); }
 
         template<typename T> static T ReadPointer(nint pointer);
         template<typename T> static T ReadPointer(nint pointer, int offset);

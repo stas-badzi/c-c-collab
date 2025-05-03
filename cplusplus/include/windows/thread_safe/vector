@@ -1,8 +1,12 @@
+#pragma once
 #include <vector>
 #include <windows.h>
 namespace cpp {
     template<typename T>
-    struct tsvector {
+    class tsvector {
+    public:
+        tsvector(const tsvector&) = delete;
+        tsvector& operator= (const tsvector&) = delete;
         tsvector() {
             m = CreateMutex(NULL,FALSE,NULL);
             if (!m) {

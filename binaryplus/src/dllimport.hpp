@@ -19,6 +19,12 @@
 
 #include "defines.h"
 
+
+#ifdef _WIN32
+    __declspec(dllimport)
+#endif
+    std::optional<std::pair<stsb::promise<std::optional<std::pair<int,std::u16string>>>,cpp::rw_pipe_t>> Console_PopupWindowAsync(int type, int argc, const char16_t* arg16v[], const char16_t u16title[]);
+
 namespace cppimp {
 
     libimport void ThrowMsg(uniconv::unichar* msg);
@@ -92,10 +98,15 @@ namespace cppimp {
     struct popwinretval { bool val; int code; uniconv::unichar* result; };
     libimport popwinretval Console_PopupWindow(int type, int argc, uniconv::unichar* argv[], uniconv::unichar* title);
 
-#ifdef _WIN32
-    __declspec(dllimport)
-#endif
-    std::optional<stsb::promise<std::optional<std::pair<int,std::u16string>>>> Console_PopupWindowAsync(int type, int argc, const char16_t* arg16v[], const char16_t u16title[]);
+    struct optional_string { bool is_val; uniconv::unichar* val; };
+
+    libimport optional_string Console_GetParentMessage(void);
+
+    libimport bool Console_SendParentMessage(uniconv::unichar* message);
+
+    libimport optional_string Console_GetChildMessage(cpp::rw_pipe_t pipe);
+    
+    libexport bool Console_SendChildMessage(cpp::rw_pipe_t pipe, uniconv::unichar* message);
 
     libimport void Main$define(int (*arg1)(void));
 

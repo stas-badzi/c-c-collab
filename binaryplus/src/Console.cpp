@@ -6,6 +6,8 @@
 #include <vector>
 #include <string.h>
 
+#include <iostream>
+
 using namespace cppimp;
 using namespace uniconv;
 using namespace std;
@@ -58,7 +60,9 @@ void Console::HandleMouseAndFocus(void) {
 }
 
 bool Console::IsFocused(void) {
-    return Console_IsFocused();
+    auto val = Console_IsFocused();
+    //std::cerr << "IsFocused: " << val << '\n';
+    return val;
 }
 
 struct Console::MouseStatus Console::GetMouseStatus(void) {
