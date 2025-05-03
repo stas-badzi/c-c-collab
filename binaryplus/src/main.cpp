@@ -113,9 +113,8 @@ int Main(void) {
         camera.DrawToScreen(0, 0, screen);
 
         Console::FillScreen(screen);
+        Console::Sleep(0.5);
     }
-
-    Console::Sleep(10.0);
     return EXIT_SUCCESS;
 }
 
