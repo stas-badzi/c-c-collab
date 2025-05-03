@@ -11,14 +11,14 @@ using namespace cpp;
 using namespace std;
 using namespace uniconv;
 
-utfstr System::self = System::GetSelf();
-utfstr System::root = System::GetRoot();
+nstring System::self = System::GetSelf();
+nstring System::root = System::GetRoot();
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 #ifdef _MSC_VER
     #define PATH_MAX MAX_PATH
 #endif
-    utfstr System::GetSelf(void) {
+    nstring System::GetSelf(void) {
         if (System::self.size()) return System::self;
         wchar_t buf[PATH_MAX];
         DWORD size = GetModuleFileName(NULL, buf, PATH_MAX);
@@ -26,7 +26,7 @@ utfstr System::root = System::GetRoot();
         return edit;
     }
 
-    utfstr System::GetRoot(void) {
+    nstring System::GetRoot(void) {
         if (!self.size()) System::self = System::GetSelf();
         wchar_t edit[PATH_MAX];
         auto size = System::self.size();
@@ -35,22 +35,23 @@ utfstr System::root = System::GetRoot();
         edit[size + 1] = '.';
         edit[size + 2] = '.';
         edit[size + 3] = '\0';
-        utfstr out = utfstr(edit);
+        nstring out = nstring(edit);
         return out;
     }
 
-    utfstr cpp::System::ToNativePath(utfstr path) {
+    nstring System::ToNativePath(nstring path) {
         for (int i = 0; path[i] != L'\0'; i++) if (path[i] == L'/') path[i] = L'\\';
         return path;
     }
 
     
-    int cpp::System::ClearDirectory(uniconv::utfcstr path) {
+    int System::ClearDirectory(uniconv::utfcstr path) {
         wstring folderPath = path;
         if (folderPath.back() != L'\\') folderPath.push_back(L'\\');
         folderPath.push_back(L'*');
         WIN32_FIND_DATA info;
         HANDLE FindHndle = FindFirstFileEx(folderPath.c_str(), FindExInfoBasic, &info, FindExSearchNameMatch, NULL, 0);
+        if (!FindHndle) return GetLastError();
         do {
             wstring fileFound = path;
             if (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
@@ -63,38 +64,136 @@ utfstr System::root = System::GetRoot();
             }
             if (fileFound.back() != L'\\') fileFound.push_back(L'\\');
             fileFound.append(info.cFileName);
-            if (RemoveFile(fileFound.c_str())) exit(0xC3);
+            if (RemoveFile(fileFound.c_str())) return GetLastError();
         } while(FindNextFile(FindHndle, &info));
-        return !FindClose(FindHndle);
+        if (FindClose(FindHndle)) return GetLastError();
+        return 0;
     }
 
-    int cpp::System::DeleteDirectory(uniconv::utfcstr path) {
+    int System::DeleteDirectory(uniconv::utfcstr path) {
         if (RemoveDirectory(path)) return 0;
         return GetLastError();
     }
 
-    int cpp::System::RemoveFile(uniconv::utfcstr path) {
+    int System::RemoveFile(uniconv::utfcstr path) {
         if (DeleteFile(path)) return 0;
         return GetLastError();
     }
 
-    bool cpp::System::IsFile(uniconv::utfcstr path) {
+    bool System::IsFile(uniconv::utfcstr path) {
         DWORD dwAttrib = GetFileAttributes(path);
         return (dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
     }
 
-    bool cpp::System::IsDirectory(uniconv::utfcstr path) {
+    bool System::IsDirectory(uniconv::utfcstr path) {
         DWORD dwAttrib = GetFileAttributes(path);
         return (dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
     }
 
-    bool cpp::System::DoesPathExist(uniconv::utfcstr path) {
+    bool System::DoesPathExist(uniconv::utfcstr path) {
         DWORD dwAttrib = GetFileAttributes(path);
         return (dwAttrib != INVALID_FILE_ATTRIBUTES);
     }
 
+    unordered_map<fd_t, pair<pair<HANDLE, tsqueue<wstring>>, wstring>> System::pipes{};
 
-    int cpp::System::MakeDirectory(utfcstr path) {
+    DWORD WINAPI PipeBackendThread(LPVOID param) {
+        auto params = static_cast<pair<HANDLE, tsqueue<wstring>*>*>(param);
+        auto [pipe, messages] = *params;
+        delete params;
+        
+        if (!ConnectNamedPipe(pipe, nullptr)) {
+            auto err = GetLastError();
+            if (err == ERROR_PIPE_CONNECTED) goto allgood;
+            //std::wcerr << L"Failed to connect to the client. Error: " << GetLastError() << std::endl;
+            CloseHandle(pipe);
+            return 1;
+        }
+    allgood:
+        
+        while (1) {
+            if (!messages->empty()) {
+                wstring message = messages->pop();
+                //wcerr << L"Writing: " << message << endl;
+                DWORD bytesWritten;
+                if (!WriteFile(pipe, message.c_str(), message.size() * sizeof(wchar_t), &bytesWritten, nullptr))
+                    return 1;
+            } else {
+                MSG msg;
+                while (auto val = PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+                    if (val < 0) return 1;
+            }
+        }
+        return 0;
+    }
+
+    fd_t System::CreatePipe(uniconv::utfcstr subpath)
+    {
+        wstring fullpath = L"\\\\.\\pipe\\";
+        fullpath.append(subpath);
+        HANDLE pipe = CreateNamedPipeW(fullpath.c_str(), PIPE_ACCESS_OUTBOUND, PIPE_TYPE_BYTE | PIPE_WAIT, 1, 0, 0, 0, nullptr);
+
+        if (pipe == INVALID_HANDLE_VALUE || pipe == INVALID_HANDLE_VALUE)
+            return INVALID_HANDLE_VALUE;
+        
+        if (!CreateSymbolicLink(subpath, fullpath.c_str(), SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE)) {
+            auto err = GetLastError();
+            if (err == ERROR_INVALID_PARAMETER) { // Windows 10 build < 14972 doesnt support `SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE`
+                if (CreateSymbolicLink(subpath, fullpath.c_str(), 0))
+                    goto good;
+                err = GetLastError();
+            }
+            Console::ThrowMsg(wstring(L"CreateSymbolicLink failed: ") + fullpath + L", with error: " + to_wstring(err));
+        }
+    good:
+
+        System::pipes[pipe];
+        System::pipes[pipe].second = subpath;
+        System::pipes[pipe].first.first = CreateThread(NULL, 0, PipeBackendThread, new pair<HANDLE, tsqueue<wstring>*>(pipe, &(System::pipes[pipe].first.second)), 0, NULL);
+        return pipe;
+    }
+
+    fd_t System::OpenPipe(uniconv::utfcstr subpath) {
+        //wstring fullpath = L"\\\\.\\pipe\\";
+        //fullpath.append(subpath);
+        HANDLE pipe = CreateFile(subpath, GENERIC_READ, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+        if (pipe == NULL || pipe == INVALID_HANDLE_VALUE) return INVALID_HANDLE_VALUE;
+        return pipe;
+    }
+
+    void System::ClosePipe(fd_t pipe) {
+        if (System::pipes.find(pipe) != System::pipes.end()) {
+            TerminateThread(System::pipes[pipe].first.first, 0);
+            WaitForSingleObject(System::pipes[pipe].first.first, INFINITE);
+            CloseHandle(System::pipes[pipe].first.first);
+            RemoveFile(System::pipes[pipe].second.c_str());
+            System::pipes.erase(pipe);
+        }
+        CloseHandle(pipe);
+    }
+
+    int System::SendMessagePipe(fd_t pipe, uniconv::nstring msg) {
+        if (System::pipes.find(pipe) == System::pipes.end())
+            return ERROR_ACCESS_DENIED; // read device
+        if (msg.size() > 255) wcerr << L"Message: \"" << msg << "\" greater than 255 bytes" << std::endl;
+        System::pipes[pipe].first.second.push(msg);
+        PostThreadMessage(GetThreadId(System::pipes[pipe].first.first), WM_USER, 0, 0);
+        return 0;
+    }
+
+    uniconv::nstring System::ReadMessagePipe(fd_t pipe) {
+        if (System::pipes.find(pipe) != System::pipes.end())
+            return wstring(); // write device
+        
+        wchar_t buf[256];
+        DWORD siz = 0;
+        if (!ReadFile(pipe, buf, sizeof(buf) - sizeof(wchar_t), &siz, nullptr))
+            return wstring();
+        buf[siz/sizeof(wchar_t)] = L'\0';
+        return buf;
+    }
+
+    int System::MakeDirectory(utfcstr path) {
         //wcerr << L"MakeDirectory: " << path << endl; 
         SECURITY_ATTRIBUTES sec_atrs{};
         sec_atrs.nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -104,16 +203,16 @@ utfstr System::root = System::GetRoot();
         return GetLastError(); 
     }
 
-    int cpp::System::Shell(uniconv::utfcstr arg) {
+    int System::Shell(uniconv::utfcstr arg) {
         return System::RunProgram(L"C:\\Windows\\System32\\cmd.exe", L"/c", arg, nullptr);
     }
 
-    bool cpp::System::ShellAsync(uniconv::utfcstr arg) {
+    bool System::ShellAsync(uniconv::utfcstr arg) {
         return System::RunProgramAsync(L"C:\\Windows\\System32\\cmd.exe", L"/c", arg, nullptr);
     }
 
     // instead or runnning conhost.exe, run cmd.exe or another program with RunProgramC
-    int cpp::System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
+    int System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
         va_list args;
         wstring args_v = L'\"' + wstring(path) + L'\"';
         bool no_args = true;
@@ -161,7 +260,7 @@ utfstr System::root = System::GetRoot();
         }
     }
 
-    int cpp::System::RunProgramC(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
+    int System::RunProgramC(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
         va_list args;
         wstring args_v = L'\"' + wstring(path) + L'\"';
         bool no_args = true;
@@ -209,7 +308,7 @@ utfstr System::root = System::GetRoot();
         }
     }
 
-    int cpp::System::RunProgram0(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
+    int System::RunProgram0(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
         va_list args;
         wstring args_v = L'\"' + wstring(path) + L'\"';
         bool no_args = true;
@@ -259,7 +358,7 @@ utfstr System::root = System::GetRoot();
 
     
     // instead or runnning conhost.exe, run cmd.exe or another program with RunProgramAsyncC
-    bool cpp::System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
+    bool System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
         va_list args;
         wstring args_v = L'\"' + wstring(path) + L'\"';
         bool no_args = true;
@@ -300,7 +399,7 @@ utfstr System::root = System::GetRoot();
         return true;
     }
 
-    bool cpp::System::RunProgramAsyncC(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
+    bool System::RunProgramAsyncC(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
         va_list args;
         wstring args_v = L'\"' + wstring(path) + L'\"';
         bool no_args = true;
@@ -339,7 +438,7 @@ utfstr System::root = System::GetRoot();
         return true;
     }
 
-    int cpp::System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
+    int System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
         wstring args_v = L'\"' + wstring(path) + L'\"';
         bool no_args = true;
         if (args[0] == nullptr) goto noargs;
@@ -384,7 +483,7 @@ utfstr System::root = System::GetRoot();
         }
     }
 
-    int cpp::System::RunProgramC(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
+    int System::RunProgramC(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
         wstring args_v = L'\"' + wstring(path) + L'\"';
         bool no_args = true;
         if (args[0] == nullptr) goto noargs;
@@ -431,7 +530,7 @@ utfstr System::root = System::GetRoot();
 
     
     // instead or runnning conhost.exe, run cmd.exe or another program with RunProgramAsyncC
-    bool cpp::System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
+    bool System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
         wstring args_v = L'\"' + wstring(path) + L'\"';
         bool no_args = true;
         if (args[0] == nullptr) goto noargs;
@@ -453,8 +552,6 @@ utfstr System::root = System::GetRoot();
             return false;
         }
 
-        Console::out << L"RunProgramAsync: " << path << L'\n' << args_v << L'\n' << flush;
-
         PROCESS_INFORMATION pi = PROCESS_INFORMATION();
         STARTUPINFO si = STARTUPINFO();
         si.cb = sizeof(STARTUPINFO);
@@ -471,7 +568,7 @@ utfstr System::root = System::GetRoot();
         return true;
     }
 
-    bool cpp::System::RunProgramAsyncC(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
+    bool System::RunProgramAsyncC(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
         wstring args_v = L'\"' + wstring(path) + L'\"';
         bool no_args = true;
         if (args[0] == nullptr) goto noargs;
@@ -511,32 +608,32 @@ utfstr System::root = System::GetRoot();
 #else
 #include <sys/stat.h>
 
-int cpp::System::DeleteDirectory(utfcstr path) {
+int System::DeleteDirectory(utfcstr path) {
     if (rmdir(path) == 0) return 0;
     return errno;
 }
 
-int cpp::System::RemoveFile(utfcstr path) {
+int System::RemoveFile(utfcstr path) {
     if (unlink(path) == 0) return 0;
     return errno;
 }
 
-bool cpp::System::IsFile(utfcstr path) {
+bool System::IsFile(utfcstr path) {
     struct stat st;
     if (stat(path, &st) == 0) return S_ISREG(st.st_mode);
     return false;
 }
 
-int cpp::System::MakeDirectory(utfcstr path) {
+int System::MakeDirectory(utfcstr path) {
     if (mkdir(path, 0777) == 0) return 0;
     return errno;
 }
 
-int cpp::System::Shell(uniconv::utfcstr command) {
+int System::Shell(uniconv::utfcstr command) {
     return System::RunProgram("/bin/sh", "-c", command, nullptr); 
 }
 
-bool cpp::System::ShellAsync(uniconv::utfcstr command) {
+bool System::ShellAsync(uniconv::utfcstr command) {
     return System::RunProgramAsync("/bin/sh", "-c", command, nullptr);
 }
 
@@ -544,13 +641,13 @@ bool cpp::System::ShellAsync(uniconv::utfcstr command) {
     retvar = (expression); \
 } while (retvar == -1 && errno == EINTR);
 
-pid_t cpp::System::tpid = 0;
+pid_t System::tpid = 0;
 
-void cpp::System::SendSignal(int signal) {
+void System::SendSignal(int signal) {
     kill(tpid, signal);
 }
 
-bool cpp::System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
+bool System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
     int status = 0;
     System::tpid = fork();
     sighandler_t old_handler[32];
@@ -600,7 +697,7 @@ bool cpp::System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr arg, .
 }
 
 
-int cpp::System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
+int System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
     int status;
     System::tpid = fork();
     sighandler_t old_handler[32];
@@ -703,7 +800,7 @@ int cpp::System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
     return status;
 }
 
-int cpp::System::RunProgramS(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
+int System::RunProgramS(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
     int status;
     System::tpid = fork();
     sighandler_t old_handler[32];
@@ -806,7 +903,7 @@ int cpp::System::RunProgramS(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
     return status;
 }
 
-int cpp::System::RunProgramS(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
+int System::RunProgramS(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
     int status;
     System::tpid = fork();
     sighandler_t old_handler[32];
@@ -901,7 +998,7 @@ int cpp::System::RunProgramS(uniconv::utfcstr path, uniconv::utfcstr const args[
     return status;
 }
 
-bool cpp::System::RunProgramAsyncS(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
+bool System::RunProgramAsyncS(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
     System::tpid = fork();
     if (tpid < 0)
         return false;
@@ -941,7 +1038,7 @@ bool cpp::System::RunProgramAsyncS(uniconv::utfcstr path, uniconv::utfcstr const
 }
 
 
-bool cpp::System::RunProgramAsyncS(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
+bool System::RunProgramAsyncS(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
     System::tpid = fork();
     if (tpid < 0)
         return false;
@@ -988,7 +1085,7 @@ bool cpp::System::RunProgramAsyncS(uniconv::utfcstr path, uniconv::utfcstr arg, 
     return true;
 }
 
-int cpp::System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
+int System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
     int status;
     System::tpid = fork();
     sighandler_t old_handler[32];
@@ -1083,7 +1180,7 @@ int cpp::System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]
     return status;
 }
 
-bool cpp::System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
+bool System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
     System::tpid = fork();
     if (tpid < 0)
         return false;
@@ -1122,12 +1219,12 @@ bool cpp::System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const 
     return true;
 }
 
-utfstr System::ToNativePath(utfstr path) {
+nstring System::ToNativePath(nstring path) {
     return path;
 }
 
 #ifdef __APPLE__
-    utfstr System::GetRoot(void) {
+    nstring System::GetRoot(void) {
         char buf[PATH_MAX] = {'\0'};
         uint32_t bufsize = PATH_MAX;
         ssize_t size = _NSGetExecutablePath(buf, &bufsize);
@@ -1140,11 +1237,11 @@ utfstr System::ToNativePath(utfstr path) {
         edit[size + 1] = '.';
         edit[size + 2] = '.';
         edit[size + 3] = '\0';
-        utfstr out = (utfstr)(edit);
+        nstring out = (nstring)(edit);
         return out;
     }
 #else
-    utfstr System::GetRoot(void) {
+    nstring System::GetRoot(void) {
         char buf[PATH_MAX] = {'\0'};
         ssize_t size = readlink("/proc/self/exe", buf, PATH_MAX);
         if (size < 0) exit(0xC3);
@@ -1155,19 +1252,19 @@ utfstr System::ToNativePath(utfstr path) {
         edit[size + 1] = '.';
         edit[size + 2] = '.';
         edit[size + 3] = '\0';
-        utfstr out = (utfstr)(edit);
+        nstring out = (nstring)(edit);
         return out;
     }
 #endif
 #endif
 
-utfstr System::GetRootDir(void) {
+nstring System::GetRootDir(void) {
     return System::root;
 }
 
 
 
-uniconv::utfstr cpp::System::GetSelfPath(void) {
+uniconv::nstring System::GetSelfPath(void) {
     return System::self;
 }
 

@@ -44,10 +44,10 @@ namespace uniconv {
     #define to_nstring(val) to_wstring(val)
     #define N(val) L##val
     typedef wchar_t utfchar;
-    typedef std::wstring utfstr;
+    typedef std::wstring nstring;
     typedef const wchar_t* utfcstr;
-    inline constexpr utfstr to_string(utfchar val) {
-        utfstr out; 
+    inline constexpr nstring to_string(utfchar val) {
+        nstring out; 
         out.push_back(val);
         return out;
     }
@@ -55,9 +55,9 @@ namespace uniconv {
     #define to_nstring(val) to_string(val)
     #define N(val) val
     typedef std::string utfchar;
-    typedef std::string utfstr;
+    typedef std::string nstring;
     typedef const char* utfcstr;
-    inline constexpr utfstr to_string(utfchar val) { return val; }
+    inline constexpr nstring to_string(utfchar val) { return val; }
 #endif
 
 inline unichar NativeToUnicode(utfchar utf8_code) {
@@ -152,8 +152,8 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         return out;
     }
 
-    inline utfstr UnicodeToNativeString(unichar* unicodes) {
-        utfstr out;
+    inline nstring UnicodeToNativeString(unichar* unicodes) {
+        nstring out;
         for (int i = 0; unicodes[i] != 0; ++i) {
             out.push_back(unicodes[i]);
         }
@@ -339,7 +339,7 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         return out;
     }
 
-    inline utfstr UnicodeToNativeString (unichar* unicodes) {
+    inline nstring UnicodeToNativeString (unichar* unicodes) {
         std::mbstate_t state{};
         
         std::string out;

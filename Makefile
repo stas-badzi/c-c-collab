@@ -456,10 +456,18 @@ ifeq ($(copylibs),1)
 flibdir = $(libdir)
 endif
 
+ifeq ($(msvc),1)
+ifeq ($(debug),1)
+build-type = Debug-MSVC-$(arch)
+else
+build-type = Release-MSVC-$(arch)
+endif
+else
 ifeq ($(debug),1)
 build-type = Debug-$(arch)
 else
 build-type = Release-$(arch)
+endif
 endif
 
 ifeq ($(archchk),0)
@@ -480,7 +488,7 @@ package: release
 check-arch: $(archfile)
 	@echo "Build type changed from $(shell cat __oldarch.dat) to $(build-type) - Cleaning"
 	-@rm __oldarch.dat
-	@$(MAKE) clean
+	@$(MAKE) clean debug=$(debug) tgarch=$(tgarch) msvc=$(msvc)
 	@echo "Version file. Remove to enable recompile" > $@
 
 release: all

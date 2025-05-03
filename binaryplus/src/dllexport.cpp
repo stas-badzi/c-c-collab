@@ -12,5 +12,7 @@ extern int Main(void);
 
 int main(void) {
     Main$define(Main);
-    return Main();
+    int ret = Main();
+    Console_Fin();
+    return ret;
 }

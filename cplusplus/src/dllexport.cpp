@@ -168,7 +168,7 @@ using namespace uniconv;
     libexport popwinretval Console_PopupWindow(int type, int argc, uniconv::unichar* argv[], uniconv::unichar* title) {
         uniconv::utfcstr* args = (uniconv::utfcstr*)System::AllocateMemory(sizeof(uniconv::utfcstr)*argc);
         for (int i = 0; i < argc; i++) {
-            uniconv::utfstr arg = UnicodeToNativeString(argv[i]).c_str();
+            uniconv::nstring arg = UnicodeToNativeString(argv[i]).c_str();
             args[i] = (uniconv::utfcstr)System::AllocateMemory(sizeof(wchar_t)*arg.size());
             char_t* loc = (char_t*)args[i];
             for (size_t j = 0; j < arg.size(); j++) loc[j] = arg[j];
@@ -185,12 +185,42 @@ using namespace uniconv;
         return retval;
     }
 
+    struct optional_string { bool is_val; uniconv::unichar* val; };
+
+    libexport optional_string Console_GetParentMessage(void) {
+        auto ret = Console::GetParentMessage();
+        if (ret.has_value()) {
+            optional_string retval;
+            retval.is_val = true;
+            retval.val = uniconv::NativeStringToUnicode(ret.value().c_str());
+            return retval;
+        } else return optional_string({false,nullptr});
+    }
+
+    libexport bool Console_SendParentMessage(uniconv::unichar* message) {
+        return Console::SendParentMessage(uniconv::UnicodeToNativeString(message));
+    }
+
+    libexport optional_string Console_GetChildMessage(rw_pipe_t pipe) {
+        auto ret = Console::GetChildMessage(pipe);
+        if (ret.has_value()) {
+            optional_string retval;
+            retval.is_val = true;
+            retval.val = uniconv::NativeStringToUnicode(ret.value().c_str());
+            return retval;
+        } else return optional_string({false,nullptr});
+    }
+
+    libexport bool Console_SendChildMessage(rw_pipe_t pipe, uniconv::unichar* message) {
+        return Console::SendChildMessage(pipe,uniconv::UnicodeToNativeString(message));
+    }
+
 #ifdef _WIN32
     __declspec(dllexport)
 #else
     __attribute__((visibility("default")))
 #endif
-    auto Console_PopupWindowAsync(int type, int argc, const char16_t* arg16v[], const char16_t u16title[]) {
+    std::optional<std::pair<stsb::promise<std::optional<std::pair<int,std::u16string>>>,rw_pipe_t>> Console_PopupWindowAsync(int type, int argc, const char16_t* arg16v[], const char16_t u16title[]) {
         return Console::PopupWindowAsync(type, argc, arg16v, u16title);
     }
 

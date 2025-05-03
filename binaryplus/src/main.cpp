@@ -12,6 +12,7 @@
 #include <chrono>
 #include <cassert>
 #include <random>
+#include <thread>
 
 typedef std::basic_stringstream<char16_t> u16stringstream;
 
@@ -29,9 +30,11 @@ using namespace cs;
 
 wchar_t getChar(wchar_t current) {
     auto texture = Console::Symbol::CreateTexture(u"Press 0-9 to change the symbol\nESC to cancel\n...\n");
-    Console::FillScreen(texture);
     do {
-        Console::HandleKeyboard();
+        Console::FillScreen(texture);
+        Console::HandleMouseAndFocus();
+        if (Console::IsFocused()) Console::HandleKeyboard();
+        else Console::DontHandleKeyboard();
     } while (!( // Waiting for a key to be pressed
         Console::IsKeyDown(Key::Enum::ONE) || 
         Console::IsKeyDown(Key::Enum::TWO) || 
@@ -89,10 +92,52 @@ tryagain:
 
 pair<int,u16string> ErrorPopup(int argc, const char16_t* argv[]);
 
+int _Main(void) {
+    Console::Init();
+    Console::SetTitle(u"FactoryRush");
+    Console::SetCursorSize(0);
+    auto ret = Console::PopupWindowAsync(4,0,nullptr,u"Message Client");
+    if (!ret.has_value()) return 1;
+    auto retval = ret.value().first;
+    auto pipe = ret.value().second;
+    thread message_get([retval,pipe]() mutable {
+        u16string text = u"Client Messages: \n";
+        while (!retval.get().has_value()) {
+            auto msg = Console::GetChildMessage(pipe);
+            if (msg.has_value()) {
+                text.append(msg.value());
+            }
+            auto scr = Console::Symbol::CreateTexture(text);
+            Console::FillScreen(scr);
+            Console::Sleep(0.3);
+        }
+    });
+    while(!retval.get().has_value()) {
+        Console::HandleMouseAndFocus();
+        Console::HandleKeyboard();
+        Console::HandleOutput();
+        wchar_t x;
+        while ((x = win.get()) && win.good())
+            if (x == L'\177' || x == L'\b') {Console::SendChildMessage(pipe,u" backspace ");}
+            else if (x == L'\n' || x == L'\r') {Console::SendChildMessage(pipe,u" enter ");}
+            else if (x == L'\t') Console::SendChildMessage(pipe,u" tab ");
+            else if (x == L'\033') Console::SendChildMessage(pipe,u" esc ");
+            else if (x == L' ') Console::SendChildMessage(pipe,u" space ");
+            else Console::SendChildMessage(pipe,WStringToU16String(std::wstring(1,x)));
+        Console::Sleep(0.03);
+    }
+    message_get.join();
+    return 0;
+}
+
+void ColorPopup(int argc, const char16_t* argv[]);
+
+
 int Main(void) {
     Console::Init();
     Console::SetTitle(u"FactoryRush");
     Console::SetCursorSize(0);
+    //ColorPopup(0,nullptr);
     
     /*
     std::u16string buf;
@@ -268,7 +313,7 @@ int Main(void) {
 
         // Menu buttons
 
-        auto menu = Console::Symbol::CreateTexture((edit ? u"| Quit | Save | New | Load | View | Help |" : u"| Quit | Save | New | Load | Edit | Help |"), array<uint8_t,70>{'\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7'}.data(), array<uint8_t,70>{'\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0'}.data());
+        auto menu = Console::Symbol::CreateTexture((edit ? u"| Quit | Save | New | Open | View | Help |" : u"| Quit | Save | New | Open | Edit | Help |"), array<uint8_t,70>{'\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7'}.data(), array<uint8_t,70>{'\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0'}.data());
         while (menu[0].size() < (size_t)width) menu[0].push_back({L' ','\0','\7'});
 
         Console::HandleMouseAndFocus();
@@ -311,7 +356,7 @@ int Main(void) {
                 file = System::ToNativePath(getPath(dir));
             }
         } else if (mouse.x > 20 && mouse.y == 0 && mouse.x < 27) {
-            // LOAD
+            // OPEN
             for (int i = 21; i < 27; ++i) menu[0][i].ReverseColors();
             if (Console::MouseButtonClicked().first == MOUSE_BUTTON_PRIMARY) {
                 file = System::ToNativePath(getPath(file));
@@ -404,7 +449,10 @@ endminput:
         if (Console::KeyPressed() == Key::Enum::r && IsCtrlDown()) Console::ClearScreenBuffer();
         Console::FillScreen(screen);
 
-        if (Console::IsFocused()) Console::HandleKeyboard();
+        if (Console::IsFocused()) {
+            Console::HandleKeyboard();
+            //cerr << "Keypressed: " << (uint16_t)Console::KeyPressed() << '\n';
+        }
         else Console::DontHandleKeyboard();
         //string x;
         //gin >> x;
@@ -412,7 +460,13 @@ endminput:
         if (Console::KeyPressed() == Key::Enum::q && IsCtrlDown()) return EXIT_SUCCESS;
         if (Console::KeyPressed() == Key::Enum::n && IsCtrlDown()) Console::PopupWindow(0,0,nullptr);
         if (Console::KeyPressed() == Key::Enum::s && IsCtrlDown()) symchar = getChar(symchar);
-        if (Console::KeyPressed() == Key::Enum::f && IsCtrlDown()) symfore = symfore;
+        if (Console::KeyPressed() == Key::Enum::f && IsCtrlDown()) {
+            symfore = symfore;
+            const char16_t* argsx[2];
+            argsx[0] = to_u16string(symfore).c_str();
+            argsx[1] = to_u16string(symback).c_str();
+            Console::PopupWindowAsync(5,2,argsx,u"Color Picker");
+        }
         //TextureSystem::DrawTextureToScreen(20,2,pos,screen);
     }
     // END
@@ -783,6 +837,127 @@ pair<int,u16string> NewFilePopup(int argc, const char16_t* argv[]) {
     return {EXIT_SUCCESS,to_u16string(flwidth) + u'\n' + to_u16string(flheight)};
 }
 
+pair<int,u16string> MsgPopup(int argc, const char16_t* argv[]) {
+    Console::SetTitle(u"Message Client");
+
+    int last_width = 0;
+    int last_height = 0;
+    u16string text = u"Messages:\n";
+    bool done = false;
+    thread sendmsg_thread([done]() {
+        u16string text;
+        while (!done) {
+            Console::HandleMouseAndFocus();
+            //if (Console::IsFocused()) Console::HandleKeyboard();
+            //else Console::DontHandleKeyboard();
+            while (win.good()) {
+                wchar_t x;
+                while ((x = win.get()) && win.good())
+                    if (x == L'\177' || x == L'\b') {if (text.size()) text.pop_back();}
+                    else if (x == L'\n' || x == L'\r') {Console::SendParentMessage(text); text.clear();}
+                    else if (x == L'\t') text = u'\t' + text;
+                    else if (x == L'\033') text.clear();
+                    else text.push_back(WCharToChar16(x));
+            }
+        }
+    });
+
+    while (1) {
+        auto msg = Console::GetParentMessage();
+        if (msg.has_value()) {
+            text.append(msg.value());
+        }
+        auto scr = Console::Symbol::CreateTexture(text);
+        Console::FillScreen(scr);
+        Console::Sleep(1);
+        Console::HandleKeyboard();
+        if (Console::KeyPressed() == Key::Enum::q && IsCtrlDown()) break;
+    }
+    done = true;
+    sendmsg_thread.join();
+    Console::Fin();
+    Console::Sleep(60);
+    return {EXIT_SUCCESS,u""};
+}
+
+#define u16toi(x) _wtoi(uniconv::U16StringToWString(x).c_str())
+
+inline int u16strlen(const char16_t* str) { int i = 0; while (str[i]) i++; return i; }
+
+void ColorPopup(int argc, const char16_t* argv[]) {
+    Console::SetTitle(u"Color Picker");
+    pair<uint8_t,uint8_t> color = pair<uint8_t,uint8_t>(u16toi(argv[1]),u16toi(argv[2]));
+
+    while (1) {
+        auto width = Console::GetWindowWidth();
+        auto height = Console::GetWindowHeight();
+
+        if (width < 25 || height < 4) { Console::Sleep(0.1); continue; }
+
+        vector<vector<Console::Symbol>> screen;
+        screen.push_back(vector<Console::Symbol>(width,Console::Symbol(u'▒',16,16)));
+        screen.push_back(vector<Console::Symbol>(width,Console::Symbol(u'▒',16,16)));
+        auto textcur = u"Current Brush Style: \u25cf";
+        for (int i = 0; i <= (width-u16strlen(textcur))/2; i++) 
+            screen.back().push_back(Console::Symbol(L'▒',16,16));
+        for (int i = 0; i < u16strlen(textcur); i++)
+            screen.back().push_back(Console::Symbol(textcur[i],16,16));
+        screen.back().back().foreground(color.first); 
+        screen.back().back().background(color.second);
+        screen.push_back(vector<Console::Symbol>());
+        screen.push_back(vector<Console::Symbol>());
+
+        auto textcur2 = u"Background Color:";
+        int i = 0;
+    nextline1:
+        --i; while (++i < width && textcur2[i])
+            screen.back().push_back(Console::Symbol(textcur2[i],16,16));
+        if (i >= width) {
+            screen.push_back(vector<Console::Symbol>(width,Console::Symbol(u'▒',16,16)));
+            goto nextline1;
+        }
+
+        int colnum = 0;
+    nextline2:
+        --i; --colnum; while (++i < width-1 && ++colnum <= 16) {
+            screen.back().push_back(Console::Symbol(u'▒',16,16));
+            screen.back().push_back(Console::Symbol(u'\u25cf',color.first,colnum));
+        }
+        if (i >= width-1) {
+            screen.push_back(vector<Console::Symbol>(width,Console::Symbol(u'▒',16,16)));
+            goto nextline2;
+        }
+
+        screen.push_back(vector<Console::Symbol>(width,Console::Symbol(u'▒',16,16)));
+        screen.push_back(vector<Console::Symbol>(width,Console::Symbol(u'▒',16,16)));
+
+        auto textcur3 = u"Foreground Color:";
+        i = 0;
+    nextline3:
+        --i; while (++i < width && textcur2[i])
+            screen.back().push_back(Console::Symbol(textcur2[i],16,16));
+        if (i >= width) {
+            screen.push_back(vector<Console::Symbol>(width,Console::Symbol(u'▒',16,16)));
+            goto nextline3;
+        }
+
+        colnum = 0;
+    nextline4:
+        --i; --colnum; while (++i < width-1 && ++colnum <= 16) {
+            screen.back().push_back(Console::Symbol(u'▒',16,16));
+            screen.back().push_back(Console::Symbol(u'\u25cf',colnum, color.second));
+        }
+        if (i >= width-1) {
+            screen.push_back(vector<Console::Symbol>(width,Console::Symbol(u'▒',16,16)));
+            goto nextline4;
+        }
+
+        screen.push_back(vector<Console::Symbol>(width,Console::Symbol(u'▒',16,16)));
+        Console::FillScreen(screen);
+        Console::Sleep(0.01);
+    }
+}
+
 int sub(int type) {
     assert(type != 0);
     auto argc = Console::GetArgC();
@@ -795,6 +970,13 @@ int sub(int type) {
         case 1:
             res = ErrorPopup(argc,argv);
             return res.first;
+        case 4:
+            res = MsgPopup(argc,argv);
+            Console::SetResult(res.second);
+            return res.first;
+        case 5:
+            ColorPopup(argc,argv);
+            return 0;
         case 6:
             res = NewFilePopup(argc,argv);
             Console::SetResult(res.second);

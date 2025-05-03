@@ -203,14 +203,16 @@ namespace cpp {
         static std::pair<int16_t,int16_t> cursorpos;
         static bool cursor_visible;
         static uint8_t cursor_size;
-        static uniconv::utfstr window_title;
+        static uniconv::nstring window_title;
         static bool cursor_blink_opposite;
-        static uniconv::utfstr user_data;
-        static uniconv::utfstr dev_data;
-        static uniconv::utfstr tmp_data;
-        static std::vector<pid_t> popup_pids; // pid_t may differ, but it should be <= int64_t
-        static uniconv::utfstr terminal_name;
+        static uniconv::nstring user_data;
+        static uniconv::nstring dev_data;
+        static uniconv::nstring tmp_data;
+        static std::vector<pid_t> popup_pids;
+        static uniconv::nstring terminal_name;
+        static rw_pipe_t parent_pipe;
     #ifdef _WIN32
+        static constexpr const wchar_t* pipedir = L"\\\\.\\pipe\\.factoryrush\\";
         static std::mutex screen_lock;
         static const wchar_t* subdir;
         //static std::vector<std::vector<COLORREF>> SaveScreen(void);
@@ -271,7 +273,7 @@ namespace cpp {
         static pid_t ppid;
     #endif
     #endif
-        static uniconv::utfstr GetTerminalExecutableName();
+        static uniconv::nstring GetTerminalExecutableName();
         static inline char_t GetChar(void);
         static void PushChar(char_t c);
         static void XtermMouseAndFocus(void);
@@ -353,6 +355,11 @@ namespace cpp {
         static uint8_t MouseButtonReleased(void); // returns button ID
         static bool IsMouseButtonDown(uint8_t button);
 
+        static std::optional<uniconv::nstring> GetParentMessage(void);
+        static bool SendParentMessage(uniconv::nstring message);
+        static std::optional<uniconv::nstring> GetChildMessage(rw_pipe_t pipe);
+        static bool SendChildMessage(rw_pipe_t pipe, uniconv::nstring message);
+
         static void HandleOutput(void);
 
         static void Update(void);
@@ -372,9 +379,9 @@ namespace cpp {
         static void SetDoubleClickMaxWait(unsigned short milliseconds);
         static unsigned short GetDoubleClickMaxWait(void);
 
-        static std::optional<std::pair<int,uniconv::utfstr>> PopupWindow(int type, int argc, const char_t* argv[], uniconv::utfcstr title = nullptr);
-        static std::optional<stsb::promise<std::optional<std::pair<int,uniconv::utfstr>>>> PopupWindowAsync(int type, int argc, const char_t* argv[], uniconv::utfcstr title = nullptr);
-        static std::optional<stsb::promise<std::optional<std::pair<int,std::u16string>>>> PopupWindowAsync(int type, int argc, const char16_t* argv[], const char16_t* u16title = nullptr);
+        static std::optional<std::pair<int,uniconv::nstring>> PopupWindow(int type, int argc, const char_t* argv[], uniconv::utfcstr title = nullptr);
+        static std::optional<std::pair<stsb::promise<std::optional<std::pair<int,uniconv::nstring>>>,rw_pipe_t>> PopupWindowAsync(int type, int argc, const char_t* argv[], uniconv::utfcstr title = nullptr);
+        static std::optional<std::pair<stsb::promise<std::optional<std::pair<int,std::u16string>>>,rw_pipe_t>> PopupWindowAsync(int type, int argc, const char16_t* argv[], const char16_t* u16title = nullptr);
 
         static void MoveCursor(int x, int y);
         static void ShowCursor(void);

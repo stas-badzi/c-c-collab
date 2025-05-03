@@ -6,6 +6,7 @@
 #include <unicode_conversion.hpp>
 #include <sstream>
 #include <optional>
+#include "defines.h"
 #include "dllimport.hpp"
 #ifdef _WIN32
     //#include <windows.h>
@@ -155,7 +156,11 @@ namespace cpp {
             if (ret.val) return std::pair<int,std::u16string>(ret.code,uniconv::UnicodeToU16String(ret.result));
             return std::nullopt;
         }
-        static std::optional<stsb::promise<std::optional<std::pair<int, std::u16string>>>> PopupWindowAsync(int type, int argc, const char16_t* argv[], const char16_t title[]) { return cppimp::Console_PopupWindowAsync(type, argc, argv,title); }
+        static std::optional<std::pair<stsb::promise<std::optional<std::pair<int, std::u16string>>>,rw_pipe_t>> PopupWindowAsync(int type, int argc, const char16_t* argv[], const char16_t title[]) { return ::Console_PopupWindowAsync(type, argc, argv,title); } 
+        static std::optional<std::u16string> GetParentMessage(void) { auto ret = cppimp::Console_GetParentMessage(); if (ret.is_val) return uniconv::UnicodeToU16String(ret.val); return std::nullopt; }
+        static bool SendParentMessage(std::u16string message) { return cppimp::Console_SendParentMessage(uniconv::U16StringToUnicode(message)); }
+        static std::optional<std::u16string> GetChildMessage(rw_pipe_t pipe) { auto ret = cppimp::Console_GetChildMessage(pipe); if (ret.is_val) return uniconv::UnicodeToU16String(ret.val); return std::nullopt; }
+        static bool SendChildMessage(rw_pipe_t pipe, std::u16string message) { return cppimp::Console_SendChildMessage(pipe,uniconv::U16StringToUnicode(message)); }
         static void Sleep(double seconds = 1.0, bool sleep_input_thread = false) { return cppimp::Console_Sleep(seconds, sleep_input_thread); }
         static void ClearScreenBuffer(void) { return cppimp::Console_ClearScreenBuffer(); }
         static void FillScreen(const std::vector<std::vector<Symbol> >& symbols);
