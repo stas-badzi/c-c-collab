@@ -178,7 +178,29 @@ void ColorPopup(int argc, const char16_t* argv[]);
 int Main(void) {
     Console::Init();
     Console::SetTitle(u"FactoryRush");
-    Console::SetCursorSize(100);
+
+    while (true) {
+
+        int width = Console::GetWindowWidth();
+        int height = Console::GetWindowHeight();
+
+        vector<vector<Console::Symbol>> screen(height, vector<Console::Symbol>(width, Console::Symbol(L'▒',(uint8_t)12,(uint8_t)16)));
+
+        // ERROR HERE
+        Game::Camera camera(9,9, Console::Symbol(L'a',(uint8_t)16,(uint8_t)11));
+        camera.DrawToScreen(0, 0, screen);
+
+        Console::FillScreen(screen);
+        Console::Sleep(0.5);
+    }
+    return EXIT_SUCCESS;
+}
+
+int Main_(void) {
+    Console::Init();
+    Console::SetTitle(u"FactoryRush");
+    Console::SetCursorSize(0);
+    //ColorPopup(0,nullptr);
     
     /*
     std::u16string buf;
