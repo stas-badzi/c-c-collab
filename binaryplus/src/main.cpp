@@ -140,20 +140,13 @@ int Main(void) {
 
     while (true) {
 
-        auto width = Console::GetWindowWidth();
-        auto height = Console::GetWindowHeight();
+        int width = Console::GetWindowWidth();
+        int height = Console::GetWindowHeight();
 
-        vector<vector<Console::Symbol>> screen;
+        vector<vector<Console::Symbol>> screen(height, vector<Console::Symbol>(width, Console::Symbol(L'▒',(uint8_t)12,(uint8_t)16)));
 
-        for (int16_t l = 0; l < height; l++) {
-            screen.push_back(vector<Console::Symbol>());
-            for (int16_t i = 0; i < width; i++) {
-                auto sym = Console::Symbol(L'▒',(uint8_t)16,(uint8_t)16);
-                screen.back().push_back(sym);
-            }
-        }
-
-        Game::Camera camera(9,9, Console::Symbol(L'a',(uint8_t)16,(uint8_t)16));
+        // ERROR HERE
+        Game::Camera camera(9,9, Console::Symbol(L'a',(uint8_t)16,(uint8_t)11));
         camera.DrawToScreen(0, 0, screen);
 
         Console::FillScreen(screen);

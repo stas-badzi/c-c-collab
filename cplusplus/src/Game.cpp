@@ -27,8 +27,6 @@ Game::MatrixPosition::MatrixPosition(int iIndex, int jIndex) {
 
 Game::Camera::Camera(int height, int width, Console::Symbol sym) {
 	this->buffer_ = vector<vector<Console::Symbol>>(height, vector<Console::Symbol>(width, sym));
-
-    ValidateViewport(this->ViewportCenter());
 }
 
 Game::MatrixPosition Game::Camera::ViewportCenter() {
@@ -37,24 +35,6 @@ Game::MatrixPosition Game::Camera::ViewportCenter() {
 
 void Game::Camera::DrawTexture(int x, int y, vector<vector<Console::Symbol>> texture) {
     TextureSystem::DrawTextureToScreen(x, y, texture, this->buffer_);
-
-    /*
-    float height = (float)texture.size();
-    float width = (float)texture[0].size();
-
-    ValidateViewport(center);
-
-    int startX = std::max(0, center.jIndex - static_cast<int>(std::floor(height / 2.0)));
-    int startY = std::max(0, center.iIndex - static_cast<int>(std::floor(width / 2.0)));
-    int endX = std::min(static_cast<int>(this->buffer_.size()), startX + static_cast<int>(texture.size()));
-    int endY = std::min(static_cast<int>(this->buffer_[0].size()), startY + static_cast<int>(texture[0].size()));
-
-    for (int i = startX, ti = 0; i < endX; i++, ti++) {
-        for (int j = startY, tj = 0; j < endY; j++, tj++) {
-            this->buffer_[i][j] = texture[ti][tj];
-        }
-    }
-    */
 }
 
 void Game::Camera::DrawToScreen(int x, int y, vector<vector<Console::Symbol>> screen) {
@@ -68,7 +48,5 @@ vector<vector<Console::Symbol>> Game::Camera::buffer() {
 // private:
 
 void Game::ValidateViewport(MatrixPosition vpc) {
-    if (vpc.iIndex % 2 == 0 || vpc.jIndex % 2 == 0) {
-		throw std::invalid_argument("Width and height must be odd numbers.");
-	}
+    return;
 }

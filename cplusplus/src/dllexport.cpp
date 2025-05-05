@@ -591,8 +591,8 @@ using namespace uniconv;
 
     libexport void* Game_Camera_Construct(int height, int width, void* symptr) {
         cpp::Game::Camera cam(height, width, *(cpp::Console::Symbol*)symptr);
-        auto ret = (cpp::Game::Camera*)System::AllocateMemory(sizeof(cpp::Game::Camera));
-        *ret = cam;
+        void* ret = System.AllocateMemory(sizeof(cpp::Game::Camera));
+        *(cpp::Game::Camera*)ret = cam;
         return ret;
     }
 
