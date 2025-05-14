@@ -119,6 +119,7 @@ nstring System::root = System::GetRoot();
                 if (!WriteFile(pipe, message.c_str(), message.size() * sizeof(wchar_t), &bytesWritten, nullptr))
                     return 1;
             } else {
+                WaitMessage();
                 MSG msg;
                 while (auto val = PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
                     if (val < 0) return 1;

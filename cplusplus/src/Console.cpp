@@ -13,9 +13,21 @@ namespace cpp {
     __declspec(dllexport) std::basic_ostream<wchar_t>& wout = *((std::basic_ostream<wchar_t>*)&Console::out);
 #define getnch() Console::input_buf->pop()
 #define ncerr wcerr
+    static bool wt = false;
+    static bool mintty = false;
+#define write_out(str) Console::write_out(str)
+    size_t Console::write_out(std::wstring str) {
+        if (mintty)
+            return fwrite(str.c_str(), sizeof(char), str.size(), stderr);
+        static DWORD wrtn;
+        BOOL res = WriteConsoleW(Console::screen, str.c_str(), str.size(),&wrtn, NULL);
+        if (!res) return -1;
+        return wrtn;
+    }
 #else
 #define getnch() getc(stdin)
 #define ncerr cerr
+#define write_out(str) fwrite(str.c_str(), sizeof(char), str.size(), stderr)
     __attribute__((visibility("default"))) std::basic_istream<wchar_t>& win = *((std::basic_istream<wchar_t>*)&Console::in);
     __attribute__((visibility("default"))) std::basic_ostream<wchar_t>& wout = *((std::basic_ostream<wchar_t>*)&Console::out);
 #endif
@@ -86,26 +98,26 @@ void Console::EscSeqSetTitle(const char_t* title) {
     if (title) Console::window_title = title;
     nstring str;
     str.append(N("\033]30;")).append(window_title).append(N("\a\033]0;")).append(window_title).push_back(N('\a'));
-    stderr_lock.lock();
-    fwrite(str.c_str(), sizeof(char_t), str.size(), stderr);
-    stderr_lock.unlock();
+    screen_lock.lock();
+    write_out(str);
+    screen_lock.unlock();
 }
 
 void Console::EscSeqMoveCursor(void) {
     nstring str;
     str.append(N("\033[")).append(to_nstring(Console::cursorpos.second+1)).append(N(";")).append(to_nstring(Console::cursorpos.first+1)).push_back(N('H'));
-    stderr_lock.lock();
-    fwrite(str.c_str(), sizeof(char_t), str.size(), stderr);
-    stderr_lock.unlock();
+    screen_lock.lock();
+    write_out(str);
+    screen_lock.unlock();
 }
 
 void Console::EscSeqSetCursor(void) {
     nstring str = N("\033[?25");
     if (Console::cursor_visible) str.push_back(N('h'));
     else str.push_back(N('l'));
-    stderr_lock.lock();
-    fwrite(str.c_str(), sizeof(char_t), str.size(), stderr);
-    stderr_lock.unlock();
+    screen_lock.lock();
+    write_out(str);
+    screen_lock.unlock();
 }
 
 void cpp::Console::ReverseCursorBlink(void) {
@@ -123,9 +135,9 @@ void Console::EscSeqSetCursorSize(void) {
     str.append(to_nstring(val));
     str.push_back(N(' '));
     str.push_back(N('q'));
-    stderr_lock.lock();
-    fwrite(str.c_str(), sizeof(char_t), str.size(), stderr);
-    stderr_lock.unlock();
+    screen_lock.lock();
+    write_out(str);
+    screen_lock.unlock();
 }
 
 void Console::EscSeqRestoreCursor(void) {
@@ -289,8 +301,6 @@ void Console::XtermMouseAndFocus(void) {
     static bool tabby = false;
 #ifdef _WIN32
     static bool conhost = false;
-    static bool mintty = false;
-    static bool wt = false;
     static bool conemu = false;
     static DWORD conemupid = 0;
     static bool cmder = false;
@@ -452,7 +462,7 @@ void Console::XtermMouseAndFocus(void) {
         // check if the process returned correctly
         wstring exitfl(sdir + L"exit.dat"), resfl(sdir + L"result.dat"), pipefl(sdir + L"parent.pipe");
         if (!System::IsDirectory(sdir.c_str()) || (System::IsFile(exitfl.c_str()) && System::IsFile(resfl.c_str()))) {
-            cerr << "yes" << endl;
+            //cerr << "yes" << endl;
             Console::out << L"YES!!!"; Console::out_endl();
             return 0;
         }
@@ -471,7 +481,7 @@ void Console::XtermMouseAndFocus(void) {
         if (System::IsFile(resfl.c_str()))
             DeleteFile(resfl.c_str());
         Console::out << L"Nooooooooooooooooooooooo..."; Console::out_endl();
-        cerr << "Nooooooooooooooooooooooo..." << endl;
+        //cerr << "Nooooooooooooooooooooooo..." << endl;
         return 1;
     }
 
@@ -580,6 +590,32 @@ void Console::XtermMouseAndFocus(void) {
 
         CloseHandle(hProcess);
     }
+    
+    struct __keepcursor_arg {
+        mutex* screen_mutex;
+        HANDLE screen;
+        bool* cursor_on;
+        pair<int16_t,int16_t>* cursor_pos;
+    };
+
+    DWORD WINAPI KeepCursorOn(LPVOID lpParam) {
+        auto args = (__keepcursor_arg*)lpParam;
+        auto& screen_mutex = *(args->screen_mutex);
+        auto screen = args->screen;
+        auto& cursor_on = *(args->cursor_on);
+        auto& cursor_pos = *(args->cursor_pos);
+        delete args;
+        while (true) {
+            screen_mutex.lock();
+            if (cursor_on) {
+                COORD pos = {cursor_pos.first,cursor_pos.second};
+                SetConsoleCursorPosition(screen, pos);
+            }
+            screen_mutex.unlock();
+            ::Sleep(1);
+        }
+        return TRUE;
+    }
 
     struct __superthread_arg { atomic<bool>* dorun; tsvector<HANDLE>* threads; };
 
@@ -607,21 +643,6 @@ void Console::XtermMouseAndFocus(void) {
             WaitForSingleObject(threads[i], INFINITE);
             CloseHandle(threads[i]);
         }
-        return TRUE;
-    }
-
-    // slow function so we put it in a separate thread
-    // trns out is wasn't slow but it can stay in here for now
-    DWORD WINAPI Console::MoveCursorThread(LPVOID lpParam) {
-        bool& issetting = *(bool*)lpParam;
-        while (issetting) ::Sleep(1);
-        issetting = true;
-        if (!SetConsoleCursorPosition(Console::screen, {cursorpos.first, cursorpos.second})) {
-            issetting = false;
-            Console::out << L"SetCursorPos failed: " << GetLastError(); out_endl();
-            return FALSE;
-        }
-        issetting = false;
         return TRUE;
     }
 
@@ -659,6 +680,8 @@ void Console::XtermMouseAndFocus(void) {
 
     void cpp::Console::SetCursorSize(uint8_t size) {
         Console::cursor_size = size;
+        if (wt || mintty) return Console::EscSeqSetCursorSize();
+        //fprintf(stderr,"not me!\n");
 
         CONSOLE_CURSOR_INFO cci;
         cci.bVisible = Console::cursor_visible;
@@ -740,33 +763,36 @@ void Console::XtermMouseAndFocus(void) {
     #define popback(str, n) str.erase(str.size()-n)
 
     std::wstring ModifyExecutableName(std::wstring term) {
+        //wcerr << term << "\n";
+        if (
+            (term.size() > 7 && term.substr(term.size()-7) == L"\\wt.exe") ||
+            (term.size() > 20 && term.substr(term.size()-20) == L"\\WindowsTerminal.exe")
+        ) {
+            wt = true;
+            //wcerr << "wt\n";
+        }
         if (term.size() > 10 && term.substr(term.size()-10) == L"\\Tabby.exe") {
-            wt = false;
             tabby = true; // todo - do it for linux
         }
         if (term.size() > 19 && term.substr(term.size()-19) == L"\\ConEmu\\ConEmuC.exe") {
             term = term.substr(0,term.size()-19);
             term.append(L"ConEmu64.exe");
-            wt = false;
             conemu = true;
         }
         if (term.size() > 21 && term.substr(term.size()-21) == L"\\ConEmu\\ConEmuC64.exe") {
             term = term.substr(0,term.size()-20);
             term.append(L"ConEmu64.exe");
-            wt = false;
             conemu = true;
         }
         if (term.size() > 34 && term.substr(term.size()-34) == L"\\vendor\\conemu-maximus5\\ConEmu.exe") {
             term = term.substr(0,term.size()-33);
             term.append(L"Cmder.exe");
-            wt = false;
             cmder = true;
             conemu = true;
         }
         if (term.size() > 36 && term.substr(term.size()-36) == L"\\vendor\\conemu-maximus5\\ConEmu64.exe") {
             term = term.substr(0,term.size()-35);
             term.append(L"Cmder.exe");
-            wt = false;
             cmder = true;
             conemu = true;
         }
@@ -1273,7 +1299,6 @@ void Console::XtermMouseAndFocus(void) {
         if (!initialised) {
             auto term_prog = _wgetenv(L"TERM_PROGRAM");
             mintty = term_prog && wstring(term_prog) == L"mintty";
-            wt = _wgetenv(L"WT_SESSION") != NULL;
             cmder = _wgetenv(L"CMDER_ROOT") != NULL;
             conemu = _wgetenv(L"ConEmuBuild") != NULL;
 
@@ -1356,6 +1381,7 @@ void Console::XtermMouseAndFocus(void) {
                 auto input_thread_arg = new __getinput_arg{Console::input_buf, SLEEP_THREAD_INPUT};
                 HANDLE input_thread = CreateThread(NULL, 0, InputThread, input_thread_arg, 0, NULL);
                 Console::thread_handles->push_back(input_thread);
+
                 *Console::super_thread_run = true;
                 auto super_thread_arg = new __superthread_arg{Console::super_thread_run, Console::thread_handles};
                 Console::super_thread = CreateThread(NULL, 0, Console::SuperThread, super_thread_arg, 0, NULL);
@@ -1604,6 +1630,12 @@ void Console::XtermMouseAndFocus(void) {
             Console::mouse_status.x = 0;
             Console::mouse_status.y = 0;
             
+            if (!wt && !mintty) {
+                auto keepcursor_thread_arg = new __keepcursor_arg{&Console::screen_lock, Console::screen, &Console::cursor_visible, &Console::cursorpos};
+                HANDLE keepcursor_thread = CreateThread(NULL, 0, KeepCursorOn, keepcursor_thread_arg, 0, NULL);
+                Console::thread_handles->push_back(keepcursor_thread);
+            } else Console::EscSeqSetCursorSize();
+            
             initialised = true;
 
             DWORD shutdown_level, shutdown_flags;
@@ -1651,6 +1683,8 @@ void Console::XtermMouseAndFocus(void) {
                 CloseHandle(proc);
             }
 
+            //cerr << "1end" << endl;
+
             if (!Console::sub_proc) {
                 System::ClearDirectory((Console::tmp_data+Console::subdir).c_str());
                 System::DeleteDirectory((Console::tmp_data+Console::subdir).c_str());
@@ -1665,12 +1699,17 @@ void Console::XtermMouseAndFocus(void) {
                     Console::SetResult(nullptr);
             }
 
+            //cerr << "2end" << endl;
+
             delete[] Console::subdir;
 
+            //cerr << "2.1end" << endl;
             Console::SetTitle(L"");
+            //cerr << "2.3end" << endl;
 
             HICON term_small_icon = nullptr;
             HICON term_big_icon = nullptr;
+            //cerr << "2.4end" << endl;
             if (!Console::old_small_icon || !Console::old_big_icon) {
                 auto term = Console::GetTerminalExecutableName();
                 SHFILEINFO shinfo = SHFILEINFO();
@@ -1685,18 +1724,24 @@ void Console::XtermMouseAndFocus(void) {
                     term_big_icon = shinfo.hIcon;
                 else wcerr << L"Couldn't get big icon for: " << term << L", with error: " << GetLastError() << endl;
             }
+            //cerr << "2.5end" << endl;
             Console::out << L"Console::old_small_icon: " << Console::old_small_icon << L", Console::old_big_icon: " << Console::old_big_icon << L", term_small_icon: " << term_small_icon << L", term_big_icon: " << term_big_icon; out_endl();
-
+        
+    
             if (Console::old_small_icon) SendMessage(Console::window, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(Console::old_small_icon));
             else SendMessage(Console::window, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(term_small_icon));
             if (Console::old_big_icon) SendMessage(Console::window, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(Console::old_big_icon));
             else SendMessage(Console::window, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(term_big_icon));
             DestroyIcon(Console::new_icon);
+            //cerr << "" << endl; // don't remove it'll break the code #fixed
             ::Sleep(100); // wait for the icon to be set
+            //cerr << "" << endl; // don't remove it'll break the code #fixed
 
             SetConsoleCursorInfo(Console::screen, &Console::old_curinf);
 
             SetConsoleMode(Console::fd, Console::old_console);
+
+            //cerr << "4end" << endl;
 
             ReleaseDC(0, device);
             CloseHandle(Console::screen);
@@ -1709,6 +1754,8 @@ void Console::XtermMouseAndFocus(void) {
                 DestroyIcon(term_small_icon);
                 DestroyIcon(term_big_icon);
             }
+
+            //cerr << "5end" << endl;
 
             initialised = false;
         }
@@ -1835,7 +1882,7 @@ void Console::XtermMouseAndFocus(void) {
                                 scr_lastmatch = true;
                             }
                             if (!atr_lastmatch) {
-                                //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                                //wcerr << L"WriteConsoleOutputAttribute1: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
                                 BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
                                 if (out == 0) { Console::out << GetLastError() << endl; return; }
                                 now_attrs.clear();
@@ -1857,9 +1904,9 @@ void Console::XtermMouseAndFocus(void) {
                         if (Console::old_symbols[i][j].foreground != 16 || Console::old_symbols[i][j].background != 16) {
                             if (atr_lastmatch) { atr_lastcoord = {(SHORT)j,(SHORT)i}; }
                             atr_lastmatch = false;
-                            now_attrs.push_back(Console::GenerateAtrVal(Console::old_symbols[i][j].foreground,Console::old_symbols[i][j].background));
+                            now_attrs.push_back(Console::GenerateAtrVal(16,16));
                         } else if (!atr_lastmatch) {
-                            //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                            //wcerr << L"WriteConsoleOutputAttribute2: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
                             BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
                             if (out == 0) { Console::out << GetLastError() << endl; return; }
                             now_attrs.clear();
@@ -1879,7 +1926,7 @@ void Console::XtermMouseAndFocus(void) {
                                         scr_lastmatch = true;
                                     }
                                     if (!atr_lastmatch) {
-                                        //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                                        //wcerr << L"WriteConsoleOutputAttribute3: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
                                         BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
                                         if (out == 0) { Console::out << GetLastError() << endl; return; }
                                         now_attrs.clear();
@@ -1901,9 +1948,9 @@ void Console::XtermMouseAndFocus(void) {
                                 if (Console::old_symbols[i][j].foreground != 16 || Console::old_symbols[i][j].background != 16) {
                                     if (atr_lastmatch) { atr_lastcoord = {(SHORT)j,(SHORT)i}; }
                                     atr_lastmatch = false;
-                                    now_attrs.push_back(Console::GenerateAtrVal(Console::old_symbols[i][j].foreground,Console::old_symbols[i][j].background));
+                                    now_attrs.push_back(Console::GenerateAtrVal(16,16));
                                 } else if (!atr_lastmatch) {
-                                    //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                                    //wcerr << L"WriteConsoleOutputAttribute4: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
                                     BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
                                     if (out == 0) { Console::out << GetLastError() << endl; return; }
                                     now_attrs.clear();
@@ -1927,7 +1974,7 @@ void Console::XtermMouseAndFocus(void) {
                                 atr_lastmatch = false;
                                 now_attrs.push_back(Console::GenerateAtrVal(symbols[i][j].foreground,symbols[i][j].background));
                             } else if (!atr_lastmatch) {
-                                //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                                //wcerr << L"WriteConsoleOutputAttribute5: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
                                 BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
                                 if (out == 0) { Console::out << GetLastError() << endl; return; }
                                 now_attrs.clear();
@@ -1950,7 +1997,7 @@ void Console::XtermMouseAndFocus(void) {
                             scr_lastmatch = true;
                         }
                         if (!atr_lastmatch) {
-                            //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                            //wcerr << L"WriteConsoleOutputAttribute6: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
                             BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
                             if (out == 0) { Console::out << GetLastError() << endl; return; }
                             now_attrs.clear();
@@ -1974,7 +2021,7 @@ void Console::XtermMouseAndFocus(void) {
                         atr_lastmatch = false;
                         now_attrs.push_back(symbols[i][j].GetAttribute());
                     } else if (!atr_lastmatch) {
-                        //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+                        //wcerr << L"WriteConsoleOutputAttribute7: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
                         BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
                         if (out == 0) { Console::out << GetLastError() << endl; return; }
                         now_attrs.clear();
@@ -1990,7 +2037,7 @@ void Console::XtermMouseAndFocus(void) {
             if (out == 0) { Console::out << GetLastError() << endl; return; }
         }
         if (!atr_lastmatch) {
-            //wcerr << L"WriteConsoleOutputAttribute: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
+            //wcerr << L"WriteConsoleOutputAttribute8: " << now_attrs.size() << L' ' << L'+' << L' ' << L'{' << atr_lastcoord.X << L' ' << atr_lastcoord.Y << L'}' << ' ' << L':' << L' ' << win_width << ' ' << win_height << endl;
             BOOL out = WriteConsoleOutputAttribute(Console::screen, now_attrs.data(), now_attrs.size(), atr_lastcoord, &(written[1]) );
             if (out == 0) { Console::out << GetLastError() << endl; return; }
         }
@@ -2263,8 +2310,6 @@ void Console::XtermMouseAndFocus(void) {
         this->SetAttribute(attribute);
     }
 
-    
-    mutex Console::screen_lock = {};
     tsqueue<wchar_t>* Console::input_buf = new tsqueue<wchar_t>();
     HANDLE Console::super_thread = HANDLE();
     atomic<bool>* Console::super_thread_run = new atomic<bool>();
@@ -3581,7 +3626,7 @@ void Console::Init(void) {
     }
 
     void Console::FillScreen(const vector<vector<Console::Symbol> >& symbols) {
-        if (!Console::stderr_lock.try_lock()) return; // it's a slow function so we can't put multiple in a queue
+        if (!Console::screen_lock.try_lock()) return; // it's a slow function so we can't put multiple in a queue
         string screen = "\033[?25l\033[H";
         bool moved = false;
         size_t width = GetWindowWidth(), height = GetWindowHeight();
@@ -3657,7 +3702,7 @@ void Console::Init(void) {
         fwrite(screen.c_str(), sizeof(char), screen.size(), stderr);
         old_scr_size = {width,height};
         old_symbols = symbols;
-        Console::stderr_lock.unlock();
+        Console::screen_lock.unlock();
         Console::EscSeqMoveCursor();
         Console::EscSeqSetCursor();
         //fprintf(stdout, "Terminal chars: ~%d, written chars: %d", width * height * 10, screen.size());
@@ -3691,7 +3736,7 @@ utfcstr* Console::argv = (utfcstr*)malloc(sizeof(utfcstr));
 
 bool Console::emulator = false;
 bool Console::initialised = false;
-mutex Console::stderr_lock = {};
+mutex Console::screen_lock = {};
 bitset<KEYBOARD_MAX> Console::key_states = bitset<KEYBOARD_MAX>(0);
 struct ToggledKeys Console::keys_toggled = ToggledKeys();
 bitset<16> Console::mouse_buttons_down = bitset<16>(0);
@@ -3899,6 +3944,7 @@ newpidgen:
 #ifdef _WIN32
     + conemu*7 // conemu need 7 more args
     - cmder // cmder uses one less arg than conemu
+    + wt
 #else
     + tabby // tabby need 1 more arg
 #endif
@@ -3974,10 +4020,19 @@ newpidgen:
         return nullopt;
     }
 #endif
-    args[0] = root_pth.c_str();
-    args[1] = info.c_str();
-    for (int i = 1; i <= argc; i++) args[i+1] = argv[i-1];
-    args[argc+2] = nullptr;
+{
+    int add = 0;
+#ifdef _WIN32
+    if (wt) {
+        args[add] = L"-f";
+        ++add;
+    }
+#endif
+    args[add] = root_pth.c_str();
+    args[add+1] = info.c_str();
+    for (int i = 1; i <= argc; i++) args[add+i+1] = argv[i-1];
+    args[add+argc+2] = nullptr;
+}
 #ifdef _WIN32 // for some reason, WindowsTerminal.exe doesn't work, but wt.exe does
     if (wt) {
         term2 = term; while (term2.back() != '\\') term2.pop_back(); term2.append(L"wt.exe");
@@ -4225,8 +4280,8 @@ contcons:
                 if (!twindow) continue;
                 if (twindow == Console::window || twindow == Console::parent_window) {
                     correct_window = true;
-                    cout << "Correct window"; out_endl();
-                } else cout << "Wrong window"; out_endl();
+                    Console::out << L"Correct window"; out_endl();
+                } else Console::out << L"Wrong window"; out_endl();
                 owner_thread = GetWindowThreadProcessId(twindow, nullptr);
                 if ((notme = (this_thread != owner_thread)))
                     AttachThreadInput(owner_thread, this_thread, true);
@@ -4237,7 +4292,7 @@ contcons:
                 twindow = tmpwindow;
                 if (tmpwindow == Console::window || tmpwindow == Console::parent_window) {
                     correct_window = true;
-                    cout << "Correct window"; out_endl();
+                    Console::out << L"Correct window"; out_endl();
                     if (notme) AttachThreadInput(owner_thread, this_thread, false);
                     owner_thread = GetWindowThreadProcessId(twindow, nullptr);
                     if ((notme = (this_thread != owner_thread)))
@@ -4349,6 +4404,7 @@ newpidgen:
 #ifdef _WIN32
     + conemu*7 // conemu need 7 more args
     - cmder // cmder uses one less arg than conemu
+    + wt // windows terminal needs 1 more arg
 #else
     + tabby // tabby need 1 more arg
 #endif
@@ -4424,11 +4480,20 @@ newpidgen:
         return nullopt;
     }
 #endif
-    args[0] = root_pth.c_str();
-    args[1] = info.c_str();
-    for (int i = 1; i <= argc; i++) args[i+1] = argv[i-1];
-    args[argc+2] = nullptr;
-    #ifdef _WIN32 // for some reason, WindowsTerminal.exe doesn't work, but wt.exe does
+{
+    int add = 0;
+#ifdef _WIN32
+    if (wt) {
+        args[add] = L"-f";
+        ++add;
+    }
+#endif
+    args[add+0] = root_pth.c_str();
+    args[add+1] = info.c_str();
+    for (int i = 1; i <= argc; i++) args[add+i+1] = argv[i-1];
+    args[add+argc+2] = nullptr;
+}
+#ifdef _WIN32 // for some reason, WindowsTerminal.exe doesn't work, but wt.exe does
     if (wt) {
         term2 = term; while (term2.back() != '\\') term2.pop_back(); term2.append(L"wt.exe");
         if (System::RunProgramAsync(term2.c_str(), args)) goto contcons;
@@ -4716,6 +4781,7 @@ newpidgen:
 #ifdef _WIN32
     + conemu*7 // conemu need 7 more args
     - cmder // cmder uses one less arg than conemu
+    + wt // windows terminal needs 1 more arg
 #else
     + tabby // tabby need 1 more arg
 #endif
@@ -4791,10 +4857,19 @@ newpidgen:
         return nullopt;
     }
 #endif
-    args[0] = root_pth.c_str();
-    args[1] = info.c_str();
-    for (int i = 1; i <= argc; i++) args[i+1] = argv[i-1].c_str();
-    args[argc+2] = nullptr;
+{
+    int add = 0;
+#ifdef _WIN32
+    if (wt) {
+        args[add] = L"-f";
+        ++add;
+    }
+#endif
+    args[add+0] = root_pth.c_str();
+    args[add+1] = info.c_str();
+    for (int i = 1; i <= argc; i++) args[add+i+1] = argv[i-1].c_str();
+    args[add+argc+2] = nullptr;
+}
 #ifdef _WIN32 // for some reason, WindowsTerminal.exe doesn't work, but wt.exe does
     if (wt) {
         term2 = term; while (term2.back() != '\\') term2.pop_back(); term2.append(L"wt.exe");

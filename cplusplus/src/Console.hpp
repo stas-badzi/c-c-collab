@@ -43,6 +43,7 @@
     #include <windows/key.hpp>
     #include <iostream>
     #include <unordered_map>
+    #include <bit>
     #include <conio.h>
     #include <windows/thread_safe/queue>
     #include <windows/thread_safe/vector>
@@ -176,7 +177,7 @@ namespace cpp {
         // max time to wait for the popup window to start up before returning -1 (in milliseconds)
         static int max_popup_startup_wait;
         static bool initialised;
-        static std::mutex stderr_lock;
+        static std::mutex screen_lock;
         static std::bitset<KEYBOARD_MAX> key_states;
         static int key_hit;
         static int key_released;
@@ -213,7 +214,6 @@ namespace cpp {
         static rw_pipe_t parent_pipe;
     #ifdef _WIN32
         static constexpr const wchar_t* pipedir = L"\\\\.\\pipe\\.factoryrush\\";
-        static std::mutex screen_lock;
         static const wchar_t* subdir;
         //static std::vector<std::vector<COLORREF>> SaveScreen(void);
         //static std::pair<std::pair<uint16_t,uint16_t>,std::pair<uint16_t,uint16_t>> GetOffsetSymSize(int color1 = 3, int color2 = 9, int color3 = 1);
@@ -242,11 +242,12 @@ namespace cpp {
         static std::atomic<bool>* super_thread_run;
         static tsvector<HANDLE>* thread_handles;
         static std::wofstream real_out;
+        static std::atomic<bool> tabactive;
         static inline wchar_t getnch(void);
         static inline constexpr uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2);
         static DWORD WINAPI MoveCursorThread(LPVOID lpParam);
         static DWORD WINAPI SuperThread(LPVOID lpParam);
-        static std::atomic<bool> tabactive;
+        static size_t write_out(std::wstring str);
         //static std::pair<uint16_t,uint16_t> xyoffset;
         //static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
     #else
