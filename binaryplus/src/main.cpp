@@ -102,6 +102,11 @@ int Main(void) {
     while (1) {
         Console::HandleMouseAndFocus();
         Console::HandleOutput();
+        if (Console::IsFocused()) Console::HandleKeyboard();
+        else Console::DontHandleKeyboard();
+        if (Console::KeyPressed() == Key::Enum::q && IsCtrlDown())
+            break;
+
         wchar_t x;
         Console::Symbol sym = Console::Symbol(L'~',16,16);
         while ((x = win.get()) && win.good())
@@ -114,7 +119,7 @@ int Main(void) {
         auto sym2 = Console::Symbol::CreateTexture(to_u16string(Console::GetMouseStatus().y));
         if (Console::GetMouseStatus().x == 0 && Console::GetMouseStatus().y == 4) {
             if (Console::GetMouseStatus().primary && !lastmouse.primary) return EXIT_SUCCESS; 
-            if (Console::GetMouseStatus().secondary && !lastmouse.secondary) Console::PopupWindow(0,0,nullptr);
+            if (Console::GetMouseStatus().secondary && !lastmouse.secondary) { Console::PopupWindow(0,0,nullptr); }
             if (Console::GetMouseStatus().middle && !lastmouse.middle) Console::PopupWindow(1,0,nullptr);
             sym = Console::Symbol(L'@',16,16);
         }

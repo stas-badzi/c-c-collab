@@ -587,7 +587,7 @@ else
 	@rm -f objects/*
 endif
 
-resources: $(check_arch) source/setkbdmode.c source/killterm.c source/getfd.c source/getfd.h source/keyboard.h source/keyboard.m source/openfile.h source/openfile.m source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h
+resources: $(check_arch) source/setkbdmode.c source/killterm.c source/getfd.c source/getfd.h source/keyboard.h source/keyboard.m source/openfile.h source/openfile.m source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h source/startprogram.c
 	@echo MAKE RESOURCES
 
 ifneq ($(msvc),1)
@@ -610,14 +610,16 @@ endif
 
 ifeq ($(shell uname -s),Linux)
 	-@rm *.o 2> $(nulldir)
-	$(c-compiler) -c source/setkbdmode.c source/getfd.c source/ledctrl.c source/mousefd.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
+	$(c-compiler) -c source/setkbdmode.c source/startprogram.c source/getfd.c source/ledctrl.c source/mousefd.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	ar rcs assets/liblinuxctrl.$(static) objects/getfd.o objects/ledctrl.o objects/mousefd.o objects/setkbdmode.o
 	$(c-compiler) -o assets/setkbdmode objects/setkbdmode.o -Lassets -llinuxctrl $(static-libc)
+	$(c-compiler) -o assets/startprogram.bin objects/startprogram.o $(static-libc) -D_GNU_SOURCE
 	git submodule update --init --recursive --remote utilities/doas-keepenv
 ifeq ($(copylibs),1)
 	@echo "$(linuxroot)/share/factoryrush/bin"
 	$(admin)mkdir -p $(linuxroot)/share/factoryrush/bin$(adminend)
 	$(admin)cp assets/setkbdmode $(linuxroot)/share/factoryrush/bin$(adminend)
+	$(admin)cp assets/startprogram.bin $(linuxroot)/share/factoryrush/bin$(adminend)
 	$(admin)cp utilities/doas-keepenv/doas-keepenv $(linuxroot)/share/factoryrush/bin/doas-keepenv.sh$(adminend)
 	$(admin)cp utilities/doas-keepenv/doas-keepenv $(linuxbin)/doas-keepenv.sh$(adminend)
 

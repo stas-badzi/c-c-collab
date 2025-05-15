@@ -21,7 +21,7 @@
 #ifdef __APPLE__
     #include <signal.h>
     #include <mach-o/dyld.h>
-    typedef void (*sighandler_t)(int);
+    typedef __sighandler_t sighandler_t;
 #elif __linux__
     #include <linux/limits.h>
 #endif
@@ -65,13 +65,21 @@ namespace cpp {
         static int Shell(uniconv::utfcstr arg);
         static int RunProgram(uniconv::utfcstr path, uniconv::utfcstr args, ...);
         static int RunProgramS(uniconv::utfcstr file, uniconv::utfcstr args, ...);
-        static int RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]);
+        static int RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]
+    #ifdef __linux__
+        , uid_t suid = 0
+    #endif
+        );
         static int RunProgramS(uniconv::utfcstr file, uniconv::utfcstr const args[]);
         
         static bool ShellAsync(uniconv::utfcstr arg);  
         static bool RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr args, ...);
         static bool RunProgramAsyncS(uniconv::utfcstr file, uniconv::utfcstr args, ...);
-        static bool RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[]);
+        static bool RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[]
+    #ifdef __linux__
+        , uid_t suid = 0
+    #endif
+        );
         static bool RunProgramAsyncS(uniconv::utfcstr file, uniconv::utfcstr const args[]);
     #ifdef _WIN32
         static int ShellC(uniconv::utfcstr arg);

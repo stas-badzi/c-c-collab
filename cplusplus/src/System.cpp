@@ -441,6 +441,11 @@ bool cpp::System::IsFile(utfcstr path) {
     return false;
 }
 
+bool cpp::System::DoesPathExist(utfcstr path) {
+    struct stat st;
+    return stat(path, &st) == 0; 
+}
+
 int cpp::System::Shell(uniconv::utfcstr command) {
     return System::RunProgram("/bin/sh", "-c", command, nullptr); 
 }
@@ -502,6 +507,7 @@ bool cpp::System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr arg, .
         }
     noargs:
         va_end(args);
+
         execv(path, args_c);
         exit(127);
     }
@@ -553,6 +559,7 @@ int cpp::System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
         }
     noargs:
         va_end(args);
+
         execv(path, args_c);
         exit(127);
     } else {
@@ -656,6 +663,7 @@ int cpp::System::RunProgramS(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
         }
     noargs:
         va_end(args);
+
         execvp(path, args_c);
         exit(127);
     } else {
@@ -751,6 +759,7 @@ int cpp::System::RunProgramS(uniconv::utfcstr path, uniconv::utfcstr const args[
         for (int i = 1; i < 256; i++)
             if (args[i-1] == nullptr) break;
             else args_c[i] = (char*)args[i-1];
+
         execv(path, args_c);
         exit(127);
     } else {
@@ -811,7 +820,11 @@ int cpp::System::RunProgramS(uniconv::utfcstr path, uniconv::utfcstr const args[
     return status;
 }
 
-int cpp::System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
+int cpp::System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]
+#ifdef __linux__
+    , uid_t suid
+#endif
+) {
     int status;
     System::tpid = fork();
     sighandler_t old_handler[32];
@@ -846,6 +859,21 @@ int cpp::System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]
         for (int i = 1; i < 256; i++)
             if (args[i-1] == nullptr) break;
             else args_c[i] = (char*)args[i-1];
+
+    #ifdef __linux__
+        if (suid) {
+            int res = setuid(suid);
+            res = setegid(getgid());
+            int nulfl = open("/dev/null", O_WRONLY);
+            dup2(nulfl, STDOUT_FILENO);
+            dup2(nulfl, STDERR_FILENO);
+            close(nulfl);
+            nulfl = open("/dev/null", O_RDONLY);
+            dup2(nulfl, STDIN_FILENO);
+            close(nulfl);
+        }
+    #endif
+
         execvp(path, args_c);
         exit(127);
     } else {
@@ -906,7 +934,11 @@ int cpp::System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]
     return status;
 }
 
-bool cpp::System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
+bool cpp::System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[]
+#ifdef __linux__
+    , uid_t suid
+#endif
+) {
     int status;
     System::tpid = fork();
     sighandler_t old_handler[32];
@@ -941,6 +973,11 @@ bool cpp::System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const 
         for (int i = 1; i < 256; i++)
             if (args[i-1] == nullptr) break;
             else args_c[i] = (char*)args[i-1];
+
+    #ifdef __linux__
+        if (suid) { int res = setuid(suid); }
+    #endif
+
         execvp(path, args_c);
         exit(127);
     }
@@ -989,8 +1026,6 @@ utfstr System::ToNativePath(utfstr path) {
 utfstr System::GetRootDir(void) {
     return System::root;
 }
-
-
 
 uniconv::utfstr cpp::System::GetSelfPath(void) {
     return System::self;
