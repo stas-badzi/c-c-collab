@@ -651,7 +651,9 @@ ifeq ($(shell uname -s),Linux)
 	$(c-compiler) -c source/setkbdmode.c source/getfd.c source/ledctrl.c source/mousefd.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	ar rcs assets/liblinuxctrl.$(static) objects/getfd.o objects/ledctrl.o objects/mousefd.o objects/setkbdmode.o
 	$(c-compiler) -o assets/setkbdmode objects/setkbdmode.o -Lassets -llinuxctrl $(static-libc)
+ifneq ($(offline),1)
 	git submodule update --init --recursive --remote utilities/doas-keepenv
+endif
 ifeq ($(copylibs),1)
 	@echo "$(linuxroot)/share/factoryrush/bin"
 	$(admin)mkdir -p $(linuxroot)/share/factoryrush/bin$(adminend)
@@ -677,7 +679,9 @@ ifeq ($(shell uname -s),Darwin)
 	$(c-compiler) -c source/keyboard.m source/openfile.m source/killterm.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(c-compiler) -dynamiclib -o assets/libapplectrl.dylib objects/keyboard.o objects/openfile.o -framework CoreGraphics -framework CoreServices
 	$(c-compiler) -o assets/killterm objects/killterm.o
+ifneq ($(offline),1)
 	git submodule update --init --recursive --remote utilities/give-control
+endif
 ifeq ($(copylibs),1)
 	$(admin)mkdir -p $(macosroot)/share/factoryrush/lib $(macosroot)/share/factoryrush/bin$(adminend)
 	$(admin)cp assets/libapplectrl.dylib $(macosroot)/share/factoryrush/lib$(adminend)
