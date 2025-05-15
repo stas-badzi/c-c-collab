@@ -148,6 +148,11 @@ int Main(void) {
     while (1) {
         Console::HandleMouseAndFocus();
         Console::HandleOutput();
+        if (Console::IsFocused()) Console::HandleKeyboard();
+        else Console::DontHandleKeyboard();
+        if (Console::KeyPressed() == Key::Enum::q && IsCtrlDown())
+            break;
+
         wchar_t x;
         Console::Symbol sym = Console::Symbol(L'~',16,16);
         while ((x = win.get()) && win.good())

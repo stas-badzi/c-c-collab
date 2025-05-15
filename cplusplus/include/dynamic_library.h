@@ -11,10 +11,18 @@
 #else
     #if defined __cplusplus
         #define libimport extern "C"
-        #define libexport extern "C" __attribute__((visibility("default")))
+        #ifdef __clang__
+            #define libexport extern "C" __attribute__((visibility("default")))
+        #else
+            #define libexport extern "C" __attribute__((visibility("default"),externally_visible))
+        #endif
     #else
-        #define libimport 
-        #define libexport __attribute__((visibility("default")))
+        #define libimport
+        #ifdef __clang__
+            #define libexport __attribute__((visibility("default")))
+        #else
+            #define libexport __attribute__((visibility("default"),externally_visible))
+        #endif
     #endif
     
 #endif

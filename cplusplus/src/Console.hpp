@@ -94,6 +94,16 @@
     #define KEYBOARD_MAX 256
 #endif
 
+#ifndef __linux__
+    #define NO_CUSTOM_HANDLING /* not supported outside linux */
+#endif
+
+#ifdef NO_CUSTOM_HANDLING
+    #define KEYSTATE_MAX KEYBOARD_MAX
+#else
+    #define KEYSTATE_MAX static_cast<uint16_t>(Key::Enum::LAST_KEY)
+#endif
+
 // change to 1 for less cpu usage but less responsiveness (windows keyboard input)
 #define SLEEP_THREAD_INPUT false
 // change to 1 for less cpu usage but less responsiveness (windows popup window switching)
@@ -178,7 +188,7 @@ namespace cpp {
         static int max_popup_startup_wait;
         static bool initialised;
         static std::mutex screen_lock;
-        static std::bitset<KEYBOARD_MAX> key_states;
+        static std::bitset<KEYSTATE_MAX> key_states;
         static int key_hit;
         static int key_released;
         static unsigned short double_click_max; // = 500;
@@ -208,10 +218,11 @@ namespace cpp {
         static bool cursor_blink_opposite;
         static uniconv::nstring user_data;
         static uniconv::nstring dev_data;
+        static uniconv::nstring log_data;
         static uniconv::nstring tmp_data;
         static std::vector<pid_t> popup_pids;
-        static uniconv::nstring terminal_name;
         static rw_pipe_t parent_pipe;
+        static uniconv::nstring terminal_name;
     #ifdef _WIN32
         static constexpr const wchar_t* pipedir = L"\\\\.\\pipe\\.factoryrush\\";
         static const wchar_t* subdir;
@@ -251,12 +262,14 @@ namespace cpp {
         //static std::pair<uint16_t,uint16_t> xyoffset;
         //static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
     #else
+        static bool custom_handling;
         static std::ofstream real_out;
         static const char* subdir;
         static struct termios old_termios;
         static struct winsize window_size;
         static mbstate_t streammbs;
     #ifdef __linux__
+        static uid_t ruid;
         static struct termios old_fdterm;
         static int old_kbdmode;
         static int fd;
@@ -268,7 +281,11 @@ namespace cpp {
         static bool no_gpm;
         static bool parent;
         static uint8_t root_type;
+        static std::string terminal_switch;
         static Key::Enum key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX];
+        static std::pair<int16_t,int16_t> scr_size;
+        static std::string GetTerminalExecuteSwitch(void);
+        static void Custom_HandleKeyboard(void);
     #endif
     #ifdef __APPLE__
         static pid_t ppid;
@@ -372,6 +389,8 @@ namespace cpp {
         static void QuickExit(int code);
         static void SetResult(uniconv::utfcstr result);
 
+        static void Beep(void);
+
         static void ThrowMsg(const char* msg);
         static void ThrowMsg(const wchar_t* msg);
         static void ThrowMsg(const std::string msg);
@@ -399,7 +418,6 @@ namespace cpp {
         static std::atomic<bool> refresh_screen;
         static std::vector<std::vector<Symbol>> old_symbols;
         static std::pair<int16_t,int16_t> old_scr_size;
-        
     };
 #ifdef _WIN32
     extern __declspec(dllexport) std::basic_istream<wchar_t>& win;
