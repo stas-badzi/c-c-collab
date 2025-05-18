@@ -54,6 +54,7 @@
 #endif
     typedef wchar_t char_t;
 #else
+    #include <errno.h>
     #include <signal.h>
     #include <limits>
     #include <climits>
@@ -102,6 +103,12 @@
     #define KEYSTATE_MAX KEYBOARD_MAX
 #else
     #define KEYSTATE_MAX static_cast<uint16_t>(Key::Enum::LAST_KEY)
+#endif
+
+#ifdef _WIN32
+#define geterror() GetLastError()
+#else
+#define geterror() errno
 #endif
 
 // change to 1 for less cpu usage but less responsiveness (windows keyboard input)
@@ -388,8 +395,6 @@ namespace cpp {
         static void Exit(int code);
         static void QuickExit(int code);
         static void SetResult(uniconv::utfcstr result);
-
-        static void Beep(void);
 
         static void ThrowMsg(const char* msg);
         static void ThrowMsg(const wchar_t* msg);

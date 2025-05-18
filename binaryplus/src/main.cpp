@@ -13,6 +13,11 @@
 #include <cassert>
 #include <random>
 #include <thread>
+#include <cwchar>
+#ifndef MSC_VER
+#include <pthread.h>
+#include <signal.h>
+#endif
 
 typedef std::basic_stringstream<char16_t> u16stringstream;
 
@@ -20,7 +25,11 @@ typedef std::basic_stringstream<char16_t> u16stringstream;
 #define quick_exit(x) cpp::QuickExit(x)
 #define _Exit(x) cpp::QuickExit(x)
 #define to_u16string(x) uniconv::WStringToU16String(std::to_wstring(x))
+#ifdef _WIN32
 #define u16toi(x) _wtoi(uniconv::U16StringToWString(x).c_str())
+#else
+#define u16toi(x) wcstol(uniconv::U16StringToWString(x).c_str(),nullptr,10)
+#endif
 inline size_t u16strlen(const char16_t* str) { size_t i = 0; while (str[i]) i++; return i; }
 
 #define IsCtrlDown() (Console::IsKeyDown(Key::Enum::CTRL) || Console::IsKeyDown(Key::Enum::CTRLL) || Console::IsKeyDown(Key::Enum::CTRLR))
@@ -718,6 +727,7 @@ pair<int,u16string> ErrorPopup(int argc, const char16_t* argv[]) {
         }
         Console::FillScreen(scr);
         Console::MoveCursor(mouse.x,mouse.y);
+        seeifsleep:
         if (width != Console::GetWindowWidth() || height != Console::GetWindowHeight()) {
             old_width = Console::GetWindowWidth();
             old_height = Console::GetWindowHeight();
@@ -729,7 +739,6 @@ pair<int,u16string> ErrorPopup(int argc, const char16_t* argv[]) {
             nothingticks++;
         else
             nothingticks = 0;
-        seeifsleep:
         if (!Console::IsFocused() || nothingticks > 100) {
         yessleep:
             lastmouse = mouse;
@@ -996,7 +1005,7 @@ pair<int,u16string> NewFilePopup(int argc, const char16_t* argv[]) {
         }
 
         if (mouse.y == wbeg.second && (mouse.x >= wbeg.first && mouse.x < wbeg.first + wistr.size())) {
-            for (int i = 0; i < wistr.size(); ++i){
+            for (size_t i = 0; i < wistr.size(); ++i){
                 scr[wbeg.second][wbeg.first + i].ReverseColors();
             }
             if (Console::MouseButtonClicked().first == MOUSE_BUTTON_PRIMARY)
@@ -1004,7 +1013,7 @@ pair<int,u16string> NewFilePopup(int argc, const char16_t* argv[]) {
         }
 
         if (mouse.y == hbeg.second && (mouse.x >= hbeg.first && mouse.x < hbeg.first + hestr.size())) {
-            for (int i = 0; i < hestr.size(); ++i){
+            for (size_t i = 0; i < hestr.size(); ++i){
                 scr[hbeg.second][hbeg.first + i].ReverseColors();
             }
             if (Console::MouseButtonClicked().first == MOUSE_BUTTON_PRIMARY)

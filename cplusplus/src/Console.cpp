@@ -199,7 +199,7 @@ void Console::XtermMouseAndFocus(void) {
             continue;
         } else if (bytes == 0) break;
         c = GetChar(); --bytes;
-        if (c != N('[') && c != N('\033')) {
+        if (c != N('[') && c != N('O') && c != N('\033')) {
             Console::PushChar(N('\033'));
             Console::PushChar(c);
             buf[0] = N('\0');
@@ -209,6 +209,25 @@ void Console::XtermMouseAndFocus(void) {
             --Console::buf_it;
             buf[buf_it] = N('\0');
         } else if (bytes == 0) break;
+        if (c == N('O')) {
+            c = GetChar(); --bytes;
+            switch (c) {
+            case N('P'):
+                Console::out << L"F1";
+                Console::out_endl();
+                break;
+            case N('Q'):
+                Console::out << L"F2";
+                Console::out_endl();
+                break;
+            case N('R'):
+                Console::out << L"F3";
+                Console::out_endl();
+                break;
+            }
+            buf[0] = N('\0');
+            continue;
+        }
         c = GetChar(); --bytes;
         switch (c) {
         case N('I'):
@@ -221,7 +240,42 @@ void Console::XtermMouseAndFocus(void) {
             Console::focused = false;
             buf[0] = N('\0');
             continue;
-        case N('<'):
+        case N('A'):
+            Console::out.put(L'^');
+            Console::out_endl();
+            buf[0] = N('\0');
+            continue;
+        case N('B'):
+            Console::out.put(L'v');
+            Console::out_endl();
+            buf[0] = N('\0');
+            continue;
+        case N('C'):
+            Console::out.put(L'>');
+            Console::out_endl();
+            buf[0] = N('\0');
+            continue;
+        case N('D'):
+            Console::out.put(L'<');
+            Console::out_endl();
+            buf[0] = N('\0');
+            continue;
+        case N('['):
+            if (bytes == 0) break;
+            c = GetChar(); --bytes;
+            switch (c) {
+            case N('M'):
+                Console::out << L"Macro";
+                Console::out_endl();
+                break;
+            case N('P'):
+                Console::out << L"Insert";
+                Console::out_endl();
+                break;
+            }
+            buf[0] = N('\0');
+            continue;
+        case N('<'): {
             int pos = 0;
             int val[3] = {0};
             int it = 2;
@@ -300,6 +354,25 @@ void Console::XtermMouseAndFocus(void) {
             buf[0] = N('\0');
             continue;
         }
+        default:
+            if (isalpha(c)) {
+                buf[0] = N('\0');
+                continue;
+            }
+            if (c >= N('0') && c <= N('9')) {
+                int num = 0;
+                while (c >= N('0') && c <= N('9')) {
+                    num *= 10;
+                    num += c - N('0');
+                    if (bytes == 0) return;
+                    c = GetChar(); --bytes;
+                }
+                if (c != N('~')) ThrowMsg("Invalid getc() input");
+                Console::out << L"Macro: " << num; Console::out_endl();
+                buf[0] = N('\0');
+                continue;
+            }
+        }
         Console::PushChar('\033');
         Console::PushChar('[');
         Console::PushChar(c);
@@ -307,7 +380,7 @@ void Console::XtermMouseAndFocus(void) {
     }
 }
 
-    static bool tabby = false;
+
 #ifdef _WIN32
     static bool conhost = false;
     static bool conemu = false;
@@ -2344,7 +2417,7 @@ void Console::XtermMouseAndFocus(void) {
     // Not windows (Probably Posix and/or Unix)
 
     void Console::HandleOutput(void) {
-        auto str = Console::out.str();
+        auto str = WStringToNative(Console::out.str());
         Console::out.clear();
         if (str.empty()) return;
         Console::out.str(wstring());
@@ -2358,10 +2431,6 @@ void Console::XtermMouseAndFocus(void) {
         fwrite(&len, sizeof(size_t), 1, fl);
         if (len) fwrite(result, sizeof(char), strlen(result), fl);
         fclose(fl);
-    }
-
-    void Console::Beep(void) {
-        fwrite("\a", sizeof(char), 1, stderr);
     }
 
     void cpp::Console::MoveCursor(int x, int y) {
@@ -2389,8 +2458,9 @@ void Console::XtermMouseAndFocus(void) {
         EscSeqSetTitle(title);
     }
 
-    void cpp::Console::Beep(void) {
-        csimp::SoundSystem_PlaySound(uniconv::NativeStringToUnicode((System::GetRootDir() + sep + N("assets") + sep + N("illegal-operation.wav")).c_str()), 0);
+    void Console::Beep(void) {
+        fwrite("\a", sizeof(char), 1, stderr);
+        //csimp::SoundSystem_PlaySound(uniconv::NativeStringToUnicode((System::GetRootDir() + sep + N("assets") + sep + N("illegal-operation.wav")).c_str()), 0);
     }
 
     mbstate_t Console::streammbs = mbstate_t();
@@ -2583,13 +2653,13 @@ void Console::XtermMouseAndFocus(void) {
         prog = args[1];
 
         for (int i=0; not_term[i]; ++i)
-            if (not_term[i][0] == '@')
+            if (not_term[i][0] == '@') {
                 if (prog.find(not_term[i] + 1) != string::npos)
                     return GetPidTerminal(getparent(pid));
-            else if (not_term[i][0] == '*')
+            } else if (not_term[i][0] == '*') {
                 if (prog.substr(prog.size() - strlen(not_term[i]+1)) == string(not_term[i] + 1))
                     return GetPidTerminal(getparent(pid));
-            else if (prog == string(not_term[i]))
+            } else if (prog == string(not_term[i]))
                 return GetPidTerminal(getparent(pid));
 
         return args[1];
@@ -2692,8 +2762,6 @@ void Console::XtermMouseAndFocus(void) {
                         }
                         Console::subdir = new const char[strlen(sdir.c_str())+1]{0};
                         strcpy((char*)Console::subdir, sdir.c_str());
-                        
-                        out = getdelim(&arg, &size, 0, cmdline);
                         break;
                     case '+':
                         // launched for permissions
@@ -2756,10 +2824,11 @@ void Console::XtermMouseAndFocus(void) {
                 fwrite("\033[?1049h", sizeof(char), 8, stderr);
 
             Console::ruid = getuid();
-            if (setuid(0) == -1)
+            if (setuid(0) == -1) {
                 if (Console::custom_handling)
                     Console::ruid = -1;
                 else ThrowMsg("setuid failed - try again with sudo or with suid bit set");
+            }
 
             struct stat st;
             //int parent_pid;
@@ -2813,6 +2882,21 @@ void Console::XtermMouseAndFocus(void) {
     subdirset:
             if (stat((tmp_data + subdir + "proc").c_str(), &st) == -1)
                 mkdir((tmp_data + subdir + "proc").c_str(), 0777);
+
+            if (sub_process) {
+                auto pipepath = Console::tmp_data + subdir;
+                pipepath.pop_back(); pipepath.append(".pipe");
+                Console::parent_pipe.read = System::OpenPipe(pipepath.c_str());
+                if (Console::parent_pipe.read == INVALID_HANDLE_VALUE) {
+                    fprintf(stderr, "Couldn't open pipe: %s, with error: %d\n", pipepath.c_str(), errno);
+                    exit(0xC3);
+                }
+                Console::parent_pipe.write = System::CreatePipe((Console::tmp_data + subdir + "parent.pipe").c_str());
+                if (Console::parent_pipe.write == INVALID_HANDLE_VALUE) {
+                    fprintf(stderr, "Couldn't create pipe: %s, with error: %d\n", (Console::tmp_data + subdir + "parent.pipe").c_str(), errno);
+                    exit(0xC4);
+                }
+            }
 
             FILE* fl;
             if (Console::sub_proc) {
@@ -3107,7 +3191,7 @@ void Console::XtermMouseAndFocus(void) {
                 fwrite(&Console::ret, sizeof(Console::ret), 1, fl);
                 fclose(fl);
 
-                //if (!System::IsFile((Console::tmp_data+Console::subdir+L"result.dat").c_str()))
+                if (!System::IsFile((Console::tmp_data+Console::subdir+"result.dat").c_str()))
                     SetResult(nullptr);
 
                 fl = fopen((string("/tmp/.factoryrush/") + Console::subdir + "pid.dat").c_str(), "w");
@@ -3453,10 +3537,6 @@ void Console::XtermMouseAndFocus(void) {
         //if (micmute) fprintf(stderr, "mic mute\n");
 
         return;
-    }
-
-    uniconv::nstring Console::GetTerminalExecutableName() {
-        if (!emulator) return ""; // later maybe handle tmux & similar
     }
 
     bool Console::IsKeyDown(Key::Enum key) {
@@ -4242,6 +4322,7 @@ void Console::Init(void) {
         }
         if (screen.size() < 10) { 
             //fprintf(stdout, "Terminal chars: ~%d, written none\n", width * height * 10, 0);
+            Console::screen_lock.unlock();
             return;
         }
         screen.append("\033[0m");
@@ -4324,7 +4405,7 @@ nstring Console::dev_data = nstring();
 nstring Console::log_data = nstring();
 vector<pid_t> Console::popup_pids = vector<pid_t>();
 rw_pipe_t Console::parent_pipe = rw_pipe_t();
-nstring Console::terminal_name = utfstr();
+nstring Console::terminal_name = nstring();
 #ifdef __linux__
 string Console::terminal_switch = std::string();
 #endif
@@ -4364,7 +4445,11 @@ bool Console::IsMouseButtonDown(uint8_t button) {
     return Console::mouse_buttons_down[button];
 }
 
-void Console::Sleep(double seconds, bool sleep_input_thread) {
+void Console::Sleep(double seconds,
+#ifndef _WIN32
+    __attribute__((unused))
+#endif
+    bool sleep_input_thread) {
 #ifdef _WIN32
     HANDLE Hinput_thread = Console::thread_handles->front(); // input thread was added first
     if (sleep_input_thread)
@@ -4477,6 +4562,7 @@ void Console::QuickExit(int code) {
 
 optional<pair<int,nstring>> cpp::Console::PopupWindow(int type, int argc, const char_t* argv[], const char_t* title) {
     auto term = Console::GetTerminalExecutableName();
+    if (!title) title = Console::window_title.c_str();
 
 #ifdef _WIN32
     HANDLE Hinput_thread = Console::thread_handles->front(); // input thread was added first
@@ -4493,7 +4579,7 @@ newpidgen:
 
     utfcstr* args = (utfcstr*)System::AllocateMemory(sizeof(void*) * (argc+3
 #ifdef __linux__
-    +2+4*wave+tabby
+    +2+4*wave
 #else
     +6*wave
 #endif
@@ -4732,16 +4818,7 @@ newpidgen:
             args[3] = newwinicon.c_str();
         }
     }
-#else
-    if (tabby) {
-        for (int i = argc+2; i > 0; i--) args[i] = args[i-1];
-        args[0] = L"run";
-    }
 #endif
-
-    if (wave) {
-
-    }
 
 #ifndef __APPLE__
 #ifndef __linux__
@@ -4752,7 +4829,7 @@ newpidgen:
         return nullopt;
     }
 #else
-    if (terminator) { // startup gliches wairdly so we create a shell script and run it
+    if (terminator) { // startup gliches weirdly so we create a shell script and run it
         string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".sh";
         auto file = fopen(runpth.c_str(), "w");
         fwrite("#!/bin/sh\nrm -f $0\n", sizeof(char), 19, file);
@@ -4832,7 +4909,7 @@ contcons:
         return nullopt;
     }
     pid_t spid = 0;
-    fread(&spid, sizeof(pid_t), 1, fl);
+    int res = fread(&spid, sizeof(pid_t), 1, fl);
     fclose(fl);
     Console::popup_pids.push_back(spid);
 
@@ -4840,7 +4917,7 @@ contcons:
     if (type != 0) {
         spipe.read = System::OpenPipe((Console::tmp_data + subdir + procdir + N("parent.pipe")).c_str());
         if (spipe.read == INVALID_HANDLE_VALUE) {
-            wcerr << L"Couldn't open pipe: " << (Console::tmp_data + subdir + procdir + N("parent.pipe")) << L", with error: " << GetLastError() << endl;
+            ThrowMsg(N("Couldn't open pipe: ") + (Console::tmp_data + subdir + procdir + N("parent.pipe")) + N(", with error: ") + to_nstring(geterror()));
             exit(0xC3);
         }
     }
@@ -4863,13 +4940,13 @@ contcons:
     HWND twindow = Console::parent_window;
     bool correct_window = twindow, notme = true;
     DWORD this_thread = GetCurrentThreadId(), owner_thread = 0;
-    bool firstchange = true;
     if (twindow) {
         owner_thread = GetWindowThreadProcessId(twindow, nullptr);
         if ((notme = (this_thread != owner_thread)))
             AttachThreadInput(owner_thread, this_thread, true);
     }
 #endif
+    bool firstchange = true;
 
     bool oldfocus = true;
     int setwindow = 0;
@@ -4994,6 +5071,7 @@ contcons:
 
 optional<pair<stsb::promise<std::optional<pair<int, uniconv::nstring>>>,rw_pipe_t>> cpp::Console::PopupWindowAsync(int type, int argc, const char_t *argv[], const char_t *title) {
     auto term = Console::GetTerminalExecutableName();
+    if (!title) title = Console::window_title.c_str();
 
 #ifdef _WIN32
     HANDLE Hinput_thread = Console::thread_handles->front(); // input thread was added first
@@ -5009,10 +5087,15 @@ newpidgen:
     Console::used_pids[npid] = true;
 
     utfcstr* args = (utfcstr*)System::AllocateMemory(sizeof(void*) * (argc+3
+#ifdef __linux__
+    +2+4*wave
+#else
+    +6*wave
+#endif
 #ifdef _WIN32
     + conemu*7 // conemu need 7 more args
     - cmder // cmder uses one less arg than conemu
-    + wt // windows terminal needs 1 more arg
+    + wt
 #else
     + tabby // tabby need 1 more arg
 #endif
@@ -5034,14 +5117,14 @@ newpidgen:
     nstring procdir = nstring(N("proc")) + sep + to_nstring(npid) + sep;
     if (System::MakeDirectory((Console::tmp_data + subdir + procdir).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg((nstring(N("Couldn't create directory: \"")) + Console::tmp_data + sep + subdir + procdir + N("\"")).c_str());
     if (System::MakeDirectory((Console::log_data + to_nstring(type) + sep).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg((nstring(N("Couldn't create directory: \"")) + Console::log_data + to_nstring(type) + sep + N("\"")).c_str());
-    
-    rw_pipe_t spipe;
+
+    rw_pipe_t spipe = {0,0};
     if (type != 0) {
         auto pipepath = Console::tmp_data + subdir + N("proc/") + to_nstring(npid) + N(".pipe");
-        spipe.write = System::CreatePipe(pipepath.c_str());
+        spipe.write = System::CreatePipe(pipepath.c_str()); // a bit useless but we add it, because sub() will expect it to exist
         if (spipe.write == INVALID_HANDLE_VALUE) ThrowMsg(nstring(N("Couldn't create pipe: \"")) + pipepath + N("\""));
     }
-  
+
     nstring info = N("\033&");
     info.append(to_nstring(type)).push_back(N('~'));
     info.append(subdir).append(procdir).push_back(N('~'));
@@ -5072,7 +5155,7 @@ newpidgen:
         goto console;
 #elif __CYGWIN__
     if (!term.size()) {
-        term.append(L"C:\\cygwin64\\bin\\mintty.exe"); // todo - if mintty doesn't exists the use default 
+        term.append(L"/bin/mintty"); // todo - if mintty doesn't exists the use default 
         if (false) goto console;
     }
 #elif __APPLE__
@@ -5080,27 +5163,51 @@ newpidgen:
         term.append("/System/Applications/Utilities/Terminal.app"); // idk if this is the actual path
     }
 #elif __linux__
-    if (!term.size()) {
-        term.append("/usr/bin/gnome-terminal"); // todo - find default terminal emulator
-    }
+    string script;
+    // empty string handled in GetTerminalExecutableName()
+    // x-terminal-emulator btw (following symlinks)
 #else
     if (!term.size()) {
         return nullopt;
     }
 #endif
-{
     int add = 0;
 #ifdef _WIN32
     if (wt) {
         args[add] = L"-f";
         ++add;
     }
+#elif __linux__
+    string startproc;
+
+    if (wave) {
+        args[add] = "run";
+        args[++add] = "--delay";
+        args[++add] = "0";
+        args[++add] = "-m";
+        args[++add] = "-X";
+        args[++add] = "--";
+        ++add;
+    } else {
+        startproc = System::GetRootDir() + "/share/factoryrush/bin/startprogram.bin";
+        args[0] = term.c_str();
+        ++add;
+        if (Console::terminal_switch.size()) {
+            Console::real_out << "Terminal execute switch: " << terminal_switch << '\n' << flush;
+            args[add] = terminal_switch.c_str();
+            ++add;
+        }
+    }
+    if (tabby) {
+        args[add] = "--no-sandbox";
+        args[++add] = "run";
+        ++add;
+    }
 #endif
-    args[add+0] = root_pth.c_str();
+    args[add] = root_pth.c_str();
     args[add+1] = info.c_str();
     for (int i = 1; i <= argc; i++) args[add+i+1] = argv[i-1];
     args[add+argc+2] = nullptr;
-}
 #ifdef _WIN32 // for some reason, WindowsTerminal.exe doesn't work, but wt.exe does
     if (wt) {
         term2 = term; while (term2.back() != '\\') term2.pop_back(); term2.append(L"wt.exe");
@@ -5133,9 +5240,9 @@ newpidgen:
             fwrite(".ps1\"\n", sizeof(char), 5, file);
             fclose(file);
 
-            if (!System::RunProgramAsync(term.c_str(), (const wchar_t*)nullptr)) {
+            if (!System::RunProgramAsync(term.c_str(), (const wchar_t*)nullptr)) /* Run to launch new window */ {
                 ResumeThread(Hinput_thread);
-                return nullopt; // Run to launch new window
+                return nullopt;
             }
             DWORD processId;
             GetWindowThreadProcessId(Console::window, &processId);
@@ -5220,19 +5327,38 @@ newpidgen:
             args[3] = newwinicon.c_str();
         }
     }
-#else
-    if (tabby) {
-        for (int i = argc+2; i > 0; i--) args[i] = args[i-1];
-        args[0] = L"run";
-    }
 #endif
+
 #ifndef __APPLE__
+#ifndef __linux__
     if (!System::RunProgramAsync(term.c_str(), args)) {
     #ifdef _WIN32
         ResumeThread(Hinput_thread);
     #endif
         return nullopt;
     }
+#else
+    if (terminator) { // startup gliches weirdly so we create a shell script and run it
+        string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".sh";
+        auto file = fopen(runpth.c_str(), "w");
+        fwrite("#!/bin/sh\nrm -f $0\n", sizeof(char), 19, file);
+        for (int i = add; args[i]; i++)
+            { fwrite("\"",sizeof(char),1,file); fwrite(args[i], sizeof(char), strlen(args[i]), file); fwrite("\" ", sizeof(char), 2, file); }
+        fwrite("\n", sizeof(char), 1, file);
+        fchmod(fileno(file), 0755);
+        fclose(file);
+        args[add] = (script = runpth).c_str();
+        args[add+1] = nullptr;
+    }
+    if (tabby) {
+        const char* launchargs[3] { term.c_str() ,"--no-sandbox", nullptr };
+        if (System::RunProgram(root_pth.c_str(), launchargs, Console::ruid) != 0) return nullopt;
+        ::usleep(900000); // 0.9 seconds
+    }
+    if (wave) {
+        if (System::RunProgram(term.c_str(), args, Console::ruid) != 0) return nullopt;
+    } else if (System::RunProgram(startproc.c_str(), args, Console::ruid) != 0) return nullopt;
+#endif
 #else
     string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".command";
     auto file = fopen(runpth.c_str(), "w");
@@ -5300,7 +5426,7 @@ contcons:
     if (type != 0) {
         spipe.read = System::OpenPipe((Console::tmp_data + subdir + procdir + N("parent.pipe")).c_str());
         if (spipe.read == INVALID_HANDLE_VALUE) {
-            wcerr << L"Couldn't open pipe: " << (Console::tmp_data + subdir + procdir + N("parent.pipe")) << L", with error: " << GetLastError() << endl;
+            ThrowMsg(N("Couldn't open pipe: ") + (Console::tmp_data + subdir + procdir + N("parent.pipe")) + N(", with error: ") + to_nstring(geterror()));
             exit(0xC3);
         }
     }
@@ -5363,14 +5489,19 @@ contcons:
 }
 
 optional<pair<stsb::promise<optional<pair<int, u16string>>>,rw_pipe_t>> cpp::Console::PopupWindowAsync(int type, int argc, const char16_t *arg16v[], const char16_t *u16title) {
-    vector<nstring> argv;
+    vector<nstring> argvs;
+    vector<const char_t*> argv;
+    argvs.reserve(argc);
     argv.reserve(argc);
-    for (int i = 0; i < argc; i++)
-        argv.push_back(UnicodeToNativeString(U16StringToUnicode(arg16v[i])));
+    for (int i = 0; i < argc; i++) {
+        argvs.push_back(UnicodeToNativeString(U16StringToUnicode(arg16v[i])));
+        argv.push_back(argvs.back().c_str());
+    }
     auto strtitle = u16title ? UnicodeToNativeString(U16StringToUnicode(u16title)) : nstring();
     auto title = u16title ? strtitle.c_str() : nullptr;
     
     auto term = Console::GetTerminalExecutableName();
+    if (!title) title = Console::window_title.c_str();
 
 #ifdef _WIN32
     HANDLE Hinput_thread = Console::thread_handles->front(); // input thread was added first
@@ -5386,10 +5517,15 @@ newpidgen:
     Console::used_pids[npid] = true;
 
     utfcstr* args = (utfcstr*)System::AllocateMemory(sizeof(void*) * (argc+3
+#ifdef __linux__
+    +2+4*wave
+#else
+    +6*wave
+#endif
 #ifdef _WIN32
     + conemu*7 // conemu need 7 more args
     - cmder // cmder uses one less arg than conemu
-    + wt // windows terminal needs 1 more arg
+    + wt
 #else
     + tabby // tabby need 1 more arg
 #endif
@@ -5411,11 +5547,11 @@ newpidgen:
     nstring procdir = nstring(N("proc")) + sep + to_nstring(npid) + sep;
     if (System::MakeDirectory((Console::tmp_data + subdir + procdir).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg((nstring(N("Couldn't create directory: \"")) + Console::tmp_data + sep + subdir + procdir + N("\"")).c_str());
     if (System::MakeDirectory((Console::log_data + to_nstring(type) + sep).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg((nstring(N("Couldn't create directory: \"")) + Console::log_data + to_nstring(type) + sep + N("\"")).c_str());
-    
-    rw_pipe_t spipe;
+
+    rw_pipe_t spipe = {0,0};
     if (type != 0) {
         auto pipepath = Console::tmp_data + subdir + N("proc/") + to_nstring(npid) + N(".pipe");
-        spipe.write = System::CreatePipe(pipepath.c_str());
+        spipe.write = System::CreatePipe(pipepath.c_str()); // a bit useless but we add it, because sub() will expect it to exist
         if (spipe.write == INVALID_HANDLE_VALUE) ThrowMsg(nstring(N("Couldn't create pipe: \"")) + pipepath + N("\""));
     }
 
@@ -5449,7 +5585,7 @@ newpidgen:
         goto console;
 #elif __CYGWIN__
     if (!term.size()) {
-        term.append(L"C:\\cygwin64\\bin\\mintty.exe"); // todo - if mintty doesn't exists the use default 
+        term.append(L"/bin/mintty"); // todo - if mintty doesn't exists the use default 
         if (false) goto console;
     }
 #elif __APPLE__
@@ -5457,27 +5593,51 @@ newpidgen:
         term.append("/System/Applications/Utilities/Terminal.app"); // idk if this is the actual path
     }
 #elif __linux__
-    if (!term.size()) {
-        term.append("/usr/bin/gnome-terminal"); // todo - find default terminal emulator
-    }
+    string script;
+    // empty string handled in GetTerminalExecutableName()
+    // x-terminal-emulator btw (following symlinks)
 #else
     if (!term.size()) {
         return nullopt;
     }
 #endif
-{
     int add = 0;
 #ifdef _WIN32
     if (wt) {
         args[add] = L"-f";
         ++add;
     }
+#elif __linux__
+    string startproc;
+
+    if (wave) {
+        args[add] = "run";
+        args[++add] = "--delay";
+        args[++add] = "0";
+        args[++add] = "-m";
+        args[++add] = "-X";
+        args[++add] = "--";
+        ++add;
+    } else {
+        startproc = System::GetRootDir() + "/share/factoryrush/bin/startprogram.bin";
+        args[0] = term.c_str();
+        ++add;
+        if (Console::terminal_switch.size()) {
+            Console::real_out << "Terminal execute switch: " << terminal_switch << '\n' << flush;
+            args[add] = terminal_switch.c_str();
+            ++add;
+        }
+    }
+    if (tabby) {
+        args[add] = "--no-sandbox";
+        args[++add] = "run";
+        ++add;
+    }
 #endif
-    args[add+0] = root_pth.c_str();
+    args[add] = root_pth.c_str();
     args[add+1] = info.c_str();
-    for (int i = 1; i <= argc; i++) args[add+i+1] = argv[i-1].c_str();
+    for (int i = 1; i <= argc; i++) args[add+i+1] = argv[i-1];
     args[add+argc+2] = nullptr;
-}
 #ifdef _WIN32 // for some reason, WindowsTerminal.exe doesn't work, but wt.exe does
     if (wt) {
         term2 = term; while (term2.back() != '\\') term2.pop_back(); term2.append(L"wt.exe");
@@ -5510,9 +5670,9 @@ newpidgen:
             fwrite(".ps1\"\n", sizeof(char), 5, file);
             fclose(file);
 
-            if (!System::RunProgramAsync(term.c_str(), (const wchar_t*)nullptr)) {
+            if (!System::RunProgramAsync(term.c_str(), (const wchar_t*)nullptr)) /* Run to launch new window */ {
                 ResumeThread(Hinput_thread);
-                return nullopt; // Run to launch new window
+                return nullopt;
             }
             DWORD processId;
             GetWindowThreadProcessId(Console::window, &processId);
@@ -5539,7 +5699,6 @@ newpidgen:
                                 Console::out << L"Tabby process\n"; out_endl();
                                 auto thiswin = GetForegroundWindow();
                                 while (thiswin == GetForegroundWindow()) SysSleep(1000);
-                                
                                 Console::Sleep(0.9);
                                 goto runtabby;
                             } else tabby = true;
@@ -5598,19 +5757,38 @@ newpidgen:
             args[3] = newwinicon.c_str();
         }
     }
-#else
-    if (tabby) {
-        for (int i = argc+2; i > 0; i--) args[i] = args[i-1];
-        args[0] = L"run";
-    }
 #endif
+
 #ifndef __APPLE__
+#ifndef __linux__
     if (!System::RunProgramAsync(term.c_str(), args)) {
-#ifdef _WIN32
+    #ifdef _WIN32
         ResumeThread(Hinput_thread);
-#endif
+    #endif
         return nullopt;
     }
+#else
+    if (terminator) { // startup gliches weirdly so we create a shell script and run it
+        string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".sh";
+        auto file = fopen(runpth.c_str(), "w");
+        fwrite("#!/bin/sh\nrm -f $0\n", sizeof(char), 19, file);
+        for (int i = add; args[i]; i++)
+            { fwrite("\"",sizeof(char),1,file); fwrite(args[i], sizeof(char), strlen(args[i]), file); fwrite("\" ", sizeof(char), 2, file); }
+        fwrite("\n", sizeof(char), 1, file);
+        fchmod(fileno(file), 0755);
+        fclose(file);
+        args[add] = (script = runpth).c_str();
+        args[add+1] = nullptr;
+    }
+    if (tabby) {
+        const char* launchargs[3] { term.c_str() ,"--no-sandbox", nullptr };
+        if (System::RunProgram(root_pth.c_str(), launchargs, Console::ruid) != 0) return nullopt;
+        ::usleep(900000); // 0.9 seconds
+    }
+    if (wave) {
+        if (System::RunProgram(term.c_str(), args, Console::ruid) != 0) return nullopt;
+    } else if (System::RunProgram(startproc.c_str(), args, Console::ruid) != 0) return nullopt;
+#endif
 #else
     string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".command";
     auto file = fopen(runpth.c_str(), "w");
@@ -5629,7 +5807,7 @@ newpidgen:
 #ifdef _WIN32
     goto contcons;
 console:
-    for (int i = 0; i < argc; i++) args[i] = argv[i].c_str();
+    for (int i = 0; i < argc; i++) args[i] = argv[i];
     args[argc] = info.c_str();
     args[argc+1] = nullptr;
     if (!System::RunProgramAsyncC(root_pth.c_str(), args)) {
@@ -5678,7 +5856,7 @@ contcons:
     if (type != 0) {
         spipe.read = System::OpenPipe((Console::tmp_data + subdir + procdir + N("parent.pipe")).c_str());
         if (spipe.read == INVALID_HANDLE_VALUE) {
-            wcerr << L"Couldn't open pipe: " << (Console::tmp_data + subdir + procdir + N("parent.pipe")) << L", with error: " << GetLastError() << endl;
+            ThrowMsg(N("Couldn't open pipe: ") + (Console::tmp_data + subdir + procdir + N("parent.pipe")) + N(", with error: ") + to_nstring(geterror()));
             exit(0xC3);
         }
     }
