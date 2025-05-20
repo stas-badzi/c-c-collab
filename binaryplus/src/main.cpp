@@ -289,6 +289,8 @@ int Main(void) {
     int argc = Console::GetArgC();
     char16_t** argv = Console::GetArgV();
 
+    Console::HandleKeyboard();
+
     u16string a = System::GetRootDir();
     a.append(u"/assets/a.tux");
     u16string file = (argc < 2) ? System::ToNativePath(getPath(u"./unnamed.tux")) : System::ToNativePath(u16string(argv[1])); // Load the texture to edit
@@ -635,6 +637,8 @@ endminput:
         //string x;
         //gin >> x;
         //if (!gin.eof()) cout << 'a' << x << '\n' << flush;
+        if (Console::KeyPressed() == Key::Enum::r && IsCtrlDown()) Console::ClearScreenBuffer();
+
         if (Console::KeyPressed() == Key::Enum::q && IsCtrlDown()) {
         #ifdef _MSC_VER
             TerminateThread(handle_color_popup.native_handle(), 0);

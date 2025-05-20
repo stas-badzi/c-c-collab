@@ -896,6 +896,7 @@ else
 #other
 ifeq ($(copylibs),1)
 	$(admin)cp binaryplus/bin/$(binname).$(binary) $(bindir)$(adminend)
+	$(admin)chown root $(bindir)/$(binname).$(binary) && $(admin)chmod u+s $(bindir)/$(binname).$(binary)$(adminend)
 ifeq ($(shell uname -s), Darwin)
 ifneq ($(give-ctrl),0)
 	$(admin)utilities/give-control/give-control '$(bindir)/$(binname).$(binary)'$(adminend)

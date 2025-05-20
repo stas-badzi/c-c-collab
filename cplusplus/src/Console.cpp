@@ -179,6 +179,7 @@ void Console::XtermMouseAndFocus(void) {
     bool mousedown = false;
     int bytes;
 
+again:
 #ifdef _WIN32
     bytes = Console::input_buf->size();
 #define nstrlen wcslen
@@ -195,14 +196,20 @@ void Console::XtermMouseAndFocus(void) {
         char_t c = GetChar(); --bytes;
         if (c != N('\033')) {
             Console::PushChar(c);
-            buf[0] = N('\0');
+            {int i = 0;
+            while (buf_it+i < 127 && buf[buf_it+i] != N('\0'))
+                buf[i] = buf[buf_it+i];
+            buf[i] = N('\0');}
             continue;
         } else if (bytes == 0) break;
         c = GetChar(); --bytes;
         if (c != N('[') && c != N('O') && c != N('\033')) {
             Console::PushChar(N('\033'));
             Console::PushChar(c);
-            buf[0] = N('\0');
+            {int i = 0;
+            while (buf_it+i < 127 && buf[buf_it+i] != N('\0'))
+                buf[i] = buf[buf_it+i];
+            buf[i] = N('\0');}
             continue;
         } else if (c == N('\033')) {
             Console::PushChar('\033');
@@ -225,7 +232,10 @@ void Console::XtermMouseAndFocus(void) {
                 Console::out_endl();
                 break;
             }
-            buf[0] = N('\0');
+            {int i = 0;
+            while (buf_it+i < 127 && buf[buf_it+i] != N('\0'))
+                buf[i] = buf[buf_it+i];
+            buf[i] = N('\0');}
             continue;
         }
         c = GetChar(); --bytes;
@@ -233,32 +243,50 @@ void Console::XtermMouseAndFocus(void) {
         case N('I'):
             //fprintf(stderr, "gained focus\n");
             Console::focused = true;
-            buf[0] = N('\0');
+            {int i = 0;
+            while (buf_it+i < 127 && buf[buf_it+i] != N('\0'))
+                buf[i] = buf[buf_it+i];
+            buf[i] = N('\0');}
             continue;
         case N('O'):
             //fprintf(stderr, "lost focus\n");
             Console::focused = false;
-            buf[0] = N('\0');
+            {int i = 0;
+            while (buf_it+i < 127 && buf[buf_it+i] != N('\0'))
+                buf[i] = buf[buf_it+i];
+            buf[i] = N('\0');}
             continue;
         case N('A'):
             Console::out.put(L'^');
             Console::out_endl();
-            buf[0] = N('\0');
+            {int i = 0;
+            while (buf_it+i < 127 && buf[buf_it+i] != N('\0'))
+                buf[i] = buf[buf_it+i];
+            buf[i] = N('\0');}
             continue;
         case N('B'):
             Console::out.put(L'v');
             Console::out_endl();
-            buf[0] = N('\0');
+            {int i = 0;
+            while (buf_it+i < 127 && buf[buf_it+i] != N('\0'))
+                buf[i] = buf[buf_it+i];
+            buf[i] = N('\0');}
             continue;
         case N('C'):
             Console::out.put(L'>');
             Console::out_endl();
-            buf[0] = N('\0');
+            {int i = 0;
+            while (buf_it+i < 127 && buf[buf_it+i] != N('\0'))
+                buf[i] = buf[buf_it+i];
+            buf[i] = N('\0');}
             continue;
         case N('D'):
             Console::out.put(L'<');
             Console::out_endl();
-            buf[0] = N('\0');
+            {int i = 0;
+            while (buf_it+i < 127 && buf[buf_it+i] != N('\0'))
+                buf[i] = buf[buf_it+i];
+            buf[i] = N('\0');}
             continue;
         case N('['):
             if (bytes == 0) break;
@@ -273,7 +301,10 @@ void Console::XtermMouseAndFocus(void) {
                 Console::out_endl();
                 break;
             }
-            buf[0] = N('\0');
+            {int i = 0;
+            while (buf_it+i < 127 && buf[buf_it+i] != N('\0'))
+                buf[i] = buf[buf_it+i];
+            buf[i] = N('\0');}
             continue;
         case N('<'): {
             int pos = 0;
@@ -301,7 +332,13 @@ void Console::XtermMouseAndFocus(void) {
             //fprintf(stderr, "mouse: %d %d\n", Console::mouse_status.x, Console::mouse_status.y);
             bitset<8> event(val[0]);
 
-            if (event[5]) { ++bytes; buf[0] = N('\0'); continue; } // move event
+            if (event[5]) { // move event
+                int i = 0;
+                while (buf_it+i < 127 && buf[buf_it+i] != N('\0'))
+                    buf[i] = buf[buf_it+i];
+                buf[i] = N('\0');
+                continue;
+            }
             
             uint8_t button = 0b0;
             
@@ -351,12 +388,18 @@ void Console::XtermMouseAndFocus(void) {
                 Console::mouse_status.scroll = {true,false};
                 break;
             }
-            buf[0] = N('\0');
+            {int i = 0;
+            while (buf_it+i < 127 && buf[buf_it+i] != N('\0'))
+                buf[i] = buf[buf_it+i];
+            buf[i] = N('\0');}
             continue;
         }
         default:
             if (isalpha(c)) {
-                buf[0] = N('\0');
+                int i = 0;
+                while (buf_it+i < 127 && buf[buf_it+i] != N('\0'))
+                    buf[i] = buf[buf_it+i];
+                buf[i] = N('\0');
                 continue;
             }
             if (c >= N('0') && c <= N('9')) {
@@ -369,14 +412,20 @@ void Console::XtermMouseAndFocus(void) {
                 }
                 if (c != N('~')) ThrowMsg("Invalid getc() input");
                 Console::out << L"Macro: " << num; Console::out_endl();
-                buf[0] = N('\0');
+                int i = 0;
+                while (buf_it+i < 127 && buf[buf_it+i] != N('\0'))
+                    buf[i] = buf[buf_it+i];
+                buf[i] = N('\0');
                 continue;
             }
         }
         Console::PushChar('\033');
         Console::PushChar('[');
         Console::PushChar(c);
-        buf[0] = N('\0');
+        {int i = 0;
+        while (buf_it+i < 127 && buf[buf_it+i] != N('\0'))
+            buf[i] = buf[buf_it+i];
+        buf[i] = N('\0');}
     }
 }
 
@@ -2665,8 +2714,8 @@ void Console::XtermMouseAndFocus(void) {
         return args[1];
     }
 
-    inline string FindTerminalEmulator() {
-        string term = GetPidTerminal(getppid());
+    inline string FindTerminalEmulator(const char* term_prog = nullptr) {
+        string term = (term_prog) ? term_prog : GetPidTerminal(getppid());
 
         if (term.find("wavesrv") != string::npos) {
             string arch;
@@ -2736,6 +2785,7 @@ void Console::XtermMouseAndFocus(void) {
             path[siz] = '\0';
 
             int sub_process = 0;
+            bool empty_switch = false;
 
             FILE *cmdline = fopen("/proc/self/cmdline", "rb");
             char *arg = 0; size_t size = 0;
@@ -2794,7 +2844,16 @@ void Console::XtermMouseAndFocus(void) {
                     out = getdelim(&arg, &size, 0, cmdline);
                 } else if (custom_handling && fd < 0) {
                     Console::fd = open(arg,O_RDONLY);
+                    
                     if (fd < 0) {
+                        perror(("Failed to open file \"" + string(arg) + "\" error " + to_string(errno)).c_str());
+                        exit(1);
+                    }
+                    arg = 0; size = 0;
+                    out = getdelim(&arg, &size, 0, cmdline);
+                } else if (custom_handling && fb_fd < 0) {
+                    Console::fb_fd = open(arg,O_RDONLY);
+                    if (fb_fd < 0) {
                         perror(("Failed to open file \"" + string(arg) + "\" error " + to_string(errno)).c_str());
                         exit(1);
                     }
@@ -2807,6 +2866,22 @@ void Console::XtermMouseAndFocus(void) {
                             Console::custom_handling = true;
                             if (fd < 0)
                             Console::fd = -1;
+                            break;
+                        case 't':
+                            arg = 0; size = 0;
+                            out = getdelim(&arg, &size, 0, cmdline);
+                            if (out == -1) {fprintf(stderr,"usage: [-t <terminal_path>] \n"); exit(1);}
+                            Console::terminal_name = arg;
+                            break;
+                        case 's':
+                            arg = 0; size = 0;
+                            out = getdelim(&arg, &size, 0, cmdline);
+                            if (out == -1) {fprintf(stderr,"usage: [-s <terminal_switch>] \n"); exit(1);}
+                            Console::terminal_switch = arg;
+                            break;
+                        case 'e':
+                            empty_switch = true;
+                            break;
                         }
                     arg = 0; size = 0;
                     out = getdelim(&arg, &size, 0, cmdline);
@@ -2905,7 +2980,7 @@ void Console::XtermMouseAndFocus(void) {
                 fclose(fl);
             }
 
-            fd = Console::custom_handling ? (INT32_MAX) : getfd(0);
+            fd = Console::custom_handling ? fd : getfd(0);
             if (!Console::emulator && !Console::custom_handling) {
                 if (stat("/etc/init.d/gpm", &st) == -1) Console::no_gpm = true;
                 else {
@@ -2933,6 +3008,7 @@ void Console::XtermMouseAndFocus(void) {
 
                 mouse_fd = getmousefd(nullptr);
             }
+            if (!custom_handling) fb_fd = 0;
 
             if (fd < 0 || fb_fd < 0 || mouse_fd < 0) {
                 if (sub_proc) exit(0x34);
@@ -3101,8 +3177,11 @@ void Console::XtermMouseAndFocus(void) {
             if (key_chart[0][125] == Key::Enum::HOLE) key_chart[0][125] = Key::Enum::SUPERL; // not presesnt in most keymaps so we add it ourselves
             if (key_chart[0][126] == Key::Enum::HOLE) key_chart[0][126] = Key::Enum::SUPERR; // not presesnt in most keymaps so we add it ourselves
 
-            Console::terminal_name = FindTerminalEmulator();
-            Console::terminal_switch = GetTerminalExecuteSwitch();
+            if (terminal_name.empty())
+                Console::terminal_name = FindTerminalEmulator();
+            else Console::terminal_name = FindTerminalEmulator(terminal_name.c_str());
+            if (terminal_switch.empty() && !empty_switch)
+                Console::terminal_switch = GetTerminalExecuteSwitch();
 
             //
             
@@ -3134,8 +3213,6 @@ void Console::XtermMouseAndFocus(void) {
         initdone:
 
             setlocale(LC_CTYPE, "");
-
-            Console::terminal_name = FindTerminalEmulator();
 
             initialised = true;
 
@@ -3397,9 +3474,7 @@ void Console::XtermMouseAndFocus(void) {
         keydown,
         keyup,
         toggle_on,
-        toggle_off,
-        resize_width,
-        resize_height,
+        toggle_off
     };
 
     struct custom_event {
@@ -3413,6 +3488,8 @@ void Console::XtermMouseAndFocus(void) {
         while (bytes >= (int)sizeof(custom_event)) {
             custom_event event;
             int res = read(Console::fd, &event, sizeof(custom_event));
+            if (res == -1) ThrowMsg("Failed to read from 1st custom pipe");
+            bytes -= res;
             switch (event.type) {
             case event_type::keydown:
                 if (!key_states[event.value]) key_hit = event.value;
@@ -3447,12 +3524,6 @@ void Console::XtermMouseAndFocus(void) {
                     Console::keys_toggled.ScrollLock = false;
                     break;
                 }
-                break;
-            case event_type::resize_width:
-                Console::scr_size.first = event.value;
-                break;
-            case event_type::resize_height:
-                Console::scr_size.second = event.value;
                 break;
             defualt:
                 ThrowMsg("Unknown event type");
@@ -3738,7 +3809,7 @@ void Console::XtermMouseAndFocus(void) {
     struct termios Console::old_fdterm = termios();
     int Console::old_kbdmode = int();
     int Console::fd = int(-1);
-    int Console::fb_fd = int();
+    int Console::fb_fd = int(-1);
     int Console::mouse_fd = int();
     bool Console::discard_mouse = bool(false);
     bool Console::no_gpm = bool(true);
@@ -4238,16 +4309,31 @@ void Console::Init(void) {
         return val;
     }
 
+    void Console::Custom_GetWindowSize(void) {
+        int bytes;
+        ioctl(Console::fb_fd, FIONREAD, &bytes);
+        while ((unsigned)bytes >= sizeof(uint16_t)*2) {
+            uint16_t width, height;
+            int res = read(Console::fb_fd, &width, sizeof(uint16_t));
+            if (res < 0) ThrowMsg("Failed to read from 2nd custom pipe (w)");
+            read(Console::fb_fd, &height, sizeof(uint16_t));
+            if (res < 0) ThrowMsg("Failed to read from 2nd custom pipe (h)");
+            Console::window_size.ws_col = width;
+            Console::window_size.ws_row = height;
+            bytes -= sizeof(width) + sizeof(height);
+        }
+
+    }
 
     int16_t Console::GetWindowWidth(void) {
-        if (custom_handling) return Console::scr_size.first;
-        ioctl(STDERR_FILENO, TIOCGWINSZ, &Console::window_size);
+        if (custom_handling) Console::Custom_GetWindowSize();
+        else ioctl(STDERR_FILENO, TIOCGWINSZ, &Console::window_size);
         return Console::window_size.ws_col;
     }
 
     int16_t Console::GetWindowHeight(void) {
-        if (custom_handling) return Console::scr_size.second;
-        ioctl(STDERR_FILENO, TIOCGWINSZ, &Console::window_size);
+        if (custom_handling) Console::Custom_GetWindowSize();
+        else ioctl(STDERR_FILENO, TIOCGWINSZ, &Console::window_size);
         return Console::window_size.ws_row;
     }
 
@@ -4257,7 +4343,8 @@ void Console::Init(void) {
         bool moved = false;
         size_t width = GetWindowWidth(), height = GetWindowHeight();
 
-        if ((int16_t)width != Console::old_scr_size.first || (int16_t)height != Console::old_scr_size.second) {
+        if ((int16_t)width != Console::old_scr_size.first || (int16_t)height != Console::old_scr_size.second || Console::refresh_screen) {
+            if (Console::refresh_screen) refresh_screen = false;
             Console::old_symbols.clear();
         }
 
@@ -4397,7 +4484,6 @@ bool Console::cursor_blink_opposite = bool(false);
 Console::config_t Console::config = Console::config_t();
 std::atomic<bool> Console::refresh_screen = bool(false);
 vector<vector<Console::Symbol>> Console::old_symbols = vector<vector<Console::Symbol>>();
-pair<int16_t,int16_t> Console::scr_size = pair<int16_t,int16_t>(0,0);
 pair<int16_t,int16_t> Console::old_scr_size = pair<int16_t,int16_t>(0,0);
 nstring Console::tmp_data = nstring();
 nstring Console::user_data = nstring();
@@ -4679,7 +4765,7 @@ newpidgen:
         args[++add] = "-X";
         args[++add] = "--";
         ++add;
-    } else {
+    } else if (!custom_handling) {
         startproc = System::GetRootDir() + "/share/factoryrush/bin/startprogram.bin";
         args[0] = term.c_str();
         ++add;
@@ -4829,26 +4915,37 @@ newpidgen:
         return nullopt;
     }
 #else
-    if (terminator) { // startup gliches weirdly so we create a shell script and run it
-        string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".sh";
-        auto file = fopen(runpth.c_str(), "w");
-        fwrite("#!/bin/sh\nrm -f $0\n", sizeof(char), 19, file);
-        for (int i = add; args[i]; i++)
-            { fwrite("\"",sizeof(char),1,file); fwrite(args[i], sizeof(char), strlen(args[i]), file); fwrite("\" ", sizeof(char), 2, file); }
-        fwrite("\n", sizeof(char), 1, file);
-        fchmod(fileno(file), 0755);
-        fclose(file);
-        args[add] = (script = runpth).c_str();
-        args[add+1] = nullptr;
+    if (custom_handling) {
+        string printmsg = "\033@";
+        int i=0; do {
+            printmsg.append(args[i]);
+            printmsg.push_back('\t');
+        } while (args[++i]);
+        printmsg.pop_back();
+        printmsg.push_back('\007');
+        fwrite(printmsg.c_str(),1,printmsg.size(),stderr);
+    } else {
+        if (terminator) { // startup gliches weirdly so we create a shell script and run it
+            string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".sh";
+            auto file = fopen(runpth.c_str(), "w");
+            fwrite("#!/bin/sh\nrm -f $0\n", sizeof(char), 19, file);
+            for (int i = add; args[i]; i++)
+                { fwrite("\"",sizeof(char),1,file); fwrite(args[i], sizeof(char), strlen(args[i]), file); fwrite("\" ", sizeof(char), 2, file); }
+            fwrite("\n", sizeof(char), 1, file);
+            fchmod(fileno(file), 0755);
+            fclose(file);
+            args[add] = (script = runpth).c_str();
+            args[add+1] = nullptr;
+        }
+        if (tabby) {
+            const char* launchargs[3] { term.c_str() ,"--no-sandbox", nullptr };
+            if (System::RunProgram(root_pth.c_str(), launchargs, Console::ruid) != 0) return nullopt;
+            ::usleep(900000); // 0.9 seconds
+        }
+        if (wave) {
+            if (System::RunProgram(term.c_str(), args, Console::ruid) != 0) return nullopt;
+        } else if (System::RunProgram(startproc.c_str(), args, Console::ruid) != 0) return nullopt;
     }
-    if (tabby) {
-        const char* launchargs[3] { term.c_str() ,"--no-sandbox", nullptr };
-        if (System::RunProgram(root_pth.c_str(), launchargs, Console::ruid) != 0) return nullopt;
-        ::usleep(900000); // 0.9 seconds
-    }
-    if (wave) {
-        if (System::RunProgram(term.c_str(), args, Console::ruid) != 0) return nullopt;
-    } else if (System::RunProgram(startproc.c_str(), args, Console::ruid) != 0) return nullopt;
 #endif
 #else
     string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".command";
@@ -5188,7 +5285,7 @@ newpidgen:
         args[++add] = "-X";
         args[++add] = "--";
         ++add;
-    } else {
+    } else if (!custom_handling) {
         startproc = System::GetRootDir() + "/share/factoryrush/bin/startprogram.bin";
         args[0] = term.c_str();
         ++add;
@@ -5338,26 +5435,37 @@ newpidgen:
         return nullopt;
     }
 #else
-    if (terminator) { // startup gliches weirdly so we create a shell script and run it
-        string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".sh";
-        auto file = fopen(runpth.c_str(), "w");
-        fwrite("#!/bin/sh\nrm -f $0\n", sizeof(char), 19, file);
-        for (int i = add; args[i]; i++)
-            { fwrite("\"",sizeof(char),1,file); fwrite(args[i], sizeof(char), strlen(args[i]), file); fwrite("\" ", sizeof(char), 2, file); }
-        fwrite("\n", sizeof(char), 1, file);
-        fchmod(fileno(file), 0755);
-        fclose(file);
-        args[add] = (script = runpth).c_str();
-        args[add+1] = nullptr;
+    if (custom_handling) {
+        string printmsg = "\033@";
+        int i=0; do {
+            printmsg.append(args[i]);
+            printmsg.push_back('\t');
+        } while (args[++i]);
+        printmsg.pop_back();
+        printmsg.push_back('\007');
+        fwrite(printmsg.c_str(),1,printmsg.size(),stderr);
+    } else {
+        if (terminator) { // startup gliches weirdly so we create a shell script and run it
+            string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".sh";
+            auto file = fopen(runpth.c_str(), "w");
+            fwrite("#!/bin/sh\nrm -f $0\n", sizeof(char), 19, file);
+            for (int i = add; args[i]; i++)
+                { fwrite("\"",sizeof(char),1,file); fwrite(args[i], sizeof(char), strlen(args[i]), file); fwrite("\" ", sizeof(char), 2, file); }
+            fwrite("\n", sizeof(char), 1, file);
+            fchmod(fileno(file), 0755);
+            fclose(file);
+            args[add] = (script = runpth).c_str();
+            args[add+1] = nullptr;
+        }
+        if (tabby) {
+            const char* launchargs[3] { term.c_str() ,"--no-sandbox", nullptr };
+            if (System::RunProgram(root_pth.c_str(), launchargs, Console::ruid) != 0) return nullopt;
+            ::usleep(900000); // 0.9 seconds
+        }
+        if (wave) {
+            if (System::RunProgram(term.c_str(), args, Console::ruid) != 0) return nullopt;
+        } else if (System::RunProgram(startproc.c_str(), args, Console::ruid) != 0) return nullopt;
     }
-    if (tabby) {
-        const char* launchargs[3] { term.c_str() ,"--no-sandbox", nullptr };
-        if (System::RunProgram(root_pth.c_str(), launchargs, Console::ruid) != 0) return nullopt;
-        ::usleep(900000); // 0.9 seconds
-    }
-    if (wave) {
-        if (System::RunProgram(term.c_str(), args, Console::ruid) != 0) return nullopt;
-    } else if (System::RunProgram(startproc.c_str(), args, Console::ruid) != 0) return nullopt;
 #endif
 #else
     string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".command";
@@ -5618,7 +5726,7 @@ newpidgen:
         args[++add] = "-X";
         args[++add] = "--";
         ++add;
-    } else {
+    } else if (!custom_handling) {
         startproc = System::GetRootDir() + "/share/factoryrush/bin/startprogram.bin";
         args[0] = term.c_str();
         ++add;
@@ -5768,26 +5876,37 @@ newpidgen:
         return nullopt;
     }
 #else
-    if (terminator) { // startup gliches weirdly so we create a shell script and run it
-        string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".sh";
-        auto file = fopen(runpth.c_str(), "w");
-        fwrite("#!/bin/sh\nrm -f $0\n", sizeof(char), 19, file);
-        for (int i = add; args[i]; i++)
-            { fwrite("\"",sizeof(char),1,file); fwrite(args[i], sizeof(char), strlen(args[i]), file); fwrite("\" ", sizeof(char), 2, file); }
-        fwrite("\n", sizeof(char), 1, file);
-        fchmod(fileno(file), 0755);
-        fclose(file);
-        args[add] = (script = runpth).c_str();
-        args[add+1] = nullptr;
+    if (custom_handling) {
+        string printmsg = "\033@";
+        int i=0; do {
+            printmsg.append(args[i]);
+            printmsg.push_back('\t');
+        } while (args[++i]);
+        printmsg.pop_back();
+        printmsg.push_back('\007');
+        fwrite(printmsg.c_str(),1,printmsg.size(),stderr);
+    } else {
+        if (terminator) { // startup gliches weirdly so we create a shell script and run it
+            string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".sh";
+            auto file = fopen(runpth.c_str(), "w");
+            fwrite("#!/bin/sh\nrm -f $0\n", sizeof(char), 19, file);
+            for (int i = add; args[i]; i++)
+                { fwrite("\"",sizeof(char),1,file); fwrite(args[i], sizeof(char), strlen(args[i]), file); fwrite("\" ", sizeof(char), 2, file); }
+            fwrite("\n", sizeof(char), 1, file);
+            fchmod(fileno(file), 0755);
+            fclose(file);
+            args[add] = (script = runpth).c_str();
+            args[add+1] = nullptr;
+        }
+        if (tabby) {
+            const char* launchargs[3] { term.c_str() ,"--no-sandbox", nullptr };
+            if (System::RunProgram(root_pth.c_str(), launchargs, Console::ruid) != 0) return nullopt;
+            ::usleep(900000); // 0.9 seconds
+        }
+        if (wave) {
+            if (System::RunProgram(term.c_str(), args, Console::ruid) != 0) return nullopt;
+        } else if (System::RunProgram(startproc.c_str(), args, Console::ruid) != 0) return nullopt;
     }
-    if (tabby) {
-        const char* launchargs[3] { term.c_str() ,"--no-sandbox", nullptr };
-        if (System::RunProgram(root_pth.c_str(), launchargs, Console::ruid) != 0) return nullopt;
-        ::usleep(900000); // 0.9 seconds
-    }
-    if (wave) {
-        if (System::RunProgram(term.c_str(), args, Console::ruid) != 0) return nullopt;
-    } else if (System::RunProgram(startproc.c_str(), args, Console::ruid) != 0) return nullopt;
 #endif
 #else
     string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".command";

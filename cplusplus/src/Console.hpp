@@ -290,9 +290,9 @@ namespace cpp {
         static uint8_t root_type;
         static std::string terminal_switch;
         static Key::Enum key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX];
-        static std::pair<int16_t,int16_t> scr_size;
         static std::string GetTerminalExecuteSwitch(void);
         static void Custom_HandleKeyboard(void);
+        static void Custom_GetWindowSize(void);
     #endif
     #ifdef __APPLE__
         static pid_t ppid;
