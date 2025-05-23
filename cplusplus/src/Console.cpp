@@ -3283,7 +3283,7 @@ again:
 
             delete[] Console::subdir;
 
-            if (Console::emulator) {
+            if (Console::emulator || Console::custom_handling) {
                 Console::XtermFinishTracking();
                 Console::EscSeqRestoreCursor();
                 if (Console::custom_handling) close(fb_fd);
