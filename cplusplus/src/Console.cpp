@@ -3271,14 +3271,14 @@ again:
                 if (!System::IsFile((Console::tmp_data+Console::subdir+"result.dat").c_str()))
                     SetResult(nullptr);
 
-                fl = fopen((string("/tmp/.factoryrush/") + Console::subdir + "pid.dat").c_str(), "w");
+                fl = fopen((Console::tmp_data + Console::subdir + "pid.dat").c_str(), "w");
                 fwrite("-1", sizeof(char), 2, fl);
                 fclose(fl);
 
             } else if (!Console::parent) {
-                remove((string("/tmp/.factoryrush/") + Console::subdir + "pid.dat").c_str());
+                remove((Console::tmp_data + Console::subdir + "pid.dat").c_str());
                 // if parent exists than it will remove it
-                remove((string("/tmp/.factoryrush/") + Console::subdir).c_str());
+                remove((Console::tmp_data + Console::subdir).c_str());
             }
 
             delete[] Console::subdir;
@@ -3286,6 +3286,7 @@ again:
             if (Console::emulator) {
                 Console::XtermFinishTracking();
                 Console::EscSeqRestoreCursor();
+                if (Console::custom_handling) close(fb_fd);
             } else {
                 close(fb_fd);
                 close(mouse_fd);
@@ -3297,8 +3298,10 @@ again:
             close(fd);
 
             tcsetattr(STDIN_FILENO,TCSANOW,&old_termios);
+        
+            if (Console::custom_handling) goto kbdmode_set;
 
-            char path[256];
+            {char path[256];
             auto length = readlink( "/proc/self/exe" , path, 256);
             string command = path;
             while (command.back() != '/') command.pop_back();
@@ -3308,13 +3311,14 @@ again:
             old_kbdmode = ret2;
             if (ret2 < 0) {
                 throw("setkbdmode error");
-            }
+            }}
+        kbdmode_set:
 
             for (int i = 0; i < argc; i++) free((void*)Console::argv[i]);
             Console::argv = (const char**)realloc(Console::argv,0);
             Console::argc = 0;
 
-            if (!Console::emulator) {
+            if (!Console::emulator && !Console::custom_handling) {
                 fwrite("\033[H", sizeof(char), 3, stderr); // clear screen because we don't have an alternate buffer
                 fwrite("\033[J", sizeof(char), 3, stderr);
             }
