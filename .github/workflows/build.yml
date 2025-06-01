@@ -70,9 +70,6 @@ jobs:
           cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Compile code
         shell: msys2 {0}
-        env:
-          CC: gcc
-          CXX: g++
         run: |
           cd /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
           tree
@@ -193,10 +190,11 @@ jobs:
           del gnuwin32.zip
           ren gnuwin32.mirror-master gnuwin32
           copy gnuwin32\bin\* .
+          echo %PATH%
+          where link
       - name: Compile code
         shell: cmd /c {0}
-        run: |
-          utilities\custom\vsdevcmd-x64.bat .\make.exe resources cpp cppbin release package archchk=0 sudo=0 msvc=1 nodep=1 c-compiler=clang-cl cpp-compiler=clang-cl
+        run: utilities\custom\vsdevcmd-x64.bat .\make.exe resources cpp cppbin release package archchk=0 sudo=0 msvc=1 nodep=1 c-compiler=clang-cl cpp-compiler=clang-cl
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
