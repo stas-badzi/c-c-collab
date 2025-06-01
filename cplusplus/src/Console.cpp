@@ -1,9 +1,11 @@
 #include "Console.hpp"
 #include "dllimport.hpp"
-#include <dirent.h>
 
 #ifdef _MSC_VER
     #define PATH_MAX MAX_PATH
+#endif
+#ifndef _WIN32
+    #include <dirent.h>
 #endif
 
 extern int Main(void);
