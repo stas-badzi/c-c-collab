@@ -180,7 +180,7 @@ jobs:
           echo $null >> csbin
           copy csharp\bin\lib\factoryrushsharp.dll cplusplus\bin\factoryrushsharp.dll
           copy csharp\bin\lib\factoryrushsharp.dll binaryplus\bin\factoryrushsharp.dll
-          where clang-cl.exe
+          del "C:\Program Files\LLVM\bin\clang-cl.exe"
       - name: Install Programs
         shell: pwsh
         run: |
@@ -316,7 +316,7 @@ jobs:
           echo $null >> csbin
           copy csharp\bin\lib\factoryrushsharp.dll cplusplus\bin\factoryrushsharp.dll
           copy csharp\bin\lib\factoryrushsharp.dll binaryplus\bin\factoryrushsharp.dll
-          where clang-cl
+          del "C:\Program Files\LLVM\bin\clang-cl.exe"
       - name: Install Programs
         shell: pwsh
         run: |
@@ -453,16 +453,16 @@ jobs:
           echo $null >> csbin
           copy csharp\bin\lib\factoryrushsharp.dll cplusplus\bin\factoryrushsharp.dll
           copy csharp\bin\lib\factoryrushsharp.dll binaryplus\bin\factoryrushsharp.dll
-          where clang-cl.exe
       - name: Install Programs
         shell: pwsh
         run: |
           choco install make
           choco install zip
           choco install tree
+          del "C:\Program Files\LLVM\bin\clang-cl.exe"
       - name: Compile code
         shell: cmd /c {0}
-        run: utilities\custom\vsdevcmd-arm64.bat .\make.exe resources cpp cppbin release package archchk=0 sudo=0 msvc=1 nodep=1 tgarch=arm64 c-compiler=clang-cl cpp-compiler=clang-cl
+        run: utilities\custom\vsdevcmd-arm64.bat make resources cpp cppbin release package archchk=0 sudo=0 msvc=1 nodep=1 tgarch=arm64 c-compiler="clang-cl --target=arm64-windows-msvc" cpp-compiler="clang-cl --target=arm64-windows-msvc"
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
