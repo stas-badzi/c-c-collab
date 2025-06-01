@@ -191,6 +191,7 @@ jobs:
           ren gnuwin32.mirror-master gnuwin32
           copy gnuwin32\bin\* .
           del "C:\Program Files\Git\usr\bin\link.exe"
+          del link.exe
       - name: Compile code
         shell: cmd /c {0}
         run: utilities\custom\vsdevcmd-x64.bat .\make.exe resources cpp cppbin release package archchk=0 sudo=0 msvc=1 nodep=1 c-compiler=clang-cl cpp-compiler=clang-cl
