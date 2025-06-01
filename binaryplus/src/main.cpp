@@ -14,7 +14,7 @@
 #include <random>
 #include <thread>
 #include <cwchar>
-#if defined(MSC_VER) || (defined(_WIN32) && defined(__aarch64__))
+#if defined(_MSC_VER) || (defined(_WIN32) && defined(__aarch64__))
 #define kill_thread(x) TerminateThread(x.native_handle(), 0)
 #else
 #include <pthread.h>
