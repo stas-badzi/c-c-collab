@@ -65,7 +65,7 @@ nstring System::root = System::GetRoot();
             }
             if (fileFound.back() != L'\\') fileFound.push_back(L'\\');
             fileFound.append(info.cFileName);
-            res = RemoveFile(fileFound.c_str());
+            auto res = RemoveFile(fileFound.c_str());
             if (res) return res;
         } while(FindNextFile(FindHndle, &info));
         if (FindClose(FindHndle)) return GetLastError();
