@@ -413,7 +413,7 @@ jobs:
         run: |
           cd /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
           tree
-          export PATH=/mingw64/bin:$PATH
+          export PATH=/clangarm64/bin:$PATH
           make resources cpp cppbin sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0
           touch cs cpp cppbin csbin
           make tgarch=aarch64 archchk=0
