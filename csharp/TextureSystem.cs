@@ -112,7 +112,7 @@ namespace Cs
                     i = -(y + 1);
                     continue;
                 }
-                else if (y + i > scrHeight) break;
+                else if (y + i >= scrHeight) break;
                 int? width = texture[i].Count;
                 int? scrWidth = screen[y + i].Count;
                 for (int j = 0; j < width; j++) {

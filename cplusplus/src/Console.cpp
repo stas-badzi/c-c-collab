@@ -156,6 +156,10 @@ void Console::XtermInitTracking(void) {
     fwrite("\033[?1003h", sizeof(char), 8, stderr);
     fwrite("\033[?1015h", sizeof(char), 8, stderr);
     fwrite("\033[?1006h", sizeof(char), 8, stderr);
+    
+    EscSeqMoveCursor();
+    EscSeqSetCursor();
+    EscSeqSetCursorSize();
 }
 
 void Console::XtermFinishTracking(void) {
@@ -2483,17 +2487,20 @@ again:
     }
 
     void cpp::Console::MoveCursor(int x, int y) {
+        if (x == Console::cursorpos.first && y == Console::cursorpos.second) return;
         Console::cursorpos.first = x;
         Console::cursorpos.second = y;
         Console::EscSeqMoveCursor();
     }
 
     void cpp::Console::ShowCursor(void) {
+        if (Console::cursor_visible) return;
         Console::cursor_visible = true;
         Console::EscSeqSetCursor();
     }
 
     void cpp::Console::HideCursor(void) {
+        if (!Console::cursor_visible) return;
         Console::cursor_visible = false;
         Console::EscSeqSetCursor();
     }
@@ -2864,6 +2871,7 @@ again:
                         switch (arg[1]) {
                         case 'c':
                             Console::custom_handling = true;
+                            Console::max_popup_startup_wait *= 2;
                             if (fd < 0)
                             Console::fd = -1;
                             break;
@@ -2893,9 +2901,9 @@ again:
             }
             fclose(cmdline);
 
-            if (Console::custom_handling) fprintf(stderr,"Custom handling\n");
+            //if (Console::custom_handling) fprintf(stderr,"Custom handling\n");
             
-            if (Console::emulator)
+            if (Console::emulator || Console::custom_handling)
                 fwrite("\033[?1049h", sizeof(char), 8, stderr);
 
             Console::ruid = getuid();
@@ -2916,12 +2924,15 @@ again:
             user_data.append("/.factoryrush/");
             Console::dev_data = (Console::ruid == (uid_t)-1) ? Console::user_data + "lib/" : "/var/lib/factoryrush/";
             Console::log_data = (Console::ruid == (uid_t)-1) ? Console::user_data + "log/" : "/var/log/factoryrush/";
+            Console::tmp_data = (Console::ruid == (uid_t)-1) ? Console::user_data + "tmp/" : "/tmp/.factoryrush/"; // staszic server .cgi files work weirdly in /tmp (ghost files)
+
 
             Console::pid = parent ? pid : getpid();
             if (Console::sub_proc) goto subdirset;
 
             if (stat(Console::tmp_data.c_str(), &st) == -1)
-                mkdir(Console::tmp_data.c_str(), 0777);
+                if (mkdir(Console::tmp_data.c_str(), 0777) == -1)
+                    ThrowMsg("mkdir failed");
 
             if (stat(Console::user_data.c_str(), &st) == -1)
                 mkdir(Console::user_data.c_str(), 0777);
@@ -3329,7 +3340,7 @@ again:
 
     void Console::HandleMouseAndFocus(void) {
 
-        if (Console::emulator)
+        if (Console::emulator || Console::custom_handling)
             return XtermMouseAndFocus();
         
         Console::this_mouse_button = -1;
@@ -4324,6 +4335,7 @@ void Console::Init(void) {
             if (res < 0) ThrowMsg("Failed to read from 2nd custom pipe (h)");
             Console::window_size.ws_col = width;
             Console::window_size.ws_row = height;
+            printf("Got window size: %d %d\n", width, height);
             bytes -= sizeof(width) + sizeof(height);
         }
 

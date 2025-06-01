@@ -645,9 +645,9 @@ public:
 
         // KT_SHIFT
         SHIFT = K_SHIFT, /* Shift */
-        CTRL = K_CTRL, /* AltGramar */
-        ALT = K_ALT, /* Control */
-        ALTGR = K_ALTGR, /* Alt */
+        CTRL = K_CTRL, /* Control */
+        ALT = K_ALT, /* Alt */
+        ALTGR = K_ALTGR, /* AltGramar */
         SHIFTL = K_SHIFTL, /* ShiftLeft */
         SHIFTR = K_SHIFTR, /* ShiftRight */
         CTRLL = K_CTRLL, /* CtrlLeft */

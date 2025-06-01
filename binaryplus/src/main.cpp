@@ -606,6 +606,8 @@ endminput:
 
         // Count FPS
         auto enlapsed_time = chrono::duration_cast<std::chrono::duration<long double, std::milli>>(chrono::high_resolution_clock::now() - start).count();
+        if (enlapsed_time < 10) Console::Sleep((10-enlapsed_time)*1e-3,true);
+        enlapsed_time = chrono::duration_cast<std::chrono::duration<long double, std::milli>>(chrono::high_resolution_clock::now() - start).count();
         wstringstream u16str;
         if (counter == INT64_MAX) counter = 0;
         avg *= counter;
@@ -613,7 +615,7 @@ endminput:
         avg /= ++counter;
         u16str << L"[  " << avg << L"FPS  ]";
         auto pos = Console::Symbol::CreateTexture(WStringToU16String(u16str.str()));
-        wout << u16str.str();
+        //wout << u16str.str();
         start = chrono::high_resolution_clock::now();
         Console::HandleOutput();
         //TextureSystem::DrawTextureToScreen(2,15,pos,screen);
@@ -775,6 +777,7 @@ pair<int,u16string> GetFilePopup(int argc, const char16_t* argv[]) {
     vector<vector<Console::Symbol>> scr;
     int last_width = 0;
     int last_height = 0;
+    int begx = 0, begy = 0, endx = -1, endy = -1;
     while (1) {
         bool newscr = false;
 
@@ -783,6 +786,14 @@ pair<int,u16string> GetFilePopup(int argc, const char16_t* argv[]) {
         else Console::DontHandleKeyboard();
         if (Console::KeyPressed() == Key::Enum::q && IsCtrlDown()) return {EXIT_FAILURE,(argc < 2) ? u"." : u16string(argv[1])};
         if (Console::KeyPressed() == Key::Enum::ESC) return {EXIT_FAILURE,(argc < 2) ? u"." : u16string(argv[1])};
+
+        auto mouse = Console::GetMouseStatus();
+        if (mouse.y >= begy && mouse.y <= endy && mouse.x >= begx && mouse.x <= endx) {
+            if (Console::MouseButtonClicked().first == MOUSE_BUTTON_PRIMARY)
+                return {EXIT_SUCCESS,path};
+            else if (Console::MouseButtonClicked().first == MOUSE_BUTTON_SECONDARY)
+                return {EXIT_FAILURE,(argc < 2) ? u"." : u16string(argv[1])};
+        }
 
         wchar_t x;
         while ((x = win.get()) && win.good()) {
@@ -827,10 +838,13 @@ pair<int,u16string> GetFilePopup(int argc, const char16_t* argv[]) {
             while (++j <= (last_width/10) + (((size_t)last_width - 2*((size_t)(last_width/10)) - path.size())/2))
                 scr.back().push_back(Console::Symbol(L' ',Color::DEFAULT,Color::LIGHT_BLACK));
 
+            begx = scr.back().size();
+            begy = scr.size() - 1;
             --j; for (auto&& c : ppath) {
                 scr.back().push_back({ c,Color::DEFAULT,Color::LIGHT_BLACK });
                 ++j;
             }
+            endx = scr.back().size() - 1;
 
             while (++j < (unsigned short)(last_width - (last_width/10)))
                 scr.back().push_back(Console::Symbol(L' ',Color::DEFAULT,Color::LIGHT_BLACK));
@@ -840,6 +854,7 @@ pair<int,u16string> GetFilePopup(int argc, const char16_t* argv[]) {
                 scr.back().push_back(Console::Symbol(L' ',16,16));
             while (++j < (unsigned short)(last_width - (last_width/10)))
                 scr.back().push_back(Console::Symbol(L' ',Color::DEFAULT,Color::LIGHT_BLACK));
+            endy = scr.size() - 1;
 
             Console::FillScreen(scr);
         }
