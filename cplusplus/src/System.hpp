@@ -26,7 +26,6 @@
 #ifdef __APPLE__
     #include <signal.h>
     #include <mach-o/dyld.h>
-    typedef __sighandler_t sighandler_t;
 #elif __linux__
     #include <linux/limits.h>
 #endif

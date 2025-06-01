@@ -3839,6 +3839,46 @@ again:
 #elif __APPLE__
 // macOS
 
+    static string getProcessName(pid_t pid) {
+        char pathbuf[PROC_PIDPATHINFO_MAXSIZE];
+        int ret = proc_pidpath(pid, pathbuf, sizeof(pathbuf));
+        if (ret <= 0) {
+            fprintf(stderr, "proc_pidpath() failed: %s\n", strerror(errno));
+            exit(0x90);
+        }
+        return string(pathbuf);
+    }
+    
+    static pid_t getParentPid(pid_t pid) {
+        proc_bsdshortinfo pinfo = proc_bsdshortinfo();
+        int ret = proc_pidinfo(pid, PROC_PIDT_SHORTBSDINFO, 0, &pinfo, sizeof(pinfo));
+        if (ret <= 0) {
+            fprintf(stderr, "proc_pidpath() failed: %s, pid: %d\n", strerror(errno), pid);
+            exit(0x90);
+        }
+        return pinfo.pbsi_ppid;
+    }
+    
+    static bool isApp(pid_t pid) {
+        string name = getProcessName(pid);
+        return name.find(".app") != string::npos;
+    }
+
+    static string GetTerminalName(pid_t pid) {
+        while (!isApp(pid))
+            if (pid) pid = getParentPid(pid);
+            else return string();
+        string name = getProcessName(pid);
+    search:
+        while (name[name.size()-1] != 'p' || name[name.size()-2] != 'p' || name[name.size()-3] != 'a' || name[name.size()-4] != '.')
+            name.pop_back();
+        if (name.substr(0, name.size()-5).find(".app") != string::npos) {
+            name = name.substr(0, name.size()-5);
+            goto search;
+        }
+        return name;
+    }
+
     void Console::Init(void) {
         if (!initialised) {
 
@@ -4001,48 +4041,8 @@ again:
         Console::XtermMouseAndFocus();
     }
 
-    static string getProcessName(pid_t pid) {
-        char pathbuf[PROC_PIDPATHINFO_MAXSIZE];
-        int ret = proc_pidpath(pid, pathbuf, sizeof(pathbuf));
-        if (ret <= 0) {
-            fprintf(stderr, "proc_pidpath() failed: %s\n", strerror(errno));
-            exit(0x90);
-        }
-        return string(pathbuf);
-    }
-    
-    static pid_t getParentPid(pid_t pid) {
-        proc_bsdshortinfo pinfo = proc_bsdshortinfo();
-        int ret = proc_pidinfo(pid, PROC_PIDT_SHORTBSDINFO, 0, &pinfo, sizeof(pinfo));
-        if (ret <= 0) {
-            fprintf(stderr, "proc_pidpath() failed: %s, pid: %d\n", strerror(errno), pid);
-            exit(0x90);
-        }
-        return pinfo.pbsi_ppid;
-    }
-    
-    static bool isApp(pid_t pid) {
-        string name = getProcessName(pid);
-        return name.find(".app") != string::npos;
-    }
-
-    static string GetTerminalName(pid_t pid) {
-        while (!isApp(pid))
-            if (pid) pid = getParentPid(pid);
-            else return string();
-        string name = getProcessName(pid);
-    search:
-        while (name[name.size()-1] != 'p' || name[name.size()-2] != 'p' || name[name.size()-3] != 'a' || name[name.size()-4] != '.')
-            name.pop_back();
-        if (name.substr(0, name.size()-5).find(".app") != string::npos) {
-            name = name.substr(0, name.size()-5);
-            goto search;
-        }
-        return name;
-    }
-
     nstring Console::GetTerminalExecutableName(void) {
-        return Console::terminal_name;;
+        return Console::terminal_name;
     }
 
 
@@ -4324,6 +4324,7 @@ void Console::Init(void) {
         return val;
     }
 
+#ifdef __linux__
     void Console::Custom_GetWindowSize(void) {
         int bytes;
         ioctl(Console::fb_fd, FIONREAD, &bytes);
@@ -4340,15 +4341,20 @@ void Console::Init(void) {
         }
 
     }
+#endif
 
     int16_t Console::GetWindowWidth(void) {
+    #ifdef __linux__
         if (custom_handling) Console::Custom_GetWindowSize();
+    #endif
         else ioctl(STDERR_FILENO, TIOCGWINSZ, &Console::window_size);
         return Console::window_size.ws_col;
     }
 
     int16_t Console::GetWindowHeight(void) {
+    #ifdef __linux__
         if (custom_handling) Console::Custom_GetWindowSize();
+    #endif
         else ioctl(STDERR_FILENO, TIOCGWINSZ, &Console::window_size);
         return Console::window_size.ws_row;
     }
