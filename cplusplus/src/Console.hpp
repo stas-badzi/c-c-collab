@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tuple> // vector arm64 Ubuntu 24.04 clang compile error
 #include <vector>
 #include <array>
 #include <bitset>
