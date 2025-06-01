@@ -18,10 +18,8 @@
 - Might not work in future versions if the `-cmd` argument is removed
   - if that happens, please open an issue (it's shouldn't be hard to fix, but I need to know the issue exists)
 
-### __Cmder ❌(✅)__
-- Mouse doesn't work in most cases
-    - that is unless you launch a tab with `bash\mintty`
-- Popups aren't fixed yet (Todo)
+### __Cmder ✅⚠️__
+- Mouse only works you launch a tab with `bash\mintty`
 
 ### __Hyper ✅⚠️__
 - ⚠️ Popup windows use the default terminal
