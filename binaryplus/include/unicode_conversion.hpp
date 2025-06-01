@@ -10,7 +10,7 @@
 #include "utils/dllalloc.h"
 
 #ifdef _WIN32
-
+    #include <algorithm>
 #else
     #include <locale>
     #include <codecvt>

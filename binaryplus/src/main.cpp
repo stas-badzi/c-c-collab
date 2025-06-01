@@ -17,6 +17,8 @@
 #ifndef MSC_VER
 #include <pthread.h>
 #include <signal.h>
+#else
+#warning "Ensure that this is MSVC or LLVM pretending to be MSVC"
 #endif
 
 typedef std::basic_stringstream<char16_t> u16stringstream;
@@ -376,8 +378,10 @@ int Main(void) {
         auto colorpopupcreate = [&]() mutable {
             if (color_popup_active) return;
             const char16_t* argsx[2];
-            argsx[0] = to_u16string(symfore).c_str();
-            argsx[1] = to_u16string(symback).c_str();
+            u16string symforestr = to_u16string(symfore);
+            u16string symbackstr = to_u16string(symback);
+            argsx[0] = symforestr.c_str();
+            argsx[1] = symbackstr.c_str();
             auto ret = Console::PopupWindowAsync(5,2,argsx,u"Color Picker");
             if (ret.has_value()) {
                 auto [await,pipe] = ret.value();
