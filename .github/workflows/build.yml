@@ -182,6 +182,8 @@ jobs:
           echo $null >> csbin
           copy csharp\bin\lib\factoryrushsharp.dll cplusplus\bin\factoryrushsharp.dll
           copy csharp\bin\lib\factoryrushsharp.dll binaryplus\bin\factoryrushsharp.dll
+          echo %PATH%
+          where link
       - name: Install Programs
         shell: pwsh
         run: |
@@ -190,8 +192,6 @@ jobs:
           del gnuwin32.zip
           ren gnuwin32.mirror-master gnuwin32
           copy gnuwin32\bin\* .
-          echo %PATH%
-          where link
       - name: Compile code
         shell: cmd /c {0}
         run: utilities\custom\vsdevcmd-x64.bat .\make.exe resources cpp cppbin release package archchk=0 sudo=0 msvc=1 nodep=1 c-compiler=clang-cl cpp-compiler=clang-cl
