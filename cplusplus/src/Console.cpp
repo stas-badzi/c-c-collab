@@ -1503,7 +1503,7 @@ again:
             if (!tmpdevdata) ThrowMsg("\"ProgramData\" env variable not set");
             Console::dev_data = tmpdevdata;
             dev_data.append(L"\\Factoryrush\\");
-            Console::log_data = Console::dev_data + "logs\\";
+            Console::log_data = Console::dev_data + L"logs\\";
 
             Console::pid = _getpid();
             Console::window = GetHwnd();
@@ -4764,6 +4764,7 @@ newpidgen:
         return nullopt;
     }
 #endif
+{
     int add = 0;
 #ifdef _WIN32
     if (wt) {
@@ -4978,6 +4979,7 @@ newpidgen:
     fclose(file);
     if (openFileInApp(runpth.c_str(), term.c_str()) != 0) return nullopt;
 #endif
+}
 #ifdef _WIN32
     goto contcons;
 console:
@@ -5284,6 +5286,7 @@ newpidgen:
         return nullopt;
     }
 #endif
+{
     int add = 0;
 #ifdef _WIN32
     if (wt) {
@@ -5498,6 +5501,7 @@ newpidgen:
     fclose(file);
     if (openFileInApp(runpth.c_str(), term.c_str()) != 0) return nullopt;
 #endif
+}
 #ifdef _WIN32
     goto contcons;
 console:
@@ -5725,6 +5729,7 @@ newpidgen:
         return nullopt;
     }
 #endif
+{
     int add = 0;
 #ifdef _WIN32
     if (wt) {
@@ -5939,6 +5944,7 @@ newpidgen:
     fclose(file);
     if (openFileInApp(runpth.c_str(), term.c_str()) != 0) return nullopt;
 #endif
+}
 #ifdef _WIN32
     goto contcons;
 console:
@@ -6093,7 +6099,11 @@ void Console::DontHandleKeyboard(void) {
 void Console::ResetKeyboard(void) {
     Console::key_hit = -1;
     Console::key_released = -1;
-    unsigned short keymax = custom_handling ? KEYSTATE_MAX : KEYBOARD_MAX;
+    unsigned short keymax =
+#ifdef __linux__
+    custom_handling ? KEYSTATE_MAX :
+#endif 
+    KEYBOARD_MAX;
     for (int i = 0; i < keymax; i++)
         Console::key_states[i] = false;
 }
