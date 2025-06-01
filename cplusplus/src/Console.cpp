@@ -4346,16 +4346,18 @@ void Console::Init(void) {
     int16_t Console::GetWindowWidth(void) {
     #ifdef __linux__
         if (custom_handling) Console::Custom_GetWindowSize();
+        else
     #endif
-        else ioctl(STDERR_FILENO, TIOCGWINSZ, &Console::window_size);
+        ioctl(STDERR_FILENO, TIOCGWINSZ, &Console::window_size);
         return Console::window_size.ws_col;
     }
 
     int16_t Console::GetWindowHeight(void) {
     #ifdef __linux__
         if (custom_handling) Console::Custom_GetWindowSize();
+        else
     #endif
-        else ioctl(STDERR_FILENO, TIOCGWINSZ, &Console::window_size);
+        ioctl(STDERR_FILENO, TIOCGWINSZ, &Console::window_size);
         return Console::window_size.ws_row;
     }
 
