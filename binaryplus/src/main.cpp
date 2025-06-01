@@ -14,12 +14,16 @@
 #include <random>
 #include <thread>
 #include <cwchar>
-#if native_handle_type == pthread_t
+#if __has_include(<pthread.h>)
 #include <pthread.h>
 #include <signal.h>
-#define kill_thread(x) pthread_kill(x.native_handle(), SIGTERM)
+#if __has_include(<windows.h>)
+#define kill_thread(x) if (std::thread::native_handle_type == pthread_t) pthread_kill(x.native_handle(), SIGTERM); else TerminateThread(x.native_handle(), 0)
 #else
-#define kill_thread(x) TerminateThread(x.native_handle(), 0);
+#define kill_thread(x) pthread_kill(x.native_handle(), SIGTERM)
+#endif
+#else
+#define kill_thread(x) TerminateThread(x.native_handle(), 0)
 #endif
 
 typedef std::basic_stringstream<char16_t> u16stringstream;
