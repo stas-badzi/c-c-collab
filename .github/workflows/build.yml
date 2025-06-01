@@ -525,11 +525,8 @@ jobs:
           dotnet-version: '9.0.x'
       - name: Compile code
         shell: bash
-        env:
-          CC: gcc
-          CXX: g++
         run: |
-          export CPLUS_INCLUDE_PATH="${CPLUS_INCLUDE_PATH:+${CPLUS_INCLUDE_PATH}:}/Library/Developer/CommandLineTools/SDKs/MacOSX15.sdk/usr/include/c++/v1"
+          sudo xcode-select -s /Library/Developer/CommandLineTools
           make sudo=0 cpp-compiler=clang++ c-compiler=clang archchk=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
