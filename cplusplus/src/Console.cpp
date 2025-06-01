@@ -4732,6 +4732,7 @@ newpidgen:
     if (termchk[termchk.size()-1] == N('r') && termchk[termchk.size()-2] == N('e') && termchk[termchk.size()-3] == N('p') && termchk[termchk.size()-4] == N('y') && termchk[termchk.size()-5] == N('H'))
         term.clear();
 
+    int add = 0;
 #ifdef _WIN32
     wstring term2;
     wstring newconstitle, newconsicon, newwinicon;
@@ -4764,8 +4765,6 @@ newpidgen:
         return nullopt;
     }
 #endif
-{
-    int add = 0;
 #ifdef _WIN32
     if (wt) {
         args[add] = L"-f";
@@ -4979,7 +4978,6 @@ newpidgen:
     fclose(file);
     if (openFileInApp(runpth.c_str(), term.c_str()) != 0) return nullopt;
 #endif
-}
 #ifdef _WIN32
     goto contcons;
 console:
@@ -5254,6 +5252,7 @@ newpidgen:
     if (termchk[termchk.size()-1] == N('r') && termchk[termchk.size()-2] == N('e') && termchk[termchk.size()-3] == N('p') && termchk[termchk.size()-4] == N('y') && termchk[termchk.size()-5] == N('H'))
         term.clear();
 
+    int add = 0;
 #ifdef _WIN32
     wstring term2;
     wstring newconstitle, newconsicon, newwinicon;
@@ -5286,8 +5285,6 @@ newpidgen:
         return nullopt;
     }
 #endif
-{
-    int add = 0;
 #ifdef _WIN32
     if (wt) {
         args[add] = L"-f";
@@ -5501,7 +5498,6 @@ newpidgen:
     fclose(file);
     if (openFileInApp(runpth.c_str(), term.c_str()) != 0) return nullopt;
 #endif
-}
 #ifdef _WIN32
     goto contcons;
 console:
@@ -5697,6 +5693,7 @@ newpidgen:
     if (termchk[termchk.size()-1] == N('r') && termchk[termchk.size()-2] == N('e') && termchk[termchk.size()-3] == N('p') && termchk[termchk.size()-4] == N('y') && termchk[termchk.size()-5] == N('H'))
         term.clear();
 
+    int add = 0;
 #ifdef _WIN32
     wstring term2;
     wstring newconstitle, newconsicon, newwinicon;
@@ -5729,8 +5726,6 @@ newpidgen:
         return nullopt;
     }
 #endif
-{
-    int add = 0;
 #ifdef _WIN32
     if (wt) {
         args[add] = L"-f";
@@ -5944,7 +5939,6 @@ newpidgen:
     fclose(file);
     if (openFileInApp(runpth.c_str(), term.c_str()) != 0) return nullopt;
 #endif
-}
 #ifdef _WIN32
     goto contcons;
 console:
@@ -6102,7 +6096,7 @@ void Console::ResetKeyboard(void) {
     unsigned short keymax =
 #ifdef __linux__
     custom_handling ? KEYSTATE_MAX :
-#endif 
+#endif
     KEYBOARD_MAX;
     for (int i = 0; i < keymax; i++)
         Console::key_states[i] = false;

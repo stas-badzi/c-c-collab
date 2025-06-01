@@ -91,8 +91,8 @@ jobs:
           name: Msys2x64CsBin
           path: bin/Cs.*.zip
   
-  build-cygwin:
-    name: Build program using Cygwin
+  build-cygwin-x64:
+    name: Build program using Cygwin (x64)
     needs: compile-cs-windows-x64
     runs-on: windows-latest
     steps:
@@ -155,7 +155,7 @@ jobs:
           path: bin/Cs.*.zip
   
   build-windows-x64:
-    name: Build program using MSVC for x64
+    name: Build program using MSVC (x64)
     runs-on: windows-latest
     needs: compile-cs-windows-x64
     steps:
@@ -464,7 +464,7 @@ jobs:
   
 
   build-ubuntu-arm64:
-    name: Build program using Ubuntu
+    name: Build program using Ubuntu (aarch64)
     runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout source code
