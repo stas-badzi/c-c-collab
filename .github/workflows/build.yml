@@ -190,7 +190,6 @@ jobs:
           del gnuwin32.zip
           ren gnuwin32.mirror-master gnuwin32
           copy gnuwin32\bin\* .
-          del "C:\Program Files\Git\usr\bin\link.exe"
           del link.exe
       - name: Compile code
         shell: cmd /c {0}
