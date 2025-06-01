@@ -14,11 +14,12 @@
 #include <random>
 #include <thread>
 #include <cwchar>
-#ifndef MSC_VER
+#if native_handle_type == pthread_t
 #include <pthread.h>
 #include <signal.h>
+#define kill_thread(x) pthread_kill(x.native_handle(), SIGTERM)
 #else
-#warning "Ensure that this is MSVC or LLVM pretending to be MSVC"
+#define kill_thread(x) TerminateThread(x.native_handle(), 0);
 #endif
 
 typedef std::basic_stringstream<char16_t> u16stringstream;
@@ -442,11 +443,7 @@ int Main(void) {
             for (int i = 1; i < 7; ++i) menu[0][i].ReverseColors();
             if (Console::MouseButtonClicked().first == MOUSE_BUTTON_PRIMARY) {
                 Control::CleanMemory();
-            #ifdef _MSC_VER
-                TerminateThread(handle_color_popup.native_handle(), 0);
-            #else
-                pthread_kill(handle_color_popup.native_handle(), SIGTERM);
-            #endif
+                kill_thread(handle_color_popup);
                 handle_color_popup.join();
                 return EXIT_SUCCESS;
             }
@@ -646,11 +643,7 @@ endminput:
         if (Console::KeyPressed() == Key::Enum::r && IsCtrlDown()) Console::ClearScreenBuffer();
 
         if (Console::KeyPressed() == Key::Enum::q && IsCtrlDown()) {
-        #ifdef _MSC_VER
-            TerminateThread(handle_color_popup.native_handle(), 0);
-        #else
-            pthread_kill(handle_color_popup.native_handle(), SIGTERM);
-        #endif
+            kill_thread(handle_color_popup);
             handle_color_popup.join();
             return EXIT_SUCCESS;
         }
@@ -662,11 +655,7 @@ endminput:
         //TextureSystem::DrawTextureToScreen(20,2,pos,screen);
     }
     // END
-#ifdef _MSC_VER
-    TerminateThread(handle_color_popup.native_handle(), 0);
-#else
-    pthread_kill(handle_color_popup.native_handle(), SIGTERM);
-#endif
+    kill_thread(handle_color_popup);
 
     handle_color_popup.join();
     return EXIT_FAILURE;
