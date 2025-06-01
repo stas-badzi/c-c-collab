@@ -24,7 +24,6 @@
     #include <sys/wait.h>
 #endif
 #ifdef __APPLE__
-    #define USE_GNU
     #include <signal.h>
     #include <mach-o/dyld.h>
 #elif __linux__

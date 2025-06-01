@@ -610,6 +610,9 @@ nstring System::root = System::GetRoot();
     
 #else
 #include <sys/stat.h>
+#ifdef __APPLE__
+#define sighandler_t sig_t
+#endif
 
 int System::DeleteDirectory(utfcstr path) {
     if (rmdir(path) == 0) return 0;
