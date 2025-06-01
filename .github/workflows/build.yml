@@ -474,9 +474,8 @@ jobs:
         with:
           dotnet-version: '9.0.x'
       - name: Set up Clang
-        uses: KyleMayes/install-llvm-action@v2
-        with:
-          version: "17.0"
+        shell: sh
+        run: sudo apt install clang
       - name: Compile code
         shell: bash
         run: |
