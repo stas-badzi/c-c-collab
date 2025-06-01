@@ -180,6 +180,7 @@ jobs:
           echo $null >> csbin
           copy csharp\bin\lib\factoryrushsharp.dll cplusplus\bin\factoryrushsharp.dll
           copy csharp\bin\lib\factoryrushsharp.dll binaryplus\bin\factoryrushsharp.dll
+          where clang-cl.exe
       - name: Install Programs
         shell: pwsh
         run: |
@@ -315,6 +316,7 @@ jobs:
           echo $null >> csbin
           copy csharp\bin\lib\factoryrushsharp.dll cplusplus\bin\factoryrushsharp.dll
           copy csharp\bin\lib\factoryrushsharp.dll binaryplus\bin\factoryrushsharp.dll
+          where clang-cl
       - name: Install Programs
         shell: pwsh
         run: |
@@ -451,6 +453,7 @@ jobs:
           echo $null >> csbin
           copy csharp\bin\lib\factoryrushsharp.dll cplusplus\bin\factoryrushsharp.dll
           copy csharp\bin\lib\factoryrushsharp.dll binaryplus\bin\factoryrushsharp.dll
+          where clang-cl.exe
       - name: Install Programs
         shell: pwsh
         run: |
