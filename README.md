@@ -76,3 +76,6 @@
 # Tecnical
 ## windows key on linux
 - my laptop: left -> 125 right -> non-existant(i think 126), submit an issue if you have it as a different keycode, than I might add testing for harware
+
+# Download
+[onedrive](https://1drv.ms/u/c/2c1a62828b4f65ed/EfSOz37OnQlGnHiaBQPvhUYB_A3Bu39x9FoMp-q-yTzDrg?e=fh4xBW)
