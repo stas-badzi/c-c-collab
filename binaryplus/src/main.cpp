@@ -168,7 +168,7 @@ int Main(void) {
     return EXIT_SUCCESS;
 }
 
-int Main_(void) {
+int Main__(void) {
     Console::Init();
     Console::SetTitle(u"FactoryRush");
 
@@ -813,7 +813,7 @@ pair<int,u16string> GetFilePopup(int argc, const char16_t* argv[]) {
     vector<vector<Console::Symbol>> scr;
     int last_width = 0;
     int last_height = 0;
-    int begx = 0, begy = 0, endx = -1, endy = -1;
+    unsigned begx = 0, begy = 0; int endx = -1, endy = -1;
     while (1) {
         bool newscr = false;
 
@@ -824,7 +824,7 @@ pair<int,u16string> GetFilePopup(int argc, const char16_t* argv[]) {
         if (Console::KeyPressed() == Key::Enum::ESC) return {EXIT_FAILURE,(argc < 2) ? u"." : u16string(argv[1])};
 
         auto mouse = Console::GetMouseStatus();
-        if (mouse.y >= begy && mouse.y <= endy && mouse.x >= begx && mouse.x <= endx) {
+        if (mouse.y >= begy && (long)mouse.y <= endy && mouse.x >= begx && (long)mouse.x <= endx) {
             if (Console::MouseButtonClicked().first == MOUSE_BUTTON_PRIMARY)
                 return {EXIT_SUCCESS,path};
             else if (Console::MouseButtonClicked().first == MOUSE_BUTTON_SECONDARY)
