@@ -18,10 +18,8 @@
 - Might not work in future versions if the `-cmd` argument is removed
   - if that happens, please open an issue (it's shouldn't be hard to fix, but I need to know the issue exists)
 
-### __Cmder ❌(✅)__
-- Mouse doesn't work in most cases
-    - that is unless you launch a tab with `bash\mintty`
-- Popups aren't fixed yet (Todo)
+### __Cmder ✅⚠️__
+- Mouse only works you launch a tab with `bash\mintty`
 
 ### __Hyper ✅⚠️__
 - ⚠️ Popup windows use the default terminal
@@ -73,3 +71,11 @@
 
 - MacOS ✅⚠️
   - Not tested (probably won't be until I get my hackickintosh working with a grafix card)
+
+
+# Tecnical
+## windows key on linux
+- my laptop: left -> 125 right -> non-existant(i think 126), submit an issue if you have it as a different keycode, than I might add testing for harware
+
+# Download
+[onedrive](https://1drv.ms/u/c/2c1a62828b4f65ed/EfSOz37OnQlGnHiaBQPvhUYB_A3Bu39x9FoMp-q-yTzDrg?e=fh4xBW)

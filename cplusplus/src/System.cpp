@@ -22,8 +22,7 @@ nstring System::root = System::GetRoot();
         if (System::self.size()) return System::self;
         wchar_t buf[PATH_MAX];
         DWORD size = GetModuleFileName(NULL, buf, PATH_MAX);
-        wchar_t* edit = buf;
-        return edit;
+        return buf;
     }
 
     nstring System::GetRoot(void) {
@@ -58,13 +57,16 @@ nstring System::root = System::GetRoot();
                 if (wcscmp(info.cFileName, L".") == 0 || wcscmp(info.cFileName, L"..") == 0) continue;
                 if (fileFound.back() != L'\\') fileFound.push_back(L'\\');
                 fileFound.append(info.cFileName);
-                ClearDirectory(fileFound.c_str());
-                DeleteDirectory(fileFound.c_str());
+                auto res = ClearDirectory(fileFound.c_str());
+                if (res) return res;
+                res = DeleteDirectory(fileFound.c_str());
+                if (res) return res;
                 continue;
             }
             if (fileFound.back() != L'\\') fileFound.push_back(L'\\');
             fileFound.append(info.cFileName);
-            if (RemoveFile(fileFound.c_str())) return GetLastError();
+            auto res = RemoveFile(fileFound.c_str());
+            if (res) return res;
         } while(FindNextFile(FindHndle, &info));
         if (FindClose(FindHndle)) return GetLastError();
         return 0;
@@ -119,6 +121,7 @@ nstring System::root = System::GetRoot();
                 if (!WriteFile(pipe, message.c_str(), message.size() * sizeof(wchar_t), &bytesWritten, nullptr))
                     return 1;
             } else {
+                WaitMessage();
                 MSG msg;
                 while (auto val = PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
                     if (val < 0) return 1;
@@ -607,6 +610,9 @@ nstring System::root = System::GetRoot();
     
 #else
 #include <sys/stat.h>
+#ifdef __APPLE__
+#define sighandler_t sig_t
+#endif
 
 int System::DeleteDirectory(utfcstr path) {
     if (rmdir(path) == 0) return 0;
@@ -618,15 +624,113 @@ int System::RemoveFile(utfcstr path) {
     return errno;
 }
 
+int System::ClearDirectory(utfcstr path) {
+    string spath = path;
+    if (spath.back() != L'/') spath.push_back(L'/');
+    DIR* dir = opendir(path);
+    if (!dir) return errno;
+    struct dirent* ent;
+    while ((ent = readdir(dir)) != NULL) {
+        if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) continue;
+        if (ent->d_type == DT_DIR) {
+            auto res = ClearDirectory((spath + ent->d_name).c_str());
+            if (res) return res;
+            res = DeleteDirectory((spath + ent->d_name).c_str());
+            if (res) return res;
+        } else if (int res = RemoveFile((spath + ent->d_name).c_str())) return res;
+    }
+    closedir(dir);
+    return 0;
+}
+
 bool System::IsFile(utfcstr path) {
     struct stat st;
     if (stat(path, &st) == 0) return S_ISREG(st.st_mode);
     return false;
 }
 
+bool System::IsDirectory(utfcstr path) {
+    struct stat st;
+    if (stat(path, &st) == 0) return S_ISDIR(st.st_mode);
+    return false;
+}
+
+bool cpp::System::DoesPathExist(utfcstr path) {
+    struct stat st;
+    return stat(path, &st) == 0; 
+}
+
 int System::MakeDirectory(utfcstr path) {
     if (mkdir(path, 0777) == 0) return 0;
     return errno;
+}
+
+
+unordered_map<fd_t, string> System::pipes{};
+
+fd_t System::CreatePipe(uniconv::utfcstr subpath)
+{
+    int createpipe = mkfifo(subpath, 0600);
+    if (createpipe < 0) {
+        Console::out << L"Couldn't create pipe: " << subpath << L", with error: " << errno; Console::out_endl();
+        return INVALID_HANDLE_VALUE;
+    }
+    int pipe = open(subpath, O_RDWR); // not only write, so it doesn't block
+    if (pipe < 0) { Console::out << L"Couldn't open pipe: " << subpath << L", with error: " << errno; Console::out_endl(); }
+    else pipes[pipe] = subpath;
+    return pipe;
+}
+
+fd_t System::OpenPipe(uniconv::utfcstr subpath) {
+    int pipe = open(subpath, O_RDONLY);
+    if (pipe < 0) { Console::out << L"Couldn't open pipe: " << subpath << L", with error: " << errno; Console::out_endl(); }
+    return pipe;
+}
+
+void System::ClosePipe(fd_t pipe) {
+    close(pipe);
+    if (pipes.find(pipe) != pipes.end()) {
+        unlink(pipes[pipe].c_str());
+        pipes.erase(pipe);
+    }
+}
+
+struct pipemsg { size_t size; char* buf; };
+
+int send_pipemsg(int fd, pipemsg msg) {
+    int ret = write(fd, &(msg.size), sizeof(msg.size));
+    if (ret < 0) return errno;
+    ret = write(fd, msg.buf, msg.size);
+    if (ret < 0) return errno;
+    return 0;
+}
+
+int read_pipemsg(int fd, pipemsg* msg) {
+    int ret = read(fd, &(msg->size), sizeof(msg->size));
+    if (ret < 0) return errno;
+    msg->buf = (char*)malloc(msg->size);
+    ret = read(fd, msg->buf, msg->size);
+    if (ret < 0) return errno;
+    return 0;
+}
+
+int System::SendMessagePipe(fd_t pipe, uniconv::nstring msg) {
+    pipemsg send = {msg.size(), (char*)msg.c_str()};
+    return send_pipemsg(pipe, send);
+}
+
+string System::ReadMessagePipe(fd_t pipe) {
+    if (pipes.find(pipe) != pipes.end()) return string(); // not a read pipe
+
+    pipemsg recv;
+    int ret = read_pipemsg(pipe, &recv);
+    if (ret != 0){
+        Console::out << L"Couldn't read message from pipe " << pipe << L"wit error: " << ret; Console::out_endl();
+        return string();
+    }
+    string out(recv.buf, recv.size);
+    free(recv.buf);
+    return out;
 }
 
 int System::Shell(uniconv::utfcstr command) {
@@ -690,12 +794,12 @@ bool System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
         }
     noargs:
         va_end(args);
+
         execv(path, args_c);
         exit(127);
     }
     return true;
 }
-
 
 int System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
     int status;
@@ -740,6 +844,7 @@ int System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
         }
     noargs:
         va_end(args);
+
         execv(path, args_c);
         exit(127);
     } else {
@@ -843,6 +948,7 @@ int System::RunProgramS(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
         }
     noargs:
         va_end(args);
+
         execvp(path, args_c);
         exit(127);
     } else {
@@ -938,7 +1044,8 @@ int System::RunProgramS(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
         for (int i = 1; i < 256; i++)
             if (args[i-1] == nullptr) break;
             else args_c[i] = (char*)args[i-1];
-        execvp(path, args_c);
+
+        execv(path, args_c);
         exit(127);
     } else {
         old_handler[SIGHUP] = signal(SIGHUP, System::SendSignal);
@@ -1085,7 +1192,11 @@ bool System::RunProgramAsyncS(uniconv::utfcstr path, uniconv::utfcstr arg, ...) 
     return true;
 }
 
-int System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
+int System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]
+#ifdef __linux__
+    , uid_t suid
+#endif
+) {
     int status;
     System::tpid = fork();
     sighandler_t old_handler[32];
@@ -1120,6 +1231,21 @@ int System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
         for (int i = 1; i < 256; i++)
             if (args[i-1] == nullptr) break;
             else args_c[i] = (char*)args[i-1];
+
+    #ifdef __linux__
+        if (suid) {
+            int res = setuid(suid);
+            res = setegid(getgid());
+            int nulfl = open("/dev/null", O_WRONLY);
+            dup2(nulfl, STDOUT_FILENO);
+            dup2(nulfl, STDERR_FILENO);
+            close(nulfl);
+            nulfl = open("/dev/null", O_RDONLY);
+            dup2(nulfl, STDIN_FILENO);
+            close(nulfl);
+        }
+    #endif
+
         execv(path, args_c);
         exit(127);
     } else {
@@ -1180,7 +1306,11 @@ int System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
     return status;
 }
 
-bool System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
+bool System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[]
+#ifdef __linux__
+    , uid_t suid
+#endif
+) {
     System::tpid = fork();
     if (tpid < 0)
         return false;
@@ -1213,6 +1343,11 @@ bool System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[
         for (int i = 1; i < 256; i++)
             if (args[i-1] == nullptr) break;
             else args_c[i] = (char*)args[i-1];
+
+    #ifdef __linux__
+        if (suid) { int res = setuid(suid); }
+    #endif
+
         execv(path, args_c);
         exit(127);
     }
@@ -1224,45 +1359,40 @@ nstring System::ToNativePath(nstring path) {
 }
 
 #ifdef __APPLE__
-    nstring System::GetRoot(void) {
+    nstring System::GetSelf(void) {
         char buf[PATH_MAX] = {'\0'};
         uint32_t bufsize = PATH_MAX;
         ssize_t size = _NSGetExecutablePath(buf, &bufsize);
         if (size < 0) exit(0xC3);
-        else size = strlen(buf);
-        char *edit = buf;
-        System::self = edit;
-        while (edit[--size] != '/')
-            buf[size] = '\0';
-        edit[size + 1] = '.';
-        edit[size + 2] = '.';
-        edit[size + 3] = '\0';
-        nstring out = (nstring)(edit);
-        return out;
+        return buf;
     }
 #else
-    nstring System::GetRoot(void) {
+    nstring System::GetSelf(void) {
         char buf[PATH_MAX] = {'\0'};
         ssize_t size = readlink("/proc/self/exe", buf, PATH_MAX);
         if (size < 0) exit(0xC3);
-        char *edit = buf;
-        System::self = edit;
-        while (edit[--size] != '/')
-            buf[size] = '\0';
+        return buf;
+    }
+#endif
+
+    nstring System::GetRoot(void) {
+        if (!self.size()) System::self = System::GetSelf();
+        char edit[PATH_MAX];
+        auto size = System::self.size();
+        while (System::self[--size] != '/')
+        for (size_t i = 0; i <= size; i++) edit[i] = System::self[i];
         edit[size + 1] = '.';
         edit[size + 2] = '.';
         edit[size + 3] = '\0';
-        nstring out = (nstring)(edit);
+        nstring out = nstring(edit);
         return out;
     }
-#endif
+
 #endif
 
 nstring System::GetRootDir(void) {
     return System::root;
 }
-
-
 
 uniconv::nstring System::GetSelfPath(void) {
     return System::self;

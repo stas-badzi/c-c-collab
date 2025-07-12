@@ -10,6 +10,10 @@
 #include <stdint.h>
 #include <typeinfo>
 
+#ifdef __linux__
+#include <linux/limits.h>
+#endif
+
 #if defined(_WIN32) || defined(__CYGWIN__)
     #include <windows.h>
     #include <shlwapi.h>
@@ -83,7 +87,7 @@ using namespace std;
 pid_t tpid;
 void SendSignal(int signal) { kill(tpid, signal); }
 
-static int RunProgram(const char* path, int argc, char* argv[]) {
+static int RunProgram(const char* path) {
     int status;
     tpid = fork();
     sighandler_t old_handler[32];
@@ -113,11 +117,9 @@ static int RunProgram(const char* path, int argc, char* argv[]) {
         signal(SIGTTIN, SIG_DFL);
         signal(SIGTTOU, SIG_DFL);
         
-        char* args_c[ARG_MAX+1]{nullptr};
-        for (int i = 0; i < argc; i++) {
-            args_c[i] = argv[i];
-        }
-        execvp(path, args_c);
+        char* args_c[2]{nullptr};
+        args_c[0] = (char*)path;
+        execv(path, args_c);
         exit(127);
     } else {
         old_handler[SIGHUP] = signal(SIGHUP, SendSignal);

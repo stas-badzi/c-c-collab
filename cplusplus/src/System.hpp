@@ -7,11 +7,11 @@
 #include <typeinfo>
 
 #include <control_heap.h>
+#include <unordered_map>
 
 #ifdef _WIN32
     #include <windows.h>
     #include <shlwapi.h>
-    #include <unordered_map>
     #include <windows/thread_safe/queue>
 #else
     #define INVALID_HANDLE_VALUE ((int)-1)
@@ -19,13 +19,13 @@
     #include <unistd.h>
     #include <pthread.h>
     #include <sys/stat.h>
+    #include <dirent.h>
 #ifndef _LINUX_WAIT_H
     #include <sys/wait.h>
 #endif
 #ifdef __APPLE__
     #include <signal.h>
     #include <mach-o/dyld.h>
-    typedef void (*sighandler_t)(int);
 #elif __linux__
     #include <linux/limits.h>
 #endif
@@ -69,8 +69,9 @@ namespace cpp {
 #if !defined(_WIN32) && !defined(__CYGWIN__)
         static pid_t tpid;
         static void SendSignal(int signal);
+        static std::unordered_map<fd_t, std::string> pipes; // pipe handle -> { pipe path }
 #else
-        static std::unordered_map<fd_t, std::pair<std::pair<HANDLE, tsqueue<std::wstring>>, std::wstring>> pipes; // pipe handle -> { { pipe thread , write queue } , symlink path } 
+        static std::unordered_map<fd_t, std::pair<std::pair<HANDLE, tsqueue<std::wstring>>, std::wstring>> pipes; // pipe handle -> { { pipe thread , write queue } , symlink path }
 #endif
     public:
         static uniconv::nstring GetRootDir(void);
@@ -109,13 +110,21 @@ namespace cpp {
         static int Shell(uniconv::utfcstr arg);
         static int RunProgram(uniconv::utfcstr path, uniconv::utfcstr args, ...);
         static int RunProgramS(uniconv::utfcstr file, uniconv::utfcstr args, ...);
-        static int RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]);
+        static int RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]
+    #ifdef __linux__
+        , uid_t suid = 0
+    #endif
+        );
         static int RunProgramS(uniconv::utfcstr file, uniconv::utfcstr const args[]);
         
         static bool ShellAsync(uniconv::utfcstr arg);  
         static bool RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr args, ...);
         static bool RunProgramAsyncS(uniconv::utfcstr file, uniconv::utfcstr args, ...);
-        static bool RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[]);
+        static bool RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[]
+    #ifdef __linux__
+        , uid_t suid = 0
+    #endif
+        );
         static bool RunProgramAsyncS(uniconv::utfcstr file, uniconv::utfcstr const args[]);
     #ifdef _WIN32
         static int ShellC(uniconv::utfcstr arg);

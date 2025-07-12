@@ -30,7 +30,7 @@ Game::Camera::Camera(int height, int width, Console::Symbol sym) {
 }
 
 Game::MatrixPosition Game::Camera::ViewportCenter() {
-    return MatrixPosition(floor(this->buffer_.size()/2), floor(this->buffer_[0].size()/2));
+    return {static_cast<int>(this->buffer_.size() / 2), static_cast<int>(this->buffer_[0].size() / 2)};
 }
 
 void Game::Camera::DrawTexture(int x, int y, vector<vector<Console::Symbol>> texture) {

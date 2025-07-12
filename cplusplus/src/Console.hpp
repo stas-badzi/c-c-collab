@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tuple> // vector arm64 Ubuntu 24.04 clang compile error
 #include <vector>
 #include <array>
 #include <bitset>
@@ -43,6 +44,7 @@
     #include <windows/key.hpp>
     #include <iostream>
     #include <unordered_map>
+    #include <bit>
     #include <conio.h>
     #include <windows/thread_safe/queue>
     #include <windows/thread_safe/vector>
@@ -53,6 +55,7 @@
 #endif
     typedef wchar_t char_t;
 #else
+    #include <errno.h>
     #include <signal.h>
     #include <limits>
     #include <climits>
@@ -91,6 +94,22 @@
     #define KEYBOARD_MAX 0x80
 #else
     #define KEYBOARD_MAX 256
+#endif
+
+#ifndef __linux__
+    #define NO_CUSTOM_HANDLING /* not supported outside linux */
+#endif
+
+#ifdef NO_CUSTOM_HANDLING
+    #define KEYSTATE_MAX KEYBOARD_MAX
+#else
+    #define KEYSTATE_MAX static_cast<uint16_t>(Key::Enum::LAST_KEY)
+#endif
+
+#ifdef _WIN32
+#define geterror() GetLastError()
+#else
+#define geterror() errno
 #endif
 
 // change to 1 for less cpu usage but less responsiveness (windows keyboard input)
@@ -176,8 +195,8 @@ namespace cpp {
         // max time to wait for the popup window to start up before returning -1 (in milliseconds)
         static int max_popup_startup_wait;
         static bool initialised;
-        static std::mutex stderr_lock;
-        static std::bitset<KEYBOARD_MAX> key_states;
+        static std::mutex screen_lock;
+        static std::bitset<KEYSTATE_MAX> key_states;
         static int key_hit;
         static int key_released;
         static unsigned short double_click_max; // = 500;
@@ -207,13 +226,13 @@ namespace cpp {
         static bool cursor_blink_opposite;
         static uniconv::nstring user_data;
         static uniconv::nstring dev_data;
+        static uniconv::nstring log_data;
         static uniconv::nstring tmp_data;
         static std::vector<pid_t> popup_pids;
-        static uniconv::nstring terminal_name;
         static rw_pipe_t parent_pipe;
+        static uniconv::nstring terminal_name;
     #ifdef _WIN32
         static constexpr const wchar_t* pipedir = L"\\\\.\\pipe\\.factoryrush\\";
-        static std::mutex screen_lock;
         static const wchar_t* subdir;
         //static std::vector<std::vector<COLORREF>> SaveScreen(void);
         //static std::pair<std::pair<uint16_t,uint16_t>,std::pair<uint16_t,uint16_t>> GetOffsetSymSize(int color1 = 3, int color2 = 9, int color3 = 1);
@@ -242,20 +261,23 @@ namespace cpp {
         static std::atomic<bool>* super_thread_run;
         static tsvector<HANDLE>* thread_handles;
         static std::wofstream real_out;
+        static std::atomic<bool> tabactive;
         static inline wchar_t getnch(void);
         static inline constexpr uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2);
         static DWORD WINAPI MoveCursorThread(LPVOID lpParam);
         static DWORD WINAPI SuperThread(LPVOID lpParam);
-        static std::atomic<bool> tabactive;
+        static size_t write_out(std::wstring str);
         //static std::pair<uint16_t,uint16_t> xyoffset;
         //static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
     #else
+        static bool custom_handling;
         static std::ofstream real_out;
         static const char* subdir;
         static struct termios old_termios;
         static struct winsize window_size;
         static mbstate_t streammbs;
     #ifdef __linux__
+        static uid_t ruid;
         static struct termios old_fdterm;
         static int old_kbdmode;
         static int fd;
@@ -267,7 +289,11 @@ namespace cpp {
         static bool no_gpm;
         static bool parent;
         static uint8_t root_type;
+        static std::string terminal_switch;
         static Key::Enum key_chart[MAX_NR_KEYMAPS][KEYBOARD_MAX];
+        static std::string GetTerminalExecuteSwitch(void);
+        static void Custom_HandleKeyboard(void);
+        static void Custom_GetWindowSize(void);
     #endif
     #ifdef __APPLE__
         static pid_t ppid;
@@ -398,7 +424,6 @@ namespace cpp {
         static std::atomic<bool> refresh_screen;
         static std::vector<std::vector<Symbol>> old_symbols;
         static std::pair<int16_t,int16_t> old_scr_size;
-        
     };
 #ifdef _WIN32
     extern __declspec(dllexport) std::basic_istream<wchar_t>& win;
