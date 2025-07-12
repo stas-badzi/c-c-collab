@@ -2,6 +2,7 @@
 #include <unicode_conversion.hpp>
 #include <vector>
 #include <string.h>
+#include <new>
 
 #include "Console.hpp"
 #include "System.hpp"
@@ -589,10 +590,9 @@ using namespace uniconv;
         return ret;
     }
 
-    libexport void* Game_Camera_Construct(int height, int width, void* symptr) {
-        cpp::Game::Camera cam(height, width, *(cpp::Console::Symbol*)symptr);
-        void* ret = System::AllocateMemory(sizeof(cpp::Game::Camera));
-        *(cpp::Game::Camera*)ret = cam;
+    libexport cpp::Game::Camera* Game_Camera_Construct(int height, int width, cpp::Console::Symbol* symptr) {
+        auto* ret = (cpp::Game::Camera*)System::AllocateMemory(sizeof(cpp::Game::Camera));
+        ret = new(ret) cpp::Game::Camera(height,width,*symptr);
         return ret;
     }
 
