@@ -608,10 +608,10 @@ using namespace uniconv;
         ((cpp::Game::Camera*)cameraptr)->DrawTexture(x, y, real_texture);
     }
 
-    libexport void Game_Camera_DrawToScreen(int x, int y, void* screenptr, void* cameraptr) {
+    libexport void Game_Camera_DrawToScreen(int x, int y, void* screenptr, cpp::Game::Camera* cameraptr) {
         auto screen = cs::PtrToTexture(screenptr, true);
         auto real_screen = cs::Convert2dVector<Console::Symbol>(screen);
-        ((cpp::Game::Camera*)cameraptr)->DrawTexture(x, y, real_screen);
+        cameraptr->DrawTexture(x, y, real_screen);
     }
 #ifdef _DEBUG
 // control_heap

@@ -43,8 +43,8 @@
 *.tar.gz
 
 #vs vscode consulo ...
-*.vs*
-*.vscode*
+*.vs/*
+.vscode/settings.json
 *.vcxproj*
 *x64*
 *.code-workspace
@@ -53,7 +53,6 @@
 *.DS_Store
 *.dSYM/*
 
-
 #generated code
 binaryplus/bin/*.tux
 binaryplus/bin/*.bat
@@ -61,7 +60,8 @@ binaryplus/bin/*.sh
 binaryplus/share/**
 *.pdb
 *.dbg
-*.json
+*.deps.json
+*.runtimeconfig.json
 *.ilk
 binarysharp/obj/*
 csharp/obj/*
