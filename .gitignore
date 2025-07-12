@@ -57,6 +57,8 @@
 #generated code
 binaryplus/bin/*.tux
 binaryplus/bin/*.bat
+binaryplus/bin/*.sh
+binaryplus/share/**
 *.pdb
 *.dbg
 *.json
