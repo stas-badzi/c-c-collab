@@ -104,8 +104,8 @@ namespace cpp {
 
         template<typename T> static T ReadPointer(nint pointer);
         template<typename T> static T ReadPointer(nint pointer, int offset);
-        template<typename T> static void WritePointer(nint& pointer, T value);
-        template<typename T> static void WritePointer(nint& pointer, int offset, T value);
+        template<typename T> static void WritePointer(nint& pointer, const T value);
+        template<typename T> static void WritePointer(nint& pointer, int offset, const T value);
         
         static int Shell(uniconv::utfcstr arg);
         static int RunProgram(uniconv::utfcstr path, uniconv::utfcstr args, ...);

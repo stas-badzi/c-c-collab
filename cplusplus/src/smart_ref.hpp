@@ -16,6 +16,7 @@ namespace {
         smart_ref<T>& operator=(const smart_ref<T>& lother);
         smart_ref<T>& operator=(smart_ref<T>&& rother) noexcept;
         explicit operator T() const;
+        T* ptr(void);
         ~smart_ref();
     };
 

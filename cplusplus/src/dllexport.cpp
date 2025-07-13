@@ -610,8 +610,7 @@ using namespace uniconv;
 
     libexport void Game_Camera_DrawToScreen(int x, int y, void* screenptr, cpp::Game::Camera* cameraptr) {
         auto screen = cs::PtrToTexture(screenptr, true);
-        auto real_screen = cs::Convert2dVector<Console::Symbol>(screen);
-        cameraptr->DrawTexture(x, y, real_screen);
+        cameraptr->DrawToScreen(x, y, screen);
     }
 #ifdef _DEBUG
 // control_heap
