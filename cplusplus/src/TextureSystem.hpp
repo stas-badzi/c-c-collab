@@ -23,7 +23,8 @@ namespace cs {
         static void ExportText(std::u16string file, std::vector<std::u16string> lines);
         static std::vector<std::vector<cpp::Console::Symbol> > TextureFromFile(std::u16string filepath);
         static void FileFromTexture(std::u16string filepath, std::vector<std::vector<cpp::Console::Symbol> > texture, bool recycle = false);
-        static void DrawTextureToScreen(int x, int y, std::vector<std::vector<cpp::Console::Symbol> > texture, std::vector<std::vector<cpp::Console::Symbol> > screen);
+        static void DrawTextureToScreen(int x, int y, const std::vector<std::vector<cpp::Console::Symbol> >& texture, std::vector<std::vector<cpp::Console::Symbol> >& screen);
+        static inline void DrawTextureToScreen(int x, int y, const std::vector<std::vector<cpp::Console::Symbol> >& texture, std::vector<std::vector<smart_ref<cpp::Console::Symbol> > >& screen);
     };
 }
 

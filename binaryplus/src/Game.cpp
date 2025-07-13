@@ -4,7 +4,6 @@
 #include "dllimport.hpp"
 #include "TextureSystem.hpp"
 #include "System.hpp"
-
 using namespace cpp;
 
 // public:
@@ -25,12 +24,12 @@ Game::MatrixPosition Game::Camera::ViewportCenter() {
     return Game::MatrixPosition(imp->iIndex, imp->jIndex);
 }
 
-void Game::Camera::DrawTexture(int x, int y, std::vector<std::vector<Console::Symbol>> texture) {
+void Game::Camera::DrawTexture(int x, int y, std::vector<std::vector<Console::Symbol>>& texture) {
     auto textureptr = cs::TextureToPtr(texture);
     cppimp::Game_Camera_DrawTexture(x, y, textureptr, internal);
 }
 
-void Game::Camera::DrawToScreen(int x, int y, std::vector<std::vector<Console::Symbol>> screen) {
+void Game::Camera::DrawToScreen(int x, int y, std::vector<std::vector<Console::Symbol>>& screen) {
     auto screenptr = cs::TextureToPtr(screen);
     cppimp::Game_Camera_DrawToScreen(x, y, screenptr, internal);
 }

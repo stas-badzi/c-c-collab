@@ -54,7 +54,7 @@ void TextureSystem::FileFromTexture(u16string filepath, vector<vector<Console::S
     csimp::TextureSystem_FileFromTexture(filepathPtr, texturePtr, recycle);
 }
 
-void TextureSystem::DrawTextureToScreen(int x, int y, vector<vector<Console::Symbol> > texture, vector<vector<Console::Symbol> > screen)
+void TextureSystem::DrawTextureToScreen(int x, int y, const vector<vector<Console::Symbol> >& texture, vector<vector<Console::Symbol> >& screen)
 {
     auto texturePtr = TextureToPtr(texture);
     auto screenPtr = TextureToPtr(screen);

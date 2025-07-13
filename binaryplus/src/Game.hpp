@@ -18,8 +18,8 @@ namespace cpp {
                 public:
                     Camera(int height, int width, cpp::Console::Symbol sym);
                     MatrixPosition ViewportCenter();
-                    void DrawTexture(int x, int y, std::vector<std::vector<Console::Symbol>> texture);
-                    void DrawToScreen(int x, int y, std::vector<std::vector<Console::Symbol>> screen);
+                    void DrawTexture(int x, int y, std::vector<std::vector<Console::Symbol>>& texture);
+                    void DrawToScreen(int x, int y, std::vector<std::vector<Console::Symbol>>& screen);
                 private:
                     void* internal;
             };

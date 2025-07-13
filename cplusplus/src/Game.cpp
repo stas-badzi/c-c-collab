@@ -33,14 +33,6 @@ Game::MatrixPosition Game::Camera::ViewportCenter() {
     return {static_cast<int>(this->buffer.size() / 2), static_cast<int>(this->buffer[0].size() / 2)};
 }
 
-void Game::Camera::DrawTexture(int x, int y, vector<vector<Console::Symbol>> texture) {
-    TextureSystem::DrawTextureToScreen(x, y, texture, this->buffer_);
-}
-
-void Game::Camera::DrawToScreen(int x, int y, vector<vector<Console::Symbol>> screen) {
-    TextureSystem::DrawTextureToScreen(x, y, this->buffer_, screen);
-}
-
 vector<vector<Console::Symbol>> Game::Camera::buffer() {
     return this->buffer_;
 }

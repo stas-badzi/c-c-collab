@@ -17,7 +17,7 @@ T System::ReadPointer(nint pointer, int offset) {
 }
 
 template <typename T>
-void System::WritePointer(nint &pointer, T value) {
+void System::WritePointer(nint &pointer, const T value) {
 #ifdef _DEBUG
     __check$ALLOCATIONS(pointer, sizeof(T));
 #endif
@@ -25,7 +25,7 @@ void System::WritePointer(nint &pointer, T value) {
 }
 
 template <typename T>
-void System::WritePointer(nint &pointer, int offset, T value) {
+void System::WritePointer(nint &pointer, int offset, const T value) {
 #ifdef _DEBUG
     __check$ALLOCATIONS(System::MovePointer(pointer,offset), sizeof(T));
 #endif

@@ -1,4 +1,5 @@
 #include "TextureSystem.hpp"
+#include "dllimport.hpp"
 
 template <typename Tout, typename Tin>
 std::vector<Tout> cs::ConvertVector(const std::vector<Tin> &vec) {
@@ -47,6 +48,36 @@ namespace cs {
         return sym;
     }
 
+    inline void* TextureToPtr(const std::vector<std::vector<Console::Symbol> > &texture) {
+        const int int32_size = sizeof(int32_t);
+        const int intptr_size = sizeof(void*);
+        int32_t size, count;
+
+        size = texture.size();
+        count = 0;
+        for (int32_t i = 0; i < size; i++) {
+            count += texture[i].size();
+        }
+
+        void* ret = System::AllocateMemory((size + 1) * int32_size + count * intptr_size);
+
+        count = 0;
+        void* where;
+        System::WritePointer<int32_t>(ret, size);
+        where = System::MovePointer(ret, int32_size);
+        for (int32_t i = 0; i < size; i++) {
+            System::WritePointer<int32_t>(where,texture[i].size());
+            where = System::MovePointer(where, int32_size);
+            for (size_t j = 0; j < texture[i].size(); j++) {
+                const void* ptr = (const void*)&(texture[i][j]);
+                System::WritePointer(where, ptr);
+                where = System::MovePointer(where, intptr_size);
+            }
+        }
+
+        return ret;
+    }
+
     inline void* TextureToPtr(std::vector<std::vector<Console::Symbol> > &texture) {
         const int int32_size = sizeof(int32_t);
         const int intptr_size = sizeof(void*);
@@ -74,5 +105,42 @@ namespace cs {
         }
 
         return ret;
+    }
+
+
+    inline void* TextureToPtr(std::vector<std::vector<smart_ref<Console::Symbol> > > &texture) {
+        const int int32_size = sizeof(int32_t);
+        const int intptr_size = sizeof(void*);
+        int32_t size, count;
+
+        size = texture.size();
+        count = 0;
+        for (int32_t i = 0; i < size; i++) {
+            count += texture[i].size();
+        }
+
+        void* ret = System::AllocateMemory((size + 1) * int32_size + count * intptr_size);
+
+        count = 0;
+        void* where;
+        System::WritePointer<int32_t>(ret, size);
+        where = System::MovePointer(ret, int32_size);
+        for (int32_t i = 0; i < size; i++) {
+            System::WritePointer<int32_t>(where,texture[i].size());
+            where = System::MovePointer(where, int32_size);
+            for (size_t j = 0; j < texture[i].size(); j++) {
+                System::WritePointer<nint>(where, texture[i][j].ptr());
+                where = System::MovePointer(where, intptr_size);
+            }
+        }
+
+        return ret;
+    }
+
+    inline void TextureSystem::DrawTextureToScreen(int x, int y, const std::vector<std::vector<Console::Symbol> >& texture, std::vector<std::vector<smart_ref<Console::Symbol>>>& screen) {
+        auto texturePtr = TextureToPtr(texture);
+        auto screenPtr = TextureToPtr(screen);
+
+        csimp::TextureSystem_DrawTextureToScreen(x, y, texturePtr, screenPtr);
     }
 }

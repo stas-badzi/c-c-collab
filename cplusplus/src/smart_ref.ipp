@@ -28,5 +28,6 @@ namespace {
     }
     template <typename T> smart_ref<T>::operator T() const { return this->ref; }
     template <typename T> smart_ref<T>::~smart_ref() {if (alloc) delete &ref;}
+    template <typename T> T* smart_ref<T>::ptr(void) {return &ref;}
 }
 #endif // SMART_REF_HPP
