@@ -30,7 +30,7 @@ Game::Camera::Camera(int height, int width, Console::Symbol sym) {
 }
 
 Game::MatrixPosition Game::Camera::ViewportCenter() {
-    return {static_cast<int>(this->buffer.size() / 2), static_cast<int>(this->buffer[0].size() / 2)};
+    return {static_cast<int>(this->buffer().size() / 2), static_cast<int>(this->buffer()[0].size() / 2)};
 }
 
 vector<vector<Console::Symbol>> Game::Camera::buffer() {
@@ -41,4 +41,5 @@ vector<vector<Console::Symbol>> Game::Camera::buffer() {
 
 void Game::ValidateViewport(MatrixPosition vpc) {
     return;
+
 }
