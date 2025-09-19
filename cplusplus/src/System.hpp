@@ -24,6 +24,7 @@
     #include <sys/stat.h>
     #include <dirent.h>
     #include <fcntl.h>
+    #include <sys/types.h>
 #ifndef _LINUX_WAIT_H
     #include <sys/wait.h>
 #endif
@@ -155,7 +156,7 @@ namespace cpp {
         static bool RunProgramAsyncC(uniconv::utfcstr path, uniconv::utfcstr const args[]);
         static bool RunProgramAsyncSC(uniconv::utfcstr file, uniconv::utfcstr const args[]);
 
-        static int RunProgram0(uniconv::utfcstr path, uniconv::utfcstr arg, ...)
+        static int RunProgram0(uniconv::utfcstr path, uniconv::utfcstr arg, ...);
     #endif
     };
 }
