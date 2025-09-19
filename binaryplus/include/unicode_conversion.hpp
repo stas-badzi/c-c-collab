@@ -6,6 +6,8 @@
 #include <string.h>
 #include <math.h>
 #include <iterator>
+#include <assert.h>
+#include <clang_constexpr.h>
 
 #include "utils/dllalloc.h"
 
@@ -43,10 +45,12 @@ namespace uniconv {
 #ifdef _WIN32
     #define to_nstring(val) to_wstring(val)
     #define N(val) L##val
+    #define _T(val) L##val
     typedef wchar_t utfchar;
     typedef std::wstring nstring;
+    typedef std::wstring tstring;
     typedef const wchar_t* utfcstr;
-    inline constexpr nstring to_string(utfchar val) {
+    inline clang_constexpr nstring to_string(utfchar val) {
         nstring out; 
         out.push_back(val);
         return out;
@@ -54,10 +58,17 @@ namespace uniconv {
 #else
     #define to_nstring(val) to_string(val)
     #define N(val) val
+#ifdef __CYGWIN__
+    #define _T(val) L##val
+    typedef std::wstring tstring;
+#else
+    #define _T(val) val
+    typedef std::string tstring;
+#endif
     typedef std::string utfchar;
     typedef std::string nstring;
     typedef const char* utfcstr;
-    inline constexpr nstring to_string(utfchar val) { return val; }
+    inline clang_constexpr nstring to_string(utfchar val) { return val; }
 #endif
 
 inline unichar NativeToUnicode(utfchar utf8_code) {
@@ -67,7 +78,8 @@ inline unichar NativeToUnicode(utfchar utf8_code) {
     std::mbstate_t state{}; 
     char32_t utf32;
     const char* utf8 = utf8_code.c_str();
-    auto siz = std::mbrtoc32(&utf32,utf8,strlen(utf8),&state);
+    ssize_t siz = std::mbrtoc32(&utf32,utf8,strlen(utf8),&state);
+    assert(siz>=0);
     return utf32;
 #endif
 }
@@ -77,13 +89,16 @@ inline utfchar UnicodeToNative(unichar unicode) {
 #ifdef _WIN32
     return unicode;
 #else
+    auto old_loc = setlocale(LC_CTYPE,"C.UTF-8");
     std::mbstate_t state{};
     char32_t utf32 = unicode;
     char* temp = new char[4];
-    std::size_t len = std::c32rtomb(temp, utf32, &state);
+    ssize_t len = std::c32rtomb(temp, utf32, &state);
+    assert(len>0);
     delete[] temp;
     std::string mbstr(len,' ');
     std::c32rtomb(&mbstr[0], utf32, &state);
+    setlocale(LC_CTYPE,old_loc);
     return mbstr;
 #endif
 }
@@ -113,27 +128,27 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
 }
 
 #ifdef _WIN32
-    inline constexpr std::u16string NativeToU16String(std::wstring str) {
+    inline clang_constexpr std::u16string NativeToU16String(std::wstring str) {
         std::u16string out;
         out.reserve(str.size());
         copy(str.begin(), str.end(), back_inserter(out));
         return out;
     }
 
-    inline constexpr std::wstring U16StringToNative(std::u16string u16str) {
+    inline clang_constexpr std::wstring U16StringToNative(std::u16string u16str) {
         std::wstring out;
         out.reserve(u16str.size());
         copy(u16str.begin(), u16str.end(), back_inserter(out));
         return out;
     }
 
-    inline constexpr std::wstring WStringToNative(std::wstring wstr) { return wstr; }
+    inline clang_constexpr std::wstring WStringToNative(std::wstring wstr) { return wstr; }
 
-    inline constexpr std::wstring NativeToWString(std::wstring wstr) { return wstr; }
+    inline clang_constexpr std::wstring NativeToWString(std::wstring wstr) { return wstr; }
 
-    inline constexpr std::u16string WStringToU16String(std::wstring wstr) { return NativeToU16String(wstr); }
+    inline clang_constexpr std::u16string WStringToU16String(std::wstring wstr) { return NativeToU16String(wstr); }
     
-    inline constexpr std::wstring U16StringToWString(std::u16string u16str) { return U16StringToNative(u16str); }
+    inline clang_constexpr std::wstring U16StringToWString(std::u16string u16str) { return U16StringToNative(u16str); }
 
     inline constexpr char16_t WCharToChar16(wchar_t wc) { return wc; }
     inline constexpr wchar_t Char16ToWChar(char16_t c16) { return c16; }
@@ -323,7 +338,6 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
     inline unichar* NativeStringToUnicode (utfcstr utf8s) {
         std::mbstate_t state{};
         size_t length = strlen(utf8s);
-        int offset = 0;
         std::u32string str;
         const char* ptr = utf8s, *end = ptr + length + 1;
         while (ptr < end) {
@@ -357,7 +371,7 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         return out;
     }
 
-    inline constexpr std::u16string WStringToU16String(std::wstring wstr) {
+    inline clang_constexpr std::u16string WStringToU16String(std::wstring wstr) {
         std::u16string out;
         for (size_t i = 0; i < wstr.size(); i++)
             out.push_back(static_cast<char16_t>(wstr[i]));
@@ -368,7 +382,7 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         return static_cast<char16_t>(wchar);
     }
 
-    inline constexpr std::wstring U16StringToWString(std::u16string u16str) {
+    inline clang_constexpr std::wstring U16StringToWString(std::u16string u16str) {
         std::wstring out;
         for (size_t i = 0; i < u16str.size(); i++)
             out.push_back(static_cast<wchar_t>(u16str[i]));
@@ -379,6 +393,28 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         return static_cast<wchar_t>(utfchar);
     }
 
+#endif
+
+
+
+#ifdef __CYGWIN__
+    inline unichar* UnderlyingStringToUnicode(const wchar_t* utf8s) {
+        unichar* out = (unichar*)__dllalloc(sizeof(unichar) * (wcslen(utf8s) + 1));
+        for (size_t i = 0; i < wcslen(utf8s); i++) out[i] = utf8s[i];
+        out[wcslen(utf8s)] = 0;
+        return out;
+    }
+    inline tstring UnicodeToUnderlyingString(unichar* unicodes) {
+        tstring out;
+        for (int i = 0; unicodes[i] != 0; ++i) {
+            out.push_back(unicodes[i]);
+        }
+        __dllfree(unicodes);
+        return out;
+    }
+#else
+auto UnderlyingStringToUnicode = NativeStringToUnicode;
+auto UnicodeToUnderlyingString = UnicodeToNativeString;
 #endif
 
 } // namespace uniconv

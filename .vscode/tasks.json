@@ -4,7 +4,7 @@
         {
             "label": "Build Program",
             "type": "shell",
-            "command": "make all debug=1 sudo=1",
+            "command": "C:\\cygwin64\\bin\\bash .vscode/make.sh",
             "options": {
             },
             "problemMatcher": ["$gcc"],

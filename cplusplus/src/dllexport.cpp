@@ -144,7 +144,7 @@ using namespace uniconv;
     }
 
     libexport void Console_SetTitle(uniconv::unichar* title) {
-        return cpp::Console::SetTitle(uniconv::UnicodeToNativeString(title).c_str());
+        return cpp::Console::SetTitle(uniconv::UnicodeToUnderlyingString(title).c_str());
     }
 
     libexport void Console_ReverseCursorBlink(void) {
@@ -169,11 +169,11 @@ using namespace uniconv;
     libexport popwinretval Console_PopupWindow(int type, int argc, uniconv::unichar* argv[], uniconv::unichar* title) {
         uniconv::utfcstr* args = (uniconv::utfcstr*)System::AllocateMemory(sizeof(uniconv::utfcstr)*argc);
         for (int i = 0; i < argc; i++) {
-            uniconv::nstring arg = UnicodeToNativeString(argv[i]).c_str();
-            args[i] = (uniconv::utfcstr)System::AllocateMemory(sizeof(wchar_t)*arg.size());
-            char_t* loc = (char_t*)args[i];
+            uniconv::nstring arg = UnicodeToNativeString(argv[i]);
+            args[i] = (uniconv::utfcstr)System::AllocateMemory(sizeof(nchar_t)*arg.size());
+            nchar_t* loc = (nchar_t*)args[i];
             for (size_t j = 0; j < arg.size(); j++) loc[j] = arg[j];
-            loc[arg.size()] = L'\0';
+            loc[arg.size()] = 0;
         }
         System::FreeMemory(argv);
         auto ret = Console::PopupWindow(type, argc, args, (title ? UnicodeToNativeString(title).c_str() : nullptr));

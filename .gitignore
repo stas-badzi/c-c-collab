@@ -75,6 +75,7 @@ cs
 cpp
 csbin
 cppbin
+compile-cppbin
 all
 dll
 release

@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <errno.h>
 #include <sys/ioctl.h>
 #include <dirent.h>
 #include <stdio.h>
@@ -9,12 +8,12 @@
 
 static int getmouseeventpath(char *buffer, size_t size) {
     DIR *dir;
-    struct dirent *ent;
     const char *find1 = "event-mouse";
-    size_t fsize1 = strlen(find1);
+    const size_t fsize1 = strlen(find1);
     const char *find2 = "mouse";
-    size_t fsize2 = strlen(find2);
+    const size_t fsize2 = strlen(find2);
     if ((dir = opendir("/dev/input/by-path")) != NULL) {
+        struct dirent *ent;
         while ((ent = readdir(dir)) != NULL) {
             size_t i;
             size_t x = 0;
@@ -57,7 +56,7 @@ static int getmouseeventpath(char *buffer, size_t size) {
 
 int
 getmousefd(const char *fnam){
-	int fd, i;
+	int fd;
 
 	if (fnam) {
 		if ((fd = open(fnam, O_RDONLY)) >= 0)
@@ -66,7 +65,7 @@ getmousefd(const char *fnam){
 	}
 
     char buffer[256] = "/dev/input/by-path/";
-    int size = getmouseeventpath(buffer+strlen(buffer), sizeof(buffer)-strlen(buffer));
+    const int size = getmouseeventpath(buffer+strlen(buffer), sizeof(buffer)-strlen(buffer));
     if (size <= 0) return size-2;
     if ((fd = open(buffer, O_RDONLY)) < 0)
         return -1;

@@ -13,6 +13,9 @@
 #ifdef __linux__
 #include <linux/limits.h>
 #endif
+#ifdef __CYGWIN__
+#include <limits.h>
+#endif
 
 #if defined(_WIN32) || defined(__CYGWIN__)
     #include <windows.h>

@@ -107,7 +107,7 @@ tryagain:
 
 pair<int,u16string> ErrorPopup(int argc, const char16_t* argv[]);
 
-int _Main(void) {
+int __Main(void) {
     Console::Init();
     Console::SetTitle(u"FactoryRush");
 
@@ -175,7 +175,7 @@ int Main_(void) {
 
 void ColorPopup(int argc, const char16_t* argv[]);
 
-int Main(void) {
+int Main__(void) {
     Console::Init();
     Console::SetTitle(u"FactoryRush");
 
@@ -196,7 +196,7 @@ int Main(void) {
     return EXIT_SUCCESS;
 }
 
-int Main__(void) {
+int Main(void) {
     Console::Init();
     Console::SetTitle(u"FactoryRush");
     Console::SetCursorSize(0);
@@ -586,7 +586,7 @@ int Main__(void) {
             // CHANGE SYMBOL FROM CHART
             if (Console::MouseButtonClicked().first == MOUSE_BUTTON_PRIMARY)
                 symchar =  brushlist[mouse.x - 53];
-        } else if (mouse.x == 64 || mouse.x == 65 && mouse.y == 0) {
+        } else if ((mouse.x == 64 || mouse.x == 65) && mouse.y == 0) {
             // EDIT CHART
             if (Console::MouseButtonClicked().first == MOUSE_BUTTON_PRIMARY) {
                 u16string charstr;

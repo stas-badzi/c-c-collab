@@ -1,6 +1,7 @@
 #pragma once
 #include <queue>
 #include <windows.h>
+#include <stdio.h>
 namespace cpp {
     template<typename T>
     class tsqueue {

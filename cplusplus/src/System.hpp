@@ -8,18 +8,22 @@
 
 #include <control_heap.h>
 #include <unordered_map>
-
 #ifdef _WIN32
     #include <windows.h>
     #include <shlwapi.h>
     #include <windows/thread_safe/queue>
 #else
+#ifdef INVALID_HANDLE_VALUE
+    #undef INVALID_HANDLE_VALUE
+    #undef ERROR_ACCESS_DENIED
+#endif
     #define INVALID_HANDLE_VALUE ((int)-1)
     #define ERROR_ACCESS_DENIED EACCES
     #include <unistd.h>
     #include <pthread.h>
     #include <sys/stat.h>
     #include <dirent.h>
+    #include <fcntl.h>
 #ifndef _LINUX_WAIT_H
     #include <sys/wait.h>
 #endif
@@ -28,6 +32,12 @@
     #include <mach-o/dyld.h>
 #elif __linux__
     #include <linux/limits.h>
+#elif __CYGWIN__
+    #include <process.h>
+    #include <sys/cygwin.h> 
+
+    #include <windows.h>
+    #include <shlwapi.h>
 #endif
 #endif
 
@@ -66,7 +76,7 @@ namespace cpp {
         static uniconv::nstring GetSelf(void);
         static uniconv::nstring self;
         static uniconv::nstring root;
-#if !defined(_WIN32) && !defined(__CYGWIN__)
+#if !defined(_WIN32)
         static pid_t tpid;
         static void SendSignal(int signal);
         static std::unordered_map<fd_t, std::string> pipes; // pipe handle -> { pipe path }
@@ -90,6 +100,12 @@ namespace cpp {
         static bool IsFile(uniconv::utfcstr path);
         static bool IsDirectory(uniconv::utfcstr path);
         static bool DoesPathExist(uniconv::utfcstr path);
+    #ifdef __CYGWIN__
+        static uniconv::nstring WindowsPathToCygwin(std::wstring path);
+        static std::wstring CygwinPathToWindows(uniconv::nstring path);
+        static std::string CygwinPathToWindowsUtf8(uniconv::nstring path);
+        static int RunProgram0(const char* cpath, const wchar_t* args, ...); // mintty fix
+    #endif
 
         static fd_t CreatePipe(uniconv::utfcstr subpath); // the cre
         static fd_t OpenPipe(uniconv::utfcstr subpath); // read == false -> write
@@ -129,7 +145,6 @@ namespace cpp {
     #ifdef _WIN32
         static int ShellC(uniconv::utfcstr arg);
         static int RunProgramC(uniconv::utfcstr path, uniconv::utfcstr args, ...);
-        static int RunProgram0(uniconv::utfcstr path, uniconv::utfcstr args, ...);
         static int RunProgramSC(uniconv::utfcstr file, uniconv::utfcstr args, ...);
         static int RunProgramC(uniconv::utfcstr path, uniconv::utfcstr const args[]);
         static int RunProgramSC(uniconv::utfcstr file, uniconv::utfcstr const args[]);

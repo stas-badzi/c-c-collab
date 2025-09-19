@@ -1,12 +1,12 @@
 # >>>> Arguments <<<<<<<<
-# sudo = [0] -> do copy libs and biraries (requiers [sudo/doas/su] permissions)
+# sudo = [0] -> do copy libs and binaries (requires [sudo/doas/su] permissions)
 # forcewin = [1] -> use windows emulator like windows
 # debug = [0] -> compile program for debbuging
 # tgarch = [host arch] -> set target architecture (for dotnet publish)
 # msvc = [0] -> force msvc++ compilation (windows only, must be run in VS developer command prompt)
 # give-ctrl = [1] -> give control over the keyboard to the binary (macOS only, requires sudo permissions)
-# c-compiler = [$defcompc] -> set compiler loacation
-# cpp-compiler = [$defcompcxx] -> set compiler loacation
+# c-compiler = [$defcompc] -> set compiler location
+# cpp-compiler = [$defcompcxx] -> set compiler location
 
 
 #******* release config *********
@@ -581,12 +581,14 @@ endif
 cppclean:
 ifeq ($(shell echo "check quotes"),"check quotes")
 	@del /f cppbin
+	@del /f compile-cppbin
 	@del /f cpp
 	@del /f resources
 	@del /f cplusplus\obj\*
 	@del /f binaryplus\obj\*
 	@del /f objects\*
 else
+	@rm -f compile-cppbin
 	@rm -f cppbin
 	@rm -f cpp
 	@rm -f resources
@@ -612,11 +614,11 @@ resources: $(check_arch) source/setkbdmode.c source/killterm.c source/getfd.c so
 
 ifneq ($(msvc),1)
 ifeq ($(binary),exe)
-	$(c-compiler) -c source/killwindow.c source/beep.c -pedantic -Wextra -DUNICODE $(cflags) $(cdb) -std=c2x && mv *.o objects/
+	$(c-compiler) -c source/killwindow.c source/beep.c -pedantic -Wall -Wextra -Wpedantic -DUNICODE $(cflags) $(cdb) -std=c2x && mv *.o objects/
 	$(c-compiler) -o binaryplus/bin/killwindow.exe objects/killwindow.o
 	$(c-compiler) -o binaryplus/bin/beep.exe objects/beep.o
 endif
-	$(c-compiler) -c source/globals.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
+	$(c-compiler) -c source/globals.c -pedantic -Wall -Wextra -Wpedantic $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(staticgen)assets/libglobals.$(static) objects/globals.o
 else
 	@echo "rc /nologo /fo objects\resources.res source\resources.rc" > run.bat
@@ -641,14 +643,14 @@ else
 	@rm run.bat
 endif
 
-#	echo $(c-compiler) -v -o $(prefix)std.$(dynamic) -pedantic -Wextra -shared -fPIC -lm -static-libgcc 2>&1 | grep ld | sed s/-lc/'$$(find -O3 /usr/lib -name libc.a 2>&1 | grep $$(uname -m) | sed 1q)' | sed s/-lm/'$$(find -O3 /usr/lib -name libm.a 2>&1 | grep $$(uname -m) | sed 1q)'/g | sed s/-o/-Bsymbolic\ -o/g > temp.sh
+#	echo $(c-compiler) -v -o $(prefix)std.$(dynamic) -pedantic -Wall -Wextra -Wpedantic -shared -fPIC -lm -static-libgcc 2>&1 | grep ld | sed s/-lc/'$$(find -O3 /usr/lib -name libc.a 2>&1 | grep $$(uname -m) | sed 1q)' | sed s/-lm/'$$(find -O3 /usr/lib -name libm.a 2>&1 | grep $$(uname -m) | sed 1q)'/g | sed s/-o/-Bsymbolic\ -o/g > temp.sh
 #	@chmod +x temp.sh
 #	./temp.sh
 #	@rm temp.sh
 
 ifeq ($(shell uname -s),Linux)
 	-@rm *.o 2> $(nulldir)
-	$(c-compiler) -c source/setkbdmode.c source/startprogram.c source/getfd.c source/ledctrl.c source/mousefd.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
+	$(c-compiler) -c source/setkbdmode.c source/startprogram.c source/getfd.c source/ledctrl.c source/mousefd.c -pedantic -Wall -Wextra -Wpedantic $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	ar rcs assets/liblinuxctrl.$(static) objects/getfd.o objects/ledctrl.o objects/mousefd.o objects/setkbdmode.o
 	$(c-compiler) -o assets/setkbdmode objects/setkbdmode.o -Lassets -llinuxctrl $(static-libc)
 	$(c-compiler) -o assets/startprogram.bin objects/startprogram.o $(static-libc) -D_GNU_SOURCE
@@ -676,9 +678,9 @@ else
 endif
 else
 ifeq ($(shell uname -s),Darwin)
-	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wextra $(cxxflags) $(cdb) -Isource -std=c++2b && mv *.o objects/
+	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wall -Wextra -Wpedantic $(cxxflags) $(cdb) -Isource -std=c++2b && mv *.o objects/
 	ar rcs assets/libapplecuchar.a objects/cuchar.o
-	$(c-compiler) -c source/keyboard.m source/openfile.m source/killterm.c -pedantic -Wextra $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
+	$(c-compiler) -c source/keyboard.m source/openfile.m source/killterm.c -pedantic -Wall -Wextra -Wpedantic $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(c-compiler) -dynamiclib -o assets/libapplectrl.dylib objects/keyboard.o objects/openfile.o -framework CoreGraphics -framework CoreServices
 	$(c-compiler) -o assets/killterm objects/killterm.o
 ifneq ($(offline),1)
@@ -843,8 +845,8 @@ else
 resources =
 endif
 
-cppbin: $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc)) $(resources)
-	@echo MAKE CPPBIN
+compile-cppbin: $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc)) $(resources)
+	@echo MAKE COMPILE CPPBIN
 
 ifeq ($(msvc),1)
 	echo "$(cpp-compiler) /EHsc /c /DUNICODE $(bpdb) source/launcher.cpp $(clstdpp)" > run.bat
@@ -857,17 +859,25 @@ ifeq ($(msvc),1)
 	echo "$(cpp-compiler) /EHsc /c $(bpdb) $(fbsrc) /Ibinaryplus\include $(clstdpp)" > run.bat
 	@cmd.exe /c run.bat
 	@$(movefl) -f $(subst obj/,$(empty),$(fbobj)) binaryplus/obj
+else
+#all
+	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -DUNICODE -D_GNU_SOURCE $(bpdb) source/launcher.cpp -std=c++2b
+	@$(movefl) -f launcher.o objects
+	$(cpp-compiler) -o binaryplus/launcher.exe objects/launcher.o $(static-libc++) $(static-libc) $(ldarg)
+
+	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) $(bpdb) $(fbsrc) -I binaryplus/include -std=c++2b -D_GNU_SOURCE
+	@$(movefl) -f $(subst obj/,$(empty),$(fbobj)) binaryplus/obj
+endif
+	@echo "Version file. Remove to enable recompile" > $@
+	
+
+cppbin: cs cpp compile-cppbin
+	@echo MAKE CPPBIN
+ifeq ($(msvc),1)
 	echo "cd binaryplus && link /OUT:bin/$(binname).$(binary) $(bldb) $(flib) ../cplusplus/bin/$(name).lib ../csharp/bin/lib/$(filename).lib $(fbobj) USER32.lib ../objects/resources.res" > run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
 else
-#all
-	$(cpp-compiler) -c -pedantic -Wextra $(cxxflags) -DUNICODE $(bpdb) source/launcher.cpp -std=c++2b
-	@$(movefl) -f launcher.o objects
-	$(cpp-compiler) -o binaryplus/launcher.exe objects/launcher.o $(static-libc++) $(static-libc) $(ldarg)
-
-	$(cpp-compiler) -c -pedantic -Wextra $(cxxflags) $(bpdb) $(fbsrc) -I binaryplus/include -std=c++2b
-	@$(movefl) -f $(subst obj/,$(empty),$(fbobj)) binaryplus/obj
 	cd binaryplus && $(cpp-compiler) -o bin/$(binname).$(binary) $(binflags) $(fbobj) -L$(flibdir) -l$(name) $(flib) $(static-libc++) $(static-libc) $(ldarg)
 #
 
@@ -965,34 +975,34 @@ ifeq ($(msvc),1)
 else
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 #windows
-	$(cpp-compiler) -c -pedantic -Wextra $(cxxflags) -DUNICODE $(cdb) $< -I cplusplus/include -std=c++2b
+	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -DUNICODE $(cdb) $< -I cplusplus/include -std=c++2b
 #
 else
 ifeq ($(shell uname -s),WINDOWS_NT)
 #windows
-	$(cpp-compiler) -c -pedantic -Wextra $(cxxflags) -DUNICODE $(cdb) $< -I cplusplus/include -std=c++2b
+	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -DUNICODE $(cdb) $< -I cplusplus/include -std=c++2b
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
-	$(cpp-compiler) -c -pedantic -Wextra $(cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c++2b
+	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE -D_GNU_SOURCE $(cdb) $< -I cplusplus/include -std=c++2b
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #mingw [ I think same as windows (?) ]
-	$(cpp-compiler) -c -pedantic -Wextra $(cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c++2b
+	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c++2b
 #
 else
 ifeq ($(findstring Windows_NT, $(shell uname -s)),Windows_NT)
 #msys [ i think older ]
-	$(cpp-compiler) -c -pedantic -Wextra $(cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c++2b
+	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c++2b
 else
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys [ I think same as windows (?) ]
-	$(cpp-compiler) -c -pedantic -Wextra $(cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c++2b
+	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c++2b
 else
 # not windows
-	$(cpp-compiler) -c -pedantic -Wextra $(cxxflags) -fPIC -DUNICODE $(cdb) -fvisibility=hidden $< -I cplusplus/include -std=c++2b
+	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE $(cdb) -fvisibility=hidden $< -I cplusplus/include -std=c++2b
 endif
 endif
 endif
@@ -1017,34 +1027,34 @@ ifeq ($(msvc),1)
 else
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 #windows
-	$(c-compiler) -c -pedantic -Wextra $(cxxflags) -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
 #
 else
 ifeq ($(shell uname -s),WINDOWS_NT)
 #windows
-	$(c-compiler) -c -pedantic -Wextra $(cxxflags) -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
-	$(c-compiler) -c -pedantic -Wextra $(cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE -D_GNU_SOURCE $(cdb) $< -I cplusplus/include -std=c2x
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #mingw [ I think same as windows (?) ]
-	$(c-compiler) -c -pedantic -Wextra $(cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
 #
 else
 ifeq ($(findstring Windows_NT, $(shell uname -s)),Windows_NT)
 #msys [ i think older ]
-	$(c-compiler) -c -pedantic -Wextra $(cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
 else
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys [ I think same as windows (?) ]
-	$(c-compiler) -c -pedantic -Wextra $(cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
 else
 # not windows
-	$(c-compiler) -c -pedantic -Wextra $(cxxflags) -fPIC -DUNICODE $(cdb) -fvisibility=hidden $< -I cplusplus/include -std=c2x
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE $(cdb) -fvisibility=hidden $< -I cplusplus/include -std=c2x
 endif
 endif
 endif

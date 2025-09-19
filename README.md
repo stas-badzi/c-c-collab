@@ -26,7 +26,7 @@
   - (because Hyper doesn't have a way to launch the terminal with a command)
 
 ### __MobaXterm ❌__
-- Windows console api just doesn't work -> no way to fix it (i think)
+- Windows console api just doesn't work -> no way to fix it (I think)
   - if you know how to go around that, please open an issue
 
 ### __FireCMD ❌__
@@ -75,7 +75,7 @@
 
 # Tecnical
 ## windows key on linux
-- my laptop: left -> 125 right -> non-existant(i think 126), submit an issue if you have it as a different keycode, than I might add testing for harware
+- my laptop: left -> 125 right -> non-existent(I think 126), submit an issue if you have it as a different keycode, than I might add testing for hardware
 
 # Download
 [onedrive](https://1drv.ms/u/c/2c1a62828b4f65ed/EfSOz37OnQlGnHiaBQPvhUYB_A3Bu39x9FoMp-q-yTzDrg?e=fh4xBW)

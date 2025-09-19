@@ -57,7 +57,7 @@ int getled(const char* led) {
         return -1;
     }
     int brightness = 0;
-    int siz = fscanf(fp, "%d", &brightness);
+    __attribute__((unused)) int siz = fscanf(fp, "%d", &brightness);
     fclose(fp);
     return brightness;
 }
@@ -72,7 +72,7 @@ int getledmax(const char* led) {
         return -1;
     }
     int max_brightness = 0;
-    int siz = fscanf(fp, "%d", &max_brightness);
+    __attribute__((unused)) int siz = fscanf(fp, "%d", &max_brightness);
     fclose(fp);
     return max_brightness;
 }

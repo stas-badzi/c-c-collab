@@ -24,7 +24,7 @@ void Console::Fin(void) {
 }
 
 void Console::HandleKeyboard(void) {
-    return Console_HandleKeyboard();
+    //return Console_HandleKeyboard();
 }
 
 bool Console::IsKeyDown(enum Key::Enum key) {

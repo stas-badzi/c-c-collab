@@ -1,6 +1,5 @@
-#include "System.hpp"
-
 #include "Console.hpp"
+#include "System.hpp"
 #include <stdarg.h>
 
 #include <iostream>
@@ -14,7 +13,7 @@ using namespace uniconv;
 nstring System::self = System::GetSelf();
 nstring System::root = System::GetRoot();
 
-#if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32)
 #ifdef _MSC_VER
     #define PATH_MAX MAX_PATH
 #endif
@@ -668,8 +667,7 @@ int System::MakeDirectory(utfcstr path) {
 
 unordered_map<fd_t, string> System::pipes{};
 
-fd_t System::CreatePipe(uniconv::utfcstr subpath)
-{
+fd_t System::CreatePipe(uniconv::utfcstr subpath) {
     int createpipe = mkfifo(subpath, 0600);
     if (createpipe < 0) {
         Console::out << L"Couldn't create pipe: " << subpath << L", with error: " << errno; Console::out_endl();
@@ -698,19 +696,23 @@ void System::ClosePipe(fd_t pipe) {
 struct pipemsg { size_t size; char* buf; };
 
 int send_pipemsg(int fd, pipemsg msg) {
-    int ret = write(fd, &(msg.size), sizeof(msg.size));
+    ssize_t ret = write(fd, &(msg.size), sizeof(msg.size));
     if (ret < 0) return errno;
+    if ((size_t)ret < sizeof(msg.size)) return errno=EIO;
     ret = write(fd, msg.buf, msg.size);
     if (ret < 0) return errno;
+    if ((size_t)ret < msg.size) return errno=EIO;
     return 0;
 }
 
 int read_pipemsg(int fd, pipemsg* msg) {
-    int ret = read(fd, &(msg->size), sizeof(msg->size));
+    ssize_t ret = read(fd, &(msg->size), sizeof(msg->size));
     if (ret < 0) return errno;
+    if ((size_t)ret < sizeof(msg->size)) return errno=EIO;
     msg->buf = (char*)malloc(msg->size);
-    ret = read(fd, msg->buf, msg->size);
-    if (ret < 0) return errno;
+    if (!msg->buf) return errno=ENOMEM;
+    if (ret < 0) {free(msg->buf);return errno;}
+    if ((size_t)ret < msg->size) {free(msg->buf);return errno=EIO;}
     return 0;
 }
 
@@ -751,13 +753,405 @@ void System::SendSignal(int signal) {
     kill(tpid, signal);
 }
 
+#ifdef __CYGWIN__
+
+string System::WindowsPathToCygwin(wstring path) {
+    char buf[PATH_MAX+1];
+    int siz = cygwin_conv_path(CCP_WIN_W_TO_POSIX,path.c_str(),buf,PATH_MAX+1); // NUL-terminated
+    if (siz < 0) return string();
+    return buf;
+}
+
+wstring System::CygwinPathToWindows(string path) {
+    wchar_t buf[PATH_MAX+1];
+    int siz = cygwin_conv_path(CCP_POSIX_TO_WIN_W,path.c_str(),buf,PATH_MAX+1); // NUL-terminated
+    if (siz < 0) return wstring();
+    return buf;
+}
+
+string System::CygwinPathToWindowsUtf8(string path) {
+    char buf[PATH_MAX+1];
+    int siz = cygwin_conv_path(CCP_POSIX_TO_WIN_A,path.c_str(),buf,PATH_MAX+1); // NUL-terminated
+    if (siz < 0) return string();
+    return buf;
+}
+
+int System::RunProgram0(uniconv::utfcstr cpath, const char_t* arg, ...) {
+    auto path = System::CygwinPathToWindows(cpath);
+    va_list args;
+    wstring args_v = L'\"' + wstring(path) + L'\"';
+    bool no_args = true;
+    if (arg == nullptr) goto noargs;
+    no_args = false;
+    args_v += L" \"";
+    va_start(args, arg);
+    args_v += arg;
+    for (int i = 2; i < 64; i++) {
+        const wchar_t* argx = va_arg(args, const wchar_t*);
+        if (argx == nullptr) break;
+        wstring argx_w = wstring(argx);
+        wstring argx_vv;
+        for (const wchar_t& c : argx_w)
+            if (c == L'\"') argx_vv += L"\\\""; else argx_vv += c;
+        args_v.append(L"\" \"").append(argx_vv);
+    }
+    args_v += L"\"";
+    va_end(args);
+noargs:
+    if (!PathFileExists(path.c_str()) && !PathFileExists((path + wstring(L".exe")).c_str())) return -1;
+
+    PROCESS_INFORMATION pi = PROCESS_INFORMATION();
+    STARTUPINFO si = STARTUPINFO();
+    si.cb = sizeof(STARTUPINFO);
+    int status;
+    DWORD dwCreationFlags = CREATE_PRESERVE_CODE_AUTHZ_LEVEL | CREATE_NO_WINDOW;
+    if (no_args)
+        status = CreateProcess(path.c_str(), nullptr, nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
+    else status = CreateProcess(path.c_str(), (wchar_t*)args_v.c_str(), nullptr, nullptr, false, dwCreationFlags, nullptr, nullptr, &si, &pi);
+    
+    if (!status) { cerr << "CreateProcess failed: " << GetLastError() << endl; exit(0x75); }
+    CloseHandle(pi.hThread);
+    WaitForSingleObject(pi.hProcess, INFINITE);
+    DWORD exitcode = -1;
+    if (GetExitCodeProcess(pi.hProcess, &exitcode)) {
+        CloseHandle(pi.hProcess);
+        return exitcode;
+    } else {
+        CloseHandle(pi.hProcess);
+        cerr << "GetExitCodeProcess failed: " << GetLastError() << endl;
+        exit(0x63);
+    }
+}
+
 bool System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
-    int status = 0;
-    System::tpid = fork();
+    va_list args;
+    va_start(args, arg);
+    char* args_c[256]{nullptr};
+    args_c[0] = (char*)path;
+    if (arg == nullptr) goto noargs;
+    args_c[1] = (char*)arg;
+    for (int i = 2; i < 64; i++) {
+        const char* argx = va_arg(args, const char*);
+        if (argx == nullptr) break;
+        args_c[i] = (char*)argx;
+    }
+    noargs:
+        va_end(args);
+
+    return spawnv(_P_NOWAITO,path, args_c) >= 0;
+}
+
+int System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
     sighandler_t old_handler[32];
-    if (tpid < 0)
+    va_list args;
+    va_start(args, arg);
+    char* args_c[256]{nullptr};
+    args_c[0] = (char*)path;
+    if (arg == nullptr) goto noargs;
+    args_c[1] = (char*)arg;
+    for (int i = 2; i < 64; i++) {
+        const char* argx = va_arg(args, const char*);
+        if (argx == nullptr) break;
+        args_c[i] = (char*)argx;
+    }
+noargs:
+    va_end(args);
+
+    System::tpid = spawnv(_P_NOWAIT,path, args_c);
+    if (System::tpid < 0) return -1;
+    old_handler[SIGHUP] = signal(SIGHUP, System::SendSignal);
+    old_handler[SIGINT] = signal(SIGINT, System::SendSignal);
+    old_handler[SIGQUIT] = signal(SIGQUIT, System::SendSignal);
+    old_handler[SIGILL] = signal(SIGILL, System::SendSignal);
+    old_handler[SIGTRAP] = signal(SIGTRAP, System::SendSignal);
+    old_handler[SIGABRT] = signal(SIGABRT, System::SendSignal);
+    old_handler[SIGIOT] = signal(SIGIOT, System::SendSignal);
+    old_handler[SIGFPE] = signal(SIGFPE, System::SendSignal);
+    old_handler[SIGKILL] = signal(SIGKILL, System::SendSignal);
+    old_handler[SIGUSR1] = signal(SIGUSR1, System::SendSignal);
+    old_handler[SIGSEGV] = signal(SIGSEGV, System::SendSignal);
+    old_handler[SIGUSR2] = signal(SIGUSR2, System::SendSignal);
+    old_handler[SIGPIPE] = signal(SIGPIPE, System::SendSignal);
+    old_handler[SIGTERM] = signal(SIGTERM, System::SendSignal);
+#ifdef SIGSTKFLT
+    old_handler[SIGSTKFLT] = signal(SIGSTKFLT, System::SendSignal);
+#endif
+    old_handler[SIGCONT] = signal(SIGCONT, System::SendSignal);
+    old_handler[SIGSTOP] = signal(SIGSTOP, System::SendSignal);
+    old_handler[SIGTSTP] = signal(SIGTSTP, System::SendSignal);
+    old_handler[SIGTTIN] = signal(SIGTTIN, System::SendSignal);
+    old_handler[SIGTTOU] = signal(SIGTTOU, System::SendSignal);
+    int wexit;
+    pid_t ret; CALL_RETRY(ret,waitpid(tpid, &wexit, 0))
+    if (ret != tpid)
+        return -1;
+    if (!WIFEXITED(wexit))
+        return -1;
+    signal(SIGHUP, old_handler[SIGHUP]);
+    signal(SIGINT, old_handler[SIGINT]);
+    signal(SIGQUIT, old_handler[SIGQUIT]);
+    signal(SIGILL, old_handler[SIGILL]);
+    signal(SIGTRAP, old_handler[SIGTRAP]);
+    signal(SIGABRT, old_handler[SIGABRT]);
+    signal(SIGIOT, old_handler[SIGIOT]);
+    signal(SIGFPE, old_handler[SIGFPE]);
+    signal(SIGKILL, old_handler[SIGKILL]);
+    signal(SIGUSR1, old_handler[SIGUSR1]);
+    signal(SIGSEGV, old_handler[SIGSEGV]);
+    signal(SIGUSR2, old_handler[SIGUSR2]);
+    signal(SIGPIPE, old_handler[SIGPIPE]);
+    signal(SIGTERM, old_handler[SIGTERM]);
+#ifdef SIGSTKFLT
+    signal(SIGSTKFLT, old_handler[SIGSTKFLT]);
+#endif
+    signal(SIGCONT, old_handler[SIGCONT]);
+    signal(SIGSTOP, old_handler[SIGSTOP]);
+    signal(SIGTSTP, old_handler[SIGTSTP]);
+    signal(SIGTTIN, old_handler[SIGTTIN]);
+    signal(SIGTTOU, old_handler[SIGTTOU]);
+    return WEXITSTATUS(wexit);
+}
+
+int System::RunProgramS(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
+    sighandler_t old_handler[32];
+    va_list args;
+    va_start(args, arg);
+    char* args_c[256]{nullptr};
+    args_c[0] = (char*)path;
+    if (arg == nullptr) goto noargs;
+    args_c[1] = (char*)arg;
+    for (int i = 2; i < 64; i++) {
+        const char* argx = va_arg(args, const char*);
+        if (argx == nullptr) break;
+        args_c[i] = (char*)argx;
+    }
+noargs:
+    va_end(args);
+
+    System::tpid = spawnvp(_P_NOWAIT,path, args_c);
+    if (System::tpid < 0) return -1;
+    old_handler[SIGHUP] = signal(SIGHUP, System::SendSignal);
+    old_handler[SIGINT] = signal(SIGINT, System::SendSignal);
+    old_handler[SIGQUIT] = signal(SIGQUIT, System::SendSignal);
+    old_handler[SIGILL] = signal(SIGILL, System::SendSignal);
+    old_handler[SIGTRAP] = signal(SIGTRAP, System::SendSignal);
+    old_handler[SIGABRT] = signal(SIGABRT, System::SendSignal);
+    old_handler[SIGIOT] = signal(SIGIOT, System::SendSignal);
+    old_handler[SIGFPE] = signal(SIGFPE, System::SendSignal);
+    old_handler[SIGKILL] = signal(SIGKILL, System::SendSignal);
+    old_handler[SIGUSR1] = signal(SIGUSR1, System::SendSignal);
+    old_handler[SIGSEGV] = signal(SIGSEGV, System::SendSignal);
+    old_handler[SIGUSR2] = signal(SIGUSR2, System::SendSignal);
+    old_handler[SIGPIPE] = signal(SIGPIPE, System::SendSignal);
+    old_handler[SIGTERM] = signal(SIGTERM, System::SendSignal);
+#ifdef SIGSTKFLT
+    old_handler[SIGSTKFLT] = signal(SIGSTKFLT, System::SendSignal);
+#endif
+    old_handler[SIGCONT] = signal(SIGCONT, System::SendSignal);
+    old_handler[SIGSTOP] = signal(SIGSTOP, System::SendSignal);
+    old_handler[SIGTSTP] = signal(SIGTSTP, System::SendSignal);
+    old_handler[SIGTTIN] = signal(SIGTTIN, System::SendSignal);
+    old_handler[SIGTTOU] = signal(SIGTTOU, System::SendSignal);
+    int wexit;
+    pid_t ret; CALL_RETRY(ret,waitpid(tpid, &wexit, 0))
+    if (ret != tpid)
+        return -1;
+    if (!WIFEXITED(wexit))
+        return -1;
+    signal(SIGHUP, old_handler[SIGHUP]);
+    signal(SIGINT, old_handler[SIGINT]);
+    signal(SIGQUIT, old_handler[SIGQUIT]);
+    signal(SIGILL, old_handler[SIGILL]);
+    signal(SIGTRAP, old_handler[SIGTRAP]);
+    signal(SIGABRT, old_handler[SIGABRT]);
+    signal(SIGIOT, old_handler[SIGIOT]);
+    signal(SIGFPE, old_handler[SIGFPE]);
+    signal(SIGKILL, old_handler[SIGKILL]);
+    signal(SIGUSR1, old_handler[SIGUSR1]);
+    signal(SIGSEGV, old_handler[SIGSEGV]);
+    signal(SIGUSR2, old_handler[SIGUSR2]);
+    signal(SIGPIPE, old_handler[SIGPIPE]);
+    signal(SIGTERM, old_handler[SIGTERM]);
+#ifdef SIGSTKFLT
+    signal(SIGSTKFLT, old_handler[SIGSTKFLT]);
+#endif
+    signal(SIGCONT, old_handler[SIGCONT]);
+    signal(SIGSTOP, old_handler[SIGSTOP]);
+    signal(SIGTSTP, old_handler[SIGTSTP]);
+    signal(SIGTTIN, old_handler[SIGTTIN]);
+    signal(SIGTTOU, old_handler[SIGTTOU]);
+    return WEXITSTATUS(wexit);
+}
+
+int System::RunProgramS(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
+    sighandler_t old_handler[32];
+    char* args_c[256]{nullptr};
+    args_c[0] = (char*)path;
+    for (int i = 1; i < 256; i++)
+        if (args[i-1] == nullptr) break;
+        else args_c[i] = (char*)args[i-1];
+
+    System::tpid = spawnvp(_P_NOWAIT,path,args_c);
+    if (tpid < 0) return -1;
+    old_handler[SIGHUP] = signal(SIGHUP, System::SendSignal);
+    old_handler[SIGINT] = signal(SIGINT, System::SendSignal);
+    old_handler[SIGQUIT] = signal(SIGQUIT, System::SendSignal);
+    old_handler[SIGILL] = signal(SIGILL, System::SendSignal);
+    old_handler[SIGTRAP] = signal(SIGTRAP, System::SendSignal);
+    old_handler[SIGABRT] = signal(SIGABRT, System::SendSignal);
+    old_handler[SIGIOT] = signal(SIGIOT, System::SendSignal);
+    old_handler[SIGFPE] = signal(SIGFPE, System::SendSignal);
+    old_handler[SIGKILL] = signal(SIGKILL, System::SendSignal);
+    old_handler[SIGUSR1] = signal(SIGUSR1, System::SendSignal);
+    old_handler[SIGSEGV] = signal(SIGSEGV, System::SendSignal);
+    old_handler[SIGUSR2] = signal(SIGUSR2, System::SendSignal);
+    old_handler[SIGPIPE] = signal(SIGPIPE, System::SendSignal);
+    old_handler[SIGTERM] = signal(SIGTERM, System::SendSignal);
+#ifdef SIGSTKFLT
+    old_handler[SIGSTKFLT] = signal(SIGSTKFLT, System::SendSignal);
+#endif
+    old_handler[SIGCONT] = signal(SIGCONT, System::SendSignal);
+    old_handler[SIGSTOP] = signal(SIGSTOP, System::SendSignal);
+    old_handler[SIGTSTP] = signal(SIGTSTP, System::SendSignal);
+    old_handler[SIGTTIN] = signal(SIGTTIN, System::SendSignal);
+    old_handler[SIGTTOU] = signal(SIGTTOU, System::SendSignal);
+    int wexit;
+    pid_t ret; CALL_RETRY(ret,waitpid(tpid, &wexit, 0))
+    if (ret != tpid)
+        return -1;
+    if (!WIFEXITED(wexit))
+        return -1;
+    signal(SIGHUP, old_handler[SIGHUP]);
+    signal(SIGINT, old_handler[SIGINT]);
+    signal(SIGQUIT, old_handler[SIGQUIT]);
+    signal(SIGILL, old_handler[SIGILL]);
+    signal(SIGTRAP, old_handler[SIGTRAP]);
+    signal(SIGABRT, old_handler[SIGABRT]);
+    signal(SIGIOT, old_handler[SIGIOT]);
+    signal(SIGFPE, old_handler[SIGFPE]);
+    signal(SIGKILL, old_handler[SIGKILL]);
+    signal(SIGUSR1, old_handler[SIGUSR1]);
+    signal(SIGSEGV, old_handler[SIGSEGV]);
+    signal(SIGUSR2, old_handler[SIGUSR2]);
+    signal(SIGPIPE, old_handler[SIGPIPE]);
+    signal(SIGTERM, old_handler[SIGTERM]);
+#ifdef SIGSTKFLT
+    signal(SIGSTKFLT, old_handler[SIGSTKFLT]);
+#endif
+    signal(SIGCONT, old_handler[SIGCONT]);
+    signal(SIGSTOP, old_handler[SIGSTOP]);
+    signal(SIGTSTP, old_handler[SIGTSTP]);
+    signal(SIGTTIN, old_handler[SIGTTIN]);
+    signal(SIGTTOU, old_handler[SIGTTOU]);
+    return WEXITSTATUS(wexit);
+}
+
+bool System::RunProgramAsyncS(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
+    char* args_c[256]{nullptr};
+    args_c[0] = (char*)path;
+    for (int i = 1; i < 256; i++)
+        if (args[i-1] == nullptr) break;
+        else args_c[i] = (char*)args[i-1];
+    return spawnvp(_P_NOWAITO,path, args_c) >= 0;
+}
+
+bool System::RunProgramAsyncS(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
+    va_list args;
+    va_start(args, arg);
+    char* args_c[256]{nullptr};
+    args_c[0] = (char*)path;
+    if (arg == nullptr) goto noargs;
+    args_c[1] = (char*)arg;
+    for (int i = 2; i < 64; i++) {
+        const char* argx = va_arg(args, const char*);
+        if (argx == nullptr) break;
+        args_c[i] = (char*)argx;
+    }
+    noargs:
+        va_end(args);
+
+    return spawnvp(_P_NOWAITO,path, args_c)>=0;
+}
+
+int System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
+    sighandler_t old_handler[32];
+    char* args_c[256]{nullptr};
+    args_c[0] = (char*)path;
+    for (int i = 1; i < 256; i++)
+        if (args[i-1] == nullptr) break;
+        else args_c[i] = (char*)args[i-1];
+
+    System::tpid = spawnv(_P_NOWAIT,path, args_c);
+    if (System::tpid < 0) return -1;
+    old_handler[SIGHUP] = signal(SIGHUP, System::SendSignal);
+    old_handler[SIGINT] = signal(SIGINT, System::SendSignal);
+    old_handler[SIGQUIT] = signal(SIGQUIT, System::SendSignal);
+    old_handler[SIGILL] = signal(SIGILL, System::SendSignal);
+    old_handler[SIGTRAP] = signal(SIGTRAP, System::SendSignal);
+    old_handler[SIGABRT] = signal(SIGABRT, System::SendSignal);
+    old_handler[SIGIOT] = signal(SIGIOT, System::SendSignal);
+    old_handler[SIGFPE] = signal(SIGFPE, System::SendSignal);
+    old_handler[SIGKILL] = signal(SIGKILL, System::SendSignal);
+    old_handler[SIGUSR1] = signal(SIGUSR1, System::SendSignal);
+    old_handler[SIGSEGV] = signal(SIGSEGV, System::SendSignal);
+    old_handler[SIGUSR2] = signal(SIGUSR2, System::SendSignal);
+    old_handler[SIGPIPE] = signal(SIGPIPE, System::SendSignal);
+    old_handler[SIGTERM] = signal(SIGTERM, System::SendSignal);
+#ifdef SIGSTKFLT
+    old_handler[SIGSTKFLT] = signal(SIGSTKFLT, System::SendSignal);
+#endif
+    old_handler[SIGCONT] = signal(SIGCONT, System::SendSignal);
+    old_handler[SIGSTOP] = signal(SIGSTOP, System::SendSignal);
+    old_handler[SIGTSTP] = signal(SIGTSTP, System::SendSignal);
+    old_handler[SIGTTIN] = signal(SIGTTIN, System::SendSignal);
+    old_handler[SIGTTOU] = signal(SIGTTOU, System::SendSignal);
+    int wexit;
+    pid_t ret; CALL_RETRY(ret,waitpid(tpid, &wexit, 0))
+    if (ret != tpid)
+        return -1;
+    if (!WIFEXITED(wexit))
+        return -1;
+    signal(SIGHUP, old_handler[SIGHUP]);
+    signal(SIGINT, old_handler[SIGINT]);
+    signal(SIGQUIT, old_handler[SIGQUIT]);
+    signal(SIGILL, old_handler[SIGILL]);
+    signal(SIGTRAP, old_handler[SIGTRAP]);
+    signal(SIGABRT, old_handler[SIGABRT]);
+    signal(SIGIOT, old_handler[SIGIOT]);
+    signal(SIGFPE, old_handler[SIGFPE]);
+    signal(SIGKILL, old_handler[SIGKILL]);
+    signal(SIGUSR1, old_handler[SIGUSR1]);
+    signal(SIGSEGV, old_handler[SIGSEGV]);
+    signal(SIGUSR2, old_handler[SIGUSR2]);
+    signal(SIGPIPE, old_handler[SIGPIPE]);
+    signal(SIGTERM, old_handler[SIGTERM]);
+#ifdef SIGSTKFLT
+    signal(SIGSTKFLT, old_handler[SIGSTKFLT]);
+#endif
+    signal(SIGCONT, old_handler[SIGCONT]);
+    signal(SIGSTOP, old_handler[SIGSTOP]);
+    signal(SIGTSTP, old_handler[SIGTSTP]);
+    signal(SIGTTIN, old_handler[SIGTTIN]);
+    signal(SIGTTOU, old_handler[SIGTTOU]);
+    return WEXITSTATUS(wexit);;
+}
+
+bool System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
+    char* args_c[256]{nullptr};
+    args_c[0] = (char*)path;
+    for (int i = 1; i < 256; i++)
+        if (args[i-1] == nullptr) break;
+        else args_c[i] = (char*)args[i-1];
+    return spawnv(_P_NOWAITO,path, args_c) >= 0;
+}
+
+#else
+
+bool System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
+    pid_t pid = fork();
+    if (pid < 0)
         return false;
-    if (tpid == 0) {
+    if (pid == 0) {
         signal(SIGINT, SIG_DFL);
         signal(SIGQUIT, SIG_DFL);
         signal(SIGILL, SIG_DFL);
@@ -865,7 +1259,6 @@ int System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
     #ifdef SIGSTKFLT
         old_handler[SIGSTKFLT] = signal(SIGSTKFLT, System::SendSignal);
     #endif
-        old_handler[SIGCHLD] = signal(SIGCHLD, System::SendSignal);
         old_handler[SIGCONT] = signal(SIGCONT, System::SendSignal);
         old_handler[SIGSTOP] = signal(SIGSTOP, System::SendSignal);
         old_handler[SIGTSTP] = signal(SIGTSTP, System::SendSignal);
@@ -896,7 +1289,6 @@ int System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
 #ifdef SIGSTKFLT
     signal(SIGSTKFLT, old_handler[SIGSTKFLT]);
 #endif
-    signal(SIGCHLD, old_handler[SIGCHLD]);
     signal(SIGCONT, old_handler[SIGCONT]);
     signal(SIGSTOP, old_handler[SIGSTOP]);
     signal(SIGTSTP, old_handler[SIGTSTP]);
@@ -969,7 +1361,6 @@ int System::RunProgramS(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
     #ifdef SIGSTKFLT
         old_handler[SIGSTKFLT] = signal(SIGSTKFLT, System::SendSignal);
     #endif
-        old_handler[SIGCHLD] = signal(SIGCHLD, System::SendSignal);
         old_handler[SIGCONT] = signal(SIGCONT, System::SendSignal);
         old_handler[SIGSTOP] = signal(SIGSTOP, System::SendSignal);
         old_handler[SIGTSTP] = signal(SIGTSTP, System::SendSignal);
@@ -1000,7 +1391,6 @@ int System::RunProgramS(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
 #ifdef SIGSTKFLT
     signal(SIGSTKFLT, old_handler[SIGSTKFLT]);
 #endif
-    signal(SIGCHLD, old_handler[SIGCHLD]);
     signal(SIGCONT, old_handler[SIGCONT]);
     signal(SIGSTOP, old_handler[SIGSTOP]);
     signal(SIGTSTP, old_handler[SIGTSTP]);
@@ -1065,7 +1455,6 @@ int System::RunProgramS(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
     #ifdef SIGSTKFLT
         old_handler[SIGSTKFLT] = signal(SIGSTKFLT, System::SendSignal);
     #endif
-        old_handler[SIGCHLD] = signal(SIGCHLD, System::SendSignal);
         old_handler[SIGCONT] = signal(SIGCONT, System::SendSignal);
         old_handler[SIGSTOP] = signal(SIGSTOP, System::SendSignal);
         old_handler[SIGTSTP] = signal(SIGTSTP, System::SendSignal);
@@ -1096,7 +1485,6 @@ int System::RunProgramS(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
 #ifdef SIGSTKFLT
     signal(SIGSTKFLT, old_handler[SIGSTKFLT]);
 #endif
-    signal(SIGCHLD, old_handler[SIGCHLD]);
     signal(SIGCONT, old_handler[SIGCONT]);
     signal(SIGSTOP, old_handler[SIGSTOP]);
     signal(SIGTSTP, old_handler[SIGTSTP]);
@@ -1106,10 +1494,10 @@ int System::RunProgramS(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
 }
 
 bool System::RunProgramAsyncS(uniconv::utfcstr path, uniconv::utfcstr const args[]) {
-    System::tpid = fork();
-    if (tpid < 0)
+    pid_t pid = fork();
+    if (pid < 0)
         return false;
-    if (tpid == 0) {
+    if (pid == 0) {
         signal(SIGINT, SIG_DFL);
         signal(SIGQUIT, SIG_DFL);
         signal(SIGILL, SIG_DFL);
@@ -1144,12 +1532,11 @@ bool System::RunProgramAsyncS(uniconv::utfcstr path, uniconv::utfcstr const args
     return true;
 }
 
-
 bool System::RunProgramAsyncS(uniconv::utfcstr path, uniconv::utfcstr arg, ...) {
-    System::tpid = fork();
-    if (tpid < 0)
+    pid_t pid = fork();
+    if (pid < 0)
         return false;
-    if (tpid == 0) {
+    if (pid == 0) {
         signal(SIGINT, SIG_DFL);
         signal(SIGQUIT, SIG_DFL);
         signal(SIGILL, SIG_DFL);
@@ -1266,7 +1653,6 @@ int System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]
     #ifdef SIGSTKFLT
         old_handler[SIGSTKFLT] = signal(SIGSTKFLT, System::SendSignal);
     #endif
-        old_handler[SIGCHLD] = signal(SIGCHLD, System::SendSignal);
         old_handler[SIGCONT] = signal(SIGCONT, System::SendSignal);
         old_handler[SIGSTOP] = signal(SIGSTOP, System::SendSignal);
         old_handler[SIGTSTP] = signal(SIGTSTP, System::SendSignal);
@@ -1297,7 +1683,6 @@ int System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]
 #ifdef SIGSTKFLT
     signal(SIGSTKFLT, old_handler[SIGSTKFLT]);
 #endif
-    signal(SIGCHLD, old_handler[SIGCHLD]);
     signal(SIGCONT, old_handler[SIGCONT]);
     signal(SIGSTOP, old_handler[SIGSTOP]);
     signal(SIGTSTP, old_handler[SIGTSTP]);
@@ -1311,10 +1696,10 @@ bool System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[
     , uid_t suid
 #endif
 ) {
-    System::tpid = fork();
-    if (tpid < 0)
+    pid_t pid = fork();
+    if (pid < 0)
         return false;
-    if (tpid == 0) {
+    if (pid == 0) {
         signal(SIGINT, SIG_DFL);
         signal(SIGQUIT, SIG_DFL);
         signal(SIGILL, SIG_DFL);
@@ -1353,6 +1738,8 @@ bool System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[
     }
     return true;
 }
+
+#endif
 
 nstring System::ToNativePath(nstring path) {
     return path;

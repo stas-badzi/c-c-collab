@@ -8,11 +8,11 @@
 #include <optional>
 #include <promise.hpp>
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows/key.hpp>
-#elif __linux__
+#elif defined(__linux__)
 #include <linux/key.hpp>
-#elif __APPLE__
+#elif defined(__APPLE__)
 #include <apple/key.hpp>
 #else
 #endif

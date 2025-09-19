@@ -1,0 +1,46 @@
+{
+    "configurations": [
+        {
+            "name": "cygwin64",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "windowsSdkVersion": "10.0.26100.0",
+            "cStandard": "c17",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "linux-gcc-x64",
+            "compilerPath": "C:/cygwin64/bin/g++.exe",
+            "forcedInclude": [
+                "${workspaceFolder}\\.vscode\\preinclude.h"
+            ],
+            "compilerArgs": [
+                "-pedantic",
+                "-Wall",
+                "-Wextra",
+                "-Wpedentic"
+            ]
+        },
+        {
+            "name": "MSVC64",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "windowsSdkVersion": "10.0.26100.0",
+            "cStandard": "c17",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "windows-msvc-x64",
+            "configurationProvider": "ms-vscode.makefile-tools"
+        }
+    ],
+    "version": 4
+}

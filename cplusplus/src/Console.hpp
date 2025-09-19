@@ -17,10 +17,9 @@
 #include <promise.hpp>
 #include <thread>
 #include <atomic>
-#include "System.hpp"
 
 #ifdef __APPLE__
-#ifndef _GLIBCXX_HAVE_AT_QUICK_EXIT
+#ifndef _GLIBCXX_HAVE_AT_QUICK_EXIT // tf is this for ??????
     #define _GLIBCXX_HAVE_QUICK_EXIT
 #endif
 #endif
@@ -54,6 +53,9 @@
     typedef DWORD pid_t;
 #endif
     typedef wchar_t char_t;
+    typedef wchar_t nchar_t;
+    typedef HANDLE thread_t;
+    #define THREAD DWORD WINAPI
 #else
     #include <errno.h>
     #include <signal.h>
@@ -65,6 +67,7 @@
     #include <deque>
     #include <string>
     #include <string.h>
+    #include <iostream>
 #ifdef __linux__
     #include <linux/getfd.h>
     #include <linux/mousefd.h>
@@ -84,17 +87,36 @@
     #include <crt_externs.h>
     #include <libproc.h>
 #elif __CYGWIN__
+    #include <sys/cygwin.h>
+    #include <sys/poll.h>
+    #include <pthread.h>
+
     #include <windows.h>
+    #include <psapi.h>
+    #include <dbghelp.h>
+    #include <tlhelp32.h>
+    
     #include <windows/key.hpp>
+    #include <unix/thread_safe/queue>
+    #include <unix/thread_safe/vector>
 #else
 #endif
+    typedef char nchar_t;
+    typedef pthread_t thread_t;
+    #define THREAD void*
+#ifdef __CYGWIN__
+    typedef wchar_t char_t;
+#else
     typedef char char_t;
+#endif
 #endif
 #ifdef __APPLE__
     #define KEYBOARD_MAX 0x80
 #else
     #define KEYBOARD_MAX 256
 #endif
+
+#include "System.hpp" // don't move up 'cause it breaks __CYGWIN__
 
 #ifndef __linux__
     #define NO_CUSTOM_HANDLING /* not supported outside linux */
@@ -210,7 +232,7 @@ namespace cpp {
         static uint8_t last_mouse_combo;
         static std::chrono::time_point<std::chrono::high_resolution_clock> last_click_time;
         static int argc;
-        static uniconv::utfcstr* argv;
+        static const nchar_t** argv;
         static struct ToggledKeys keys_toggled;
         static bool emulator;
         static pid_t pid;
@@ -218,11 +240,11 @@ namespace cpp {
         static int ret;
         static std::array<bool,UINT16_MAX> used_pids;
         static uint16_t next_pid;
-        static char_t buf[127]; static int8_t buf_it;
+        static nchar_t buf[127]; static int8_t buf_it;
         static std::pair<int16_t,int16_t> cursorpos;
         static bool cursor_visible;
         static uint8_t cursor_size;
-        static uniconv::nstring window_title;
+        static uniconv::tstring window_title;
         static bool cursor_blink_opposite;
         static uniconv::nstring user_data;
         static uniconv::nstring dev_data;
@@ -231,18 +253,7 @@ namespace cpp {
         static std::vector<pid_t> popup_pids;
         static rw_pipe_t parent_pipe;
         static uniconv::nstring terminal_name;
-    #ifdef _WIN32
-        static constexpr const wchar_t* pipedir = L"\\\\.\\pipe\\.factoryrush\\";
-        static const wchar_t* subdir;
-        //static std::vector<std::vector<COLORREF>> SaveScreen(void);
-        //static std::pair<std::pair<uint16_t,uint16_t>,std::pair<uint16_t,uint16_t>> GetOffsetSymSize(int color1 = 3, int color2 = 9, int color3 = 1);
-        
-        //static std::pair<uint16_t,uint16_t> scr_offs;
-        //static std::pair<uint16_t,uint16_t> sym_size;
-        //static bool auto_size_updates;
-        //static int16_t old_width;
-        //static int16_t old_height;
-        //static RECT old_rect;
+    #if defined(_WIN32) || defined(__CYGWIN__)
         static uint8_t default_fcol;
         static uint8_t default_bcol;
         static HANDLE screen;
@@ -256,16 +267,29 @@ namespace cpp {
         static DWORD old_console;
         static HANDLE old_buffer;
         static CONSOLE_CURSOR_INFO old_curinf;
-        static tsqueue<wchar_t>* input_buf;
-        static HANDLE super_thread;
-        static std::atomic<bool>* super_thread_run;
-        static tsvector<HANDLE>* thread_handles;
-        static std::wofstream real_out;
+        static tsqueue<nchar_t>* input_buf;
         static std::atomic<bool> tabactive;
-        static inline wchar_t getnch(void);
+        static std::atomic<bool>* super_thread_run;
+        static tsvector<thread_t>* thread_handles;
         static inline constexpr uint8_t GenerateAtrVal(uint8_t i1, uint8_t i2);
-        static DWORD WINAPI MoveCursorThread(LPVOID lpParam);
-        static DWORD WINAPI SuperThread(LPVOID lpParam);
+        static inline wchar_t getnch(void);
+        static THREAD MoveCursorThread(void* lpParam);
+        static THREAD SuperThread(void* lpParam);
+    #endif
+    #ifdef _WIN32
+        static constexpr const wchar_t* pipedir = L"\\\\.\\pipe\\.factoryrush\\";
+        static const wchar_t* subdir;
+        //static std::vector<std::vector<COLORREF>> SaveScreen(void);
+        //static std::pair<std::pair<uint16_t,uint16_t>,std::pair<uint16_t,uint16_t>> GetOffsetSymSize(int color1 = 3, int color2 = 9, int color3 = 1);
+        
+        //static std::pair<uint16_t,uint16_t> scr_offs;
+        //static std::pair<uint16_t,uint16_t> sym_size;
+        //static bool auto_size_updates;
+        //static int16_t old_width;
+        //static int16_t old_height;
+        //static RECT old_rect;
+        static HANDLE super_thread;
+        static std::wofstream real_out;
         static size_t write_out(std::wstring str);
         //static std::pair<uint16_t,uint16_t> xyoffset;
         //static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
@@ -276,6 +300,10 @@ namespace cpp {
         static struct termios old_termios;
         static struct winsize window_size;
         static mbstate_t streammbs;
+    #ifdef __CYGWIN__
+        static pthread_t super_thread;
+        static inline HWND GetHwnd(void);
+    #endif
     #ifdef __linux__
         static uid_t ruid;
         static struct termios old_fdterm;
@@ -305,7 +333,7 @@ namespace cpp {
         static void XtermMouseAndFocus(void);
         static void XtermInitTracking(void);
         static void XtermFinishTracking(void);
-        static void EscSeqSetTitle(const char_t* title);
+        static void EscSeqSetTitle(const nchar_t* title);
         static void EscSeqMoveCursor(void);
         static void EscSeqSetCursor(void);
         static void EscSeqSetCursorSize(void);
@@ -333,7 +361,7 @@ namespace cpp {
 
             Symbol & operator=(const Symbol &src);
 
-            #ifdef _WIN32
+            #if defined(_WIN32) || defined(__CYGWIN__)
                 uint8_t GetAttribute(void) const;
                 void SetAttribute(uint8_t attribute);
             #endif
@@ -361,6 +389,9 @@ namespace cpp {
         static uniconv::utfcstr* GetArgV(void);
 
         static void FillScreen(const std::vector<std::vector<Symbol> >& symbols);
+    #ifdef __CYGWIN__
+        static void EscSeqFillScreen(const std::vector<std::vector<Symbol> >& symbols);
+    #endif
         static void ClearScreenBuffer(void);
         
         static void HandleKeyboard(void);
@@ -405,8 +436,8 @@ namespace cpp {
         static void SetDoubleClickMaxWait(unsigned short milliseconds);
         static unsigned short GetDoubleClickMaxWait(void);
 
-        static std::optional<std::pair<int,uniconv::nstring>> PopupWindow(int type, int argc, const char_t* argv[], uniconv::utfcstr title = nullptr);
-        static std::optional<std::pair<stsb::promise<std::optional<std::pair<int,uniconv::nstring>>>,rw_pipe_t>> PopupWindowAsync(int type, int argc, const char_t* argv[], uniconv::utfcstr title = nullptr);
+        static std::optional<std::pair<int,uniconv::nstring>> PopupWindow(int type, int argc, const nchar_t* argv[], const nchar_t* title = nullptr);
+        static std::optional<std::pair<stsb::promise<std::optional<std::pair<int,uniconv::nstring>>>,rw_pipe_t>> PopupWindowAsync(int type, int argc, const nchar_t* argv[], const nchar_t* title = nullptr);
         static std::optional<std::pair<stsb::promise<std::optional<std::pair<int,std::u16string>>>,rw_pipe_t>> PopupWindowAsync(int type, int argc, const char16_t* argv[], const char16_t* u16title = nullptr);
 
         static void MoveCursor(int x, int y);

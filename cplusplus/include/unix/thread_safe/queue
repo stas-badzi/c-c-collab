@@ -1,0 +1,75 @@
+#pragma once
+#include <queue>
+#include <pthread.h>
+#include <stdio.h>
+namespace cpp {
+    template<typename T>
+    class tsqueue {
+    public:
+        tsqueue(const tsqueue&) = delete;
+        tsqueue& operator= (const tsqueue&) = delete;
+        tsqueue() {
+            if (pthread_mutex_init(&m,NULL) < 0) {
+                perror("pthread_mutex_init");
+                exit(1);
+            }
+        }
+        ~tsqueue() {	
+            if (pthread_mutex_destroy(&m) < 0) {
+                perror("pthread_mutex_destroy");
+                exit(1);
+            }
+        }
+        void push(T val) {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            q.push(val);
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+        }
+        T pop(void) {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            T val = q.front();
+            q.pop();
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+            return val;
+        }
+        bool empty(void) {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            bool e = q.empty();
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+            return e;
+        }
+        size_t size(void) {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            size_t s = q.size();
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+            return s;
+        }
+    protected:
+        std::queue<T> q;
+        mutable pthread_mutex_t m;
+    };
+}

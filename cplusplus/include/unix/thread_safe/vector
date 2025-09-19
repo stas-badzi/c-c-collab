@@ -1,0 +1,248 @@
+#pragma once
+#include <vector>
+#include <pthread.h>
+#include <stdio.h>
+namespace cpp {
+    template<typename T>
+    class tsvector {
+    public:
+        tsvector(const tsvector&) = delete;
+        tsvector& operator=(const tsvector&) = delete;
+        tsvector() {
+            if (pthread_mutex_init(&m,NULL) < 0) {
+                perror("pthread_mutex_init");
+                exit(1);
+            }
+        }
+        ~tsvector() {	
+            if (pthread_mutex_destroy(&m) < 0) {
+                perror("pthread_mutex_destroy");
+                exit(1);
+            }
+        }
+        void push_back(T val) {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            v.push_back(val);
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+        }
+        void pop_back(void) {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            v.pop_back();
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+        }
+        T& operator[](size_t i) {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            T& val = v[i];
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+            return val;
+        }
+        const T& operator[](size_t i) const {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            const T& val = v[i];
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+            return val;
+        }
+        T& front(size_t i) {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            T& val = v.front();
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+            return val;
+        }
+        const T& front(size_t i) const {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            const T& val = v.front();
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+            return val;
+        }
+        T& back(size_t i) {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            T& val = v.back();
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+            return val;
+        }
+        const T& back(size_t i) const {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            const T& val = v.back();
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+            return val;
+        }
+        T& at(size_t i) {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            T& val = v.at(i);
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+            return val;
+        }
+        const T& at(size_t i) const {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            const T& val = v.at(i);
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+            return val;
+        }
+        void clear(void) {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            v.clear();
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+        }
+        void resize(void) {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            v.resize();
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+        }
+        void reserve(void) {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            v.reserve();
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+        }
+        void erase(size_t i) {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            v.erase(v.begin()+i);
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+        }
+        void shrink_to_fit(void) {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            v.shrink_to_fit();
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+        }
+        bool empty(void) const {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            bool e = v.empty();
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+            return e;
+        }
+        size_t size(void) const {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            size_t s = v.size();
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+            return s;
+        }
+        size_t capacity(void) const {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            size_t s = v.capacity();
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+            return s;
+        }
+        size_t max_size(void) const {
+            if (pthread_mutex_lock(&m) < 0) {
+                perror("pthread_mutex_lock");
+                exit(1);
+            }
+            size_t s = v.max_size();
+            if (pthread_mutex_unlock(&m) < 0) {
+                perror("pthread_mutex_unlock");
+                exit(1);
+            }
+            return s;
+        }
+    protected:
+        std::vector<T> v;
+        mutable pthread_mutex_t m;
+    };
+}

@@ -1,0 +1,1 @@
+make all debug=1

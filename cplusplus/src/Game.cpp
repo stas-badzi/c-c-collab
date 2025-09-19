@@ -39,7 +39,8 @@ vector<vector<Console::Symbol>> Game::Camera::buffer() {
 
 // private:
 
-void Game::ValidateViewport(MatrixPosition vpc) {
+void Game::ValidateViewport(
+    __attribute__((unused)) MatrixPosition vpc) {
     return;
 
 }
