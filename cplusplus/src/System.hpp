@@ -24,7 +24,7 @@
     #include <sys/stat.h>
     #include <dirent.h>
     #include <fcntl.h>
-#ifdef _LINUX_WAIT_H#ifdef P_ALL
+#ifdef _LINUX_WAIT_H
     #undef P_ALL
     #undef P_PID
     #undef P_PGID
