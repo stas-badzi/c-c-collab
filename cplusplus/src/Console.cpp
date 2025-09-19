@@ -808,13 +808,13 @@ void Console::XtermMouseAndFocus(void) {
         HANDLE hProcess = OpenProcess(SYNCHRONIZE, FALSE, spid);
         if (hProcess == nullptr || hProcess == (void*)INVALID_HANDLE_VALUE) {
             Console::out << L"Error opening process with ID " << spid; Console::out_endl();
-            return (LPVOID)-1;
+            return (thread_ret_t)-1;
         }
         DWORD ret = WaitForSingleObject(hProcess, INFINITE);
         if (ret != WAIT_OBJECT_0) {
             CloseHandle(hProcess);
             Console::out << L"Error waiting for exit"; Console::out_endl();
-            return (LPVOID)-1;
+            return (thread_ret_t)-1;
         }
         CloseHandle(hProcess);
         // check if the process returned correctly
@@ -840,7 +840,7 @@ void Console::XtermMouseAndFocus(void) {
             System::RemoveFile(resfl.c_str());
         Console::out << L"Nooooooooooooooooooooooo..."; Console::out_endl();
         //cerr << "Nooooooooooooooooooooooo..." << endl;
-        return (LPVOID)1;
+        return (thread_ret_t)1;
     }
 
     size_t sleepmcs(size_t mcs) {
@@ -861,7 +861,7 @@ void Console::XtermMouseAndFocus(void) {
         HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
         if (hProcess == NULL) {
             ncerr << "Failed to open process with ID " << pid << ". Error: " << GetLastError() << std::endl;
-            return (void*)1;
+            return (thread_ret_t)1;
         }
         IO_COUNTERS prevIoCounters = {};
         if (!GetProcessIoCounters(hProcess, &prevIoCounters)) {
@@ -950,7 +950,7 @@ void Console::XtermMouseAndFocus(void) {
             screen_mutex.unlock();
             ::Sleep(1);
         }
-        return (void*)1;
+        return (thread_ret_t)1;
     }
 
     struct __superthread_arg { atomic<bool>* dorun; tsvector<thread_t>* threads; };
@@ -979,7 +979,7 @@ void Console::XtermMouseAndFocus(void) {
             WaitForSingleObject(threads[i], INFINITE);
             CloseHandle(threads[i]);
         }
-        return (void*)1;
+        return (thread_ret_t)1;
     }
 
     void cpp::Console::MoveCursor(int x, int y) {

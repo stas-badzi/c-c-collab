@@ -55,6 +55,7 @@
     typedef wchar_t char_t;
     typedef wchar_t nchar_t;
     typedef HANDLE thread_t;
+    typedef DWORD thread_ret_t;
     #define THREAD DWORD WINAPI
 #else
     #include <errno.h>
@@ -104,6 +105,7 @@
 #endif
     typedef char nchar_t;
     typedef pthread_t thread_t;
+    typedef void* thread_ret_t;
     #define THREAD void*
 #ifdef __CYGWIN__
     typedef wchar_t char_t;
