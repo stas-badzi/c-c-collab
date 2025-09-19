@@ -24,10 +24,7 @@
     #include <sys/stat.h>
     #include <dirent.h>
     #include <fcntl.h>
-    #include <sys/types.h>
-#ifndef _LINUX_WAIT_H
     #include <sys/wait.h>
-#endif
 #ifdef __APPLE__
     #include <signal.h>
     #include <mach-o/dyld.h>
