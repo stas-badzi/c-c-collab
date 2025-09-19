@@ -22,9 +22,9 @@ namespace cpp {
 #ifdef _WIN32
     __declspec(dllexport) std::basic_istream<wchar_t>& win = *((std::basic_istream<wchar_t>*)&Console::in);
     __declspec(dllexport) std::basic_ostream<wchar_t>& wout = *((std::basic_ostream<wchar_t>*)&Console::out);
-    constexpr auto& ncerr = wcerr;
-    typedef wstringstream nstringstream;
-#define sep L'\\'
+    constexpr auto& ncerr = std::wcerr;
+    typedef wstringstream std::nstringstream;
+#define sep L"\\"
 #define topen _wfopen
 #define fgetnc fgetwc
 #define nstrlen wcslen
@@ -1783,6 +1783,35 @@ void Console::XtermMouseAndFocus(void) {
     }
 */
 
+    inline HWND GetHwnd(void) {
+        HWND hwndFound;
+        wchar_t pszNewWindowTitle[1024];
+        wsprintf(pszNewWindowTitle,L"%d/%d",GetTickCount(),GetCurrentProcessId());
+        SetConsoleTitle(pszNewWindowTitle);
+        SysSleep(40e3);
+        hwndFound=FindWindow(NULL, pszNewWindowTitle);
+        if (!(good = hwndFound)) {
+            if (mintty) {
+                NameHwnd namehwnd = {pszNewWindowTitle, 0};
+                BOOL ret = EnumWindows(FindWindowBegin, (LPARAM)&namehwnd);
+                Console::out << L"EnumWindows: " << ret << L'\n';
+                if (!ret) {
+                    good = true;
+                    hwndFound = namehwnd.hwnd;
+                    Console::out << L"Window: " << hwndFound << L" good: " << good << L'\n';
+                    return hwndFound;
+                }
+            }
+            hwndFound = GetForegroundWindow();
+            wchar_t pszWindowTitle[1024];
+            int siz = GetWindowText(hwndFound, pszWindowTitle, 1024);
+            pszWindowTitle[siz] = L'\0';
+            if (wcscmp(pszWindowTitle, pszNewWindowTitle) == 0) good = true;
+        }
+        Console::out << L"Window: " << hwndFound << L" good: " << good << L'\n';
+        return hwndFound;
+    }
+
     void Console::Init(void) {
         if (!initialised) {
             auto term_prog = _wgetenv(L"TERM_PROGRAM");
@@ -2485,10 +2514,9 @@ void Console::XtermMouseAndFocus(void) {
         if (len) fwrite(result, sizeof(char), strlen(result), fl);
         fclose(fl);
     }
-
-    void Console::HandleMouseAndFocus(void) {
-        Console::XtermMouseAndFocus();
-    }
+#ifndef __linux__
+    void Console::HandleMouseAndFocus(void) { Console::XtermMouseAndFocus(); }
+#endif
 
 #ifndef __CYGWIN__
     void Console::Beep(void) {
@@ -2498,7 +2526,7 @@ void Console::XtermMouseAndFocus(void) {
 
     void cpp::Console::SetTitle(const nchar_t* title) {
         if (title) Console::window_title = title;
-        Console::EscSeqSetTitle(Console::window_title);
+        Console::EscSeqSetTitle(Console::window_title.c_str());
     }
 
     void cpp::Console::MoveCursor(int x, int y) {
@@ -3323,7 +3351,7 @@ void Console::XtermMouseAndFocus(void) {
 
             {char path[PATH_MAX+1];
             auto length = readlink( "/proc/self/exe" , path, PATH_MAX);
-            path[lenght]='\0';
+            path[length]='\0';
             string command = path;
             while (command.back() != '/') command.pop_back();
             command.append("../share/factoryrush/bin/setkbdmode");
@@ -3550,7 +3578,7 @@ void Console::XtermMouseAndFocus(void) {
                     break;
                 }
                 break;
-            defualt:
+            default:
                 ThrowMsg("Unknown event type");
             }
         }
@@ -3657,10 +3685,6 @@ void Console::XtermMouseAndFocus(void) {
         if (Console::key_released < 0) return Key::Enum::NONE;
         if (Console::custom_handling) return static_cast<Key::Enum>(Console::key_released);
         return Console::key_chart[0][Console::key_released];
-    }
-
-    nstring Console::GetTerminalExecutableName() {
-        return Console::terminal_name;
     }
 
     static pair<const char*,const char*> exeswitches[] = {
@@ -4048,8 +4072,8 @@ void Console::XtermMouseAndFocus(void) {
     }
 
     Key::Enum Console::KeyPressed(void) {
-        if (Console:static_cast:key_hit < 0) return Key::Enum::NONE;
-        return <Key::Enum>(Console::key_hit);
+        if (Console::key_hit < 0) return Key::Enum::NONE;
+        return static_cast<Key::Enum>(Console::key_hit);
     }
 
     Key::Enum Console::KeyReleased(void) {
@@ -4095,7 +4119,6 @@ void Console::XtermMouseAndFocus(void) {
         Console::out << L"Window: " << hwndFound << L" good: " << good << L'\n';
         return hwndFound;
     }
-
 
     void Console::Init(void) {
         if (!initialised) {

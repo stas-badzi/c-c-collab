@@ -154,6 +154,8 @@ namespace cpp {
         static bool RunProgramAsyncSC(uniconv::utfcstr file, uniconv::utfcstr args, ...);
         static bool RunProgramAsyncC(uniconv::utfcstr path, uniconv::utfcstr const args[]);
         static bool RunProgramAsyncSC(uniconv::utfcstr file, uniconv::utfcstr const args[]);
+
+        static int RunProgram0(uniconv::utfcstr path, uniconv::utfcstr arg, ...)
     #endif
     };
 }

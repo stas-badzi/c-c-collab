@@ -86,6 +86,7 @@
     #include <apple/openfile.h>
     #include <crt_externs.h>
     #include <libproc.h>
+    #define thread_t _thread_t
 #elif __CYGWIN__
     #include <sys/cygwin.h>
     #include <sys/poll.h>
