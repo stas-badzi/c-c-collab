@@ -23,7 +23,7 @@ namespace cpp {
     __declspec(dllexport) std::basic_istream<wchar_t>& win = *((std::basic_istream<wchar_t>*)&Console::in);
     __declspec(dllexport) std::basic_ostream<wchar_t>& wout = *((std::basic_ostream<wchar_t>*)&Console::out);
     constexpr auto& ncerr = std::wcerr;
-    typedef wstringstream std::nstringstream;
+    typedef std::wstringstream nstringstream;
 #define sep L"\\"
 #define topen _wfopen
 #define fgetnc fgetwc
