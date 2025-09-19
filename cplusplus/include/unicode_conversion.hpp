@@ -413,8 +413,8 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         return out;
     }
 #else
-auto UnderlyingStringToUnicode = NativeStringToUnicode;
-auto UnicodeToUnderlyingString = UnicodeToNativeString;
+static auto UnderlyingStringToUnicode = NativeStringToUnicode;
+static auto UnicodeToUnderlyingString = UnicodeToNativeString;
 #endif
 
 } // namespace uniconv
