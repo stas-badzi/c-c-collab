@@ -99,12 +99,12 @@ jobs:
     needs: compile-cs-windows-x64
     runs-on: windows-latest
     steps:
-      - name: Set up Cygwin
+      - name: Install Cygwin
         shell: powershell
-        run:
+        run: |
           cd ..
           Invoke-WebRequest -Uri "https://www.cygwin.com/setup-x86_64.exe" -OutFile "setup-x86_64.exe" -Verbose
-          setup-x86_64.exe -q -P gcc-g++,zip,grep,gawk,binutils,tree
+          & setup-x86_64.exe -q -P gcc-g++,zip,grep,gawk,binutils,tree
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
