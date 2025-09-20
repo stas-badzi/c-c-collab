@@ -619,9 +619,14 @@ jobs:
         uses: douglascamata/setup-docker-macos-action@v1.0.0
       - name: Checkout source code
         uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
       - name: Compile code
         shell: bash
         run: |
+          sudo xcode-select -s /Library/Developer/CommandLineTools
           make release sudo=0 cpp-compiler=clang++ c-compiler=clang
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
