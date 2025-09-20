@@ -134,7 +134,7 @@ jobs:
           Expand-Archive -Force make-bin.zip .
           del make-bin.zip
           copy make-4.4.1\dist\* .
-          C:\cygwin64\bin\tree.exe C:\cygwin64
+          ls C:\
       - name: TestCyg
         shell: C:\cygwin64\bin\bash.exe --login -o igncr '{0}'
         run: echo /cygdrive/$(echo '${{ github.workspace }}' | sed 's/\\\\/\\//g' | sed 's/://g' | sed 's/\(.*\)/\L\1/')
