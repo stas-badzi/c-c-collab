@@ -10,7 +10,7 @@ jobs:
     permissions:
       contents: read
     name: Compile C# for Windows (x64)
-    runs-on: windows-11
+    runs-on: windows-2022
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -47,7 +47,7 @@ jobs:
       contents: read
     name: Build program using MSYS2 (x64)
     needs: compile-cs-windows-x64
-    runs-on: windows-11
+    runs-on: windows-2022
     steps:
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
@@ -96,7 +96,7 @@ jobs:
       contents: read
     name: Build program using Cygwin (x64)
     needs: compile-cs-windows-x64
-    runs-on: windows-11
+    runs-on: windows-2022
     steps:
       - name: Install Cygwin
         shell: powershell
@@ -155,7 +155,7 @@ jobs:
       contents: read
     name: Build program using Cygwin x86
     needs: compile-cs-windows-x86
-    runs-on: windows-11
+    runs-on: windows-2022
     steps:
       - name: Install Cygwin
         shell: powershell
@@ -212,7 +212,7 @@ jobs:
     permissions:
       contents: read
     name: Build program using MSVC (x64)
-    runs-on: windows-11
+    runs-on: windows-2022
     needs: compile-cs-windows-x64
     steps:
       - name: Checkout source code
@@ -267,7 +267,7 @@ jobs:
     permissions:
       contents: read
     name: Compile C# for Windows (x86)
-    runs-on: windows-11
+    runs-on: windows-2022
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -302,7 +302,7 @@ jobs:
       contents: read
     name: Build program using MSYS2 (i686)
     needs: compile-cs-windows-x86
-    runs-on: windows-11
+    runs-on: windows-2022
     steps:
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
@@ -353,7 +353,7 @@ jobs:
     permissions:
       contents: read
     name: Build program using MSVC (x86)
-    runs-on: windows-11
+    runs-on: windows-2022
     needs: compile-cs-windows-x86
     steps:
       - name: Checkout source code
@@ -409,7 +409,7 @@ jobs:
     permissions:
       contents: read
     name: Compile C# for Windows (arm64)
-    runs-on: windows-11
+    runs-on: windows-2022
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -444,7 +444,7 @@ jobs:
       contents: read
     name: Build program using MSYS2 (aarch64)
     needs: compile-cs-windows-arm64
-    runs-on: windows-11-arm
+    runs-on: windows-2022-arm
     steps:
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
@@ -495,7 +495,7 @@ jobs:
     permissions:
       contents: read
     name: Build program using MSVC (arm64)
-    runs-on: windows-11
+    runs-on: windows-2022
     needs: compile-cs-windows-arm64
     steps:
       - name: Checkout source code
