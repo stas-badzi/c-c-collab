@@ -7,6 +7,8 @@ on:
 
 jobs:
   compile-cs-windows-x64:
+    permissions:
+      contents: read
     name: Compile C# for Windows (x64)
     runs-on: windows-latest
     steps:
@@ -41,6 +43,8 @@ jobs:
           path: binarysharp/bin/exe/cs-factoryrush.exe
 
   build-msys-x64:
+    permissions:
+      contents: read
     name: Build program using MSYS2 (x64)
     needs: compile-cs-windows-x64
     runs-on: windows-latest
@@ -89,6 +93,8 @@ jobs:
           path: bin/Cs.*.zip
   
   build-cygwin-x64:
+    permissions:
+      contents: read
     name: Build program using Cygwin (x64)
     needs: compile-cs-windows-x64
     runs-on: windows-latest
@@ -151,6 +157,8 @@ jobs:
           path: bin/Cs.*.zip
   
   build-windows-x64:
+    permissions:
+      contents: read
     name: Build program using MSVC (x64)
     runs-on: windows-latest
     needs: compile-cs-windows-x64
@@ -204,6 +212,8 @@ jobs:
           path: bin/Cs.*.zip
 
   compile-cs-windows-x86:
+    permissions:
+      contents: read
     name: Compile C# for Windows (x86)
     runs-on: windows-latest
     steps:
@@ -236,6 +246,8 @@ jobs:
           path: binarysharp/bin/exe/cs-factoryrush.exe
 
   build-msys-x86:
+    permissions:
+      contents: read
     name: Build program using MSYS2 (i686)
     needs: compile-cs-windows-x86
     runs-on: windows-latest
@@ -287,6 +299,8 @@ jobs:
           path: bin/Cs.*.zip
   
   build-windows-x86:
+    permissions:
+      contents: read
     name: Build program using MSVC (x86)
     runs-on: windows-latest
     needs: compile-cs-windows-x86
@@ -341,6 +355,8 @@ jobs:
           path: bin/Cs.*.zip
   
   compile-cs-windows-arm64:
+    permissions:
+      contents: read
     name: Compile C# for Windows (arm64)
     runs-on: windows-latest
     steps:
@@ -373,6 +389,8 @@ jobs:
           path: binarysharp/bin/exe/cs-factoryrush.exe
 
   build-msys-arm64:
+    permissions:
+      contents: read
     name: Build program using MSYS2 (aarch64)
     needs: compile-cs-windows-arm64
     runs-on: windows-11-arm
@@ -424,6 +442,8 @@ jobs:
           path: bin/Cs.*.zip
 
   build-windows-arm64:
+    permissions:
+      contents: read
     name: Build program using MSVC (arm64)
     runs-on: windows-latest
     needs: compile-cs-windows-arm64
@@ -473,7 +493,9 @@ jobs:
           name: Windowsarm64CsBin
           path: bin/Cs.*.zip
 
-  build-ubuntu:
+  build-ubuntu-x64:
+    permissions:
+      contents: read
     name: Build program using Ubuntu
     runs-on: ubuntu-24.04
     steps:
@@ -536,7 +558,9 @@ jobs:
           name: UbuntuArm64CsBin
           path: bin/Cs.*.tar.gz
 
-  build-debian:
+  build-debian-x64:
+    permissions:
+      contents: read
     name: Build program using Debian
     runs-on: [self-hosted, debian]
     steps:
@@ -558,6 +582,8 @@ jobs:
           path: bin/Cs.*.tar.gz
   
   build-macos-arm64:
+    permissions:
+      contents: read
     name: Build program using Arm64 MacOS
     runs-on: macos-15
     steps:
@@ -583,7 +609,9 @@ jobs:
           name: MacOSArmCsBin
           path: bin/Cs.*.tgz
   
-  build-macos-amd64:
+  build-macos-x64:
+    permissions:
+      contents: read
     name: Build program using x64 MacOS
     runs-on: [self-hosted, macOS, X64]
     steps:
