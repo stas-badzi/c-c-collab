@@ -680,8 +680,10 @@ else
 ifeq ($(shell uname -s),Darwin)
 	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wall -Wextra -Wpedantic $(cxxflags) $(cdb) -Isource -std=c++2b && mv *.o objects/
 	ar rcs assets/libapplecuchar.a objects/cuchar.o
-	$(c-compiler) -c source/keyboard.m source/openfile.m source/killterm.c -pedantic -Wall -Wextra -Wpedantic $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
+	$(c-compiler) -c source/keyboard.m source/openfile.m -framework CoreGraphics -framework CoreServices -pedantic -Wall -Wextra -Wpedantic $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(c-compiler) -dynamiclib -o assets/libapplectrl.dylib objects/keyboard.o objects/openfile.o -framework CoreGraphics -framework CoreServices
+	
+	$(c-compiler) -c source/killterm.c -pedantic -Wall -Wextra -Wpedantic $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(c-compiler) -o assets/killterm objects/killterm.o
 ifneq ($(offline),1)
 	git submodule update --init --recursive --remote utilities/give-control
