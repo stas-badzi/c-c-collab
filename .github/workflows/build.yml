@@ -656,7 +656,7 @@ jobs:
       - name: Compile code
         shell: bash
         run: |
-          sudo xcode-select -s /Library/Developer/CommandLineTools
+          xcode-select -s /Library/Developer/CommandLineTools
           make release sudo=0 cpp-compiler=clang++ c-compiler=clang
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
