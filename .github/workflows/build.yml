@@ -121,13 +121,10 @@ jobs:
         run: |
           dir
       - name: Copy C# where it's needed
-        shell: C:\cygwin64\bin\bash.exe --login -o igncr '{0}'
+        shell: pwsh
         run: |
-          cd $(cygpath -u "${{ github.workspace }}")
-          touch cs
-          touch csbin
-          pwd
-          tree
+          echo $null >> cs
+          echo $null >> csbin
           cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
           cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Install Programs
