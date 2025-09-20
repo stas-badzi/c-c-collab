@@ -1,7 +1,5 @@
 #if (defined(_WIN32) && !defined(_MSC_VER)) || (defined(__APPLE__) && !defined(__cpp_lib_quick_exit))
-#ifdef _WIN32
     void null(void) { return; }
-#endif
     #include <quick_exit/defines.h>
 
     int atquickexit__iterator = 0;
