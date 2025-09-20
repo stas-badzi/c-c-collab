@@ -12,6 +12,9 @@
     #include <windows.h>
     #include <shlwapi.h>
     #include <windows/thread_safe/queue>
+    __if_not_exists(quick_exit) {
+        #include <quick_exit.h>
+    }
 #else
 #ifdef INVALID_HANDLE_VALUE
     #undef INVALID_HANDLE_VALUE
@@ -34,6 +37,9 @@
 #ifdef __APPLE__
     #include <signal.h>
     #include <mach-o/dyld.h>
+    #ifndef quick_exit
+        #include <quick_exit.h>
+    #endif
 #elif __linux__
     #include <linux/limits.h>
 #elif __CYGWIN__

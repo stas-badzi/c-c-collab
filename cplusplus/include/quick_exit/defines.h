@@ -1,0 +1,1 @@
+#define _AT_QUICK_EXIT_MAX 256

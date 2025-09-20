@@ -48,7 +48,7 @@
     #include <windows/thread_safe/queue>
     #include <windows/thread_safe/vector>
 #ifndef _MSC_VER
-    #include <windows/quick_exit.h>
+    #include <quick_exit.h>
 #else
     typedef DWORD pid_t;
 #endif
@@ -88,6 +88,9 @@
     #include <crt_externs.h>
     #include <libproc.h>
     #define thread_t _thread_t
+    __if_not_exists(quick_exit) {
+        #include <quick_exit.h>
+    }
 #elif __CYGWIN__
     #include <sys/cygwin.h>
     #include <sys/poll.h>

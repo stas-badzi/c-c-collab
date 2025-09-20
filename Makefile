@@ -26,7 +26,7 @@ sources = Console.cpp TextureSystem.cpp System.cpp Game.cpp dllexport.cpp SoundS
 #> header files
 headers = Console.hpp TextureSystem.hpp TextureSystem.ipp Game.hpp dllimport.hpp System.hpp System.ipp smart_ref.hpp smart_ref.ipp SoundSystem.hpp
 #> include files
-includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h windows/quick_exit.h control_heap.h operating_system.h windows/quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp apple/keyboard.h apple/openfile.h linux/ledctrl.h linux/mousefd.h windows/thread_safe/queue windows/thread_safe/vector promise.hpp
+includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h quick_exit.h control_heap.h operating_system.h quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp apple/keyboard.h apple/openfile.h linux/ledctrl.h linux/mousefd.h windows/thread_safe/queue windows/thread_safe/vector promise.hpp
 #> name the dynamic library
 name = factoryrushplus
 # *******************************
@@ -682,7 +682,7 @@ ifeq ($(shell uname -s),Darwin)
 	ar rcs assets/libapplecuchar.a objects/cuchar.o
 	$(c-compiler) -c source/keyboard.m source/openfile.m -framework CoreGraphics -framework CoreServices -pedantic -Wall -Wextra -Wpedantic $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(c-compiler) -dynamiclib -o assets/libapplectrl.dylib objects/keyboard.o objects/openfile.o -framework CoreGraphics -framework CoreServices
-	
+
 	$(c-compiler) -c source/killterm.c -pedantic -Wall -Wextra -Wpedantic $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(c-compiler) -o assets/killterm objects/killterm.o
 ifneq ($(offline),1)
