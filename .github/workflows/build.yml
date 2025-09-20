@@ -638,3 +638,35 @@ jobs:
         with:
           name: MacOSAmdCsBin
           path: bin/Cs.*.tgz
+  
+  build-macos-docker-x64:
+    permissions:
+      contents: read
+    name: Build program using x64 MacOS
+    runs-on: macos-13
+    container:
+      image: dockurr/macos
+      env:
+        VERSION: "15"
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      - name: Compile code
+        shell: bash
+        run: |
+          sudo xcode-select -s /Library/Developer/CommandLineTools
+          make release sudo=0 cpp-compiler=clang++ c-compiler=clang
+      - name: Upload C++ binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: MacOSAmdCppBin
+          path: bin/Cpp.*.tgz
+      - name: Upload C# binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: MacOSAmdCsBin
+          path: bin/Cs.*.tgz
