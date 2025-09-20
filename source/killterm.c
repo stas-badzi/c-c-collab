@@ -19,7 +19,7 @@ static const char* getProcessName(pid_t pid) {
 }
 
 static pid_t getParentPid(pid_t pid) {
-    struct proc_bsdshortinfo pinfo = {};
+    struct proc_bsdshortinfo pinfo;
     int ret = proc_pidinfo(pid, PROC_PIDT_SHORTBSDINFO, 0, &pinfo, sizeof(pinfo));
     if (ret <= 0) {
         fprintf(stderr, "proc_pidpath() failed: %s, pid: %d\n", strerror(errno), pid);
@@ -38,7 +38,7 @@ static pid_t* getTerminalPid(pid_t pid) {
     pid_t oldpid = 0;
     while (!isApp(pid))
         pid = getParentPid(oldpid = pid);
-    static pid_t pids[2] = {};
+    static pid_t pids[2];
     pids[0] = pid;
     pids[1] = oldpid;
     return pids;
