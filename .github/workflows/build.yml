@@ -140,7 +140,7 @@ jobs:
       - name: Compile code
         shell: C:\cygwin64\bin\bash.exe --login -o igncr '{0}'
         run: |
-          cd /cygdrive/$(echo '${{ github.workspace }}' | sed 's/\\\\/\\//g' | sed 's/://g' | sed 's/\(.*\)/\L\1/')
+          cd "$(cygpath -u '${{ github.workspace }}')"
           ./make.exe sudo=0 archchk=0 nodep=1 c-compiler=/bin/gcc cpp-compiler=/bin/g++
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
@@ -689,34 +689,34 @@ jobs:
           name: MacOSAmdCsBin
           path: bin/Cs.*.tgz
   
-  build-macos-docker-x64:
-    permissions:
-      contents: read
-    name: Build program using x64 MacOS 15 (Docker)
-    runs-on: ubuntu-latest
-    container:
-      image: dockurr/macos
-      env:
-        VERSION: "15"
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0.x'
-      - name: Compile code
-        shell: bash
-        run: |
-          xcode-select -s /Library/Developer/CommandLineTools
-          make release sudo=0 cpp-compiler=clang++ c-compiler=clang
-      - name: Upload C++ binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: MacOSAmdCppBin
-          path: bin/Cpp.*.tgz
-      - name: Upload C# binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: MacOSAmdCsBin
-          path: bin/Cs.*.tgz
+#  build-macos-docker-x64:
+#    permissions:
+#      contents: read
+#    name: Build program using x64 MacOS 15 (Docker)
+#    runs-on: ubuntu-latest
+#    container:
+#      image: dockurr/macos
+#      env:
+#        VERSION: "15"
+#    steps:
+#      - name: Checkout source code
+#        uses: actions/checkout@v4
+#      - name: Setup .NET
+#        uses: actions/setup-dotnet@v4
+#        with:
+#          dotnet-version: '9.0.x'
+#      - name: Compile code
+#        shell: bash
+#        run: |
+#          xcode-select -s /Library/Developer/CommandLineTools
+#          make release sudo=0 cpp-compiler=clang++ c-compiler=clang
+#      - name: Upload C++ binaries
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: MacOSAmdCppBin
+#          path: bin/Cpp.*.tgz
+#      - name: Upload C# binaries
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: MacOSAmdCsBin
+#          path: bin/Cs.*.tgz
