@@ -53,7 +53,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           update: true
-          install: make git zip tree mingw-w64-x86_64-binutils mingw-w64-x86_64-clang
+          install: make git zip mingw-w64-x86_64-binutils mingw-w64-x86_64-clang
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
@@ -76,7 +76,6 @@ jobs:
         shell: msys2 {0}
         run: |
           cd /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
-          tree
           export PATH=/mingw64/bin:$PATH
           make resources cpp cppbin sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0
           touch cs cpp cppbin csbin
@@ -104,7 +103,7 @@ jobs:
         run: |
           Invoke-WebRequest -Uri "https://www.cygwin.com/setup-x86_64.exe" -OutFile "setup-x86_64.exe" -Verbose
           choco install sudo
-          sudo .\setup-x86_64.exe -s	https://mirrors.kernel.org/sourceware/cygwin -q -P gcc-g++,zip,grep,gawk,binutils,tree
+          sudo .\setup-x86_64.exe -s	https://mirrors.kernel.org/sourceware/cygwin -q -P gcc-g++,zip,grep,gawk,binutils
           sudo rm .\setup-x86_64.exe
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -136,13 +135,6 @@ jobs:
           Expand-Archive -Force make-bin.zip .
           del make-bin.zip
           copy make-4.4.1\dist\* .
-          ls C:\cygwin64
-          ls C:\cygwin64\bin
-          ls C:\cygwin64\usr\bin
-          ls C:\cygwin64\bin\bash.exe
-      - name: TestCyg
-        shell: C:\cygwin64\bin\bash.exe --login -o igncr '{0}'
-        run: echo /cygdrive/$(echo '${{ github.workspace }}' | sed 's/\\\\/\\//g' | sed 's/://g' | sed 's/\(.*\)/\L\1/')
       - name: Compile code
         shell: C:\cygwin64\bin\bash.exe --login -o igncr '{0}'
         run: |
@@ -261,7 +253,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           update: true
-          install: make git zip tree mingw-w64-i686-binutils mingw-w64-i686-clang
+          install: make git zip mingw-w64-i686-binutils mingw-w64-i686-clang
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
@@ -287,7 +279,6 @@ jobs:
           CXX: g++
         run: |
           cd /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
-          tree
           export PATH=/mingw32/bin:$PATH
           make resources cpp cppbin sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0
           touch cs cpp cppbin csbin
@@ -404,7 +395,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           update: true
-          install: make git zip tree mingw-w64-clang-aarch64-binutils mingw-w64-clang-aarch64-clang
+          install: make git zip mingw-w64-clang-aarch64-binutils mingw-w64-clang-aarch64-clang
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
@@ -430,7 +421,6 @@ jobs:
           CXX: g++
         run: |
           cd /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
-          tree
           export PATH=/clangarm64/bin:$PATH
           make resources cpp cppbin sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0
           touch cs cpp cppbin csbin
@@ -482,7 +472,6 @@ jobs:
         run: |
           choco install make
           choco install zip
-          choco install tree
           del "C:\Program Files\LLVM\bin\clang-cl.exe"
       - name: Compile code
         shell: cmd /c {0}
