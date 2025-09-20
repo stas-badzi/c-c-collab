@@ -94,9 +94,11 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Set up Cygwin
-        uses: egor-tensin/setup-cygwin@v4
-        with:
-          packages: gcc-g++ zip grep gawk binutils tree
+        shell: powershell.exe
+        run:
+          cd ..
+          Invoke-WebRequest -Uri "https://www.cygwin.com/setup-x86_64.exe" -OutFile "setup-x86_64.exe" -Verbose
+          setup-x86.exe -q -P gcc-g++,zip,grep,gawk,binutils,tree
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
@@ -114,7 +116,7 @@ jobs:
         run: |
           dir
       - name: Copy C# where it's needed
-        shell: C:\tools\cygwin\bin\bash.exe --login -o igncr '{0}'
+        shell: C:\cygwin64\bin\bash.exe --login -o igncr '{0}'
         run: |
           cd $(cygpath -u "${{ github.workspace }}")
           touch cs
@@ -131,13 +133,10 @@ jobs:
           del make-bin.zip
           copy make-4.4.1\dist\* .
       - name: Compile code
-        shell: C:\tools\cygwin\bin\bash.exe --login -o igncr '{0}'
-        env:
-          CC: gcc
-          CXX: g++
+        shell: C:\cygwin64\bin\bash.exe --login -o igncr '{0}'
         run: |
           cd $(cygpath -u "${{ github.workspace }}")
-          ./make resources cpp cppbin sudo=0 archchk=0 nodep=1
+          ./make resources cpp cppbin sudo=0 archchk=0 nodep=1 c-compiler=/bin/gcc cpp-compiler=/bin/g++
           touch cs cpp cppbin csbin
           ./make archchk=0
       - name: Upload C++ binaries
