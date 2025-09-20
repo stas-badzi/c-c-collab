@@ -131,6 +131,7 @@ jobs:
           Expand-Archive -Force make-bin.zip .
           del make-bin.zip
           copy make-4.4.1\dist\* .
+          C:\cygwin64\bin\bash.exe -c ls
       - name: TestCyg
         shell: C:\cygwin64\bin\bash.exe --login '{0}'
         run: ls
