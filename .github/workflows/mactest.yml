@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: Test MacOS Version
         shell: bash
-        run: sw_vers -productVersion | cut -d '.' -f 1,2
+        run: sw_vers -productVersion | cut -d '.' -f 1,2 && uname -a
   
   test-macos-x64:
     permissions:
@@ -24,16 +24,16 @@ jobs:
     steps:
       - name: Test MacOS Version
         shell: bash
-        run: sw_vers -productVersion | cut -d '.' -f 1,2
+        run: sw_vers -productVersion | cut -d '.' -f 1,2 && uname -a
   test-macos-26:
     permissions:
       contents: read
-    name: Build program using x64 MacOS 13
+    name: Build program using x64 MacOS 26
     runs-on: macos-26
     steps:
       - name: Test MacOS Version
         shell: bash
-        run: sw_vers -productVersion | cut -d '.' -f 1,2
+        run: sw_vers -productVersion | cut -d '.' -f 1,2 && uname -a
   
   test-macos-docker-x64:
     permissions:
@@ -48,4 +48,4 @@ jobs:
     steps:
       - name: Test MacOS Version
         shell: bash
-        run: sw_vers -productVersion | cut -d '.' -f 1,2
+        run: sw_vers -productVersion | cut -d '.' -f 1,2 && uname -a
