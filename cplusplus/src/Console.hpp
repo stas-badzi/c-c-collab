@@ -88,9 +88,9 @@
     #include <crt_externs.h>
     #include <libproc.h>
     #define thread_t _thread_t
-    __if_not_exists(quick_exit) {
+    #ifndef__cpp_lib_quick_exit
         #include <quick_exit.h>
-    }
+    #endif
 #elif __CYGWIN__
     #include <sys/cygwin.h>
     #include <sys/poll.h>
