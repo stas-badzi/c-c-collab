@@ -88,7 +88,7 @@
     #include <crt_externs.h>
     #include <libproc.h>
     #define thread_t _thread_t
-    #ifndef__cpp_lib_quick_exit
+    #ifndef __cpp_lib_quick_exit
         #include <quick_exit.h>
     #endif
 #elif __CYGWIN__
