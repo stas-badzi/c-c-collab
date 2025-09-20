@@ -37,7 +37,7 @@
 #ifdef __APPLE__
     #include <signal.h>
     #include <mach-o/dyld.h>
-    #ifndef__cpp_lib_quick_exit
+    #ifndef __cpp_lib_quick_exit
         #include <quick_exit.h>
     #endif
 #elif __linux__
