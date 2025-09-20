@@ -117,10 +117,6 @@ jobs:
         with:
           name: CSharpWinx64Exe
           path: binarysharp/bin/exe
-      - name: testrea;
-        shell: cmd
-        run: |
-          dir
       - name: Copy C# where it's needed
         shell: pwsh
         run: |
@@ -145,12 +141,70 @@ jobs:
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
-          name: CygwinCppBin
+          name: Cygwinx64CppBin
           path: bin/Cpp.*.zip
       - name: Upload C# binaries
         uses: actions/upload-artifact@v4
         with:
-          name: CygwinCsBin
+          name: Cygwinx64CsBin
+          path: bin/Cs.*.zip
+  
+  build-cygwin-x86:
+    permissions:
+      contents: read
+    name: Build program using Cygwin x86
+    needs: compile-cs-windows-x86
+    runs-on: windows-latest
+    steps:
+      - name: Install Cygwin
+        shell: powershell
+        run: |
+          Invoke-WebRequest -Uri http://ctm.crouchingtigerhiddenfruitbat.org/pub/cygwin/setup/snapshots/setup-x86-2.923.exe -OutFile setup-x86.exe -Verbose
+          choco install sudo
+          sudo .\setup-x86.exe -s http://ctm.crouchingtigerhiddenfruitbat.org -q -P gcc-g++,zip,grep,gawk,binutils,tar
+          sudo rm .\setup-x86.exe
+      - name: Checkout source code
+        uses: actions/checkout@v4
+      - name: Import C# compiled dynamic library
+        uses: actions/download-artifact@v4
+        with:
+          name: CSharpWinx86Dll
+          path: csharp/bin/lib
+      - name: Import C# compiled executable
+        uses: actions/download-artifact@v4
+        with:
+          name: CSharpWinx86Exe
+          path: binarysharp/bin/exe
+      - name: Copy C# where it's needed
+        shell: pwsh
+        run: |
+          echo $null >> cs
+          echo $null >> csbin
+          cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
+          cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
+      - name: Install Programs
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://mirror.msys2.org/mingw/mingw32/mingw-w64-i686-make-4.4.1-3-any.pkg.tar.zst" -OutFile "make-bin.tar.zst" -Verbose
+          C:\cygwin\bin\tar.exe -xf make-bin.tar.zst
+          del make-bin.tar.zst
+          copy make-bin\mingw32\bin\make.exe .
+      - name: Compile code
+        shell: C:\cygwin\bin\bash.exe --login -o igncr '{0}'
+        run: |
+          cd /cygdrive/$(echo '${{ github.workspace }}' | sed 's/\\\\/\\//g' | sed 's/://g' | sed 's/\(.*\)/\L\1/')
+          ./make resources cpp cppbin sudo=0 archchk=0 nodep=1 c-compiler=/bin/gcc cpp-compiler=/bin/g++
+          touch cs cpp cppbin csbin
+          ./make archchk=0
+      - name: Upload C++ binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: Cygwinx86CppBin
+          path: bin/Cpp.*.zip
+      - name: Upload C# binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: Cygwinx86CsBin
           path: bin/Cs.*.zip
   
   build-windows-x64:
