@@ -608,11 +608,9 @@ jobs:
   build-macos-x64:
     permissions:
       contents: read
-    name: Build program using x64 MacOS
+    name: Build program using x64 MacOS 13
     runs-on: macos-13
     steps:
-      - name: Setup Docker on macOS
-        uses: douglascamata/setup-docker-macos-action@v1.0.0
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Setup .NET
@@ -638,8 +636,8 @@ jobs:
   build-macos-docker-x64:
     permissions:
       contents: read
-    name: Build program using x64 MacOS
-    runs-on: macos-13
+    name: Build program using x64 MacOS 15 (Docker)
+    runs-on: ubuntu-latest
     container:
       image: dockurr/macos
       env:
