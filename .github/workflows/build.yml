@@ -613,7 +613,7 @@ jobs:
     permissions:
       contents: read
     name: Build program using x64 MacOS
-    runs-on: [self-hosted, macOS, X64]
+    runs-on: macos-13
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
