@@ -98,14 +98,14 @@ jobs:
     needs: compile-cs-windows-x64
     runs-on: windows-2022
     steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
       - name: Install Cygwin
         shell: powershell
         run: |
-          cd ..
           Invoke-WebRequest -Uri "https://www.cygwin.com/setup-x86_64.exe" -OutFile "setup-x86_64.exe" -Verbose
-          .\setup-x86_64.exe -s https://mirrors.kernel.org/sourceware/cygwin -W -q -P binutils,gcc-g++,zip,gawk,grep
-      - name: Checkout source code
-        uses: actions/checkout@v4
+          choco install sudo
+          sudo .\setup-x86_64.exe -s https://mirrors.kernel.org/sourceware/cygwin -W -q -P binutils,gcc-g++,zip,gawk,grep
       - name: Import C# compiled dynamic library
         uses: actions/download-artifact@v4
         with:
