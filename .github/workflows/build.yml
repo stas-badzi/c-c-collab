@@ -134,10 +134,12 @@ jobs:
           Expand-Archive -Force make-bin.zip .
           del make-bin.zip
           copy make-4.4.1\dist\* .
+      - name: TestCyg
+        shell: C:\cygwin64\bin\bash.exe --login -o igncr '{0}'
+        run: echo /cygdrive/$(echo "${{ github.workspace }}" | sed s/\\\\/\\//g | sed s/://g | sed 's/\(.*\)/\L\1/')
       - name: Compile code
         shell: C:\cygwin64\bin\bash.exe --login -o igncr '{0}'
         run: |
-          echo /cygdrive/$(echo "${{ github.workspace }}" | sed s/\\\\/\\//g | sed s/://g | sed 's/\(.*\)/\L\1/')
           cd /cygdrive/$(echo "${{ github.workspace }}" | sed s/\\\\/\\//g | sed s/://g | sed 's/\(.*\)/\L\1/')
           ./make resources cpp cppbin sudo=0 archchk=0 nodep=1 c-compiler=/bin/gcc cpp-compiler=/bin/g++
           touch cs cpp cppbin csbin
