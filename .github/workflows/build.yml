@@ -100,7 +100,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Set up Cygwin
-        shell: powershell.exe
+        shell: powershell
         run:
           cd ..
           Invoke-WebRequest -Uri "https://www.cygwin.com/setup-x86_64.exe" -OutFile "setup-x86_64.exe" -Verbose
