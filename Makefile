@@ -134,9 +134,12 @@ endif
 endif
 
 ifeq ($(shell uname -s),Darwin)
+macver = -D_MAC_VER:$(shell sw_vers -productVersion | cut -d '.' -f 1,2)
 ifeq ($(shell arch), x86_64)
 arch = x64
 endif
+else
+macver =
 endif
 
 ifeq ($(shell echo "check quotes"),"check quotes")
@@ -1004,7 +1007,7 @@ ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c++2b
 else
 # not windows
-	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE $(cdb) -fvisibility=hidden $< -I cplusplus/include -std=c++2b
+	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE $(macver) $(cdb) -fvisibility=hidden $< -I cplusplus/include -std=c++2b
 endif
 endif
 endif
@@ -1056,7 +1059,7 @@ ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
 else
 # not windows
-	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE $(cdb) -fvisibility=hidden $< -I cplusplus/include -std=c2x
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE $(macver) $(cdb) -fvisibility=hidden $< -I cplusplus/include -std=c2x
 endif
 endif
 endif
