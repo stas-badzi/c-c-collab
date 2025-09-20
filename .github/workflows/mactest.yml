@@ -39,13 +39,14 @@ jobs:
     permissions:
       contents: read
     name: Build program using x64 MacOS 15 (Docker)
-    runs-on: ubuntu-latest
-    container:
-      image: dockurr/macos
-      env:
-        VERSION: "15"
-    
+    runs-on: macos-13
     steps:
+      - name: Intall UTM
+        run: |
+          wget https://github.com/utmapp/UTM/releases/latest/download/UTM.dmg
+          hdiutil attach UTM.dmg
+          sudo cp -rf /Volumes/UTM /Applications
+          hdiutil detach /Volumes/UTM
       - name: Test MacOS Version
         shell: bash
         run: sw_vers -productVersion | cut -d '.' -f 1,2 && uname -a
