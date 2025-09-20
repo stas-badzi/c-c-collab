@@ -104,7 +104,6 @@ jobs:
         run: |
           Invoke-WebRequest -Uri "https://www.cygwin.com/setup-x86_64.exe" -OutFile "setup-x86_64.exe" -Verbose
           .\setup-x86_64.exe -q -P gcc-g++,zip,grep,gawk,binutils,tree
-          rm setup-x86_64.exe
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
