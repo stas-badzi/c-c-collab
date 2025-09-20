@@ -134,7 +134,7 @@ endif
 endif
 
 ifeq ($(shell uname -s),Darwin)
-macver = -D_MAC_VER=$(shell sw_vers -productVersion | cut -d '.' -f 1,2)
+macver = -D_MAC_VER=$(shell sw_vers -productVersion | cut -d '.' -f 1)
 ifeq ($(shell arch), x86_64)
 arch = x64
 endif

@@ -790,7 +790,7 @@ public:
         SNAPSHOT , /* Print Screen Key */
         SUPERL = kVK_Command, /* Left Super[Windows/Command] key */
         SUPERR = kVK_RightCommand, /* Right Super[Windows/Command] key */
-#if _MAC_VER >= 15.0
+#if _MAC_VER >= 15
         MENU = kVK_ContextualMenu, /* Applications Key */
 #else
         MENU = 110, /* Applications Key */
