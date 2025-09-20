@@ -658,7 +658,7 @@ ifeq ($(shell uname -s),Linux)
 	$(c-compiler) -o assets/setkbdmode objects/setkbdmode.o -Lassets -llinuxctrl $(static-libc)
 	$(c-compiler) -o assets/startprogram.bin objects/startprogram.o $(static-libc) -D_GNU_SOURCE
 ifneq ($(offline),1)
-	git submodule init --recursive --remote utilities/doas-keepenv
+	git submodule update --init --rebase --recursive --remote utilities/doas-keepenv
 endif
 ifeq ($(copylibs),1)
 	@echo "$(linuxroot)/share/factoryrush/bin"
@@ -689,7 +689,7 @@ ifeq ($(shell uname -s),Darwin)
 	$(c-compiler) -c source/killterm.c -pedantic -Wall -Wextra -Wpedantic $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(c-compiler) -o assets/killterm objects/killterm.o
 ifneq ($(offline),1)
-	git submodule init --recursive --remote utilities/give-control
+	git submodule update --init --rebase --recursive --remote utilities/give-control
 endif
 ifeq ($(copylibs),1)
 	$(admin)mkdir -p $(macosroot)/share/factoryrush/lib $(macosroot)/share/factoryrush/bin$(adminend)
