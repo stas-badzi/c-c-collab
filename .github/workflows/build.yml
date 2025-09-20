@@ -104,8 +104,8 @@ jobs:
           Invoke-WebRequest -Uri "https://www.cygwin.com/setup-x86_64.exe" -OutFile "setup-x86_64.exe" -Verbose
           choco install gsudo
           Import-Module 'gsudoModule'
-          sudo --wait .\setup-x86_64.exe -s https://mirrors.kernel.org/sourceware/cygwin -W -q -P binutils,gcc-g++,zip,gawk,grep
-          sudo --wait rm .\setup-x86_64.exe
+          gsudo --wait .\setup-x86_64.exe -s https://mirrors.kernel.org/sourceware/cygwin -W -q -P binutils,gcc-g++,zip,gawk,grep
+          gsudo --wait rm .\setup-x86_64.exe
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
