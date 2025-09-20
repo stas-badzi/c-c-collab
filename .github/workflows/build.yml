@@ -103,7 +103,9 @@ jobs:
         run: |
           Invoke-WebRequest -Uri "https://www.cygwin.com/setup-x86_64.exe" -OutFile "setup-x86_64.exe" -Verbose
           choco install sudo
-          sudo .\setup-x86_64.exe -s	https://mirrors.kernel.org/sourceware/cygwin -q -P gcc-g++,zip,grep,gawk,binutils
+          sudo .\setup-x86_64.exe -s	https://mirrors.kernel.org/sourceware/cygwin -q -P binutils,gcc-g++,zip,gawk,grep
+          Do {Start-Sleep -Seconds 1}
+          until (Test-Path -path "C:\cygwin64\bin\grep.exe")
           sudo rm .\setup-x86_64.exe
       - name: Checkout source code
         uses: actions/checkout@v4
