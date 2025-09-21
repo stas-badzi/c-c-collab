@@ -98,14 +98,15 @@ jobs:
     needs: compile-cs-windows-x64
     runs-on: windows-2022
     steps:
-      - name: Install Cygwin
+      - name: Install gsudo
         shell: powershell
+        run: choco install gsudo
+      - name: Install Cygwin (gsudo)
+        shell: gsudo C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -C ". {0}"
         run: |
           Invoke-WebRequest -Uri "https://www.cygwin.com/setup-x86_64.exe" -OutFile "setup-x86_64.exe" -Verbose
-          choco install gsudo
-          Import-Module 'gsudoModule'
-          gsudo --wait .\setup-x86_64.exe -s https://mirrors.kernel.org/sourceware/cygwin -W -q -P binutils,gcc-g++,zip,gawk,grep
-          gsudo --wait rm .\setup-x86_64.exe
+          .\setup-x86_64.exe -s https://mirrors.kernel.org/sourceware/cygwin -q -P binutils,gcc-g++,zip,gawk,grep
+          rm .\setup-x86_64.exe
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
