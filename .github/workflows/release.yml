@@ -16,6 +16,8 @@ on:
 jobs:
   release:
     name: Release Compiled Binaries and Source Code
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - name: checkout last commit
