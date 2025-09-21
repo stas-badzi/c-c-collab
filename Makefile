@@ -5,6 +5,7 @@
 # tgarch = [host arch] -> set target architecture (for dotnet publish)
 # msvc = [0] -> force msvc++ compilation (windows only, must be run in VS developer command prompt)
 # give-ctrl = [1] -> give control over the keyboard to the binary (macOS only, requires sudo permissions)
+# universal2 = [0] -> compile for both arm64 and x64 (macOS only) 
 # c-compiler = [$defcompc] -> set compiler location
 # cpp-compiler = [$defcompcxx] -> set compiler location
 
@@ -138,6 +139,10 @@ macver = -D_MAC_VER=$(shell sw_vers -productVersion | cut -d '.' -f 1)
 ifeq ($(shell arch), x86_64)
 arch = x64
 endif
+ifeq ($(universal2),1)
+tgarch=x64;osx-arm64
+cflags=$(cflags) -arch x86_64 -arch arm64
+else
 else
 macver =
 endif
