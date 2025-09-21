@@ -98,13 +98,14 @@ jobs:
     needs: compile-cs-windows-x64
     runs-on: windows-2022
     steps:
-      - name: Install gsudo
+      - name: Install Cygwin install requirements
         shell: powershell
-        run: choco install gsudo
-      - name: Install Cygwin (gsudo)
-        shell: C:\tools\gsudo\Current\gsudo.exe C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -C ". {0}"
         run: |
+          choco install gsudo
           Invoke-WebRequest -Uri "https://www.cygwin.com/setup-x86_64.exe" -OutFile "setup-x86_64.exe" -Verbose
+      - name: Install Cygwin (gsudo)
+        shell: C:\tools\gsudo\Current\gsudo.exe "{0}"
+        run: |
           .\setup-x86_64.exe -s https://mirrors.kernel.org/sourceware/cygwin -q -P binutils,gcc-g++,zip,gawk,grep
           rm .\setup-x86_64.exe
       - name: Checkout source code
@@ -122,6 +123,7 @@ jobs:
       - name: Copy C# where it's needed
         shell: pwsh
         run: |
+          ls C:\cygwin64\bin
           echo $null >> cs
           echo $null >> csbin
           cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
