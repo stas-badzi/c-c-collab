@@ -102,7 +102,7 @@ jobs:
         shell: powershell
         run: choco install gsudo
       - name: Install Cygwin (gsudo)
-        shell: gsudo C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -C ". {0}"
+        shell: C:\tools\gsudo\Current\gsudo.exe C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -C ". {0}"
         run: |
           Invoke-WebRequest -Uri "https://www.cygwin.com/setup-x86_64.exe" -OutFile "setup-x86_64.exe" -Verbose
           .\setup-x86_64.exe -s https://mirrors.kernel.org/sourceware/cygwin -q -P binutils,gcc-g++,zip,gawk,grep
