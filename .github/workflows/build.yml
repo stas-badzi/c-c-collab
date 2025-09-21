@@ -612,7 +612,7 @@ jobs:
 
   build-debian-x64:
     permissions:
-      contents: read
+      contents: none
     name: Build program using Debian
     runs-on: [self-hosted, debian]
     steps:
