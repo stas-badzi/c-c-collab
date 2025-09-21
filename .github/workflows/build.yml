@@ -102,6 +102,7 @@ jobs:
         shell: powershell
         run: |
           Invoke-WebRequest -Uri "https://www.cygwin.com/setup-x86_64.exe" -OutFile "setup-x86_64.exe" -Verbose
+          Remove-Item C:\cygwin64 -Recurse -Force
           .\setup-x86_64.exe -s https://mirrors.kernel.org/sourceware/cygwin --no-admin -q -P binutils,gcc-g++,zip,gawk,grep
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -118,7 +119,6 @@ jobs:
       - name: Copy C# where it's needed
         shell: pwsh
         run: |
-          ls C:\cygwin64\bin
           echo $null >> cs
           echo $null >> csbin
           cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
@@ -130,10 +130,6 @@ jobs:
           Expand-Archive -Force make-bin.zip .
           del make-bin.zip
           copy make-4.4.1\dist\* .
-          C:\cygwin64\bin\bash.exe -c ls
-      - name: TestCyg
-        shell: C:\cygwin64\bin\bash.exe --login '{0}'
-        run: ls
       - name: Compile code
         shell: C:\cygwin64\bin\bash.exe --login -o igncr '{0}'
         run: |
