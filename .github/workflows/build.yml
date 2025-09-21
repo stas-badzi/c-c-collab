@@ -102,8 +102,9 @@ jobs:
         shell: powershell
         run: |
           Invoke-WebRequest -Uri "https://www.cygwin.com/setup-x86_64.exe" -OutFile "setup-x86_64.exe" -Verbose
-          Remove-Item C:\cygwin64 -Recurse -Force
           .\setup-x86_64.exe -s https://mirrors.kernel.org/sourceware/cygwin --no-admin -q -P binutils,gcc-g++,zip,gawk,grep
+          # wait for cygwin to install the last man page of the last package (openssl) 
+          Do {Start-Sleep -Milliseconds 100} Until (Test-Path "C:\cygwin64\usr\share\man\man7\openssl_user_macros.7ossl.gz")
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
