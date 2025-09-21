@@ -98,16 +98,11 @@ jobs:
     needs: compile-cs-windows-x64
     runs-on: windows-2022
     steps:
-      - name: Install Cygwin install requirements
+      - name: Install Cygwin
         shell: powershell
         run: |
-          choco install gsudo
           Invoke-WebRequest -Uri "https://www.cygwin.com/setup-x86_64.exe" -OutFile "setup-x86_64.exe" -Verbose
-      - name: Install Cygwin (gsudo)
-        shell: C:\tools\gsudo\Current\gsudo.exe "{0}"
-        run: |
-          .\setup-x86_64.exe -s https://mirrors.kernel.org/sourceware/cygwin -q -P binutils,gcc-g++,zip,gawk,grep
-          rm .\setup-x86_64.exe
+          .\setup-x86_64.exe -s https://mirrors.kernel.org/sourceware/cygwin --no-admin -q -P binutils,gcc-g++,zip,gawk,grep
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
@@ -166,9 +161,8 @@ jobs:
         shell: powershell
         run: |
           Invoke-WebRequest -Uri http://ctm.crouchingtigerhiddenfruitbat.org/pub/cygwin/setup/snapshots/setup-x86-2.923.exe -OutFile setup-x86.exe -Verbose
-          choco install sudo
-          sudo .\setup-x86.exe -q -P gcc-g++,zip,grep,gawk,binutils,tar
-          sudo rm .\setup-x86.exe
+          .\setup-x86.exe --no-admin -q -P gcc-g++,zip,grep,gawk,binutils,tar
+          rm .\setup-x86.exe
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
