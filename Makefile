@@ -148,13 +148,13 @@ ifeq ($(shell arch), x86_64)
 arch = x64
 endif
 ifeq ($(universal2),1)
-arch = x64
+arch = x86_64
+archif = -arch $(arch)
 _cflags = -arch arm64 $(cflags)
 _cxxflags = -arch arm64 $(cxxflags)
 arch2 = universal2
 endif
 macver =
-archif = -arch $(arch)
 endif
 
 ifeq ($(shell echo "check quotes"),"check quotes")
