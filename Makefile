@@ -642,7 +642,7 @@ ifeq ($(universal2),1)
 	$(staticgen)assets/arm64/libglobals.$(static) objects/arm64/globals.o
 endif
 else
-	@echo "rc /nologo /fo objects\resources.res source\resources.rc" > run.bat
+	@echo "rc /nologo /fo objects\$(arch)\resources.res source\resources.rc" > run.bat
 	@cmd.exe /c run.bat
 
 	@echo "$(c-compiler) /c /DUNICODE /D_MSVC /D_CRT_SECURE_NO_DEPRECATE $(cdb) source/killwindow.c source/beep.c $(clstd)" > run.bat
@@ -891,7 +891,7 @@ endif
 	@echo "Version file. Remove to enable recompile" > $@
 
 ifeq ($(msvc),1)
-resources = objects/resources.res
+resources = objects/$(arch)/resources.res
 else
 resources =
 endif
@@ -904,7 +904,7 @@ ifeq ($(msvc),1)
 	echo "$(cpp-compiler) /EHsc /c /DUNICODE $(bpdb) source/launcher.cpp $(clstdpp)" > run.bat
 	@cmd.exe /c run.bat
 	@$(movefl) -f launcher.obj objects
-	echo "link /OUT:binaryplus/launcher.exe /CGTHREADS:8 objects/launcher.obj objects/resources.res" > run.bat
+	echo "link /OUT:binaryplus/launcher.exe /CGTHREADS:8 objects/launcher.obj objects/$(arch)/resources.res" > run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
 
