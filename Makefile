@@ -140,10 +140,9 @@ ifeq ($(shell arch), x86_64)
 arch = x64
 endif
 ifeq ($(universal2),1)
-tgarch=x64;osx-arm64
-cflags=$(cflags) -arch x86_64 -arch arm64
-else
-else
+tgarch=x64
+cflags=-arch x86_64 -arch arm64 $(cflags)
+endif
 macver =
 endif
 
@@ -809,6 +808,13 @@ cs: $(resdep) $(foreach fl,$(files),csharp/$(fl))
 
 	-@mkdir -p csharp/bin/$(configuration)/net9.0/$(os_name)/native/
 	-@mv csharp/bin/$(arch)/$(configuration)/net9.0/$(os_name)/native/* csharp/bin/$(configuration)/net9.0/$(os_name)/native/
+ifeq ($(universal2),1)
+	cd csharp && dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r osx-arm64 -c $(configuration)
+
+	-@mkdir -p csharp/bin/$(configuration)/net9.0/osx-arm64/native/
+	-@mv csharp/bin/$(arch)/$(configuration)/net9.0/osx-arm64/native/* csharp/bin/$(configuration)/net9.0/osx-arm64/native/
+	lipo -create csharp/bin/$(configuration)/net9.0/$(os_name)/native/$(libname) csharp/bin/$(configuration)/net9.0/osx-arm64/native/$(libname) -output csharp/bin/$(configuration)/net9.0/$(os_name)/native/$(libname)
+endif
 ifeq ($(msvc),1)
 	@cd csharp/bin/$(configuration)/net9.0/$(os_name)/native/ && for i in *.exp; do if [ ! "$$i" = '$(filename).exp' ]; then mv $$i $(filename).exp; fi; done && for i in *.lib; do if [ ! "$$i" = '$(filename).lib' ]; then mv $$i $(filename).lib; fi; done && for i in *.pdb; do if [ ! "$$i" = '$(filename).pdb' ]; then mv $$i $(filename).pdb; fi; done && for i in *.dll; do if [ ! "$$i" = '$(filename).dll' ]; then mv $$i $(filename).dll; fi; done 
 	@mv csharp/bin/$(configuration)/net9.0/$(os_name)/native/* csharp/bin/lib
@@ -934,6 +940,13 @@ csbin: $(foreach bfl,$(binfiles),binarysharp/$(bfl))
 
 	-@mkdir -p binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/
 	-@mv binarysharp/bin/$(arch)/$(configuration)/net9.0/$(os_name)/native/* binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/
+ifeq ($(universal2),1)
+	cd binarysharp && dotnet publish -p:SelfContained=true -r osx-arm64 -c $(configuration)
+
+	-@mkdir -p binarysharp/bin/$(configuration)/net9.0/osx-arm64/native/
+	-@mv binarysharp/bin/$(arch)/$(configuration)/net9.0/osx-arm64/native/* binarysharp/bin/$(configuration)/net9.0/osx-arm64/native/
+	lipo -create binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/$(binfile).$(binary) binarysharp/bin/$(configuration)/net9.0/osx-arm64/native/$(binfile).$(binary) -output binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/$(binfile).$(binary)
+endif
 ifeq ($(msvc),1)
 	@cd binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/ && for i in *.$(binary); do if [ ! "$$i" = '$(binname).$(binary)' ]; then mv $$i $(binname).$(binary); fi; done 
 	@mv binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/* binarysharp/bin/exe
