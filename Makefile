@@ -134,20 +134,27 @@ arch = x64
 endif
 endif
 
+ifneq ($(tgarch),$(empty))
+	arch = $(tgarch)
+endif
+arch2 = $(arch)
+
+_cflags = $(cflags)
+_cxxflags = $(cxxflags)
+archif =
 ifeq ($(shell uname -s),Darwin)
 macver = -D_MAC_VER=$(shell sw_vers -productVersion | cut -d '.' -f 1)
 ifeq ($(shell arch), x86_64)
 arch = x64
 endif
 ifeq ($(universal2),1)
-tgarch=x64
-_cflags=-arch x86_64 -arch arm64 $(cflags)
-else
-_cflags=$(cflags)
+arch = x64
+_cflags = -arch arm64 $(cflags)
+_cxxflags = -arch arm64 $(cxxflags)
+arch2 = universal2
 endif
 macver =
-else
-_cflags=$(cflags)
+archif = -arch $(arch)
 endif
 
 ifeq ($(shell echo "check quotes"),"check quotes")
@@ -203,10 +210,6 @@ cppdep = cpp
 resdep = resources
 endif
 
-ifneq ($(tgarch),$(empty))
-	arch = $(tgarch)
-endif
-
 ifeq ($(msvc),1)
 ifeq ($(findstring clang, $(c-compiler)),clang)
 ifeq ($(arch),x86)
@@ -255,13 +258,13 @@ os = $(subst $(space),-,$(shell echo $$(uname -s) $$(uname -r).$$(uname -m)))
 ifeq ($(msvc),1)
 flib = ../csharp/bin/lib/$(filename).lib
 fsrc = $(foreach src,$(sources),cplusplus\\src\\$(src))
-objects = $(foreach file,$(sources),obj/$(subst .c,.obj,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
-fbobj = $(foreach file,$(binsources),obj/$(subst .c,.obj,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
+objects = $(foreach file,$(sources),obj/$(arch)/$(subst .c,.obj,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
+fbobj = $(foreach file,$(binsources),obj/$(arch)/$(subst .c,.obj,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
 else
 flib = -l$(filename)
 fsrc = $(foreach src,$(sources),cplusplus/src/$(src))
-objects = $(foreach file,$(sources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
-fbobj = $(foreach file,$(binsources),obj/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
+objects = $(foreach file,$(sources),obj/$(arch)/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
+fbobj = $(foreach file,$(binsources),obj/$(arch)/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
 endif
 
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
@@ -399,10 +402,10 @@ else
 ifeq ($(shell uname -s),Darwin)
 #macos
 nulldir =  /dev/null
-binflags = -lapplecuchar -L../assets
+binflags = -lapplecuchar -L../assets/$(arch2)
 admin = sudo$(space)
 adminend =
-staticgen = ar -rcs$(space)
+staticgen = libtool -static -o$(space)
 run = ./
 os_name = osx-$(arch)
 binary = app
@@ -595,7 +598,7 @@ ifeq ($(shell echo "check quotes"),"check quotes")
 	@del /f compile-cppbin
 	@del /f cpp
 	@del /f resources
-	@del /f cplusplus\obj\*
+	@del /f cplusplus\obj\* 
 	@del /f binaryplus\obj\*
 	@del /f objects\*
 else
@@ -603,9 +606,9 @@ else
 	@rm -f cppbin
 	@rm -f cpp
 	@rm -f resources
-	@rm -f cplusplus/obj/*
-	@rm -f binaryplus/obj/*
-	@rm -f objects/*
+	@rm -rf cplusplus/obj/*
+	@rm -rf binaryplus/obj/*
+	@rm -rf objects/*
 endif
 
 fixmintty-cygwin: source/fixmintty.c
@@ -622,34 +625,41 @@ endif
 
 resources: $(check_arch) source/setkbdmode.c source/killterm.c source/getfd.c source/getfd.h source/keyboard.h source/keyboard.m source/openfile.h source/openfile.m source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h source/killwindow.c source/resources.rc assets/images/icon.ico source/beep.c source/startprogram.c
 	@echo MAKE RESOURCES
+	
+	-@mkdir objects/$(arch)/ assets/$(arch) cplusplus/obj/$(arch)/
 
 ifneq ($(msvc),1)
 ifeq ($(binary),exe)
-	$(c-compiler) -c source/killwindow.c source/beep.c -pedantic -Wall -Wextra -Wpedantic -DUNICODE $(_cflags) $(cdb) -std=c2x && mv *.o objects/
-	$(c-compiler) -o binaryplus/bin/killwindow.exe objects/killwindow.o
-	$(c-compiler) -o binaryplus/bin/beep.exe objects/beep.o
+	$(c-compiler) -c source/killwindow.c source/beep.c -pedantic -Wall -Wextra -Wpedantic -DUNICODE $(_cflags) $(cdb) -std=c2x && mv *.o objects/$(arch)/
+	$(c-compiler) -o binaryplus/bin/killwindow.exe objects/$(arch)/killwindow.o
+	$(c-compiler) -o binaryplus/bin/beep.exe objects/$(arch)/beep.o
 endif
-	$(c-compiler) -c source/globals.c -pedantic -Wall -Wextra -Wpedantic $(_cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
-	$(staticgen)assets/libglobals.$(static) objects/globals.o
+	$(c-compiler) -c source/globals.c -pedantic -Wall -Wextra -Wpedantic $(_cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/$(arch)/
+	$(staticgen)assets/$(arch)/libglobals.$(static) objects/$(arch)/globals.o
+ifeq ($(universal2),1)
+	-@mkdir objects/arm64/ objects/universal2/ assets/arm64/ assets/universal2/ cplusplus/obj/arm64/ cplusplus/obj/universal2/
+	$(c-compiler) -c source/globals.c -pedantic -Wall -Wextra -Wpedantic $(cflags) -arch arm64 $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/arm64/
+	$(staticgen)assets/arm64/libglobals.$(static) objects/arm64/globals.o
+endif
 else
 	@echo "rc /nologo /fo objects\resources.res source\resources.rc" > run.bat
 	@cmd.exe /c run.bat
 
 	@echo "$(c-compiler) /c /DUNICODE /D_MSVC /D_CRT_SECURE_NO_DEPRECATE $(cdb) source/killwindow.c source/beep.c $(clstd)" > run.bat
 	@cmd.exe /c run.bat
-	@mv *.obj objects/
+	@mv *.obj objects/$(arch)/
 
-	@echo "link /OUT:binaryplus/bin/killwindow.exe objects/killwindow.obj USER32.lib" > run.bat
+	@echo "link /OUT:binaryplus/bin/killwindow.exe objects/$(arch)/killwindow.obj USER32.lib" > run.bat
 	@cmd.exe /c run.bat
 
-	@echo "link /OUT:binaryplus/bin/beep.exe objects/beep.obj USER32.lib" > run.bat
+	@echo "link /OUT:binaryplus/bin/beep.exe objects/$(arch)/beep.obj USER32.lib" > run.bat
 	@cmd.exe /c run.bat
 
 	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) source/globals.c /Icplusplus\include $(clstd)" > run.bat
 	@cmd.exe /c run.bat
 	@dir
-	@mv *.obj objects/
-	@echo "lib /OUT:assets/globals.lib objects/globals.obj" > run.bat
+	@mv *.obj objects/$(arch)/
+	@echo "lib /OUT:assets/$(arch)/globals.lib objects/$(arch)/globals.obj" > run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
 endif
@@ -661,18 +671,18 @@ endif
 
 ifeq ($(shell uname -s),Linux)
 	-@rm *.o 2> $(nulldir)
-	$(c-compiler) -c source/setkbdmode.c source/startprogram.c source/getfd.c source/ledctrl.c source/mousefd.c -pedantic -Wall -Wextra -Wpedantic $(_cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
-	ar rcs assets/liblinuxctrl.$(static) objects/getfd.o objects/ledctrl.o objects/mousefd.o objects/setkbdmode.o
-	$(c-compiler) -o assets/setkbdmode objects/setkbdmode.o -Lassets -llinuxctrl $(static-libc)
-	$(c-compiler) -o assets/startprogram.bin objects/startprogram.o $(static-libc) -D_GNU_SOURCE
+	$(c-compiler) -c source/setkbdmode.c source/startprogram.c source/getfd.c source/ledctrl.c source/mousefd.c -pedantic -Wall -Wextra -Wpedantic $(_cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/$(arch)/
+	ar rcs assets/$(arch)/liblinuxctrl.$(static) objects/$(arch)/getfd.o objects/$(arch)/ledctrl.o objects/$(arch)/mousefd.o objects/$(arch)/setkbdmode.o
+	$(c-compiler) -o assets/$(arch)/setkbdmode objects/$(arch)/setkbdmode.o -Lassets/$(arch) -llinuxctrl $(static-libc)
+	$(c-compiler) -o assets/$(arch)/startprogram.bin objects/$(arch)/startprogram.o $(static-libc) -D_GNU_SOURCE
 ifneq ($(offline),1)
 	git submodule update --init --rebase --recursive --remote utilities/doas-keepenv
 endif
 ifeq ($(copylibs),1)
 	@echo "$(linuxroot)/share/factoryrush/bin"
 	$(admin)mkdir -p $(linuxroot)/share/factoryrush/bin$(adminend)
-	$(admin)cp assets/setkbdmode $(linuxroot)/share/factoryrush/bin$(adminend)
-	$(admin)cp assets/startprogram.bin $(linuxroot)/share/factoryrush/bin$(adminend)
+	$(admin)cp assets/$(arch2)/setkbdmode $(linuxroot)/share/factoryrush/bin$(adminend)
+	$(admin)cp assets/$(arch2)/startprogram.bin $(linuxroot)/share/factoryrush/bin$(adminend)
 	$(admin)cp utilities/doas-keepenv/doas-keepenv $(linuxroot)/share/factoryrush/bin/doas-keepenv.sh$(adminend)
 	$(admin)cp utilities/doas-keepenv/doas-keepenv $(linuxbin)/doas-keepenv.sh$(adminend)
 
@@ -680,7 +690,7 @@ ifeq ($(copylibs),1)
 	$(admin)cp README.md $(linuxroot)/share/factoryrush/assets$(adminend)
 else
 	@mkdir -p binaryplus/bin/../share/factoryrush/bin
-	@cp assets/setkbdmode binaryplus/share/factoryrush/bin
+	@cp assets/$(arch2)/setkbdmode binaryplus/share/factoryrush/bin
 	@cp utilities/doas-keepenv/doas-keepenv binaryplus/share/factoryrush/bin/doas-keepenv.sh
 	@cp utilities/doas-keepenv/doas-keepenv binaryplus/bin/doas-keepenv.sh
 
@@ -689,25 +699,37 @@ else
 endif
 else
 ifeq ($(shell uname -s),Darwin)
-	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wall -Wextra -Wpedantic $(cxxflags) $(cdb) -Isource -std=c++2b && mv *.o objects/
-	ar rcs assets/libapplecuchar.a objects/cuchar.o
-	$(c-compiler) -c source/keyboard.m source/openfile.m -framework CoreGraphics -framework CoreServices -pedantic -Wall -Wextra -Wpedantic $(_cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
-	$(c-compiler) -dynamiclib -o assets/libapplectrl.dylib objects/keyboard.o objects/openfile.o -framework CoreGraphics -framework CoreServices
+	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) $(cdb) -Isource -std=c++2b && mv *.o objects/$(arch)/
+	$(staticgen)assets/$(arch)/libapplecuchar.a objects/$(arch)/cuchar.o
+	$(c-compiler) -c source/keyboard.m source/openfile.m -framework CoreGraphics -framework CoreServices -pedantic -Wall -Wextra -Wpedantic $(_cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/$(arch)/
+	$(c-compiler) -dynamiclib -o assets/$(arch)/libapplectrl.dylib objects/$(arch)/keyboard.o objects/$(arch)/openfile.o -framework CoreGraphics -framework CoreServices
 
-	$(c-compiler) -c source/killterm.c -pedantic -Wall -Wextra -Wpedantic $(_cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
-	$(c-compiler) -o assets/killterm objects/killterm.o
+	$(c-compiler) -c source/killterm.c -pedantic -Wall -Wextra -Wpedantic $(_cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/$(arch)/
+	$(c-compiler) -o assets/$(arch)/killterm objects/$(arch)/killterm.o
+
+ifeq ($(universal2),1)
+	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -arch arm64 $(cdb) -Isource -std=c++2b && mv *.o objects/arm64/
+	$(staticgen)assets/arm64/libapplecuchar.a objects/arm64/cuchar.o
+
+	$(c-compiler) -c source/keyboard.m source/openfile.m -framework CoreGraphics -framework CoreServices -pedantic -Wall -Wextra -Wpedantic $(cflags) -arch arm64 $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/arm64/
+	$(c-compiler) -dynamiclib -o assets/arm64/libapplectrl.dylib objects/arm64/keyboard.o objects/arm64/openfile.o -framework CoreGraphics -framework CoreServices
+	lipo -create assets/$(arch)/libapplectrl.dylib assets/arm64/libapplectrl.dylib -output assets/universal2/libapplectrl.dylib
+
+	$(c-compiler) -c source/killterm.c -pedantic -Wall -Wextra -Wpedantic $(cflags) -arch arm64 $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/arm64/
+	$(c-compiler) -o assets/arm64/killterm objects/arm64/killterm.o
+endif
 ifneq ($(offline),1)
 	git submodule update --init --rebase --recursive --remote utilities/give-control
 endif
 ifeq ($(copylibs),1)
 	$(admin)mkdir -p $(macosroot)/share/factoryrush/lib $(macosroot)/share/factoryrush/bin$(adminend)
-	$(admin)cp assets/libapplectrl.dylib $(macosroot)/share/factoryrush/lib$(adminend)
-	$(admin)cp assets/libapplectrl.dylib $(macoslib)$(adminend)
-	$(admin)cp assets/killterm $(macosroot)/share/factoryrush/bin$(adminend)
+	$(admin)cp assets/$(arch)/libapplectrl.dylib $(macosroot)/share/factoryrush/lib$(adminend)
+	$(admin)cp assets/$(arch)/libapplectrl.dylib $(macoslib)$(adminend)
+	$(admin)cp assets/$(arch)/killterm $(macosroot)/share/factoryrush/bin$(adminend)
 else
 	@mkdir -p binaryplus/share/factoryrush/lib
-	@cp assets/libapplectrl.dylib binaryplus/share/factoryrush/lib
-	@cp assets/libapplectrl.dylib binaryplus/bin
+	@cp assets/$(arch)/libapplectrl.dylib binaryplus/share/factoryrush/lib
+	@cp assets/$(arch)/libapplectrl.dylib binaryplus/bin
 endif
 else
 endif
@@ -738,7 +760,7 @@ cpp: $(resdep) $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(heade
 	@echo MAKE CPP
 
 ifeq ($(msvc),1)
-	echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(flib) $(objects) ../assets/globals.lib USER32.lib Gdi32.lib Shell32.lib Shlwapi.lib Dbghelp.lib" > run.bat
+	echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(flib) $(objects) ../assets/$(arch)/globals.lib USER32.lib Gdi32.lib Shell32.lib Shlwapi.lib Dbghelp.lib" > run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
 ifeq ($(debug),1)
@@ -760,25 +782,32 @@ else
 ifeq ($(binary),exe)
 #windows
 ifeq ($(shell uname -s),Windows_NT)
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals -ldbghelp -lshlwapi -lshell32 $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets/$(arch) -L$(flibdir) -lglobals -ldbghelp -lshlwapi -lshell32 $(flib) $(static-libc++) $(static-libc) $(ldarg)
 else
 ifeq ($(shell uname -s),windows32)
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals -ldbghelp -lshlwapi -lshell32 $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets/$(arch) -L$(flibdir) -lglobals -ldbghelp -lshlwapi -lshell32 $(flib) $(static-libc++) $(static-libc) $(ldarg)
 else
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets -L$(flibdir) -lglobals -ldbghelp -lshlwapi -lshell32 $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets/$(arch) -L$(flibdir) -lglobals -ldbghelp -lshlwapi -lshell32 $(flib) $(static-libc++) $(static-libc) $(ldarg)
 endif
 endif
 #
 else
 ifeq ($(shell uname -s),Darwin)
 #macos
-	cd cplusplus && $(cpp-compiler) -dynamiclib -o bin/lib$(name).dylib $(objects) -L../assets -L$(flibdir) -lapplecuchar -lapplectrl -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -dynamiclib -arch $(arch) -o bin/lib$(name).dylib $(objects) -L../assets/$(arch2) -L../assets/$(arch) -L$(flibdir) -lapplecuchar -lapplectrl -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
 	utilities/custom/dylib-fix.sh "cplusplus/bin/lib$(name).dylib" "applectrl"
+
+ifeq ($(universal2),1)
+	cd cplusplus && $(cpp-compiler) -dynamiclib -arch arm64 -o bin/lib$(name).arm64.dylib $(foreach file,$(sources),obj/arm64/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file))))) -L../assets/$(arch2) -L../assets/arm64 -L$(flibdir) -lapplecuchar -lapplectrl -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	utilities/custom/dylib-fix.sh "cplusplus/bin/lib$(name).arm64.dylib" "applectrl"
+
+	lipo -create cplusplus/bin/lib$(name).dylib cplusplus/bin/lib$(name).arm64.dylib -output cplusplus/bin/lib$(name).dylib
+endif
 #
 else
 #linux and similar
-#	cd cplusplus && $(cpp-compiler) -v -shared -o bin/lib$(name).so $(objects) -L../assets -L$(flibdir) -lglobals -llinuxctrl $(flib) $(static-libc++) $(static-libc) $(ldarg) 2>&1 | grep ld | sed 's/-lc/$$(find -O3 \/usr\/lib -name libc.a 2>&1 | grep $$(uname -m) | sed 1q)'/g | sed 's/-lm/$$(find -O3 \/usr\/lib -name libm.a 2>&1 | grep $$(uname -m) | sed 1q)'/g | sed s/-o/-Bsymbolic\ -o/g > temp.sh && chmod +x temp.sh && ./temp.sh && rm temp.sh
-	cd cplusplus && $(cpp-compiler) -shared -o bin/lib$(name).so $(objects) -L../assets -L$(flibdir) -lglobals -llinuxctrl $(flib) $(static-libc++) $(static-libc) $(ldarg)
+#	cd cplusplus && $(cpp-compiler) -v -shared -o bin/lib$(name).so $(objects) -L../assets/$(arch) -L$(flibdir) -lglobals -llinuxctrl $(flib) $(static-libc++) $(static-libc) $(ldarg) 2>&1 | grep ld | sed 's/-lc/$$(find -O3 \/usr\/lib -name libc.a 2>&1 | grep $$(uname -m) | sed 1q)'/g | sed 's/-lm/$$(find -O3 \/usr\/lib -name libm.a 2>&1 | grep $$(uname -m) | sed 1q)'/g | sed s/-o/-Bsymbolic\ -o/g > temp.sh && chmod +x temp.sh && ./temp.sh && rm temp.sh
+	cd cplusplus && $(cpp-compiler) -shared -o bin/lib$(name).so $(objects) -L../assets/$(arch) -L$(flibdir) -lglobals -llinuxctrl $(flib) $(static-libc++) $(static-libc) $(ldarg)
 endif
 endif
 #
@@ -868,6 +897,7 @@ endif
 compile-cppbin: $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach head,$(binheaders),binaryplus/src/$(head)) $(foreach inc,$(binincludes),binaryplus/include/$(inc)) $(resources)
 	@echo MAKE COMPILE CPPBIN
 
+	-@mkdir binaryplus/obj/$(arch)/
 ifeq ($(msvc),1)
 	echo "$(cpp-compiler) /EHsc /c /DUNICODE $(bpdb) source/launcher.cpp $(clstdpp)" > run.bat
 	@cmd.exe /c run.bat
@@ -878,15 +908,25 @@ ifeq ($(msvc),1)
 
 	echo "$(cpp-compiler) /EHsc /c $(bpdb) $(fbsrc) /Ibinaryplus\include $(clstdpp)" > run.bat
 	@cmd.exe /c run.bat
-	@$(movefl) -f $(subst obj/,$(empty),$(fbobj)) binaryplus/obj
+	@$(movefl) -f $(subst obj/$(arch)/,$(empty),$(fbobj)) binaryplus/obj/$(arch)/
 else
 #all
-	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -DUNICODE -D_GNU_SOURCE $(bpdb) source/launcher.cpp -std=c++2b
-	@$(movefl) -f launcher.o objects
-	$(cpp-compiler) -o binaryplus/launcher.exe objects/launcher.o $(static-libc++) $(static-libc) $(ldarg)
+	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) -DUNICODE -D_GNU_SOURCE $(bpdb) source/launcher.cpp -std=c++2b
+	@$(movefl) -f launcher.o objects/$(arch)/
+	$(cpp-compiler) $(archif) -o binaryplus/launcher.$(binary) objects/$(arch)/launcher.o $(static-libc++) $(static-libc) $(ldarg)
 
-	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) $(bpdb) $(fbsrc) -I binaryplus/include -std=c++2b -D_GNU_SOURCE
-	@$(movefl) -f $(subst obj/,$(empty),$(fbobj)) binaryplus/obj
+	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) $(bpdb) $(fbsrc) -I binaryplus/include -std=c++2b -D_GNU_SOURCE
+	@$(movefl) -f $(subst obj/$(arch)/,$(empty),$(fbobj)) binaryplus/obj/$(arch)/
+
+ifeq ($(universal2),1)
+	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -arch arm64 -DUNICODE -D_GNU_SOURCE $(bpdb) source/launcher.cpp -std=c++2b
+	@$(movefl) -f launcher.o objects/arm64/
+	$(cpp-compiler) -arch arm64 -o binaryplus/launcher.arm64.$(binary) objects/arm64/launcher.o $(static-libc++) $(static-libc) $(ldarg)
+	lipo -create binaryplus/launcher.$(binary) binaryplus/launcher.arm64.$(binary) -output binaryplus/launcher.$(binary)
+
+	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -arch arm64 $(bpdb) $(fbsrc) -I binaryplus/include -std=c++2b -D_GNU_SOURCE
+	@$(movefl) -f $(subst obj/$(arch)/,$(empty),$(fbobj)) binaryplus/obj/arm64/
+endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
 	
@@ -894,17 +934,25 @@ endif
 cppbin: cs cpp compile-cppbin
 	@echo MAKE CPPBIN
 ifeq ($(msvc),1)
-	echo "cd binaryplus && link /OUT:bin/$(binname).$(binary) $(bldb) $(flib) ../cplusplus/bin/$(name).lib ../csharp/bin/lib/$(filename).lib $(fbobj) USER32.lib ../objects/resources.res" > run.bat
+	echo "cd binaryplus && link /OUT:bin/$(binname).$(binary) $(bldb) $(flib) ../cplusplus/bin/$(name).lib ../csharp/bin/lib/$(filename).lib $(fbobj) USER32.lib ../objects/$(arch)/resources.res" > run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
 else
-	cd binaryplus && $(cpp-compiler) -o bin/$(binname).$(binary) $(binflags) $(fbobj) -L$(flibdir) -l$(name) $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd binaryplus && $(cpp-compiler) $(archif) -o bin/$(binname).$(binary) $(binflags) $(fbobj) -L$(flibdir) -l$(name) $(flib) $(static-libc++) $(static-libc) $(ldarg)
+ifeq ($(universal2),1)
+	cd binaryplus && $(cpp-compiler) -arch arm64 -o bin/$(binname).arm64.$(binary) $(binflags) $(foreach file,$(binsources),obj/arm64/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file))))) -L$(flibdir) -l$(name) $(flib) $(static-libc++) $(static-libc) $(ldarg)
+endif
 #
 
 ifeq ($(shell uname -s),Darwin)
 #macos
 	utilities/custom/dylib-fix.sh "binaryplus/bin/$(binname).$(binary)" "$(name)"
 	utilities/custom/dylib-fix.sh "binaryplus/bin/$(binname).$(binary)" "$(filename)"
+ifeq ($(universal2),1)
+	utilities/custom/dylib-fix.sh "binaryplus/bin/$(binname).arm64.$(binary)" "$(name)"
+	utilities/custom/dylib-fix.sh "binaryplus/bin/$(binname).arm64.$(binary)" "$(filename)"
+	lipo -create binaryplus/bin/$(binname).$(binary) binaryplus/bin/$(binname).arm64.$(binary) -output binaryplus/bin/$(binname).$(binary)
+endif
 ifneq ($(give-ctrl),0)
 	utilities/give-control/give-control "binaryplus/bin/$(binname).$(binary)"
 endif
@@ -989,7 +1037,7 @@ endif
 	@echo "Version file. Remove to enable recompile" > $@
 
 # .cpp
-cplusplus/obj/%.$(objsuf): cplusplus/src/%.cpp $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
+cplusplus/obj/$(arch)/%.$(objsuf): cplusplus/src/%.cpp $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
 ifeq ($(findstring $(subst cplusplus/src/,$(empty),$<),$(sources)),$(subst cplusplus/src/,$(empty),$<))
 
 ifeq ($(msvc),1)
@@ -1002,34 +1050,34 @@ ifeq ($(msvc),1)
 else
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 #windows
-	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -DUNICODE $(cdb) $< -I cplusplus/include -std=c++2b
+	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) -DUNICODE $(cdb) $< -I cplusplus/include -std=c++2b
 #
 else
 ifeq ($(shell uname -s),WINDOWS_NT)
 #windows
-	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -DUNICODE $(cdb) $< -I cplusplus/include -std=c++2b
+	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) -DUNICODE $(cdb) $< -I cplusplus/include -std=c++2b
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
-	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE -D_GNU_SOURCE $(cdb) $< -I cplusplus/include -std=c++2b
+	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) -fPIC -DUNICODE -D_GNU_SOURCE $(cdb) $< -I cplusplus/include -std=c++2b
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #mingw [ I think same as windows (?) ]
-	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c++2b
+	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c++2b
 #
 else
 ifeq ($(findstring Windows_NT, $(shell uname -s)),Windows_NT)
 #msys [ i think older ]
-	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c++2b
+	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c++2b
 else
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys [ I think same as windows (?) ]
-	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c++2b
+	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c++2b
 else
 # not windows
-	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE $(macver) $(cdb) -fvisibility=hidden $< -I cplusplus/include -std=c++2b
+	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) -fPIC -DUNICODE $(macver) $(cdb) -fvisibility=hidden $< -I cplusplus/include -std=c++2b
 endif
 endif
 endif
@@ -1037,11 +1085,11 @@ endif
 endif
 endif
 endif
-	@$(movefl) -f $(subst cplusplus/obj/,$(empty),$@) cplusplus/obj
+	@$(movefl) -f $(subst cplusplus/obj/$(arch)/,$(empty),$@) cplusplus/obj/$(arch)/
 endif
 
 # .c
-cplusplus/obj/%.$(objsuf): cplusplus/src/%.c $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
+cplusplus/obj/$(arch)/%.$(objsuf): cplusplus/src/%.c $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
 ifeq ($(findstring $(subst cplusplus/src/,$(empty),$<),$(sources)),$(subst cplusplus/src/,$(empty),$<))
 
 ifeq ($(msvc),1)
@@ -1054,34 +1102,34 @@ ifeq ($(msvc),1)
 else
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 #windows
-	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
 #
 else
 ifeq ($(shell uname -s),WINDOWS_NT)
 #windows
-	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
-	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE -D_GNU_SOURCE $(cdb) $< -I cplusplus/include -std=c2x
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) -fPIC -DUNICODE -D_GNU_SOURCE $(cdb) $< -I cplusplus/include -std=c2x
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #mingw [ I think same as windows (?) ]
-	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
 #
 else
 ifeq ($(findstring Windows_NT, $(shell uname -s)),Windows_NT)
 #msys [ i think older ]
-	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
 else
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys [ I think same as windows (?) ]
-	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
 else
 # not windows
-	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -fPIC -DUNICODE $(macver) $(cdb) -fvisibility=hidden $< -I cplusplus/include -std=c2x
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) -fPIC -DUNICODE $(macver) $(cdb) -fvisibility=hidden $< -I cplusplus/include -std=c2x
 endif
 endif
 endif
@@ -1089,5 +1137,5 @@ endif
 endif
 endif
 endif
-	@$(movefl) -f $(subst cplusplus/obj/,$(empty),$@) cplusplus/obj
+	@$(movefl) -f $(subst cplusplus/obj/$(arch)/,$(empty),$@) cplusplus/obj/$(arch)/
 endif
