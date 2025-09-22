@@ -946,9 +946,9 @@ ifeq ($(msvc),1)
 	@cmd.exe /c run.bat
 	@rm run.bat
 else
-	cd binaryplus && $(cpp-compiler) $(archif) -o bin/$(binname).$(binary) $(binflags) $(fbobj) -L$(flibdir) -l$(name) $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd binaryplus && $(cpp-compiler) $(archif) -o bin/$(binname).$(binary) $(binflags) -L../assets/$(arch) $(fbobj) -L$(flibdir) -l$(name) $(flib) $(static-libc++) $(static-libc) $(ldarg)
 ifeq ($(universal2),1)
-	cd binaryplus && $(cpp-compiler) -arch arm64 -o bin/$(binname).arm64.$(binary) $(binflags) $(foreach file,$(binsources),obj/arm64/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file))))) -L$(flibdir) -l$(name) $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd binaryplus && $(cpp-compiler) -arch arm64 -o bin/$(binname).arm64.$(binary) $(binflags) -L../assets/arm64 $(foreach file,$(binsources),obj/arm64/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file))))) -L$(flibdir) -l$(name) $(flib) $(static-libc++) $(static-libc) $(ldarg)
 endif
 #
 
