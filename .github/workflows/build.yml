@@ -77,9 +77,7 @@ jobs:
         run: |
           cd /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
           export PATH=/mingw64/bin:$PATH
-          make resources cpp cppbin sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0
-          touch cs cpp cppbin csbin
-          make archchk=0
+          make sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -145,64 +143,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Cygwinx64CsBin
-          path: bin/Cs.*.zip
-  
-  build-cygwin-x86:
-    permissions:
-      contents: read
-    name: Build program using Cygwin x86
-    needs: compile-cs-windows-x86
-    runs-on: windows-2022
-    steps:
-      - name: Install Cygwin
-        shell: powershell
-        run: |
-          Invoke-WebRequest -Uri http://ctm.crouchingtigerhiddenfruitbat.org/pub/cygwin/setup/snapshots/setup-x86-2.923.exe -OutFile setup-x86.exe -Verbose
-          .\setup-x86.exe -W -q -P gcc-g++,zip,grep,gawk,binutils,tar
-          # wait for cygwin to install the last man page of the last package (openssl) 
-          Do {Start-Sleep -Milliseconds 100} Until (Test-Path "C:\cygwin\usr\share\man\man1\zipsplit.1.gz")
-      - name: Checkout source code
-        uses: actions/checkout@v4
-      - name: Import C# compiled dynamic library
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinx86Dll
-          path: csharp/bin/lib
-      - name: Import C# compiled executable
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinx86Exe
-          path: binarysharp/bin/exe
-      - name: Copy C# where it's needed
-        shell: pwsh
-        run: |
-          echo $null >> cs
-          echo $null >> csbin
-          cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
-          cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
-      - name: Install Programs
-        shell: pwsh
-        run: |
-          Invoke-WebRequest -Uri "https://mirror.msys2.org/mingw/mingw32/mingw-w64-i686-make-4.4.1-3-any.pkg.tar.zst" -OutFile "make-bin.tar.zst" -Verbose
-          C:\cygwin\bin\tar.exe -xf make-bin.tar.zst
-          del make-bin.tar.zst
-          copy make-bin\mingw32\bin\make.exe .
-      - name: Compile code
-        shell: C:\cygwin\bin\bash.exe --login -o igncr '{0}'
-        run: |
-          cd /cygdrive/$(echo '${{ github.workspace }}' | sed 's/\\\\/\\//g' | sed 's/://g' | sed 's/\(.*\)/\L\1/')
-          ./make resources cpp cppbin sudo=0 archchk=0 nodep=1 c-compiler=/bin/gcc cpp-compiler=/bin/g++
-          touch cs cpp cppbin csbin
-          ./make archchk=0
-      - name: Upload C++ binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: Cygwinx86CppBin
-          path: bin/Cpp.*.zip
-      - name: Upload C# binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: Cygwinx86CsBin
           path: bin/Cs.*.zip
   
   build-windows-x64:
@@ -305,7 +245,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           update: true
-          install: make git zip mingw-w64-i686-binutils mingw-w64-i686-clang
+          install: mingw-w64-i686-make git zip mingw-w64-i686-binutils mingw-w64-i686-clang
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
@@ -332,9 +272,7 @@ jobs:
         run: |
           cd /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
           export PATH=/mingw32/bin:$PATH
-          make resources cpp cppbin sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0
-          touch cs cpp cppbin csbin
-          make tgarch=i686 archchk=0
+          make sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0 tgarch=i686
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -344,6 +282,64 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Msys2i686CsBin
+          path: bin/Cs.*.zip
+  
+  build-cygwin-x86:
+    permissions:
+      contents: read
+    name: Build program using Cygwin x86
+    needs: compile-cs-windows-x86
+    runs-on: windows-2022
+    steps:
+      - name: Install Cygwin
+        shell: powershell
+        run: |
+          Invoke-WebRequest -Uri http://ctm.crouchingtigerhiddenfruitbat.org/pub/cygwin/setup/snapshots/setup-x86-2.923.exe -OutFile setup-x86.exe -Verbose
+          .\setup-x86.exe -W -q -P gcc-g++,zip,grep,gawk,binutils,tar
+          # wait for cygwin to install the last man page of the last package (openssl) 
+          Do {Start-Sleep -Milliseconds 100} Until (Test-Path "C:\cygwin\usr\share\man\man1\zipsplit.1.gz")
+      - name: Checkout source code
+        uses: actions/checkout@v4
+      - name: Import C# compiled dynamic library
+        uses: actions/download-artifact@v4
+        with:
+          name: CSharpWinx86Dll
+          path: csharp/bin/lib
+      - name: Import C# compiled executable
+        uses: actions/download-artifact@v4
+        with:
+          name: CSharpWinx86Exe
+          path: binarysharp/bin/exe
+      - name: Copy C# where it's needed
+        shell: pwsh
+        run: |
+          echo $null >> cs
+          echo $null >> csbin
+          cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
+          cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
+      - name: Install Programs
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://mirror.msys2.org/mingw/mingw32/mingw-w64-i686-make-4.4.1-3-any.pkg.tar.zst" -OutFile "make-bin.tar.zst" -Verbose
+          C:\cygwin\bin\tar.exe -xf make-bin.tar.zst
+          del make-bin.tar.zst
+          copy make-bin\mingw32\bin\make.exe .
+      - name: Compile code
+        shell: C:\cygwin\bin\bash.exe --login -o igncr '{0}'
+        run: |
+          cd /cygdrive/$(echo '${{ github.workspace }}' | sed 's/\\\\/\\//g' | sed 's/://g' | sed 's/\(.*\)/\L\1/')
+          ./make resources cpp cppbin sudo=0 archchk=0 nodep=1 c-compiler=/bin/gcc cpp-compiler=/bin/g++
+          touch cs cpp cppbin csbin
+          ./make archchk=0
+      - name: Upload C++ binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: Cygwinx86CppBin
+          path: bin/Cpp.*.zip
+      - name: Upload C# binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: Cygwinx86CsBin
           path: bin/Cs.*.zip
   
   build-windows-x86:

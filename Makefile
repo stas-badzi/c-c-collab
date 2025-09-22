@@ -976,7 +976,7 @@ ifeq ($(shell echo "check quotes"),"check quotes")
 #windows
 ifeq ($(copylibs),1)
 	$(admin)copy binaryplus\bin\$(binname).$(binary) $(bindir)$(adminend)
-	cd binaryplus\bin && dir
+	cd binaryplus\bin
 endif
 else
 #other
@@ -1031,14 +1031,14 @@ ifeq ($(shell echo "check quotes"),"check quotes")
 ifeq ($(copylibs),1)
 	$(admin)copy binarysharp\bin\exe\$(binfile).$(binary) $(bindir)$(adminend)
 else
-	@cd binarysharp\bin\exe && dir
+	@cd binarysharp\bin\exe
 endif
 else
 #other
 ifeq ($(copylibs),1)
 	$(admin)cp binarysharp/bin/exe/$(binfile).$(binary) $(bindir)$(adminend)
 else
-	@cd binarysharp/bin/exe && ls
+	@cd binarysharp/bin/exe
 endif
 endif
 endif
