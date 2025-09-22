@@ -158,7 +158,7 @@ jobs:
         shell: powershell
         run: |
           Invoke-WebRequest -Uri http://ctm.crouchingtigerhiddenfruitbat.org/pub/cygwin/setup/snapshots/setup-x86-2.923.exe -OutFile setup-x86.exe -Verbose
-          .\setup-x86.exe --no-admin -q -P gcc-g++,zip,grep,gawk,binutils,tar
+          .\setup-x86.exe -W -q -P gcc-g++,zip,grep,gawk,binutils,tar
           # wait for cygwin to install the last man page of the last package (openssl) 
           Do {Start-Sleep -Milliseconds 100} Until (Test-Path "C:\cygwin\usr\share\man\man1\zipsplit.1.gz")
       - name: Checkout source code
