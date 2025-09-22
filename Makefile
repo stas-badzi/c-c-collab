@@ -702,34 +702,36 @@ ifeq ($(shell uname -s),Darwin)
 	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) $(cdb) -Isource -std=c++2b && mv *.o objects/$(arch)/
 	$(staticgen)assets/$(arch)/libapplecuchar.a objects/$(arch)/cuchar.o
 	$(c-compiler) -c source/keyboard.m source/openfile.m -framework CoreGraphics -framework CoreServices -pedantic -Wall -Wextra -Wpedantic $(_cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/$(arch)/
-	$(c-compiler) -dynamiclib -o assets/$(arch)/libapplectrl.dylib objects/$(arch)/keyboard.o objects/$(arch)/openfile.o -framework CoreGraphics -framework CoreServices
+	$(c-compiler) -dynamiclib $(archif) -o assets/$(arch)/libapplectrl.dylib objects/$(arch)/keyboard.o objects/$(arch)/openfile.o -framework CoreGraphics -framework CoreServices
 
 	$(c-compiler) -c source/killterm.c -pedantic -Wall -Wextra -Wpedantic $(_cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/$(arch)/
-	$(c-compiler) -o assets/$(arch)/killterm objects/$(arch)/killterm.o
+	$(c-compiler) $(archif) -o assets/$(arch)/killterm objects/$(arch)/killterm.o
 
 ifeq ($(universal2),1)
 	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -arch arm64 $(cdb) -Isource -std=c++2b && mv *.o objects/arm64/
 	$(staticgen)assets/arm64/libapplecuchar.a objects/arm64/cuchar.o
 
 	$(c-compiler) -c source/keyboard.m source/openfile.m -framework CoreGraphics -framework CoreServices -pedantic -Wall -Wextra -Wpedantic $(cflags) -arch arm64 $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/arm64/
-	$(c-compiler) -dynamiclib -o assets/arm64/libapplectrl.dylib objects/arm64/keyboard.o objects/arm64/openfile.o -framework CoreGraphics -framework CoreServices
+	$(c-compiler) -dynamiclib -arch arm64 -o assets/arm64/libapplectrl.dylib objects/arm64/keyboard.o objects/arm64/openfile.o -framework CoreGraphics -framework CoreServices
 	lipo -create assets/$(arch)/libapplectrl.dylib assets/arm64/libapplectrl.dylib -output assets/universal2/libapplectrl.dylib
 
 	$(c-compiler) -c source/killterm.c -pedantic -Wall -Wextra -Wpedantic $(cflags) -arch arm64 $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/arm64/
-	$(c-compiler) -o assets/arm64/killterm objects/arm64/killterm.o
+	$(c-compiler) -arch arm64 -o assets/arm64/killterm objects/arm64/killterm.o
+	lipo -create assets/$(arch)/$(arch)/killterm assets/arm64/killterm -output assets/universal2/killterm
 endif
 ifneq ($(offline),1)
 	git submodule update --init --rebase --recursive --remote utilities/give-control
 endif
 ifeq ($(copylibs),1)
 	$(admin)mkdir -p $(macosroot)/share/factoryrush/lib $(macosroot)/share/factoryrush/bin$(adminend)
-	$(admin)cp assets/$(arch)/libapplectrl.dylib $(macosroot)/share/factoryrush/lib$(adminend)
-	$(admin)cp assets/$(arch)/libapplectrl.dylib $(macoslib)$(adminend)
-	$(admin)cp assets/$(arch)/killterm $(macosroot)/share/factoryrush/bin$(adminend)
+	$(admin)cp assets/$(arch2)/libapplectrl.dylib $(macosroot)/share/factoryrush/lib$(adminend)
+	$(admin)cp assets/$(arch2)/libapplectrl.dylib $(macoslib)$(adminend)
+	$(admin)cp assets/$(arch2)/killterm $(macosroot)/share/factoryrush/bin$(adminend)
 else
-	@mkdir -p binaryplus/share/factoryrush/lib
-	@cp assets/$(arch)/libapplectrl.dylib binaryplus/share/factoryrush/lib
-	@cp assets/$(arch)/libapplectrl.dylib binaryplus/bin
+	@mkdir -p binaryplus/share/factoryrush/lib binaryplus/share/factoryrush/bin
+	@cp assets/$(arch2)/libapplectrl.dylib binaryplus/share/factoryrush/lib
+	@cp assets/$(arch2)/libapplectrl.dylib binaryplus/bin
+	@cp assets/$(arch2)/killterm binaryplus/share/factoryrush/bin
 endif
 else
 endif
@@ -794,7 +796,7 @@ endif
 else
 ifeq ($(shell uname -s),Darwin)
 #macos
-	cd cplusplus && $(cpp-compiler) -dynamiclib -arch $(arch) -o bin/lib$(name).dylib $(objects) -L../assets/$(arch2) -L../assets/$(arch) -L$(flibdir) -lapplecuchar -lapplectrl -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -dynamiclib $(archif) -o bin/lib$(name).dylib $(objects) -L../assets/$(arch2) -L../assets/$(arch) -L$(flibdir) -lapplecuchar -lapplectrl -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
 	utilities/custom/dylib-fix.sh "cplusplus/bin/lib$(name).dylib" "applectrl"
 
 ifeq ($(universal2),1)
