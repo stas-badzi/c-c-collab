@@ -141,9 +141,13 @@ arch = x64
 endif
 ifeq ($(universal2),1)
 tgarch=x64
-cflags=-arch x86_64 -arch arm64 $(cflags)
+_cflags=-arch x86_64 -arch arm64 $(cflags)
+else
+_cflags=$(cflags)
 endif
 macver =
+else
+_cflags=$(cflags)
 endif
 
 ifeq ($(shell echo "check quotes"),"check quotes")
@@ -621,11 +625,11 @@ resources: $(check_arch) source/setkbdmode.c source/killterm.c source/getfd.c so
 
 ifneq ($(msvc),1)
 ifeq ($(binary),exe)
-	$(c-compiler) -c source/killwindow.c source/beep.c -pedantic -Wall -Wextra -Wpedantic -DUNICODE $(cflags) $(cdb) -std=c2x && mv *.o objects/
+	$(c-compiler) -c source/killwindow.c source/beep.c -pedantic -Wall -Wextra -Wpedantic -DUNICODE $(_cflags) $(cdb) -std=c2x && mv *.o objects/
 	$(c-compiler) -o binaryplus/bin/killwindow.exe objects/killwindow.o
 	$(c-compiler) -o binaryplus/bin/beep.exe objects/beep.o
 endif
-	$(c-compiler) -c source/globals.c -pedantic -Wall -Wextra -Wpedantic $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
+	$(c-compiler) -c source/globals.c -pedantic -Wall -Wextra -Wpedantic $(_cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(staticgen)assets/libglobals.$(static) objects/globals.o
 else
 	@echo "rc /nologo /fo objects\resources.res source\resources.rc" > run.bat
@@ -657,7 +661,7 @@ endif
 
 ifeq ($(shell uname -s),Linux)
 	-@rm *.o 2> $(nulldir)
-	$(c-compiler) -c source/setkbdmode.c source/startprogram.c source/getfd.c source/ledctrl.c source/mousefd.c -pedantic -Wall -Wextra -Wpedantic $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
+	$(c-compiler) -c source/setkbdmode.c source/startprogram.c source/getfd.c source/ledctrl.c source/mousefd.c -pedantic -Wall -Wextra -Wpedantic $(_cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	ar rcs assets/liblinuxctrl.$(static) objects/getfd.o objects/ledctrl.o objects/mousefd.o objects/setkbdmode.o
 	$(c-compiler) -o assets/setkbdmode objects/setkbdmode.o -Lassets -llinuxctrl $(static-libc)
 	$(c-compiler) -o assets/startprogram.bin objects/startprogram.o $(static-libc) -D_GNU_SOURCE
@@ -687,10 +691,10 @@ else
 ifeq ($(shell uname -s),Darwin)
 	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wall -Wextra -Wpedantic $(cxxflags) $(cdb) -Isource -std=c++2b && mv *.o objects/
 	ar rcs assets/libapplecuchar.a objects/cuchar.o
-	$(c-compiler) -c source/keyboard.m source/openfile.m -framework CoreGraphics -framework CoreServices -pedantic -Wall -Wextra -Wpedantic $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
+	$(c-compiler) -c source/keyboard.m source/openfile.m -framework CoreGraphics -framework CoreServices -pedantic -Wall -Wextra -Wpedantic $(_cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(c-compiler) -dynamiclib -o assets/libapplectrl.dylib objects/keyboard.o objects/openfile.o -framework CoreGraphics -framework CoreServices
 
-	$(c-compiler) -c source/killterm.c -pedantic -Wall -Wextra -Wpedantic $(cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
+	$(c-compiler) -c source/killterm.c -pedantic -Wall -Wextra -Wpedantic $(_cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/
 	$(c-compiler) -o assets/killterm objects/killterm.o
 ifneq ($(offline),1)
 	git submodule update --init --rebase --recursive --remote utilities/give-control
