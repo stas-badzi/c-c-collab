@@ -717,7 +717,7 @@ ifeq ($(universal2),1)
 
 	$(c-compiler) -c source/killterm.c -pedantic -Wall -Wextra -Wpedantic $(cflags) -arch arm64 $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/arm64/
 	$(c-compiler) -arch arm64 -o assets/arm64/killterm objects/arm64/killterm.o
-	lipo -create assets/$(arch)/$(arch)/killterm assets/arm64/killterm -output assets/universal2/killterm
+	lipo -create assets/$(arch)/killterm assets/arm64/killterm -output assets/universal2/killterm
 endif
 ifneq ($(offline),1)
 	git submodule update --init --rebase --recursive --remote utilities/give-control
