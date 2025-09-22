@@ -150,8 +150,8 @@ endif
 ifeq ($(universal2),1)
 arch = x86_64
 archif = -arch $(arch)
-_cflags = -arch arm64 $(cflags)
-_cxxflags = -arch arm64 $(cxxflags)
+_cflags = -arch $(arch) $(cflags)
+_cxxflags = -arch $(arch) $(cxxflags)
 arch2 = universal2
 endif
 macver =
