@@ -850,7 +850,8 @@ ifeq ($(universal2),1)
 	-@mkdir -p csharp/bin/$(configuration)/net9.0/osx-arm64/native/
 	-@mv csharp/bin/$(arch)/$(configuration)/net9.0/osx-arm64/native/* csharp/bin/$(configuration)/net9.0/osx-arm64/native/
 	tree csharp/bin/$(configuration)/net9.0/$(os_name)
-	lipo -create csharp/bin/$(configuration)/net9.0/$(os_name)/native/$(libname) csharp/bin/$(configuration)/net9.0/osx-arm64/native/$(libname) -output csharp/bin/$(configuration)/net9.0/$(os_name)/native/$(libname)
+	lipo -create csharp/bin/$(configuration)/net9.0/$(os_name)/native/$(libname) csharp/bin/$(configuration)/net9.0/osx-arm64/native/$(libname) -output csharp/bin/$(configuration)/net9.0/$(os_name)/native/.$(libname)
+	mv csharp/bin/$(configuration)/net9.0/$(os_name)/native/.$(libname) csharp/bin/$(configuration)/net9.0/$(os_name)/native/$(libname)
 endif
 ifeq ($(msvc),1)
 	@cd csharp/bin/$(configuration)/net9.0/$(os_name)/native/ && for i in *.exp; do if [ ! "$$i" = '$(filename).exp' ]; then mv $$i $(filename).exp; fi; done && for i in *.lib; do if [ ! "$$i" = '$(filename).lib' ]; then mv $$i $(filename).lib; fi; done && for i in *.pdb; do if [ ! "$$i" = '$(filename).pdb' ]; then mv $$i $(filename).pdb; fi; done && for i in *.dll; do if [ ! "$$i" = '$(filename).dll' ]; then mv $$i $(filename).dll; fi; done 
