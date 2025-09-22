@@ -925,6 +925,8 @@ else
 	@$(movefl) -f $(subst obj/$(arch)/,$(empty),$(fbobj)) binaryplus/obj/$(arch)/
 
 ifeq ($(universal2),1)
+	mkdir binaries/obj/arm64/
+
 	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -arch arm64 -DUNICODE -D_GNU_SOURCE $(bpdb) source/launcher.cpp -std=c++2b
 	@$(movefl) -f launcher.o objects/arm64/
 	$(cpp-compiler) -arch arm64 -o binaryplus/launcher.arm64.$(binary) objects/arm64/launcher.o $(static-libc++) $(static-libc) $(ldarg)
