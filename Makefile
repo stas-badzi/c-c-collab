@@ -1092,6 +1092,10 @@ endif
 endif
 endif
 	@$(movefl) -f $(subst cplusplus/obj/$(arch)/,$(empty),$@) cplusplus/obj/$(arch)/
+ifeq ($(universal2),1)
+	$(cpp-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -arch arm64 -fPIC -DUNICODE $(macver) $(cdb) -fvisibility=hidden $< -I cplusplus/include -std=c++2b
+	@$(movefl) -f $(subst cplusplus/obj/$(arch)/,$(empty),$@) cplusplus/obj/arm64/
+endif
 endif
 
 # .c
@@ -1108,34 +1112,34 @@ ifeq ($(msvc),1)
 else
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 #windows
-	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cflags) -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
 #
 else
 ifeq ($(shell uname -s),WINDOWS_NT)
 #windows
-	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cflags) -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
 #
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 #cygwin [ I think same as windows (?) ]
-	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) -fPIC -DUNICODE -D_GNU_SOURCE $(cdb) $< -I cplusplus/include -std=c2x
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cflags) -fPIC -DUNICODE -D_GNU_SOURCE $(cdb) $< -I cplusplus/include -std=c2x
 #
 else
 ifeq ($(findstring MINGW, $(shell uname -s)),MINGW)
 #mingw [ I think same as windows (?) ]
-	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
 #
 else
 ifeq ($(findstring Windows_NT, $(shell uname -s)),Windows_NT)
 #msys [ i think older ]
-	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
 else
 ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 #msys [ I think same as windows (?) ]
-	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cflags) -fPIC -DUNICODE $(cdb) $< -I cplusplus/include -std=c2x
 else
 # not windows
-	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) -fPIC -DUNICODE $(macver) $(cdb) -fvisibility=hidden $< -I cplusplus/include -std=c2x
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(_cflags) -fPIC -DUNICODE $(macver) $(cdb) -fvisibility=hidden $< -I cplusplus/include -std=c2x
 endif
 endif
 endif
@@ -1144,4 +1148,8 @@ endif
 endif
 endif
 	@$(movefl) -f $(subst cplusplus/obj/$(arch)/,$(empty),$@) cplusplus/obj/$(arch)/
+ifeq ($(universal2),1)
+	$(c-compiler) -c -pedantic -Wall -Wextra -Wpedantic $(cflags) -arch arm64 -fPIC -DUNICODE $(macver) $(cdb) $< -I cplusplus/include -std=c2x
+	@$(movefl) -f $(subst cplusplus/obj/$(arch)/,$(empty),$@) cplusplus/obj/arm64/
+endif
 endif
