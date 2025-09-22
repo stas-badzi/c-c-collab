@@ -879,7 +879,9 @@ else
 	@cd csharp/bin/$(configuration)/net9.0/$(os_name)/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
 	@mv -f csharp/bin/$(configuration)/net9.0/$(os_name)/native/* csharp/bin/lib/$(libname)
 ifeq ($(universal2),1)
-	lipo -create csharp/bin/$(configuration)/net9.0/$(os_name)/native/$(libname) csharp/bin/$(configuration)/net9.0/osx-arm64/native/$(libname) -output csharp/bin/$(configuration)/net9.0/$(os_name)/native/$(libname)
+	@cd csharp/bin/$(configuration)/net9.0/osx-arm64/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
+	@mv -f csharp/bin/$(configuration)/net9.0/osx-arm64/native/* csharp/bin/lib/$(libname).arm64
+	lipo -create csharp/bin/lib/$(libname) csharp/bin/lib/$(libname).arm64 -output csharp/bin/lib/$(libname)
 endif
 ifeq ($(copylibs),1)
 	$(admin)cp csharp/bin/lib/$(libname) $(libdir)$(adminend)
