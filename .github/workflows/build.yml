@@ -639,6 +639,8 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
+      - name: Install tree
+        run: brew install tree
       - name: Compile code
         shell: bash
         run: |
@@ -667,6 +669,8 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
+      - name: Install tree
+        run: brew install tree
       - name: Compile code
         shell: bash
         run: |
@@ -695,6 +699,8 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
+      - name: Install tree
+        run: brew install tree
       - name: Compile code
         shell: bash
         run: |
