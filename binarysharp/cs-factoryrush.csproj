@@ -14,6 +14,9 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.DotNet.ILCompiler; runtime.win-x64.Microsoft.DotNet.ILCompiler" Version="9.0.0-*" />
+    <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+      <PackageReference Include="runtime.osx-arm64.Microsoft.DotNet.ILCompiler" Version="9.0.0-*" />
+    </PropertyGroup>
   </ItemGroup>
 
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
@@ -29,9 +32,6 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
-    <ItemGroup>
-      <PackageReference Include="runtime.osx-arm64.Microsoft.DotNet.ILCompiler" Version="9.0.0-*" />
-    </ItemGroup>
     <DefineConstants>__APPLE__</DefineConstants>
   </PropertyGroup>
   
