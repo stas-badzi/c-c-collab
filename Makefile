@@ -843,11 +843,13 @@ cs: $(resdep) $(foreach fl,$(files),csharp/$(fl))
 
 	-@mkdir -p csharp/bin/$(configuration)/net9.0/$(os_name)/native/
 	-@mv csharp/bin/$(arch)/$(configuration)/net9.0/$(os_name)/native/* csharp/bin/$(configuration)/net9.0/$(os_name)/native/
+	tree dotnet/bin/net9.0/$(os_name)
 ifeq ($(universal2),1)
 	cd csharp && dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r osx-arm64 -c $(configuration)
 
 	-@mkdir -p csharp/bin/$(configuration)/net9.0/osx-arm64/native/
 	-@mv csharp/bin/$(arch)/$(configuration)/net9.0/osx-arm64/native/* csharp/bin/$(configuration)/net9.0/osx-arm64/native/
+	tree dotnet/bin/net9.0/$(os_name)
 	lipo -create csharp/bin/$(configuration)/net9.0/$(os_name)/native/$(libname) csharp/bin/$(configuration)/net9.0/osx-arm64/native/$(libname) -output csharp/bin/$(configuration)/net9.0/$(os_name)/native/$(libname)
 endif
 ifeq ($(msvc),1)
