@@ -288,6 +288,7 @@ jobs:
           Invoke-WebRequest -Uri http://ctm.crouchingtigerhiddenfruitbat.org/pub/cygwin/setup/snapshots/setup-x86-2.923.exe -OutFile setup-x86.exe -Verbose
           .\setup-x86.exe -s http://ctm.crouchingtigerhiddenfruitbat.org/pub/cygwin/circa/2022/11/23/063457 -q -P gcc-g++,zip,grep,gawk,binutils,tar
           # wait for cygwin to install the last man page of the last package (openssl) 
+          choco install --forcex86 make
           Do {Start-Sleep -Milliseconds 100} Until (Test-Path "C:\cygwin\usr\share\man\man1\openssl.1.gz")
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -308,13 +309,6 @@ jobs:
           echo $null >> csbin
           cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
           cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
-      - name: Install Programs
-        shell: pwsh
-        run: |
-          Invoke-WebRequest -Uri "https://mirror.msys2.org/mingw/mingw32/mingw-w64-i686-make-4.4.1-3-any.pkg.tar.zst" -OutFile "make-bin.tar.zst" -Verbose
-          C:\cygwin\bin\tar.exe -xf make-bin.tar.zst
-          del make-bin.tar.zst
-          copy make-bin\mingw32\bin\make.exe .
       - name: Compile code
         shell: C:\cygwin\bin\bash.exe --login -o igncr '{0}'
         run: |
