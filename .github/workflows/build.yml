@@ -525,7 +525,12 @@ jobs:
           dotnet-version: '9.0.x'
       - name: Set up GCC
         shell: sh
-        run: sudo apt install gcc-15
+        run: |
+          sudo apt update
+          sudo apt install software-properties-common -y
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+          sudo apt update
+          sudo apt install gcc-15
       - name: Compile code
         run: make sudo=0 archchk=0 c-compiler=gcc cpp-compiler=g++
       - name: Upload C++ binaries
@@ -552,7 +557,12 @@ jobs:
         with:
           dotnet-version: '9.0.x'
       - name: Set up GCC
-        run: sudo apt install gcc-15
+        run: |
+          sudo apt update
+          sudo apt install software-properties-common -y
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+          sudo apt update
+          sudo apt install gcc-15
       - name: Compile code
         run: make sudo=0 archchk=0 c-compiler=gcc cpp-compiler=g++ tgarch=arm64
       - name: Upload C++ binaries
