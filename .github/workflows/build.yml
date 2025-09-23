@@ -265,7 +265,7 @@ jobs:
           cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
           cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Compile code
-        shell: msys2 -mingw32 {0}
+        shell: msys2 env MSYSTEM=MINGW32 bash {0} 
         run: make sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0 tgarch=i686
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
