@@ -74,10 +74,7 @@ jobs:
           cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Compile code
         shell: msys2 {0}
-        run: |
-          cd /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
-          export PATH=/mingw64/bin:$PATH
-          make sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0
+        run: /msys2_shell.cmd -defterm -no-start -mingw32 -here -c 'make sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0'
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -266,9 +263,7 @@ jobs:
           cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Compile code
         shell: msys2 {0}
-        env:
-          MSYSTEM: MINGW32
-        run: make sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0 tgarch=i686
+        run: /msys2_shell.cmd -defterm -no-start -mingw32 -here -c 'make sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0 tgarch=i686'
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -459,9 +454,7 @@ jobs:
       - name: Compile code
         shell: msys2 {0}
         run: |
-          cd /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
-          export PATH=/clangarm64/bin:$PATH
-          make sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0
+          /msys2_shell.cmd -defterm -no-start -mingw32 -here -c 'make sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0'
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
