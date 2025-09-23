@@ -53,7 +53,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           update: true
-          install: make git zip mingw-w64-x86_64-binutils mingw-w64-x86_64-clang
+          install: make git zip mingw-w64-x86_64-binutils mingw-w64-x86_64-g++
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
@@ -74,7 +74,7 @@ jobs:
           cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Compile code
         shell: msys2 {0}
-        run: /msys2_shell.cmd -defterm -no-start -mingw64 -here -l -c 'make sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0'
+        run: /msys2_shell.cmd -defterm -no-start -mingw64 -here -l -c 'make sudo=0 nodep=1 c-compiler=gcc cpp-compiler=g++ archchk=0'
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -242,7 +242,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           update: true
-          install: make git zip mingw-w64-i686-binutils mingw-w64-i686-clang
+          install: make git zip mingw-w64-i686-binutils mingw-w64-i686-g++
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
@@ -263,7 +263,7 @@ jobs:
           cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Compile code
         shell: msys2 {0}
-        run: /msys2_shell.cmd -defterm -no-start -mingw32 -here -l -c 'make sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0 tgarch=i686'
+        run: /msys2_shell.cmd -defterm -no-start -mingw32 -here -l -c 'make sudo=0 nodep=1 c-compiler=gcc cpp-compiler=g++ archchk=0 tgarch=i686'
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -426,7 +426,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           update: true
-          install: make git zip mingw-w64-clang-aarch64-binutils mingw-w64-clang-aarch64-clang
+          install: make git zip mingw-w64-clang-aarch64-binutils mingw-w64-clang-aarch64-g++
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
@@ -448,7 +448,7 @@ jobs:
       - name: Compile code
         shell: msys2 {0}
         run: |
-          /msys2_shell.cmd -defterm -no-start -clangarm64 -here -l -c 'make sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0'
+          /msys2_shell.cmd -defterm -no-start -clangarm64 -here -l -c 'make sudo=0 nodep=1 c-compiler=gcc cpp-compiler=g++ archchk=0'
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -523,18 +523,11 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
-      - name: Set up Clang
-        uses: egor-tensin/setup-clang@v1
-        with:
-          version: latest
-          platform: x64
+      - name: Set up GCC
+        shell: sh
+        run: sudo apt install gcc-15
       - name: Compile code
-        shell: bash
-        env:
-          CC: gcc
-          CXX: g++
-        run: |
-          make sudo=0 archchk=0 c-compiler=clang cpp-compiler=clang++
+        run: make sudo=0 archchk=0 c-compiler=gcc cpp-compiler=g++
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -558,13 +551,10 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
-      - name: Set up Clang
-        shell: sh
-        run: sudo apt install clang
+      - name: Set up GCC
+        run: sudo apt install gcc-15
       - name: Compile code
-        shell: bash
-        run: |
-          make sudo=0 archchk=0 c-compiler=clang cpp-compiler=clang++ tgarch=arm64
+        run: make sudo=0 archchk=0 c-compiler=gcc cpp-compiler=g++ tgarch=arm64
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -586,8 +576,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Compile code
         shell: bash
-        run: |
-          make sudo=0 c-compiler=clang cpp-compiler=clang++
+        run: make sudo=0 c-compiler=gcc cpp-compiler=g++
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -615,7 +604,7 @@ jobs:
         shell: bash
         run: |
           sudo xcode-select -s /Library/Developer/CommandLineTools
-          make sudo=0 cpp-compiler=clang++ c-compiler=clang archchk=0
+          make sudo=0 c-compiler=clang cpp-compiler=clang++ archchk=0
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -643,7 +632,7 @@ jobs:
         shell: bash
         run: |
           sudo xcode-select -s /Library/Developer/CommandLineTools
-          make release sudo=0 cpp-compiler=clang++ c-compiler=clang
+          make release sudo=0 c-compiler=clang cpp-compiler=clang++
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -671,7 +660,7 @@ jobs:
         shell: bash
         run: |
           sudo xcode-select -s /Library/Developer/CommandLineTools
-          make sudo=0 cpp-compiler=clang++ c-compiler=clang archchk=0 universal2=1
+          make sudo=0 c-compiler=clang cpp-compiler=clang++ archchk=0 universal2=1
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -703,7 +692,7 @@ jobs:
 #        shell: bash
 #        run: |
 #          xcode-select -s /Library/Developer/CommandLineTools
-#          make release sudo=0 cpp-compiler=clang++ c-compiler=clang
+#          make release sudo=0 c-compiler=clang cpp-compiler=clang++
 #      - name: Upload C++ binaries
 #        uses: actions/upload-artifact@v4
 #        with:
