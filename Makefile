@@ -1005,15 +1005,10 @@ ifeq ($(universal2),1)
 
 	-@mkdir -p binarysharp/bin/$(configuration)/net9.0/osx-arm64/native/
 	-@mv binarysharp/bin/$(arch)/$(configuration)/net9.0/osx-arm64/native/* binarysharp/bin/$(configuration)/net9.0/osx-arm64/native/
-	lipo -create binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/$(binfile).$(binary) binarysharp/bin/$(configuration)/net9.0/osx-arm64/native/$(binfile).$(binary) -output binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/$(binfile).$(binary)
 endif
 ifeq ($(msvc),1)
 	@cd binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/ && for i in *.$(binary); do if [ ! "$$i" = '$(binname).$(binary)' ]; then mv $$i $(binname).$(binary); fi; done 
 	@mv binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/* binarysharp/bin/exe
-ifeq ($(copylibs),1)
-	$(admin)cp binarysharp/bin/exe/$(binfile).$(binary) $(bindir)$(adminend)
-else
-endif
 else
 
 ifeq ($(shell echo "check quotes"),"check quotes")
@@ -1023,6 +1018,12 @@ ifeq ($(shell echo "check quotes"),"check quotes")
 else
 	@cd binarysharp/bin/$(binconfig)/net9.0/$(os_name)/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
 	@cp -f binarysharp/bin/$(binconfig)/net9.0/$(os_name)/native/* binarysharp/bin/exe/$(binfile).$(binary)
+ifeq ($(universal2),1)
+	@cd binarysharp/bin/$(binconfig)/net9.0/osx-arm64/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
+	@cp -f binarysharp/bin/$(binconfig)/net9.0/osx-arm64/native/* binarysharp/bin/exe/$(binfile).$(binary).arm64
+	lipo -create binarysharp/bin/exe/$(binfile).$(binary) binarysharp/bin/exe/$(binfile).$(binary).arm64 -output binarysharp/bin/exe/$(binfile).$(binary)
+	@rm -f binarysharp/bin/$(binconfig)/net9.0/osx-arm64/native/*
+endif
 	@rm -f binarysharp/bin/$(binconfig)/net9.0/$(os_name)/native/*
 endif
 
