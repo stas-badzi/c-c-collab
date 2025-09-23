@@ -265,10 +265,7 @@ jobs:
           cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
           cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Compile code
-        shell: mingw32 {0}
-        env:
-          CC: gcc
-          CXX: g++
+        shell: msys2 /mingw32.exe {0}
         run: |
           cd /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
           make sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0 tgarch=i686
