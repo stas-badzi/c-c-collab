@@ -74,7 +74,7 @@ jobs:
           cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Compile code
         shell: msys2 {0}
-        run: /msys2_shell.cmd -defterm -no-start -mingw64 -here -l -c 'echo $PATH; make sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0'
+        run: /msys2_shell.cmd -defterm -no-start -mingw64 -here -l -c 'make sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0'
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -242,7 +242,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           update: true
-          install: mingw-w64-i686-make git zip mingw-w64-i686-binutils mingw-w64-i686-clang
+          install: make git zip mingw-w64-i686-binutils mingw-w64-i686-clang
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
@@ -263,7 +263,7 @@ jobs:
           cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Compile code
         shell: msys2 {0}
-        run: /msys2_shell.cmd -defterm -no-start -mingw32 -here -l -c 'echo $PATH; make sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0 tgarch=i686'
+        run: /msys2_shell.cmd -defterm -no-start -mingw32 -here -l -c 'make sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0 tgarch=i686'
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -448,7 +448,7 @@ jobs:
       - name: Compile code
         shell: msys2 {0}
         run: |
-          /msys2_shell.cmd -defterm -no-start -clangarm64 -here -l -c 'echo $PATH; make sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0'
+          /msys2_shell.cmd -defterm -no-start -clangarm64 -here -l -c 'make sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0'
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
