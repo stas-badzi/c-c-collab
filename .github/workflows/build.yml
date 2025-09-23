@@ -288,7 +288,7 @@ jobs:
           Invoke-WebRequest -Uri http://ctm.crouchingtigerhiddenfruitbat.org/pub/cygwin/setup/snapshots/setup-x86-2.923.exe -OutFile setup-x86.exe -Verbose
           .\setup-x86.exe -s http://ctm.crouchingtigerhiddenfruitbat.org/pub/cygwin/circa/2022/11/23/063457 -q -P gcc-g++,zip,grep,gawk,binutils,tar
           # wait for cygwin to install the last man page of the last package (openssl) 
-          Do {Start-Sleep -Milliseconds 100} Until (Test-Path "C:\cygwin\usr\share\man\man1\zipsplit.1.gz")
+          Do {Start-Sleep -Milliseconds 100} Until (Test-Path "C:\cygwin\usr\share\man\man7\openssl_user_macros.7ossl.gz")
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
