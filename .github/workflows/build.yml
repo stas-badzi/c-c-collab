@@ -266,9 +266,7 @@ jobs:
           cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Compile code
         shell: msys2 -mingw32 {0}
-        run: |
-          cd /$(echo "${{ github.workspace }}" | sed 's/://g' | sed 's/\\/\//g' )
-          make sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0 tgarch=i686
+        run: make sudo=0 nodep=1 c-compiler=clang cpp-compiler=clang++ archchk=0 tgarch=i686
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -398,7 +396,7 @@ jobs:
     permissions:
       contents: read
     name: Compile C# for Windows (arm64)
-    runs-on: windows-2022
+    runs-on: windows-11-arm
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -433,7 +431,7 @@ jobs:
       contents: read
     name: Build program using MSYS2 (aarch64)
     needs: compile-cs-windows-arm64
-    runs-on: windows-2022-arm
+    runs-on: windows-11-arm
     steps:
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
@@ -484,7 +482,7 @@ jobs:
     permissions:
       contents: read
     name: Build program using MSVC (arm64)
-    runs-on: windows-2022
+    runs-on: windows-11-arm
     needs: compile-cs-windows-arm64
     steps:
       - name: Checkout source code
@@ -519,7 +517,7 @@ jobs:
           del "C:\Program Files\LLVM\bin\clang-cl.exe"
       - name: Compile code
         shell: cmd /c {0}
-        run: utilities\custom\vsdevcmd-arm64.bat make resources cpp cppbin release package archchk=0 sudo=0 msvc=1 nodep=1 tgarch=arm64 c-compiler="clang-cl --target=arm64-windows-msvc" cpp-compiler="clang-cl --target=arm64-windows-msvc"
+        run: utilities\custom\vsdevcmd-arm64.bat make resources cpp cppbin release package archchk=0 sudo=0 msvc=1 nodep=1 tgarch=arm64 c-compiler=clang-cl cpp-compiler=clang-cl
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
