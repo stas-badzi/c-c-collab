@@ -313,7 +313,7 @@ jobs:
         shell: C:\cygwin\bin\bash.exe --login -o igncr '{0}'
         run: |
           cd /cygdrive/$(echo '${{ github.workspace }}' | sed 's/\\\\/\\//g' | sed 's/://g' | sed 's/\(.*\)/\L\1/')
-          ./make sudo=0 archchk=0 nodep=1 c-compiler=/bin/gcc cpp-compiler=/bin/g++
+          make sudo=0 archchk=0 nodep=1 c-compiler=/bin/gcc cpp-compiler=/bin/g++
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
