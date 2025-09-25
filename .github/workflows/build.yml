@@ -53,7 +53,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           update: true
-          install: make git zip mingw-w64-x86_64-binutils mingw-w64-x86_64-g++
+          install: make git zip mingw-w64-x86_64-binutils mingw-w64-x86_64-gcc
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
@@ -242,7 +242,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           update: true
-          install: make git zip mingw-w64-i686-binutils mingw-w64-i686-g++
+          install: make git zip mingw-w64-i686-binutils mingw-w64-i686-gcc
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
@@ -313,7 +313,7 @@ jobs:
         shell: C:\cygwin\bin\bash.exe --login -o igncr '{0}'
         run: |
           cd $(cygpath -u '${{ github.workspace }}')
-          make sudo=0 archchk=0 nodep=1 c-compiler=/bin/gcc cpp-compiler=/bin/g++
+          make sudo=0 archchk=0 nodep=1 c-compiler=gcc cpp-compiler=g++
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -426,7 +426,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           update: true
-          install: make git zip mingw-w64-clang-aarch64-binutils mingw-w64-clang-aarch64-g++
+          install: make git zip mingw-w64-clang-aarch64-binutils mingw-w64-clang-aarch64-gcc
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Import C# compiled dynamic library
