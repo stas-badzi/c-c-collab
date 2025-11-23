@@ -4672,7 +4672,7 @@ void Console::XtermMouseAndFocus(void) {
             if (res < 0) ThrowMsg("Failed to read from 2nd custom pipe (h)");
             Console::window_size.ws_col = width;
             Console::window_size.ws_row = height;
-            printf("Got window size: %d %d\n", width, height);
+            //printf("Got window size: %d %d\n", width, height);
             bytes -= sizeof(width) + sizeof(height);
         }
 
