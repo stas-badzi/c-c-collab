@@ -619,7 +619,7 @@ jobs:
     permissions:
       contents: read
     name: Build program using x64 MacOS 13
-    runs-on: macos-13
+    runs-on: macos-15-intel
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
