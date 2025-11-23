@@ -178,7 +178,7 @@ namespace cpp {
             bool primary; // is down
             bool secondary; // is down
             bool middle; // is down
-            std::pair<bool,bool> scroll; // (is scrolling),(up or down)[windows/linux/freebsd - scroll up == move scroll whell (fingers on touchbad) up; down == move down | macos scroll like tablet/phone (opposite)]
+            std::pair<bool,bool> scroll; // (is scrolling),(up or down)[windows/linux/freebsd - scroll up == move scroll whell (fingers on touchpad) up; down == move down | macos scroll like tablet/phone (opposite)]
             unsigned int x; // in console chracters
             unsigned int y; // in console chracters
             MouseStatus(void);

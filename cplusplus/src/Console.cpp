@@ -2719,7 +2719,7 @@ void Console::XtermMouseAndFocus(void) {
                     return GetPidTerminal(getparent(pid));
                 else continue;
             else if (not_term[i][0] == '*')
-                if (prog.substr(prog.size() - strlen(not_term[i]+1)) == string(not_term[i] + 1))
+                if (prog.size() >= strlen(not_term[i]+1) && prog.substr(prog.size() - strlen(not_term[i]+1)) == string(not_term[i] + 1))
                     return GetPidTerminal(getparent(pid));
                 else continue;
             else if (prog == string(not_term[i]))
@@ -2751,7 +2751,7 @@ void Console::XtermMouseAndFocus(void) {
                 if (prog.find(not_term[i] + 1) != string::npos)
                     return GetPidTerminal(getparent(pid));
             } else if (not_term[i][0] == '*') {
-                if (prog.substr(prog.size() - strlen(not_term[i]+1)) == string(not_term[i] + 1))
+                if (prog.size() >= strlen(not_term[i]+1) && prog.substr(prog.size() - strlen(not_term[i]+1)) == string(not_term[i] + 1))
                     return GetPidTerminal(getparent(pid));
             } else if (prog == string(not_term[i]))
                 return GetPidTerminal(getparent(pid));
