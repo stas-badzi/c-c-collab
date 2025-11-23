@@ -618,7 +618,7 @@ jobs:
   build-macos-x64:
     permissions:
       contents: read
-    name: Build program using x64 MacOS 13
+    name: Build program using x64 MacOS 15
     runs-on: macos-15-intel
     steps:
       - name: Checkout source code
