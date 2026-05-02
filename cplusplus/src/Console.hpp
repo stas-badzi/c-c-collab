@@ -5,7 +5,7 @@
 #include <array>
 #include <bitset>
 #include <utility>
-#include <clang_constexpr.h>
+#include <cpp20_constexpr.hpp>
 #include <sstream>
 #include <fstream>
 #include <filesystem>

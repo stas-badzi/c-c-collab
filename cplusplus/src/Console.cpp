@@ -2070,9 +2070,10 @@ void Console::XtermMouseAndFocus(void) {
                 FILE* file = _wfopen(ps1path.c_str(), L"w");
                 _setmode(_fileno(file),  _O_WTEXT); wint_t x = 0xfeff; fwrite(&x, sizeof(wint_t), 1, file);
                 fwrite(L"& ", sizeof(wchar_t), 2, file);
-                for (int i = 0; i < argc; i++)
+                fwprintf(file, L"\"%ls\" ", System::GetSelfPath().c_str());
+                for (int i = 1; i < argc; i++)
                     fwprintf(file, L"\"%ls\" ", argv[i]);
-                fwrite(L"\"\033#\"\nexit $LASTEXITCODE\n", sizeof(wchar_t), 24, file);
+                fwrite((nstring()+L'"'+ESCAPE+L"#\"\nexit $LASTEXITCODE\n").c_str(), sizeof(wchar_t), 24, file);
                 fclose(file);
 
                 file = _wfopen(cmdpath.c_str(), L"w");
@@ -2568,7 +2569,7 @@ void Console::XtermMouseAndFocus(void) {
 
     bool terminator = false;
 
-    inline clang_constexpr string GenerateEscapeSequence(uint8_t,uint8_t);
+    inline cpp20_constexpr string GenerateEscapeSequence(uint8_t,uint8_t);
 
     inline constexpr int parse_input(int show_keycodes, const char * buf, int n) {
         int out = 0;
@@ -4641,7 +4642,7 @@ void Console::XtermMouseAndFocus(void) {
 #endif
 
 // all non windows
-    inline clang_constexpr string GenerateEscapeSequence(uint8_t i1, uint8_t i2) {
+    inline cpp20_constexpr string GenerateEscapeSequence(uint8_t i1, uint8_t i2) {
         string val = "\033[";
         if (i1 < 8) {
             val.append(to_string(30 + i1));
