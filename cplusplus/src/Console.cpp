@@ -3929,7 +3929,7 @@ void Console::XtermMouseAndFocus(void) {
             int j = 0;
             for (int i = 0; i < Console::argc; i++) {
                 auto&& arg = appargv[i+j];
-                if (strlen(arg) > 1 && arg[0] == ESCAPE {
+                if (strlen(arg) > 1 && arg[0] == ESCAPE) {
                     string sdir; const char* narg;
                     switch (arg[1]) {
                         case '&':
