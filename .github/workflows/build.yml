@@ -17,7 +17,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
       - name: Compile c#
         shell: cmd
         run: |
@@ -208,7 +208,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
       - name: Compile c#
         shell: cmd
         run: |
@@ -392,7 +392,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
       - name: Compile c#
         shell: cmd
         run: |
@@ -522,7 +522,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
       - name: Set up GCC
         run: sudo apt install gcc-14
       - name: Compile code
@@ -549,7 +549,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
       - name: Set up GCC
         run: sudo apt install gcc-14
       - name: Compile code
@@ -598,7 +598,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
       - name: Compile code
         shell: bash
         run: |
@@ -626,7 +626,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
       - name: Compile code
         shell: bash
         run: |
@@ -654,7 +654,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
       - name: Compile code
         shell: bash
         run: |
@@ -686,7 +686,7 @@ jobs:
 #      - name: Setup .NET
 #        uses: actions/setup-dotnet@v4
 #        with:
-#          dotnet-version: '9.0.x'
+#          dotnet-version: '10.0.x'
 #      - name: Compile code
 #        shell: bash
 #        run: |

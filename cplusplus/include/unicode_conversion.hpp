@@ -161,7 +161,6 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
     
     inline unichar* NativeStringToUnicode(utfcstr utf8s) {
         unichar* out = (unichar*)__dllalloc(sizeof(unichar) * (wcslen(utf8s) + 1));
-        size_t offset;
         for (size_t i = 0; i < wcslen(utf8s); i++) out[i] = utf8s[i];
         out[wcslen(utf8s)] = 0;
         return out;

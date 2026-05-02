@@ -26,6 +26,31 @@
             ]
         },
         {
+            "name": "clangarm64",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "windowsSdkVersion": "10.0.26100.0",
+            "cStandard": "c17",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "windows-clang-arm64",
+            "compilerPath": "C:/msys64/clangarm64/bin/clang++.exe",
+            "forcedInclude": [
+                "${workspaceFolder}\\.vscode\\preinclude.h"
+            ],
+            "compilerArgs": [
+                "-pedantic",
+                "-Wall",
+                "-Wextra",
+                "-Wpedentic"
+            ]
+        },
+        {
             "name": "MSVC64",
             "includePath": [
                 "${workspaceFolder}/**"

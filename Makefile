@@ -234,8 +234,8 @@ ldb = /DEBUG /PDB:bin/$(name).pdb
 bldb = /DEBUG /PDB:bin/$(binname).pdb
 bpdb = /MTd /Z7
 else
-cdb = -g -Og
-bpdb = -g -Og
+cdb = -g -Og -D_DEBUG
+bpdb = -g -Og -D_DEBUG
 endif
 else
 configuration = Release
@@ -494,7 +494,7 @@ old_arch = $(shell cat __arch.dat 2> /dev/null || echo > __arch.dat)
 ifneq ($(old_arch),$(build-type))
 archfile = $(shell echo $(old_arch) > __oldarch.dat && echo $(build-type) > __arch.dat && echo __arch.dat)
 else
-archfile = __arch.dat
+archfile =
 endif
 
 package: release
@@ -837,21 +837,21 @@ endif
 	@echo "Version file. Remove to enable recompile" > $@
 
 
-cs: $(resdep) $(foreach fl,$(files),csharp/$(fl))
+cs: $(foreach fl,$(files),csharp/$(fl))
 	@echo MAKE CS
 	cd csharp && dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r $(os_name) -c $(configuration)
 
-	-@mkdir -p csharp/bin/$(configuration)/net9.0/$(os_name)/native/
-	-@mv csharp/bin/$(arch)/$(configuration)/net9.0/$(os_name)/native/* csharp/bin/$(configuration)/net9.0/$(os_name)/native/
+	-@mkdir -p csharp/bin/$(configuration)/net10.0/$(os_name)/native/
+	-@mv csharp/bin/$(arch)/$(configuration)/net10.0/$(os_name)/native/* csharp/bin/$(configuration)/net10.0/$(os_name)/native/
 ifeq ($(universal2),1)
 	cd csharp && dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r osx-arm64 -c $(configuration)
 
-	-@mkdir -p csharp/bin/$(configuration)/net9.0/osx-arm64/native/
-	-@mv csharp/bin/$(arch)/$(configuration)/net9.0/osx-arm64/native/* csharp/bin/$(configuration)/net9.0/osx-arm64/native/
+	-@mkdir -p csharp/bin/$(configuration)/net10.0/osx-arm64/native/
+	-@mv csharp/bin/$(arch)/$(configuration)/net10.0/osx-arm64/native/* csharp/bin/$(configuration)/net10.0/osx-arm64/native/
 endif
 ifeq ($(msvc),1)
-	@cd csharp/bin/$(configuration)/net9.0/$(os_name)/native/ && for i in *.exp; do if [ ! "$$i" = '$(filename).exp' ]; then mv $$i $(filename).exp; fi; done && for i in *.lib; do if [ ! "$$i" = '$(filename).lib' ]; then mv $$i $(filename).lib; fi; done && for i in *.pdb; do if [ ! "$$i" = '$(filename).pdb' ]; then mv $$i $(filename).pdb; fi; done && for i in *.dll; do if [ ! "$$i" = '$(filename).dll' ]; then mv $$i $(filename).dll; fi; done 
-	@mv csharp/bin/$(configuration)/net9.0/$(os_name)/native/* csharp/bin/lib
+	@cd csharp/bin/$(configuration)/net10.0/$(os_name)/native/ && for i in *.exp; do if [ ! "$$i" = '$(filename).exp' ]; then mv $$i $(filename).exp; fi; done && for i in *.lib; do if [ ! "$$i" = '$(filename).lib' ]; then mv $$i $(filename).lib; fi; done && for i in *.pdb; do if [ ! "$$i" = '$(filename).pdb' ]; then mv $$i $(filename).pdb; fi; done && for i in *.dll; do if [ ! "$$i" = '$(filename).dll' ]; then mv $$i $(filename).dll; fi; done 
+	@mv csharp/bin/$(configuration)/net10.0/$(os_name)/native/* csharp/bin/lib
 ifeq ($(debug),1)
 	@cp csharp/bin/lib/$(filename).pdb binarysharp/bin/exe
 	@cp csharp/bin/lib/$(filename).pdb binaryplus/bin
@@ -866,8 +866,8 @@ else
 endif
 else
 ifeq ($(shell echo "check quotes"),"check quotes")
-	@cd csharp/bin/$(configuration)/net9.0/$(os_name)/native/ && @echo . > null.exp && @echo . > null.lib && @echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(libname)
-	@move csharp\bin\$(configuration)\net9.0\$(os_name)\native\$(libname) csharp\bin\lib
+	@cd csharp/bin/$(configuration)/net10.0/$(os_name)/native/ && @echo . > null.exp && @echo . > null.lib && @echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(libname)
+	@move csharp\bin\$(configuration)\net10.0\$(os_name)\native\$(libname) csharp\bin\lib
 ifeq ($(copylibs),1)
 	$(admin)copy csharp\bin\lib\$(libname) $(libdir)$(adminend)
 else
@@ -876,11 +876,11 @@ else
 	@copy csharp\bin\lib\$(libname) cplusplus\bin
 endif
 else
-	@cd csharp/bin/$(configuration)/net9.0/$(os_name)/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
-	@mv -f csharp/bin/$(configuration)/net9.0/$(os_name)/native/* csharp/bin/lib/$(libname)
+	@cd csharp/bin/$(configuration)/net10.0/$(os_name)/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
+	@mv -f csharp/bin/$(configuration)/net10.0/$(os_name)/native/* csharp/bin/lib/$(libname)
 ifeq ($(universal2),1)
-	@cd csharp/bin/$(configuration)/net9.0/osx-arm64/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
-	@mv -f csharp/bin/$(configuration)/net9.0/osx-arm64/native/* csharp/bin/lib/$(libname).arm64
+	@cd csharp/bin/$(configuration)/net10.0/osx-arm64/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
+	@mv -f csharp/bin/$(configuration)/net10.0/osx-arm64/native/* csharp/bin/lib/$(libname).arm64
 	lipo -create csharp/bin/lib/$(libname) csharp/bin/lib/$(libname).arm64 -output csharp/bin/lib/$(libname)
 endif
 ifeq ($(copylibs),1)
@@ -998,33 +998,33 @@ csbin: $(foreach bfl,$(binfiles),binarysharp/$(bfl))
 	@echo MAKE CSBIN
 	cd binarysharp && dotnet publish -p:SelfContained=true -r $(os_name) -c $(binconfig)
 
-	-@mkdir -p binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/
-	-@mv binarysharp/bin/$(arch)/$(configuration)/net9.0/$(os_name)/native/* binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/
+	-@mkdir -p binarysharp/bin/$(configuration)/net10.0/$(os_name)/native/
+	-@mv binarysharp/bin/$(arch)/$(configuration)/net10.0/$(os_name)/native/* binarysharp/bin/$(configuration)/net10.0/$(os_name)/native/
 ifeq ($(universal2),1)
 	cd binarysharp && dotnet publish -p:SelfContained=true -r osx-arm64 -c $(configuration)
 
-	-@mkdir -p binarysharp/bin/$(configuration)/net9.0/osx-arm64/native/
-	-@mv binarysharp/bin/$(arch)/$(configuration)/net9.0/osx-arm64/native/* binarysharp/bin/$(configuration)/net9.0/osx-arm64/native/
+	-@mkdir -p binarysharp/bin/$(configuration)/net10.0/osx-arm64/native/
+	-@mv binarysharp/bin/$(arch)/$(configuration)/net10.0/osx-arm64/native/* binarysharp/bin/$(configuration)/net10.0/osx-arm64/native/
 endif
 ifeq ($(msvc),1)
-	@cd binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/ && for i in *.$(binary); do if [ ! "$$i" = '$(binname).$(binary)' ]; then mv $$i $(binname).$(binary); fi; done 
-	@mv binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/* binarysharp/bin/exe
+	@cd binarysharp/bin/$(configuration)/net10.0/$(os_name)/native/ && for i in *.$(binary); do if [ ! "$$i" = '$(binname).$(binary)' ]; then mv $$i $(binname).$(binary); fi; done 
+	@mv binarysharp/bin/$(configuration)/net10.0/$(os_name)/native/* binarysharp/bin/exe
 else
 
 ifeq ($(shell echo "check quotes"),"check quotes")
-	@cd binarysharp/bin/$(binconfig)/net9.0/$(os_name)/native/ && @echo . > null.exp && @echo . > null.lib && @echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(binfile).$(binary)
-	@copy binarysharp\bin\$(binconfig)\net9.0\$(os_name)\native\$(binfile).$(binary) binarysharp\bin\exe
-	del binarysharp\bin\$(binconfig)\net9.0\$(os_name)\native\$(binfile).$(binary)
+	@cd binarysharp/bin/$(binconfig)/net10.0/$(os_name)/native/ && @echo . > null.exp && @echo . > null.lib && @echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(binfile).$(binary)
+	@copy binarysharp\bin\$(binconfig)\net10.0\$(os_name)\native\$(binfile).$(binary) binarysharp\bin\exe
+	del binarysharp\bin\$(binconfig)\net10.0\$(os_name)\native\$(binfile).$(binary)
 else
-	@cd binarysharp/bin/$(binconfig)/net9.0/$(os_name)/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
-	@cp -f binarysharp/bin/$(binconfig)/net9.0/$(os_name)/native/* binarysharp/bin/exe/$(binfile).$(binary)
+	@cd binarysharp/bin/$(binconfig)/net10.0/$(os_name)/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
+	@cp -f binarysharp/bin/$(binconfig)/net10.0/$(os_name)/native/* binarysharp/bin/exe/$(binfile).$(binary)
 ifeq ($(universal2),1)
-	@cd binarysharp/bin/$(binconfig)/net9.0/osx-arm64/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
-	@cp -f binarysharp/bin/$(binconfig)/net9.0/osx-arm64/native/* binarysharp/bin/exe/$(binfile).$(binary).arm64
+	@cd binarysharp/bin/$(binconfig)/net10.0/osx-arm64/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
+	@cp -f binarysharp/bin/$(binconfig)/net10.0/osx-arm64/native/* binarysharp/bin/exe/$(binfile).$(binary).arm64
 	lipo -create binarysharp/bin/exe/$(binfile).$(binary) binarysharp/bin/exe/$(binfile).$(binary).arm64 -output binarysharp/bin/exe/$(binfile).$(binary)
-	@rm -f binarysharp/bin/$(binconfig)/net9.0/osx-arm64/native/*
+	@rm -f binarysharp/bin/$(binconfig)/net10.0/osx-arm64/native/*
 endif
-	@rm -f binarysharp/bin/$(binconfig)/net9.0/$(os_name)/native/*
+	@rm -f binarysharp/bin/$(binconfig)/net10.0/$(os_name)/native/*
 endif
 
 ifeq ($(shell echo "check quotes"),"check quotes")

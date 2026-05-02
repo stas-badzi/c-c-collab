@@ -1,6 +1,12 @@
 #include "Console.hpp"
 #include "dllimport.hpp"
 
+#ifdef _DEBUG
+    #define ESCAPE N('~')
+#else
+    #define ESCAPE N('\033')
+#endif
+
 #ifdef _MSC_VER
     #define PATH_MAX MAX_PATH
 #endif
@@ -1831,7 +1837,7 @@ void Console::XtermMouseAndFocus(void) {
             int j = 0;
             for (int i = 0; i < Console::argc; i++) {
                 auto&& arg = winargv[i+j];
-                if (wcslen(arg) > 1 && arg[0] == L'\033') {
+                if (wcslen(arg) > 1 && arg[0] == ESCAPE) {
                     wstring sdir; const wchar_t* narg;
                     switch (arg[1]) {
                         case L'&':
@@ -1899,9 +1905,10 @@ void Console::XtermMouseAndFocus(void) {
             if (fixmintty) goto dontstartthings;
 
             {
-                auto input_thread_arg = new __getinput_arg{Console::input_buf, SLEEP_THREAD_INPUT};
-                HANDLE input_thread = CreateThread(NULL, 0, InputThread, input_thread_arg, 0, NULL);
-                Console::thread_handles->push_back(input_thread);
+                // Why the hell does Windows x86_64 have the separate input buffers for different threads, but Windows on Arm the same
+                //auto input_thread_arg = new __getinput_arg{Console::input_buf, SLEEP_THREAD_INPUT};
+                //HANDLE input_thread = CreateThread(NULL, 0, InputThread, input_thread_arg, 0, NULL);
+                //Console::thread_handles->push_back(input_thread);
 
                 *Console::super_thread_run = true;
                 auto super_thread_arg = new __superthread_arg{Console::super_thread_run, Console::thread_handles};
@@ -2320,24 +2327,18 @@ void Console::XtermMouseAndFocus(void) {
         Console::mouse_status.scroll = {false,false};
         GetNumberOfConsoleInputEvents(Console::fd, &evnts);
         auto oldmouse = Console::mouse_buttons_down;
-        if (evnts == 0) goto getinputx;
-        for (unsigned i = 0; i < evnts; ++i) {
-        
-            if(!ReadConsoleInput(Console::fd, &record, 1, &numRead)) {
-                Console::out << L"ReadConsoleInput";
-                __attribute__((unused)) int err = GetLastError();
-                exit(0x82);
-            }
-            bitset<5> event(record.EventType);
-            if (event[0]) {
+        for (DWORD i=0;i<evnts;++i) {
+            if (!ReadConsoleInput(Console::fd, &record, 1, &numRead)) ThrowMsg("ReadConsoleInput");
+            if (record.EventType & KEY_EVENT) {
                 // KEY_EVENT
+                auto key = record.Event.KeyEvent;
+                if (key.bKeyDown)while(key.wRepeatCount--)Console::PushChar(key.uChar.UnicodeChar);
             }
 
-            if (event[1]) {
+            if (record.EventType & MOUSE_EVENT) {
                 // MOUSE_EVENT
 
                 auto mouse = record.Event.MouseEvent;
-                bitset<4> flags(mouse.dwEventFlags);
 
                 if (mouse.dwEventFlags & MOUSE_MOVED) {
                     Console::mouse_status.x = mouse.dwMousePosition.X;
@@ -2361,7 +2362,7 @@ void Console::XtermMouseAndFocus(void) {
                     cerr << "v";
                 }//*/
                 //if (mouse.dwButtonState & 0b11111) Console::out << L'0' << L'x' << std::hex << mouse.dwButtonState << L'\n';
-                Console::this_mouse_combo = (flags[1] ? this_mouse_combo : 0) + 1;
+                //Console::this_mouse_combo = (mouse.dwEventFlags & DOUBLE_CLICK ? this_mouse_combo : 0) + 1;
                 for (int i = 1; i <= 7; i++) if (mouse_buttons_down[i] && !oldmouse[i]) {
                     Console::this_mouse_down = true;
                     Console::this_mouse_combo = (mouse.dwEventFlags & DOUBLE_CLICK) ? 2 : 1;
@@ -2375,15 +2376,15 @@ void Console::XtermMouseAndFocus(void) {
                 }
             }
 
-            if (event[2]) {
+            if (record.EventType & WINDOW_BUFFER_SIZE_EVENT) {
                 // WINDOW_BUFFER_SIZE_EVENT
             }
 
-            if (event[3]) {
+            if (record.EventType & MENU_EVENT) {
                 // MENU_EVENT
             }
 
-            if (event[4]) {
+            if (record.EventType & FOCUS_EVENT) {
                 // FOCUS_EVENT
                 // reserved for some reason
                 // I don't quacking care
@@ -2421,6 +2422,7 @@ void Console::XtermMouseAndFocus(void) {
         Console::mouse_status.y = mouse.y;
         Console::mouse_status.y = mouse.y;
 */
+/*
     getinputx:
         int bytes = Console::input_buf->size();
         if (bytes == 0) return;
@@ -2478,7 +2480,7 @@ void Console::XtermMouseAndFocus(void) {
                     break;
             }
         }
-        return;
+        return;*/
     }
 
     void SysSleep(int microseconds) {
@@ -2836,7 +2838,7 @@ void Console::XtermMouseAndFocus(void) {
             char *arg = 0; size_t size = 0;
             int out = getdelim(&arg, &size, 0, cmdline);
             while(out != -1) {
-                if (arg[1] != '\0' && arg[0] == '\033') {
+                if (arg[1] != '\0' && arg[0] == ESCAPE) {
                     string sdir; char* narg;
                     switch (arg[1]) {
                     case '&':
@@ -3085,7 +3087,7 @@ void Console::XtermMouseAndFocus(void) {
                     args_c.append(Console::argv[i]);
                     args_c.push_back(' ');
                 
-                args_c.push_back('\033');
+                args_c.push_back(ESCAPE);
                 args_c.push_back('+');
                 args_c.append(to_string(sudolevel));
                 args_c.push_back('\\');
@@ -3927,7 +3929,7 @@ void Console::XtermMouseAndFocus(void) {
             int j = 0;
             for (int i = 0; i < Console::argc; i++) {
                 auto&& arg = appargv[i+j];
-                if (strlen(arg) > 1 && arg[0] == '\033') {
+                if (strlen(arg) > 1 && arg[0] == ESCAPE {
                     string sdir; const char* narg;
                     switch (arg[1]) {
                         case '&':
@@ -4145,7 +4147,7 @@ void Console::XtermMouseAndFocus(void) {
             char *arg = 0; size_t size = 0;
             int out = getdelim(&arg, &size, 0, cmdline);
             while(out != -1) {
-                if (arg[1] != '\0' && arg[0] == '\033') {
+                if (arg[1] != '\0' && arg[0] == ESCAPE) {
                     string sdir; char* narg;
                     switch (arg[1]) {
                     case '&':
@@ -4895,11 +4897,11 @@ bool Console::IsMouseButtonDown(uint8_t button) {
 }
 
 void Console::Sleep(double seconds,
-#ifndef _WIN32
+#ifndef _MSC_VER
     __attribute__((unused))
 #endif
     bool sleep_input_thread) {
-#ifdef _WIN32
+#ifdef DISABLED_WIN32
     HANDLE Hinput_thread = Console::thread_handles->front(); // input thread was added first
     if (sleep_input_thread)
         SuspendThread(Hinput_thread);
@@ -4929,7 +4931,7 @@ void Console::Sleep(double seconds,
     auto start = high_resolution_clock::now();
     while ((high_resolution_clock::now() - start).count() / 1e9 < seconds);
 
-#ifdef _WIN32
+#ifdef DISABLED_WIN32
     if (sleep_input_thread)
         ResumeThread(Hinput_thread);
 #endif
@@ -5022,7 +5024,7 @@ optional<pair<int,nstring>> cpp::Console::PopupWindow(int type, int argc, const 
     #endif
     ;}
 
-#ifdef _WIN32
+#ifdef DISABLED_WIN32
     HANDLE Hinput_thread = Console::thread_handles->front(); // input thread was added first
     SuspendThread(Hinput_thread);
 #endif
@@ -5060,8 +5062,10 @@ newpidgen:
         spipe.write = System::CreatePipe(pipepath.c_str()); // a bit useless but we add it, because sub() will expect it to exist
         if (spipe.write == INVALID_HANDLE_VALUE) ThrowMsg(nstring(N("Couldn't create pipe: \"")) + pipepath + N("\""));
     }
-
-    nstring info = N("\033&");
+    
+    nstring info;
+    info.push_back(ESCAPE);
+    info.push_back(N('&'));
     info.append(to_nstring(type)).push_back(N('~'));
     info.append(subdir).append(procdir).push_back(N('~'));
     nstring root_pth = System::GetSelfPath();
@@ -5185,7 +5189,7 @@ newpidgen:
 
             if (!System::RunProgramAsync(term.c_str(), (const nchar_t*)nullptr)) /* Run to launch new window */ {
             #ifdef _WIN32
-                ResumeThread(Hinput_thread);
+                //ResumeThread(Hinput_thread);
             #else
                 pthread::suspend
             #endif
@@ -5235,7 +5239,7 @@ newpidgen:
         realargs[4] = nullptr;
         Console::out << L"Running: " << term << L" " << runpth; out_endl();
         if (!System::RunProgramAsync(term.c_str(), realargs)) {
-            ResumeThread(Hinput_thread);  
+            //ResumeThread(Hinput_thread);  
             return nullopt;
         }
         Console::out << L"Started: " << term << L" " << runpth; out_endl();
@@ -5263,7 +5267,7 @@ newpidgen:
             const nchar_t* realargs[3] = { N("/x"), cmdargs.c_str(), nullptr };
             if (!System::RunProgramAsync(term.c_str(), realargs)) {
             #ifndef __CYGWIN__
-                ResumeThread(Hinput_thread);
+                //ResumeThread(Hinput_thread);
             #endif
                 return nullopt;
             }
@@ -5282,7 +5286,7 @@ newpidgen:
 #ifndef __APPLE__
 #ifndef __linux__
     if (!System::RunProgramAsync(term.c_str(), args)) {
-    #ifdef _WIN32
+    #ifdef DISABLED_WIN32
         ResumeThread(Hinput_thread);
     #endif
         return nullopt;
@@ -5342,7 +5346,7 @@ console:
     args[argc] = info.c_str();
     args[argc+1] = nullptr;
     if (!System::RunProgramAsyncC(root_pth.c_str(), args)) {
-        ResumeThread(Hinput_thread);
+        //ResumeThread(Hinput_thread);
         return nullopt;
     }
 #endif
@@ -5366,7 +5370,7 @@ contcons:
         Console::out << L"Waiting for popup to start: " << chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count(); out_endl();
     }
     if (chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() >= max_popup_startup_wait) {
-    #ifdef _WIN32
+    #ifdef DISABLED_WIN32
         ResumeThread(Hinput_thread);
     #endif
         return nullopt;
@@ -5375,7 +5379,7 @@ contcons:
     Console::HandleOutput();
     FILE* fl = topen((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str(), N("r"));
     if (!fl) {
-    #ifdef _WIN32
+    #ifdef DISABLED_WIN32
         ResumeThread(Hinput_thread);
     #endif
         return nullopt;
@@ -5402,7 +5406,7 @@ contcons:
 #if defined(_WIN32) || defined(__CYGWIN__)
     fl = topen((Console::tmp_data + subdir + procdir + N("window.dat")).c_str(), N("r"));
     if (!fl) {
-    #ifdef _WIN32
+    #ifdef DISABLED_WIN32
         ResumeThread(Hinput_thread);
     #endif
         return nullopt;
@@ -5504,7 +5508,7 @@ contcons:
     nstring result;
     fl = topen((Console::tmp_data + subdir + procdir + N("result.dat")).c_str(), N("r"));
     if (!fl) {
-    #ifdef _WIN32
+    #ifdef DISABLED_WIN32
         ResumeThread(Hinput_thread);
     #endif
         return nullopt;
@@ -5536,7 +5540,7 @@ contcons:
         Console::out << L"Popup exited with code: 0x" << std::hex << pret << L" and result: \"" << NativeToWString(result) << L"\"\n";
 
 
-#ifdef _WIN32
+#ifdef DISABLED_WIN32
     ResumeThread(Hinput_thread);
 #endif
     return { {pret,result} };
@@ -5555,7 +5559,7 @@ optional<pair<stsb::promise<std::optional<pair<int, uniconv::nstring>>>,rw_pipe_
     #endif
     ;}
 
-#ifdef _WIN32
+#ifdef DISABLED_WIN32
     HANDLE Hinput_thread = Console::thread_handles->front(); // input thread was added first
     SuspendThread(Hinput_thread);
 #endif
@@ -5594,7 +5598,9 @@ newpidgen:
         if (spipe.write == INVALID_HANDLE_VALUE) ThrowMsg(nstring(N("Couldn't create pipe: \"")) + pipepath + N("\""));
     }
 
-    nstring info = N("\033&");
+    nstring info;
+    info.push_back(ESCAPE);
+    info.push_back(N('&'));
     info.append(to_nstring(type)).push_back(N('~'));
     info.append(subdir).append(procdir).push_back(N('~'));
     nstring root_pth = System::GetSelfPath();
@@ -5718,7 +5724,7 @@ newpidgen:
 
             if (!System::RunProgramAsync(term.c_str(), (const nchar_t*)nullptr)) /* Run to launch new window */ {
             #ifdef _WIN32
-                ResumeThread(Hinput_thread);
+                //ResumeThread(Hinput_thread);
             #else
                 pthread::suspend
             #endif
@@ -5768,7 +5774,7 @@ newpidgen:
         realargs[4] = nullptr;
         Console::out << L"Running: " << term << L" " << runpth; out_endl();
         if (!System::RunProgramAsync(term.c_str(), realargs)) {
-            ResumeThread(Hinput_thread);  
+            //ResumeThread(Hinput_thread);  
             return nullopt;
         }
         Console::out << L"Started: " << term << L" " << runpth; out_endl();
@@ -5796,7 +5802,7 @@ newpidgen:
             const nchar_t* realargs[3] = { N("/x"), cmdargs.c_str(), nullptr };
             if (!System::RunProgramAsync(term.c_str(), realargs)) {
             #ifndef __CYGWIN__
-                ResumeThread(Hinput_thread);
+                //ResumeThread(Hinput_thread);
             #endif
                 return nullopt;
             }
@@ -5815,7 +5821,7 @@ newpidgen:
 #ifndef __APPLE__
 #ifndef __linux__
     if (!System::RunProgramAsync(term.c_str(), args)) {
-    #ifdef _WIN32
+    #ifdef DISABLED_WIN32
         ResumeThread(Hinput_thread);
     #endif
         return nullopt;
@@ -5875,7 +5881,7 @@ console:
     args[argc] = info.c_str();
     args[argc+1] = nullptr;
     if (!System::RunProgramAsyncC(root_pth.c_str(), args)) {
-        ResumeThread(Hinput_thread);
+        //ResumeThread(Hinput_thread);
         return nullopt;
     }
 #endif
@@ -5899,7 +5905,7 @@ contcons:
         Console::out << L"Waiting for popup to start: " << chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count(); out_endl();
     }
     if (chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() >= max_popup_startup_wait) {
-    #ifdef _WIN32
+    #ifdef DISABLED_WIN32
         ResumeThread(Hinput_thread);
     #endif
         return nullopt;
@@ -5908,7 +5914,7 @@ contcons:
     Console::HandleOutput();
     FILE* fl = topen((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str(), N("r"));
     if (!fl) {
-    #ifdef _WIN32
+    #ifdef DISABLED_WIN32
         ResumeThread(Hinput_thread);
     #endif
         return nullopt;
@@ -5977,7 +5983,7 @@ contcons:
         return nullopt;
     });
     waitthr.detach();
-#ifdef _WIN32
+#ifdef DISABLED_WIN32
     ResumeThread(Hinput_thread);
 #endif
     return pair<stsb::promise<optional<pair<int, nstring>>>,rw_pipe_t>({retx,spipe});
@@ -6007,7 +6013,7 @@ optional<pair<stsb::promise<optional<pair<int, u16string>>>,rw_pipe_t>> cpp::Con
     #endif
     ;}
 
-#ifdef _WIN32
+#ifdef DISABLED_WIN32
     HANDLE Hinput_thread = Console::thread_handles->front(); // input thread was added first
     SuspendThread(Hinput_thread);
 #endif
@@ -6046,7 +6052,9 @@ newpidgen:
         if (spipe.write == INVALID_HANDLE_VALUE) ThrowMsg(nstring(N("Couldn't create pipe: \"")) + pipepath + N("\""));
     }
 
-    nstring info = N("\033&");
+    nstring info;
+    info.push_back(ESCAPE);
+    info.push_back(N('&'));
     info.append(to_nstring(type)).push_back(N('~'));
     info.append(subdir).append(procdir).push_back(N('~'));
     nstring root_pth = System::GetSelfPath();
@@ -6170,7 +6178,7 @@ newpidgen:
 
             if (!System::RunProgramAsync(term.c_str(), (const nchar_t*)nullptr)) /* Run to launch new window */ {
             #ifdef _WIN32
-                ResumeThread(Hinput_thread);
+                //ResumeThread(Hinput_thread);
             #else
                 pthread::suspend
             #endif
@@ -6220,7 +6228,7 @@ newpidgen:
         realargs[4] = nullptr;
         Console::out << L"Running: " << term << L" " << runpth; out_endl();
         if (!System::RunProgramAsync(term.c_str(), realargs)) {
-            ResumeThread(Hinput_thread);  
+            //ResumeThread(Hinput_thread);  
             return nullopt;
         }
         Console::out << L"Started: " << term << L" " << runpth; out_endl();
@@ -6248,7 +6256,7 @@ newpidgen:
             const nchar_t* realargs[3] = { N("/x"), cmdargs.c_str(), nullptr };
             if (!System::RunProgramAsync(term.c_str(), realargs)) {
             #ifndef __CYGWIN__
-                ResumeThread(Hinput_thread);
+                //ResumeThread(Hinput_thread);
             #endif
                 return nullopt;
             }
@@ -6267,7 +6275,7 @@ newpidgen:
 #ifndef __APPLE__
 #ifndef __linux__
     if (!System::RunProgramAsync(term.c_str(), args)) {
-    #ifdef _WIN32
+    #ifdef DISABLED_WIN32
         ResumeThread(Hinput_thread);
     #endif
         return nullopt;
@@ -6327,7 +6335,7 @@ console:
     args[argc] = info.c_str();
     args[argc+1] = nullptr;
     if (!System::RunProgramAsyncC(root_pth.c_str(), args)) {
-        ResumeThread(Hinput_thread);
+        //ResumeThread(Hinput_thread);
         return nullopt;
     }
 #endif
@@ -6351,7 +6359,7 @@ contcons:
         Console::out << L"Waiting for popup to start: " << chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count(); out_endl();
     }
     if (chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() >= max_popup_startup_wait) {
-    #ifdef _WIN32
+    #ifdef DISABLED_WIN32
         ResumeThread(Hinput_thread);
     #endif
         return nullopt;
@@ -6360,7 +6368,7 @@ contcons:
     Console::HandleOutput();
     FILE* fl = topen((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str(), N("r"));
     if (!fl) {
-    #ifdef _WIN32
+    #ifdef DISABLED_WIN32
         ResumeThread(Hinput_thread);
     #endif
         return nullopt;
@@ -6428,7 +6436,7 @@ contcons:
         return nullopt;
     });
     waitthr.detach();
-#ifdef _WIN32
+#ifdef DISABLED_WIN32
     ResumeThread(Hinput_thread);
 #endif
     return pair<stsb::promise<optional<pair<int, u16string>>>,rw_pipe_t>({retx,spipe});

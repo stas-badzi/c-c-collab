@@ -175,7 +175,23 @@ int Main_(void) {
 
 void ColorPopup(int argc, const char16_t* argv[]);
 
-int Main__(void) {
+int ______Main() {
+    Console::Init();
+    HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE); // Get console input handle
+    DWORD dwRead;
+    INPUT_RECORD ir; // Input record to store event data
+
+    std::cout << "Waiting for mouse events... (Press right mouse button to exit)\n";
+
+    while (true) {
+        Console::HandleMouseAndFocus();
+        Sleep(50);
+    }
+
+    return 0;
+}
+
+int _____Main(void) {
     Console::Init();
     Console::SetTitle(u"FactoryRush");
 
@@ -185,7 +201,8 @@ int Main__(void) {
         int height = Console::GetWindowHeight();
 
         vector<vector<Console::Symbol>> screen(height, vector<Console::Symbol>(width, Console::Symbol(L'▒',(uint8_t)12,(uint8_t)16)));
-
+        Console::HandleMouseAndFocus();
+        auto mouse = Console::GetMouseStatus();
         // ERROR HERE
         Game::Camera camera(9,9, Console::Symbol(L'a',(uint8_t)16,(uint8_t)11));
         camera.DrawToScreen(0, 0, screen);
@@ -1529,8 +1546,8 @@ int sub(int type) {
     assert(type != 0);
     auto argc = Console::GetArgC();
     auto argv = (const char16_t**)Console::GetArgV();
-    wout << L"sub: " << type << L'\n' << "argc: " << argc << L'\n';
-    for (int i = 0; i < argc; i++) wout << L"argv[" << i << L"]: " << U16StringToWString(argv[i]) << L'\n';
+    //wout << L"sub: " << type << L'\n' << "argc: " << argc << L'\n';
+    //for (int i = 0; i < argc; i++) wout << L"argv[" << i << L"]: " << U16StringToWString(argv[i]) << L'\n';
     flush();
     pair<int,u16string> res;
     switch (type) { 
