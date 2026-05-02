@@ -3,6 +3,7 @@ CompileFlags:
     -D_DEBUG,
     -DUNICODE,
     -D_UNICODE,
+    -std=c++20,
     -isystem "./**",
     -Icplusplus/include,
     -I../include,
