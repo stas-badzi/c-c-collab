@@ -746,6 +746,7 @@ void Console::XtermMouseAndFocus(void) {
         return term;
     }struct __getinput_arg { tsqueue<nchar_t>* buf; bool dowait; };
 
+    /*
 #ifdef __CYGWIN__
     int _kbhit() {
         struct pollfd fds;
@@ -802,7 +803,7 @@ void Console::XtermMouseAndFocus(void) {
             if (wc > 0) buf.push(wc);
         }
         return NULL;
-    }
+    }*/
 
     struct __waitpid_arg {
         DWORD pid;

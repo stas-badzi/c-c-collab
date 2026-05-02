@@ -44,7 +44,6 @@
     #include <iostream>
     #include <unordered_map>
     #include <bit>
-    #include <conio.h>
     #include <windows/thread_safe/queue>
     #include <windows/thread_safe/vector>
 #ifndef _MSC_VER

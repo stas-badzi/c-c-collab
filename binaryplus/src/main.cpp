@@ -175,22 +175,6 @@ int Main_(void) {
 
 void ColorPopup(int argc, const char16_t* argv[]);
 
-int ______Main() {
-    Console::Init();
-    HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE); // Get console input handle
-    DWORD dwRead;
-    INPUT_RECORD ir; // Input record to store event data
-
-    std::cout << "Waiting for mouse events... (Press right mouse button to exit)\n";
-
-    while (true) {
-        Console::HandleMouseAndFocus();
-        Sleep(50);
-    }
-
-    return 0;
-}
-
 int _____Main(void) {
     Console::Init();
     Console::SetTitle(u"FactoryRush");
