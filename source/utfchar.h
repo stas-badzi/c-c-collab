@@ -1,6 +1,7 @@
 #if !defined(__APPLE__) && !defined(__CYGWIN32__)
 #include <uchar.h>
 #else
+#include <wchar.h>
 size_t mbrtoc32 (char32_t *__restrict__ __pc32, const char *__restrict__ __s, size_t __n, mbstate_t *__restrict__ __p);
 size_t c32rtomb(char *__restrict__ __s, char32_t __c32, mbstate_t *__restrict__ __ps);
 static size_t mbrtoc16(char16_t *__restrict__ __pc16, const char *__restrict__ __s, size_t __n, mbstate_t *__restrict__ __p) {return mbrtowc(__pc16, __s, __n, __p);}

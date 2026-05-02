@@ -1,7 +1,9 @@
-#ifndef __CYGWIN32__
-#include <uchar.h>
-#endif
+#include <wchar.h>
 #include <errno.h>
+#ifdef __CYGWIN32__
+typedef unsigned int char16_t;
+typedef unsigned long long char32_t;
+#endif
 
 #ifndef __unused
 #ifdef __GNUC__
@@ -12,7 +14,6 @@
 #endif
 
 size_t mbrtoc32 (char32_t *__restrict__ __pc32, const char *__restrict__ __s, size_t __n, mbstate_t *__restrict__ __unused(__p)) {
-    
     if ( __s == NULL )
         return 0;
     /* something like this (it doesn't really matter for utf-32)
