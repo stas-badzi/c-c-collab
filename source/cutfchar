@@ -5,7 +5,9 @@
 namespace std {
     using ::mbrtoc32;
     using ::c32rtomb;
+#ifdef __CYGWIN32__
     using ::mbrtoc16;
     using ::c16rtomb;
+#endif
 }
 #endif
