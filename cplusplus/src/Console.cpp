@@ -988,7 +988,7 @@ void Console::XtermMouseAndFocus(void) {
             WaitForSingleObject(threads[i], INFINITE);
             CloseHandle(threads[i]);
         }
-        return TRUE;
+        return (thread_ret_t)TRUE;
     }
 
     void cpp::Console::MoveCursor(int x, int y) {

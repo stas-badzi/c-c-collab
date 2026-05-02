@@ -1,0 +1,17 @@
+#include <utfchar.h>
+#ifndef __APPLE__
+#include <cuchar>
+#ifdef __CYGWIN32__
+namespace std {
+    using ::mbrtoc32;
+    using ::c32rtomb;
+    using ::mbrtoc16;
+    using ::c16rtomb;
+}
+#endif
+#else
+namespace std {
+    using ::mbrtoc32;
+    using ::c32rtomb;
+}
+#endif

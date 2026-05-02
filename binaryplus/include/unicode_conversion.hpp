@@ -17,7 +17,7 @@
     #include <bitset>
     #include <string_view>
     #include <exception>
-    #include "cuchar.hpp"
+    #include <cutfchar>
 #endif
 
 namespace uniconv {
