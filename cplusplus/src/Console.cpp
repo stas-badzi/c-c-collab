@@ -746,7 +746,6 @@ void Console::XtermMouseAndFocus(void) {
         return term;
     }struct __getinput_arg { tsqueue<nchar_t>* buf; bool dowait; };
 
-    /*
 #ifdef __CYGWIN__
     int _kbhit() {
         struct pollfd fds;
@@ -760,7 +759,7 @@ void Console::XtermMouseAndFocus(void) {
     #define _getnch() _getwch()
     #define nfopen _wfopen
 #endif
-
+    /*
     THREAD InputThread(void* pvarg) {
         __getinput_arg* arg = (__getinput_arg*)pvarg;
         tsqueue<nchar_t>& buf = *(arg->buf);
