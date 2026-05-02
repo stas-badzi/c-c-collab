@@ -12,7 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="NetCoreAudio" Version="2.0.0" />
-    <PackageReference Include="runtime.osx-arm64.Microsoft.DotNet.ILCompiler" Condition="$([MSBuild]::IsOsPlatform('OSX'))"/>
+    <PackageReference Include="runtime.osx-arm64.Microsoft.DotNet.ILCompiler" Version="10.0.7" Condition="$([MSBuild]::IsOsPlatform('OSX'))"/>
   </ItemGroup>
 
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
