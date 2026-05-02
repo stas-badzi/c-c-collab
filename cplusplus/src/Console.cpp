@@ -4210,10 +4210,10 @@ void Console::XtermMouseAndFocus(void) {
             //if (fixmintty) goto dontstartthings;
 
             {
-                auto input_thread_arg = new __getinput_arg{Console::input_buf, SLEEP_THREAD_INPUT};
-                pthread_t input_thread;
-                __attribute__((unused)) int res = pthread_create(&input_thread, NULL, InputThread, input_thread_arg);
-                Console::thread_handles->push_back(input_thread);
+                //auto input_thread_arg = new __getinput_arg{Console::input_buf, SLEEP_THREAD_INPUT};
+                //pthread_t input_thread;
+                //__attribute__((unused)) int res = pthread_create(&input_thread, NULL, InputThread, input_thread_arg);
+                //Console::thread_handles->push_back(input_thread);
 
                 *Console::super_thread_run = true;
                 auto super_thread_arg = new __superthread_arg{Console::super_thread_run, Console::thread_handles};
@@ -5191,7 +5191,7 @@ newpidgen:
             #ifdef _WIN32
                 //ResumeThread(Hinput_thread);
             #else
-                pthread::suspend
+                //pthread::suspend(input_thread);
             #endif
                 return nullopt;
             }
@@ -5726,7 +5726,7 @@ newpidgen:
             #ifdef _WIN32
                 //ResumeThread(Hinput_thread);
             #else
-                pthread::suspend
+                //pthread::suspend(input_thread);
             #endif
                 return nullopt;
             }
@@ -6180,7 +6180,7 @@ newpidgen:
             #ifdef _WIN32
                 //ResumeThread(Hinput_thread);
             #else
-                pthread::suspend
+                //pthread::suspend(input_thread);
             #endif
                 return nullopt;
             }
