@@ -6,7 +6,6 @@
 #include <unicode_conversion.hpp>
 #include <typeinfo>
 
-#include <control_heap.h>
 #include <unordered_map>
 #ifdef _WIN32
     #include <windows.h>

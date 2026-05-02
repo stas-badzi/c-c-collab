@@ -4,7 +4,6 @@
 
 #include <dynamic_library.h>
 #include <unicode_conversion.hpp>
-#include <control_heap.h>
 
 #include "Console.hpp"
 

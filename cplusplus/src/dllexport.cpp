@@ -8,7 +8,6 @@
 #include "System.hpp"
 #include "TextureSystem.hpp"
 #include "Game.hpp"
-#include <control_heap.h>
 
 
 using namespace uniconv;
@@ -158,7 +157,7 @@ using namespace uniconv;
     libexport unichar** Console_GetArgV(void) {
         int _argc = cpp::Console::GetArgC();
         utfcstr* _argv = cpp::Console::GetArgV();
-        unichar** out = (unichar**)__dllalloc(sizeof(unichar*)*_argc);
+        unichar** out = (unichar**)malloc(sizeof(unichar*)*_argc);
         for (int i = 0; i < _argc; i++)
             out[i] = NativeStringToUnicode(_argv[i]);;
         return out;
@@ -612,29 +611,3 @@ using namespace uniconv;
         auto screen = cs::PtrToTexture(screenptr, true);
         cameraptr->DrawToScreen(x, y, screen);
     }
-#ifdef _DEBUG
-// control_heap
-    libexport void ControlHeap__save$ALLOCATIONS(void* arg1, unsigned long arg2) {
-        return __save$ALLOCATIONS(arg1,arg2);
-    }
-
-    libexport void ControlHeap__free$ALLOCATIONS(void* arg1) {
-        return __free$ALLOCATIONS(arg1);
-    }
-
-    libexport void ControlHeap__check$ALLOCATIONS(void* arg1, unsigned long arg2) {
-        return __check$ALLOCATIONS(arg1,arg2);
-    }
-
-    libexport void ControlHeap__save$SYMBOLS(void* arg1) {
-        return __save$SYMBOLS(arg1);
-    }
-
-    libexport void ControlHeap__free$SYMBOLS(void* arg1) {
-        return __free$SYMBOLS(arg1);
-    }
-
-    libexport void ControlHeap__check$SYMBOLS(void* arg1) {
-        return __check$SYMBOLS(arg1);
-    }
-#endif

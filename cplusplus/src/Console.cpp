@@ -988,7 +988,7 @@ void Console::XtermMouseAndFocus(void) {
             WaitForSingleObject(threads[i], INFINITE);
             CloseHandle(threads[i]);
         }
-        return (thread_ret_t)1;
+        return TRUE;
     }
 
     void cpp::Console::MoveCursor(int x, int y) {
@@ -4217,7 +4217,7 @@ void Console::XtermMouseAndFocus(void) {
 
                 *Console::super_thread_run = true;
                 auto super_thread_arg = new __superthread_arg{Console::super_thread_run, Console::thread_handles};
-                res = pthread_create(&Console::super_thread, NULL, Console::SuperThread, super_thread_arg);
+                __attribute__((unused)) int res = pthread_create(&Console::super_thread, NULL, Console::SuperThread, super_thread_arg);
             }
 
             if (auto conpid = getenv("ConEmuServerPID")) {

@@ -9,8 +9,6 @@
 #include <assert.h>
 #include <clang_constexpr.h>
 
-#include "utils/dllalloc.h"
-
 #ifdef _WIN32
     #include <algorithm>
 #else
@@ -104,7 +102,7 @@ inline utfchar UnicodeToNative(unichar unicode) {
 }
 
 inline unichar* U16StringToUnicode(std::u16string utf16s) {
-    unichar* out = (unichar*)__dllalloc(sizeof(unichar) * (utf16s.size() + 1));
+    unichar* out = (unichar*)malloc(sizeof(unichar) * (utf16s.size() + 1));
     for (size_t i = 0; i < utf16s.size(); ++i)
         out[i] = static_cast<unichar>(utf16s[i]);
     out[utf16s.size()] = 0;
@@ -115,7 +113,7 @@ inline std::u16string UnicodeToU16String(unichar* unicodes) {
     std::u16string out;
     for (int i = 0; unicodes[i] != 0; ++i)
         out.push_back(static_cast<char16_t>(unicodes[i]));
-    __dllfree(unicodes);
+    free(unicodes);
     return out;
 }
 
@@ -160,7 +158,7 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
     }
     
     inline unichar* NativeStringToUnicode(utfcstr utf8s) {
-        unichar* out = (unichar*)__dllalloc(sizeof(unichar) * (wcslen(utf8s) + 1));
+        unichar* out = (unichar*)malloc(sizeof(unichar) * (wcslen(utf8s) + 1));
         size_t offset;
         for (size_t i = 0; i < wcslen(utf8s); i++) out[i] = utf8s[i];
         out[wcslen(utf8s)] = 0;
@@ -172,7 +170,7 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         for (int i = 0; unicodes[i] != 0; ++i) {
             out.push_back(unicodes[i]);
         }
-        __dllfree(unicodes);
+        free(unicodes);
         return out;
     }
 
@@ -348,7 +346,7 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
             ptr += siz;
         }
         
-        unichar* out = (unichar*)__dllalloc(sizeof(unichar) * (str.size() + 1));
+        unichar* out = (unichar*)malloc(sizeof(unichar) * (str.size() + 1));
         for (size_t i = 0; i < str.size(); i++) out[i] = str[i];
         out[str.size()] = 0;
         return out;
@@ -367,7 +365,7 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
             std::c32rtomb(&mbstr[0], utf32, &state);
             out.append(mbstr);
         }
-        __dllfree(unicodes);
+        free(unicodes);
         return out;
     }
 
@@ -399,7 +397,7 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
 
 #ifdef __CYGWIN__
     inline unichar* UnderlyingStringToUnicode(const wchar_t* utf8s) {
-        unichar* out = (unichar*)__dllalloc(sizeof(unichar) * (wcslen(utf8s) + 1));
+        unichar* out = (unichar*)malloc(sizeof(unichar) * (wcslen(utf8s) + 1));
         for (size_t i = 0; i < wcslen(utf8s); i++) out[i] = utf8s[i];
         out[wcslen(utf8s)] = 0;
         return out;
@@ -409,7 +407,7 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         for (int i = 0; unicodes[i] != 0; ++i) {
             out.push_back(unicodes[i]);
         }
-        __dllfree(unicodes);
+        free(unicodes);
         return out;
     }
 #else

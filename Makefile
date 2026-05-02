@@ -27,7 +27,7 @@ sources = Console.cpp TextureSystem.cpp System.cpp Game.cpp dllexport.cpp SoundS
 #> header files
 headers = Console.hpp TextureSystem.hpp TextureSystem.ipp Game.hpp dllimport.hpp System.hpp System.ipp smart_ref.hpp smart_ref.ipp SoundSystem.hpp
 #> include files
-includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h quick_exit.h control_heap.h operating_system.h quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp apple/keyboard.h apple/openfile.h linux/ledctrl.h linux/mousefd.h windows/thread_safe/queue windows/thread_safe/vector promise.hpp
+includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h quick_exit.h operating_system.h quick_exit/defines.h utils/cextern.h linux/key.hpp windows/key.hpp apple/key.hpp apple/keyboard.h apple/openfile.h linux/ledctrl.h linux/mousefd.h windows/thread_safe/queue windows/thread_safe/vector promise.hpp
 #> name the dynamic library
 name = factoryrushplus
 # *******************************
@@ -38,7 +38,7 @@ binsources = main.cpp Console.cpp TextureSystem.cpp System.cpp Control.cpp dllex
 #> header files
 binheaders = dllimport.hpp Console.hpp TextureSystem.hpp System.hpp defines.h Control.hpp SoundSystem.hpp Game.hpp
 #> include files
-binincludes = dynamic_library.h unicode_conversion.hpp control_heap.h utils/cextern.h control_heap.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp
+binincludes = dynamic_library.h unicode_conversion.hpp utils/cextern.h linux/key.hpp windows/key.hpp apple/key.hpp
 #> name the binary file
 binname = cpp-factoryrush
 #********************************
@@ -124,12 +124,14 @@ endif
 empty =
 space = $(empty) $(empty)
 
+sanitze = 
 ifeq ($(findstring arm, $(shell uname -m)),arm)
 arch = arm64
 else
 ifeq ($(findstring aarch, $(shell uname -m)),aarch)
 arch = arm64
 else
+sanitize = -fsanitize=address,undefined
 arch = x64
 endif
 endif
@@ -234,8 +236,9 @@ ldb = /DEBUG /PDB:bin/$(name).pdb
 bldb = /DEBUG /PDB:bin/$(binname).pdb
 bpdb = /MTd /Z7
 else
-cdb = -g -Og -D_DEBUG
-bpdb = -g -Og -D_DEBUG
+cdb = -g -Og -D_DEBUG $(sanitze)
+bpdb = -g -Og -D_DEBUG $(sanitze)
+clnk = $(sanitze)
 endif
 else
 configuration = Release
@@ -248,6 +251,7 @@ bpdb = /MT /O2
 else
 cdb = -s -Ofast
 bpdb = -s -Ofast
+clnk =
 endif
 endif
 
@@ -631,8 +635,8 @@ resources: $(check_arch) source/setkbdmode.c source/killterm.c source/getfd.c so
 ifneq ($(msvc),1)
 ifeq ($(binary),exe)
 	$(c-compiler) -c source/killwindow.c source/beep.c -pedantic -Wall -Wextra -Wpedantic -DUNICODE $(_cflags) $(cdb) -std=c2x && mv *.o objects/$(arch)/
-	$(c-compiler) -o binaryplus/bin/killwindow.exe objects/$(arch)/killwindow.o
-	$(c-compiler) -o binaryplus/bin/beep.exe objects/$(arch)/beep.o
+	$(c-compiler) -o binaryplus/bin/killwindow.exe objects/$(arch)/killwindow.o $(clnk)
+	$(c-compiler) -o binaryplus/bin/beep.exe objects/$(arch)/beep.o $(clnk)
 endif
 	$(c-compiler) -c source/globals.c -pedantic -Wall -Wextra -Wpedantic $(_cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/$(arch)/
 	$(staticgen)assets/$(arch)/libglobals.$(static) objects/$(arch)/globals.o
