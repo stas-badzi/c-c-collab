@@ -1,12 +1,9 @@
-#include <wchar.h>
 #include <errno.h>
-#ifdef __CYGWIN32__
-typedef unsigned int char16_t;
-typedef unsigned long long char32_t;
-#endif
-
+#include <stdlib.h>
+typedef unsigned short char16_t;
+typedef unsigned int char32_t;
 #ifndef __unused
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__clang__)
     #define __unused(x) __attribute__((unused)) x
 #else
     #define __unused(x) x
