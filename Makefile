@@ -710,12 +710,12 @@ else
 endif
 else
 ifeq ($(i686cygwin),1)
-	$(c-compiler) -c source/utfchar.c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) $(cdb) -Isource -std=c++2b && mv *.o objects/$(arch)/
+	$(c-compiler) -c source/utfchar.c -pedantic -Wall -Wextra -Wpedantic $(cdb) -Isource -std=c++2b && mv *.o objects/$(arch)/
 	$(staticgen)assets/$(arch)/libutfchar.a objects/$(arch)/utfchar.o
 endif
 
 ifeq ($(shell uname -s),Darwin)
-	$(c-compiler) -c source/utfchar.c -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) $(cdb) -Isource -std=c++2b && mv *.o objects/$(arch)/
+	$(c-compiler) -c source/utfchar.c -pedantic -Wall -Wextra -Wpedantic $(cdb) -Isource -std=c++2b && mv *.o objects/$(arch)/
 	$(staticgen)assets/$(arch)/libutfchar.a objects/$(arch)/utfchar.o
 	$(c-compiler) -c source/keyboard.m source/openfile.m -framework CoreGraphics -framework CoreServices -pedantic -Wall -Wextra -Wpedantic $(_cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/$(arch)/
 	$(c-compiler) -dynamiclib $(archif) -o assets/$(arch)/libapplectrl.dylib objects/$(arch)/keyboard.o objects/$(arch)/openfile.o -framework CoreGraphics -framework CoreServices
@@ -724,7 +724,7 @@ ifeq ($(shell uname -s),Darwin)
 	$(c-compiler) $(archif) -o assets/$(arch)/killterm objects/$(arch)/killterm.o
 
 ifeq ($(universal2),1)
-	$(c-compiler) -c source/utfchar.cpp -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -arch arm64 $(cdb) -Isource -std=c++2b && mv *.o objects/arm64/
+	$(c-compiler) -c source/utfchar.cpp -pedantic -Wall -Wextra -Wpedantic -arch arm64 $(cdb) -Isource -std=c++2b && mv *.o objects/arm64/
 	$(staticgen)assets/arm64/libutfchar.a objects/arm64/utfchar.o
 
 	$(c-compiler) -c source/keyboard.m source/openfile.m -framework CoreGraphics -framework CoreServices -pedantic -Wall -Wextra -Wpedantic $(cflags) -arch arm64 $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/arm64/
