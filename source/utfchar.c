@@ -1,4 +1,6 @@
+#ifndef __CYGWIN32__
 #include <uchar.h>
+#endif
 #include <errno.h>
 
 #ifndef __unused

@@ -126,7 +126,7 @@ jobs:
         shell: C:\cygwin64\bin\bash.exe --login -o igncr '{0}'
         run: |
           cd "$(cygpath -u '${{ github.workspace }}')"
-          /cygdrive/c/ProgramData/chocolatey/bin/make sudo=0 archchk=0 nodep=1 c-compiler=/bin/gcc cpp-compiler=/bin/g++
+          make sudo=0 archchk=0 nodep=1 c-compiler=/bin/gcc cpp-compiler=/bin/g++
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -309,7 +309,7 @@ jobs:
         shell: C:\cygwin\bin\bash.exe --login -o igncr '{0}'
         run: |
           cd $(cygpath -u '${{ github.workspace }}')
-          make sudo=0 archchk=0 nodep=1 c-compiler=gcc cpp-compiler=g++
+          make sudo=0 archchk=0 nodep=1 c-compiler=gcc cpp-compiler=g++ tgarch=i686
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
