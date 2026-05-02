@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <stdlib.h>
+#include <wchar.h>
 typedef unsigned short char16_t;
 typedef unsigned int char32_t;
 #ifndef __unused
