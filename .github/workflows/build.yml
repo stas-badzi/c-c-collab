@@ -561,27 +561,27 @@ jobs:
           name: UbuntuArm64CsBin
           path: bin/Cs.*.tar.gz
 
-  build-debian-x64:
-    permissions:
-      contents: none
-    name: Build program using Debian
-    runs-on: [self-hosted, debian]
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
-      - name: Compile code
-        shell: bash
-        run: make sudo=0 c-compiler=gcc cpp-compiler=g++
-      - name: Upload C++ binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: DebianCppBin
-          path: bin/Cpp.*.tar.gz
-      - name: Upload C# binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: DebianCsBin
-          path: bin/Cs.*.tar.gz
+#  build-debian-x64:
+#    permissions:
+#      contents: none
+#    name: Build program using Debian
+#    runs-on: [self-hosted, debian]
+#    steps:
+#      - name: Checkout source code
+#        uses: actions/checkout@v4
+#      - name: Compile code
+#        shell: bash
+#        run: make sudo=0 c-compiler=gcc cpp-compiler=g++
+#      - name: Upload C++ binaries
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: DebianCppBin
+#          path: bin/Cpp.*.tar.gz
+#      - name: Upload C# binaries
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: DebianCsBin
+#          path: bin/Cs.*.tar.gz
   
   build-macos-arm64:
     permissions:
