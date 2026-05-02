@@ -1065,7 +1065,6 @@ void Console::XtermMouseAndFocus(void) {
             if (!status) { cerr << "CreateProcess failed: " << GetLastError() << endl; exit(0x63); }
             CloseHandle(pi.hThread);
             WaitForSingleObject(pi.hProcess, INFINITE);
-            bool isdone = false;
             DWORD exitcode = -1;
             if (GetExitCodeProcess(pi.hProcess, &exitcode)) {
                 if (exitcode)
@@ -1899,6 +1898,7 @@ void Console::XtermMouseAndFocus(void) {
             Console::pid = _getpid();
             Console::window = GetHwnd();
             Console::terminal_name = GetWindowExecutableName(Console::window); // for checking the type of terminal
+            if (mintty&&!conemu&&!cmder&&terminal_name.find(L"mintty")==string::npos)mintty=fixmintty=0;
 
             setlocale(LC_ALL, "");
 
