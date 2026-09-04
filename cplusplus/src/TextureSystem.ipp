@@ -2,14 +2,14 @@
 #include "dllimport.hpp"
 
 template <typename Tout, typename Tin>
-std::vector<Tout> cs::ConvertVector(const std::vector<Tin> &vec) {
+std::vector<Tout> ConvertVector(const std::vector<Tin> &vec) {
     std::vector<Tout> out;
     for (auto &&t : vec) out.push_back((Tout)t);
     return out;
 }
 
 template <typename Tout, typename Tin>
-std::vector<std::vector<Tout>> cs::Convert2dVector(const std::vector<std::vector<Tin>> &vec2d) {
+std::vector<std::vector<Tout>> Convert2dVector(const std::vector<std::vector<Tin>> &vec2d) {
     std::vector<std::vector<Tout>> out;
     for (auto &&vt : vec2d) out.push_back(ConvertVector<Tout,Tin>(vt));
     return out;
@@ -138,9 +138,6 @@ namespace cs {
     }
 
     inline void TextureSystem::DrawTextureToScreen(int x, int y, const std::vector<std::vector<Console::Symbol> >& texture, std::vector<std::vector<smart_ref<Console::Symbol>>>& screen) {
-        auto texturePtr = TextureToPtr(texture);
-        auto screenPtr = TextureToPtr(screen);
-
-        csimp::TextureSystem_DrawTextureToScreen(x, y, texturePtr, screenPtr);
+        return; // implemented somewhere
     }
 }

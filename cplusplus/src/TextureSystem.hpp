@@ -6,7 +6,7 @@
 #include "Console.hpp"
 #include "smart_ref.hpp"
 
-namespace cs {
+namespace io {
 
     template<typename Tout, typename Tin>
     std::vector<Tout> ConvertVector(const std::vector<Tin>& vec);

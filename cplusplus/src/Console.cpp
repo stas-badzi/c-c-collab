@@ -2325,7 +2325,7 @@ void Console::XtermMouseAndFocus(void) {
         
             if(!ReadConsoleInput(Console::fd, &record, 1, &numRead)) {
                 Console::out << L"ReadConsoleInput";
-                __attribute__((unused)) int err = GetLastError();
+                int err = GetLastError();
                 exit(0x82);
             }
             bitset<5> event(record.EventType);
@@ -4981,7 +4981,9 @@ Console::Symbol::Symbol(const Symbol& sym) {
 Console::Symbol::~Symbol(void) {}
 
 void Console::Symbol::ReverseColors(void) {
-    cppimp::Console_Symbol_ReverseColors(this);
+    foreground^=background;
+    background^=foreground;
+    foreground^=background;
 }
 
 Console::Symbol & Console::Symbol::operator=(const Console::Symbol & src) {
@@ -5381,7 +5383,7 @@ contcons:
         return nullopt;
     }
     pid_t spid = 0;
-    __attribute__((unused)) int res = fread(&spid, sizeof(pid_t), 1, fl);
+    int res = fread(&spid, sizeof(pid_t), 1, fl);
     fclose(fl);
     Console::popup_pids.push_back(spid);
 

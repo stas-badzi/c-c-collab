@@ -113,24 +113,4 @@ namespace cppimp {
             return out;
         }
     // ~Symbol
-
-    // actually from c# but who cares
-        libimport void Console_Symbol_ReverseColors(cpp::Console::Symbol* sym);
-    //
 }
-
-namespace csimp {
-    
-    libimport uniconv::unichar** TextureSystem_ImportText(uniconv::unichar* file);
-    
-    libimport void TextureSystem_ExportText(uniconv::unichar* file, uniconv::unichar** content);
-
-    libimport void* TextureSystem_TextureFromFile(uniconv::unichar* arg1);
-
-    libimport void TextureSystem_FileFromTexture(uniconv::unichar* filepathPtr, void* texturePtr, bool recycle);
-
-    libimport void TextureSystem_DrawTextureToScreen(int x, int y, void* texturePtr, void* screenPtr);
-
-    libimport void SoundSystem_PlaySound(uniconv::unichar* filepathPtr, bool wait);
-
-} // namespace csimp

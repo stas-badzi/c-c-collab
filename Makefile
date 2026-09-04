@@ -43,20 +43,6 @@ binincludes = dynamic_library.h unicode_conversion.hpp control_heap.h utils/cext
 binname = cpp-factoryrush
 #********************************
 
-#********* c# config ************
-#> name the dynamic library
-filename = factoryrushsharp
-#>source code files
-files = DllExport.cs DllImport.cs TextureSystem.cs Terminal.cs Console.cs Utility.cs Exec.cs Control.cs Key.cs linux_keyboard.cs apple_event.cs windows_vkcodes.cs SoundSystem.cs
-# *******************************
-
-#********* c# binary config *****
-#> name the binary file
-binfile = cs-factoryrush
-#>source code files
-binfiles = Program.cs DllImport.cs TextureSystem.cs Terminal.cs Utility.cs Exec.cs Key.cs linux_keyboard.cs apple_event.cs windows_vkcodes.cs SoundSystem.cs
-# *******************************
-
 #***** application config ****
 #> linux root of application path
 linuxroot = /usr
@@ -526,7 +512,6 @@ endif
 	@copy csharp\bin\lib\$(libname) bin\cs
 
 	@cd bin && ren cpp Cpp.$(release)
-	@cd bin && ren cs Cs.$(release)
 
 	@cd bin && powershell Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/raw/master/bin/zip.exe" -OutFile "zip.exe" -Verbose
 
@@ -548,7 +533,6 @@ endif
 	@cp csharp/bin/lib/$(libname) bin/cs
 
 	@cd bin && mv cpp Cpp.$(release)
-	@cd bin && mv cs Cs.$(release)
 
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 	zip -r bin/Cpp.$(release).$(os).zip bin/Cpp.$(release)
@@ -575,22 +559,13 @@ endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
 
-all: resources dll cppbin csbin fixmintty-cygwin fixmintty-msys2
+all: resources dll cppbin fixmintty-cygwin fixmintty-msys2
 	@echo "Version file. Remove to enable recompile" > $@
 
-dll: cs cpp
+dll: cpp
 	@echo "Version file. Remove to enable recompile" > $@
 
 clean: cppclean csclean
-
-csclean:
-ifeq ($(shell echo "check quotes"),"check quotes")
-	@del /f cs
-	@del /f csbin
-else
-	@rm -f cs
-	@rm -f csbin
-endif
 
 cppclean:
 ifeq ($(shell echo "check quotes"),"check quotes")
@@ -755,14 +730,11 @@ else
 endif
 endif
 
-csrun:
-	-cd binarysharp/bin/exe && $(run)$(binfile).$(binary)
-
 cpp: $(resdep) $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))
 	@echo MAKE CPP
 
 ifeq ($(msvc),1)
-	echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(flib) $(objects) ../assets/$(arch)/globals.lib USER32.lib Gdi32.lib Shell32.lib Shlwapi.lib Dbghelp.lib" > run.bat
+	echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(objects) ../assets/$(arch)/globals.lib USER32.lib Gdi32.lib Shell32.lib Shlwapi.lib Dbghelp.lib" > run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
 ifeq ($(debug),1)
@@ -784,23 +756,23 @@ else
 ifeq ($(binary),exe)
 #windows
 ifeq ($(shell uname -s),Windows_NT)
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets/$(arch) -L$(flibdir) -lglobals -ldbghelp -lshlwapi -lshell32 $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets/$(arch) -lglobals -ldbghelp -lshlwapi -lshell32 $(static-libc++) $(static-libc) $(ldarg)
 else
 ifeq ($(shell uname -s),windows32)
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets/$(arch) -L$(flibdir) -lglobals -ldbghelp -lshlwapi -lshell32 $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets/$(arch) -lglobals -ldbghelp -lshlwapi -lshell32 $(static-libc++) $(static-libc) $(ldarg)
 else
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets/$(arch) -L$(flibdir) -lglobals -ldbghelp -lshlwapi -lshell32 $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets/$(arch) -lglobals -ldbghelp -lshlwapi -lshell32 $(static-libc++) $(static-libc) $(ldarg)
 endif
 endif
 #
 else
 ifeq ($(shell uname -s),Darwin)
 #macos
-	cd cplusplus && $(cpp-compiler) -dynamiclib $(archif) -o bin/lib$(name).dylib $(objects) -L../assets/$(arch2) -L../assets/$(arch) -L$(flibdir) -lapplecuchar -lapplectrl -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -dynamiclib $(archif) -o bin/lib$(name).dylib $(objects) -L../assets/$(arch2) -L../assets/$(arch) -L$(flibdir) -lapplecuchar -lapplectrl -lglobals $(static-libc++) $(static-libc) $(ldarg)
 	utilities/custom/dylib-fix.sh "cplusplus/bin/lib$(name).dylib" "applectrl"
 
 ifeq ($(universal2),1)
-	cd cplusplus && $(cpp-compiler) -dynamiclib -arch arm64 -o bin/lib$(name).arm64.dylib $(foreach file,$(sources),obj/arm64/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file))))) -L../assets/$(arch2) -L../assets/arm64 -L$(flibdir) -lapplecuchar -lapplectrl -lglobals $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -dynamiclib -arch arm64 -o bin/lib$(name).arm64.dylib $(foreach file,$(sources),obj/arm64/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file))))) -L../assets/$(arch2) -L../assets/arm64 -L$(flibdir) -lapplecuchar -lapplectrl -lglobals $(static-libc++) $(static-libc) $(ldarg)
 	utilities/custom/dylib-fix.sh "cplusplus/bin/lib$(name).arm64.dylib" "applectrl"
 
 	lipo -create cplusplus/bin/lib$(name).dylib cplusplus/bin/lib$(name).arm64.dylib -output cplusplus/bin/lib$(name).dylib
@@ -808,8 +780,8 @@ endif
 #
 else
 #linux and similar
-#	cd cplusplus && $(cpp-compiler) -v -shared -o bin/lib$(name).so $(objects) -L../assets/$(arch) -L$(flibdir) -lglobals -llinuxctrl $(flib) $(static-libc++) $(static-libc) $(ldarg) 2>&1 | grep ld | sed 's/-lc/$$(find -O3 \/usr\/lib -name libc.a 2>&1 | grep $$(uname -m) | sed 1q)'/g | sed 's/-lm/$$(find -O3 \/usr\/lib -name libm.a 2>&1 | grep $$(uname -m) | sed 1q)'/g | sed s/-o/-Bsymbolic\ -o/g > temp.sh && chmod +x temp.sh && ./temp.sh && rm temp.sh
-	cd cplusplus && $(cpp-compiler) -shared -o bin/lib$(name).so $(objects) -L../assets/$(arch) -L$(flibdir) -lglobals -llinuxctrl $(flib) $(static-libc++) $(static-libc) $(ldarg)
+#	cd cplusplus && $(cpp-compiler) -v -shared -o bin/lib$(name).so $(objects) -L../assets/$(arch) -L$(flibdir) -lglobals -llinuxctrl $(static-libc++) $(static-libc) $(ldarg) 2>&1 | grep ld | sed 's/-lc/$$(find -O3 \/usr\/lib -name libc.a 2>&1 | grep $$(uname -m) | sed 1q)'/g | sed 's/-lm/$$(find -O3 \/usr\/lib -name libm.a 2>&1 | grep $$(uname -m) | sed 1q)'/g | sed s/-o/-Bsymbolic\ -o/g > temp.sh && chmod +x temp.sh && ./temp.sh && rm temp.sh
+	cd cplusplus && $(cpp-compiler) -shared -o bin/lib$(name).so $(objects) -L../assets/$(arch) -L$(flibdir) -lglobals -llinuxctrl $(static-libc++) $(static-libc) $(ldarg)
 endif
 endif
 #
@@ -831,64 +803,6 @@ else
 	@cp cplusplus/bin/$(dllname) binaryplus/bin
 	@cp cplusplus/bin/$(dllname) binarysharp/bin/exe
 	@cp cplusplus/bin/$(dllname) csharp/bin/lib
-endif
-endif
-endif
-	@echo "Version file. Remove to enable recompile" > $@
-
-
-cs: $(resdep) $(foreach fl,$(files),csharp/$(fl))
-	@echo MAKE CS
-	cd csharp && dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r $(os_name) -c $(configuration)
-
-	-@mkdir -p csharp/bin/$(configuration)/net9.0/$(os_name)/native/
-	-@mv csharp/bin/$(arch)/$(configuration)/net9.0/$(os_name)/native/* csharp/bin/$(configuration)/net9.0/$(os_name)/native/
-ifeq ($(universal2),1)
-	cd csharp && dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r osx-arm64 -c $(configuration)
-
-	-@mkdir -p csharp/bin/$(configuration)/net9.0/osx-arm64/native/
-	-@mv csharp/bin/$(arch)/$(configuration)/net9.0/osx-arm64/native/* csharp/bin/$(configuration)/net9.0/osx-arm64/native/
-endif
-ifeq ($(msvc),1)
-	@cd csharp/bin/$(configuration)/net9.0/$(os_name)/native/ && for i in *.exp; do if [ ! "$$i" = '$(filename).exp' ]; then mv $$i $(filename).exp; fi; done && for i in *.lib; do if [ ! "$$i" = '$(filename).lib' ]; then mv $$i $(filename).lib; fi; done && for i in *.pdb; do if [ ! "$$i" = '$(filename).pdb' ]; then mv $$i $(filename).pdb; fi; done && for i in *.dll; do if [ ! "$$i" = '$(filename).dll' ]; then mv $$i $(filename).dll; fi; done 
-	@mv csharp/bin/$(configuration)/net9.0/$(os_name)/native/* csharp/bin/lib
-ifeq ($(debug),1)
-	@cp csharp/bin/lib/$(filename).pdb binarysharp/bin/exe
-	@cp csharp/bin/lib/$(filename).pdb binaryplus/bin
-	@cp csharp/bin/lib/$(filename).pdb cplusplus/bin
-endif
-ifeq ($(copylibs),1)
-	$(admin)cp csharp/bin/lib/$(libname) $(libdir)$(adminend)
-else
-	@cp csharp/bin/lib/$(libname) binarysharp/bin/exe
-	@cp csharp/bin/lib/$(libname) binaryplus/bin
-	@cp csharp/bin/lib/$(libname) cplusplus/bin
-endif
-else
-ifeq ($(shell echo "check quotes"),"check quotes")
-	@cd csharp/bin/$(configuration)/net9.0/$(os_name)/native/ && @echo . > null.exp && @echo . > null.lib && @echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(libname)
-	@move csharp\bin\$(configuration)\net9.0\$(os_name)\native\$(libname) csharp\bin\lib
-ifeq ($(copylibs),1)
-	$(admin)copy csharp\bin\lib\$(libname) $(libdir)$(adminend)
-else
-	@copy csharp\bin\lib\$(libname) binarysharp\bin\exe
-	@copy csharp\bin\lib\$(libname) binaryplus\bin
-	@copy csharp\bin\lib\$(libname) cplusplus\bin
-endif
-else
-	@cd csharp/bin/$(configuration)/net9.0/$(os_name)/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
-	@mv -f csharp/bin/$(configuration)/net9.0/$(os_name)/native/* csharp/bin/lib/$(libname)
-ifeq ($(universal2),1)
-	@cd csharp/bin/$(configuration)/net9.0/osx-arm64/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
-	@mv -f csharp/bin/$(configuration)/net9.0/osx-arm64/native/* csharp/bin/lib/$(libname).arm64
-	lipo -create csharp/bin/lib/$(libname) csharp/bin/lib/$(libname).arm64 -output csharp/bin/lib/$(libname)
-endif
-ifeq ($(copylibs),1)
-	$(admin)cp csharp/bin/lib/$(libname) $(libdir)$(adminend)
-else
-	@cp csharp/bin/lib/$(libname) binarysharp/bin/exe
-	@cp csharp/bin/lib/$(libname) binaryplus/bin
-	@cp csharp/bin/lib/$(libname) cplusplus/bin
 endif
 endif
 endif
@@ -939,16 +853,16 @@ endif
 	@echo "Version file. Remove to enable recompile" > $@
 	
 
-cppbin: cs cpp compile-cppbin
+cppbin: cpp compile-cppbin
 	@echo MAKE CPPBIN
 ifeq ($(msvc),1)
-	echo "cd binaryplus && link /OUT:bin/$(binname).$(binary) $(bldb) $(flib) ../cplusplus/bin/$(name).lib ../csharp/bin/lib/$(filename).lib $(fbobj) USER32.lib ../objects/$(arch)/resources.res" > run.bat
+	echo "cd binaryplus && link /OUT:bin/$(binname).$(binary) $(bldb) ../cplusplus/bin/$(name).lib ../csharp/bin/lib/$(filename).lib $(fbobj) USER32.lib ../objects/$(arch)/resources.res" > run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
 else
-	cd binaryplus && $(cpp-compiler) $(archif) -o bin/$(binname).$(binary) $(binflags) -L../assets/$(arch) $(fbobj) -L$(flibdir) -l$(name) $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd binaryplus && $(cpp-compiler) $(archif) -o bin/$(binname).$(binary) $(binflags) -L../assets/$(arch) $(fbobj) -L$(flibdir) -l$(name) $(static-libc++) $(static-libc) $(ldarg)
 ifeq ($(universal2),1)
-	cd binaryplus && $(cpp-compiler) -arch arm64 -o bin/$(binname).arm64.$(binary) $(binflags) -L../assets/arm64 $(foreach file,$(binsources),obj/arm64/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file))))) -L$(flibdir) -l$(name) $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd binaryplus && $(cpp-compiler) -arch arm64 -o bin/$(binname).arm64.$(binary) $(binflags) -L../assets/arm64 $(foreach file,$(binsources),obj/arm64/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file))))) -L$(flibdir) -l$(name) $(static-libc++) $(static-libc) $(ldarg)
 endif
 #
 
@@ -994,56 +908,6 @@ endif
 endif
 	@echo "Version file. Remove to enable recompile" > $@
 
-csbin: $(foreach bfl,$(binfiles),binarysharp/$(bfl))
-	@echo MAKE CSBIN
-	cd binarysharp && dotnet publish -p:SelfContained=true -r $(os_name) -c $(binconfig)
-
-	-@mkdir -p binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/
-	-@mv binarysharp/bin/$(arch)/$(configuration)/net9.0/$(os_name)/native/* binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/
-ifeq ($(universal2),1)
-	cd binarysharp && dotnet publish -p:SelfContained=true -r osx-arm64 -c $(configuration)
-
-	-@mkdir -p binarysharp/bin/$(configuration)/net9.0/osx-arm64/native/
-	-@mv binarysharp/bin/$(arch)/$(configuration)/net9.0/osx-arm64/native/* binarysharp/bin/$(configuration)/net9.0/osx-arm64/native/
-endif
-ifeq ($(msvc),1)
-	@cd binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/ && for i in *.$(binary); do if [ ! "$$i" = '$(binname).$(binary)' ]; then mv $$i $(binname).$(binary); fi; done 
-	@mv binarysharp/bin/$(configuration)/net9.0/$(os_name)/native/* binarysharp/bin/exe
-else
-
-ifeq ($(shell echo "check quotes"),"check quotes")
-	@cd binarysharp/bin/$(binconfig)/net9.0/$(os_name)/native/ && @echo . > null.exp && @echo . > null.lib && @echo . > null.pdb && del *.exp && del *.lib && del *.pdb && ren * $(binfile).$(binary)
-	@copy binarysharp\bin\$(binconfig)\net9.0\$(os_name)\native\$(binfile).$(binary) binarysharp\bin\exe
-	del binarysharp\bin\$(binconfig)\net9.0\$(os_name)\native\$(binfile).$(binary)
-else
-	@cd binarysharp/bin/$(binconfig)/net9.0/$(os_name)/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
-	@cp -f binarysharp/bin/$(binconfig)/net9.0/$(os_name)/native/* binarysharp/bin/exe/$(binfile).$(binary)
-ifeq ($(universal2),1)
-	@cd binarysharp/bin/$(binconfig)/net9.0/osx-arm64/native/ && mkdir null.dSYM && touch null.dSYM/null.null && rm *.dSYM/* && rmdir *.dSYM && touch null.dbg && touch null.exp && touch null.lib && touch null.pdb && rm *.dbg && rm *.exp && rm *.lib && rm *.pdb
-	@cp -f binarysharp/bin/$(binconfig)/net9.0/osx-arm64/native/* binarysharp/bin/exe/$(binfile).$(binary).arm64
-	lipo -create binarysharp/bin/exe/$(binfile).$(binary) binarysharp/bin/exe/$(binfile).$(binary).arm64 -output binarysharp/bin/exe/$(binfile).$(binary)
-	@rm -f binarysharp/bin/$(binconfig)/net9.0/osx-arm64/native/*
-endif
-	@rm -f binarysharp/bin/$(binconfig)/net9.0/$(os_name)/native/*
-endif
-
-ifeq ($(shell echo "check quotes"),"check quotes")
-#windows
-ifeq ($(copylibs),1)
-	$(admin)copy binarysharp\bin\exe\$(binfile).$(binary) $(bindir)$(adminend)
-else
-	@cd binarysharp\bin\exe
-endif
-else
-#other
-ifeq ($(copylibs),1)
-	$(admin)cp binarysharp/bin/exe/$(binfile).$(binary) $(bindir)$(adminend)
-else
-	@cd binarysharp/bin/exe
-endif
-endif
-endif
-	@echo "Version file. Remove to enable recompile" > $@
 
 # .cpp
 cplusplus/obj/$(arch)/%.$(objsuf): cplusplus/src/%.cpp $(foreach head,$(headers),cplusplus/src/$(head)) $(foreach inc,$(includes),cplusplus/include/$(inc))

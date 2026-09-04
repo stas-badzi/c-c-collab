@@ -2,49 +2,76 @@
 #include "System.hpp"
 #include "dllimport.hpp"
 
-using namespace csimp;
+#ifdef _WIN32
+#define nfopen _wfopen
+#define tfgetc fgetwc
+#else
+#define tfgetc fgetc
+#endif
+
 using namespace uniconv;
 using namespace std;
 using namespace cpp;
-using namespace cs;
+using namespace io;
 
 vector<u16string> TextureSystem::ImportText(u16string filename) {
-    unichar** textptr = TextureSystem_ImportText(U16StringToUnicode(filename));
-
-
-    vector<u16string> utftext;
-    for (size_t i = 0; true; i++) {
-        u16string utfline;
-        for (size_t j = 0; textptr[i][j] > 0; j++) {
-            utfline.push_back(UnicodeToChar16(textptr[i][j]));
-        }
-        delete[] textptr[i];
-        if (utfline.size() == 0) { break; }
-        utftext.push_back(utfline);
+    FILE* f = nfopen(U16StringToNative(filename).c_str(),N("r"));
+    vector<u16string> result;
+    nstring text;
+    while (1) {
+        nchar_t ch = tfgetc(f);
+        if (ch&&!feof(f)) text.push_back(ch);
     }
-
-    delete[] textptr;
-
-    return utftext;
-    
+    fclose(f);
+    u16string parsed = NativeToU16String(text);
+    result.emplace_back();
+    for (const auto& ch : parsed)
+        if (ch==u'\n')result.emplace_back();
+        else result.back().push_back(ch);
+    return result;
 }
 
-void TextureSystem::ExportText(u16string file, vector<u16string> lines) {
-    unichar** unilines = new unichar*[lines.size()];
-
-    for (size_t i = 0; i < lines.size(); i++) {
-        unilines[i] = U16StringToUnicode(lines[i]);
+void TextureSystem::ExportText(u16string filename, vector<u16string> lines) {
+    FILE* f = nfopen(U16StringToNative(filename).c_str(),N("w"));
+    u16string text;
+    for (auto&& ln : lines) {
+        for (auto&& ch : ln)text.push_back(ch);
+        text.push_back(u'\n');
     }
-    unilines[lines.size()] = new unichar[1]{0};
-    
-    TextureSystem_ExportText(U16StringToUnicode(file),unilines);
+    nstring nativetext = U16StringToNative(text);
+    fwrite(nativetext.c_str(),sizeof(nstring::value_type),nativetext.size(),f);
+    fclose(f);
 }
 
-vector<vector<Console::Symbol> > TextureSystem::TextureFromFile(u16string filepath) {
-    unichar* arg1 = U16StringToUnicode(filepath);
-    void* ret = csimp::TextureSystem_TextureFromFile(arg1);
+static uint8_t HexToByte(int input) {
+    if (input>='0'&&input<='9')return input-'0';
+    if (input>='A'&&input<='F')return input-'A'+10;
+    return 16;
+}
+static int ByteToHex(uint8_t input) {
+    if (input<10)return input+'0';
+    if (input<16)return input+'A'-10;
+    return '-';
+}
 
-    return Convert2dVector<Console::Symbol>(PtrToTexture(ret));
+vector<vector<Console::Symbol>> TextureSystem::TextureFromFile(u16string filepath) {
+    auto file = ImportText(filepath); // Imported List<string>
+    auto symbols = Texture(); // Final symbol list
+
+    int width=stoi(fileImported[0]),height=stoi(fileImported[1]);
+    
+    if (!int.TryParse(fileImported[1], out int height)) Console::ThrowMsg("Parsing height failed");
+
+    int remainingSymbols = width * 3 * height;
+    for (int i = 0; i < height; i++) {
+        auto symbolLine = vector<Console::Symbol>();
+        for (int j = 0; j < width * 3; j+=3)
+            symbolLine.emplace_back(UnicodeToNative(file[i][j]), HexToByte(file[i][j+1]), HexToByte(file[i][j+2]));
+        symbols.emplace_back().swap(symbolLine);
+    }
+    
+
+    return symbols;
 }
 
 void TextureSystem::FileFromTexture(u16string filepath, vector<vector<Console::Symbol> > texture, bool recycle) {
