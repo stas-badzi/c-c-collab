@@ -1,3 +1,5 @@
+// converts old .tux files into ones complying with the current standard 
+
 #include <iostream>
 #include <fstream>
 #include <fcntl.h>

@@ -20,11 +20,11 @@ Game::Camera::Camera(int height, int width, Console::Symbol sym) {
 }
 
 void Game::Camera::DrawTexture(int x, int y, std::vector<std::vector<Console::Symbol>>& texture) {
-    auto textureptr = io::TextureToPtr(texture);
+    auto textureptr = util::TextureToPtr(texture);
     cppimp::Game_Camera_DrawTexture(x, y, textureptr, internal);
 }
 
 void Game::Camera::DrawToScreen(int x, int y, std::vector<std::vector<Console::Symbol>>& screen) {
-    auto screenptr = io::TextureToPtr(screen);
+    auto screenptr = util::TextureToPtr(screen);
     cppimp::Game_Camera_DrawToScreen(x, y, screenptr, internal);
 }

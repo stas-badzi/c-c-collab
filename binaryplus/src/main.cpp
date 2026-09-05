@@ -47,7 +47,7 @@ inline size_t u16strlen(const char16_t* str) { size_t i = 0; while (str[i]) i++;
 using namespace std;
 using namespace uniconv;
 using namespace cpp;
-using namespace io;
+using namespace util;
 
 int touch(const char* path) {
     int fd = open(path, O_CREAT | O_WRONLY, 0600);
@@ -528,11 +528,6 @@ int Main_Paint(void) {
             }
         };
 
-        //u16string* characters = new u16string[(width+1)*height - 1]();
-        //uint8_t* back = new uint8_t[width]();
-        //uint8_t* fore = new uint8_t[width]();
-        //po new jest delete;
-        //ale jakby co masz vectory i vector.data() / vector.dat() nie pamietam
         for (int16_t l = 0; l < height; l++) { // Fill screen with empty symbols
             screen.push_back(vector<Console::Symbol>());
             for (int16_t i = 0; i < width; i++) {

@@ -1,21 +1,37 @@
 #include "TextureSystem.hpp"
 #include "dllimport.hpp"
+#include "smart_ref.hpp"
 
-template <typename Tout, typename Tin>
-std::vector<Tout> ConvertVector(const std::vector<Tin> &vec) {
-    std::vector<Tout> out;
-    for (auto &&t : vec) out.push_back((Tout)t);
-    return out;
-}
+namespace util {
 
-template <typename Tout, typename Tin>
-std::vector<std::vector<Tout>> Convert2dVector(const std::vector<std::vector<Tin>> &vec2d) {
-    std::vector<std::vector<Tout>> out;
-    for (auto &&vt : vec2d) out.push_back(ConvertVector<Tout,Tin>(vt));
-    return out;
-}
+    template <typename T>
+    inline std::vector<T> ConvertVector(const std::vector<smart_ref<T>> &vec) {
+        std::vector<T> out;
+        for (auto &&t : vec) out.push_back(t);
+        return out;
+    }
 
-namespace io {
+    template <typename Tout, typename Tin>
+    inline std::vector<Tout> ConvertVector(const std::vector<Tin> &vec) {
+        std::vector<Tout> out;
+        for (auto &&t : vec) out.push_back((Tout)t);
+        return out;
+    }
+
+    template <typename T>
+    inline std::vector<std::vector<T>> Convert2dVector(const std::vector<std::vector<smart_ref<T>>> &vec2d) {
+        std::vector<std::vector<T>> out;
+        for (auto &&vt : vec2d) out.push_back(ConvertVector<T>(vt));
+        return out;
+    }
+
+    template <typename Tout, typename Tin>
+    inline std::vector<std::vector<Tout>> Convert2dVector(const std::vector<std::vector<Tin>> &vec2d) {
+        std::vector<std::vector<Tout>> out;
+        for (auto &&vt : vec2d) out.push_back(ConvertVector<Tout,Tin>(vt));
+        return out;
+    }
+
     inline std::vector<std::vector<smart_ref<Console::Symbol> > > PtrToTexture(void* ptr, bool direct = false) {
         auto sym = std::vector<std::vector<smart_ref<Console::Symbol> > >();
 
@@ -145,6 +161,7 @@ namespace io {
     }*/
 
     inline void TextureSystem::DrawTextureToScreen(int x, int y, const std::vector<std::vector<Console::Symbol> >& texture, std::vector<std::vector<smart_ref<Console::Symbol>>>& screen) {
+        static const auto tab = uniconv::UnicodeToNative(U'\t');
         int height = texture.size();
         int scrHeight = screen.size();
 
@@ -159,7 +176,7 @@ namespace io {
             for (int j = 0; j < width; j++) {
                 if (y+i >= 0 && y+i < scrHeight && x+j >= 0 && x+j < scrWidth) {
                     auto elem = texture[i][j];
-                    if (elem.character[0] != '\t') {
+                    if (elem.character != tab) {
                         screen[y+i][x+j].ptr()->character = elem.character;
                     }
                     if (elem.foreground < 16) {

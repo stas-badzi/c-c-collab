@@ -264,7 +264,6 @@ namespace cppimp {
 
         libimport void System_WritePointer$nint$ofs(nint arg1, int32_t arg3, nint arg2);
 
-    // actually from c# but who cares
         libimport void Console_Symbol_ReverseColors(nint sym);
 
     // Camera
@@ -276,4 +275,14 @@ namespace cppimp {
     // SoundSystem
     libimport void SoundSystem_PlaySound(uniconv::unichar* filepathPtr, bool wait);
 
+    // TextureSystem
+    libimport uniconv::unichar** TextureSystem_ImportText(uniconv::unichar* file);
+    
+    libimport void TextureSystem_ExportText(uniconv::unichar* file, uniconv::unichar** content);
+
+    libimport void* TextureSystem_TextureFromFile(uniconv::unichar* arg1);
+
+    libimport void TextureSystem_FileFromTexture(uniconv::unichar* filepathPtr, void* texturePtr);
+
+    libimport void TextureSystem_DrawTextureToScreen(int x, int y, void* texturePtr, void* screenPtr);
 } // namespace CppImp

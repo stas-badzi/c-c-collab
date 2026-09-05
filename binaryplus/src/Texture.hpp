@@ -60,7 +60,7 @@ namespace cpp {
     };
 
     std::vector<std::vector<cpp::Console::Symbol>> __WoodChopperTexture0;
-    auto& WoodChopperTexture0() {if(__WoodChopperTexture0.empty()) __WoodChopperTexture0=io::TextureSystem::TextureFromFile(u"/home/stas/sand.1.tux");return __WoodChopperTexture0;}
+    auto& WoodChopperTexture0() {if(__WoodChopperTexture0.empty()) __WoodChopperTexture0=util::TextureSystem::TextureFromFile(u"/home/stas/sand.1.tux");return __WoodChopperTexture0;}
 
     class WoodChopper : public Animation {
     private:
@@ -81,7 +81,7 @@ namespace cpp {
 /*
 using namespace std;
 using namespace cpp;
-using namespace io;
+using namespace util;
 vector<cpp::Texture*> vec;
 // we want STDIN to be still open when we exit
 int App(); 

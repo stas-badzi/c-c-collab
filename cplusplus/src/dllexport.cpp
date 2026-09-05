@@ -98,7 +98,7 @@ using namespace uniconv;
     }
 
     libexport void Console_FillScreen(void* ptr) {
-        std::vector<std::vector<cpp::Console::Symbol> > texture = io::Convert2dVector<cpp::Console::Symbol>(io::PtrToTexture(ptr));
+        std::vector<std::vector<cpp::Console::Symbol> > texture = util::Convert2dVector<cpp::Console::Symbol>(util::PtrToTexture(ptr));
         return cpp::Console::FillScreen(texture);
     }
 
@@ -258,6 +258,10 @@ using namespace uniconv;
             return out;
         }
 
+        libexport void Console_Symbol_ReverseColors(cpp::Console::Symbol* smb) {
+            smb->ReverseColors();
+        }
+
         #ifdef _WIN32
             libexport void* Console_Symbol_Construct$atr(uint8_t attribute) {
                 void* out = (void*) new cpp::Console::Symbol(attribute);
@@ -274,27 +278,27 @@ using namespace uniconv;
         #endif
 
         libexport void Console_Symbol_character$set(cpp::Console::Symbol* smb, unichar character) {
-        smb->character = UnicodeToNative(character);
+            smb->character = UnicodeToNative(character);
         }
 
         libexport unichar Console_Symbol_character$get(cpp::Console::Symbol* smb) {
-        return NativeToUnicode(smb->character);
+            return NativeToUnicode(smb->character);
         }
 
         libexport void Console_Symbol_foreground$set(cpp::Console::Symbol* smb, uint8_t foreground) {
-        smb->foreground = foreground;
+            smb->foreground = foreground;
         }
 
         libexport uint8_t Console_Symbol_foreground$get(cpp::Console::Symbol* smb) {
-        return smb->foreground;
+            return smb->foreground;
         }
 
         libexport void Console_Symbol_background$set(cpp::Console::Symbol* smb, uint8_t background) {
-        smb->background = background;
+            smb->background = background;
         }
 
         libexport uint8_t Console_Symbol_background$get(cpp::Console::Symbol* smb) {
-        return smb->background;
+            return smb->background;
         }
 
         libexport void Console_Symbol_Destruct(cpp::Console::Symbol* smb) {
@@ -538,6 +542,42 @@ using namespace uniconv;
 
 // ~System
 
+// TextureSystem
+    libexport uniconv::unichar** TextureSystem_ImportText(uniconv::unichar* file) {
+        auto text = util::TextureSystem::ImportText(uniconv::UnicodeToU16String(file));
+        unichar** res = new unichar*[text.size()+1];
+
+        for (size_t i = 0; i<text.size(); i++)
+            res[i]=U16StringToUnicode(text[i]);
+        res[text.size()]=NULL;
+
+        return res;
+    }
+    
+    libexport void TextureSystem_ExportText(uniconv::unichar* file, uniconv::unichar** content) {
+        std::vector<std::u16string> text;
+        for (size_t i = 0; content[i]; i++)
+            text.push_back(UnicodeToU16String(content[i]));
+        free(content);
+        util::TextureSystem::ExportText(UnicodeToU16String(file),text);
+        free(file);
+    }
+    
+    libexport void* TextureSystem_TextureFromFile(uniconv::unichar* arg1) {
+        return util::TextureToPtr(util::TextureSystem::TextureFromFile(UnicodeToU16String(arg1)));
+    }
+
+    libexport void TextureSystem_FileFromTexture(uniconv::unichar* filepathPtr, void* texturePtr) {
+        util::TextureSystem::FileFromTexture(UnicodeToU16String(filepathPtr), util::Convert2dVector(util::PtrToTexture(texturePtr)));
+    }
+
+    libexport void TextureSystem_DrawTextureToScreen(int x, int y, void* texturePtr, void* screenPtr);
+
+// SoundSystem
+    libexport void SoundSystem_PlaySound(uniconv::unichar* filepathPtr, bool wait) {
+        return;
+    }
+
 // Camera
     libexport void* Game_MartixPosition_Construct(int iIndex, int jIndex) {
         cpp::Game::MatrixPosition vpc(iIndex, jIndex);
@@ -553,12 +593,12 @@ using namespace uniconv;
     }
 
     libexport void Game_Camera_DrawTexture(int x, int y, void* textureptr, void* cameraptr) {
-        const auto texture = io::PtrToTexture(textureptr, true);
-        const auto real_texture = io::Convert2dVector<Console::Symbol>(texture);
+        const auto texture = util::PtrToTexture(textureptr, true);
+        const auto real_texture = util::Convert2dVector<Console::Symbol>(texture);
         ((cpp::Game::Camera*)cameraptr)->DrawTexture(x, y, real_texture);
     }
 
     libexport void Game_Camera_DrawToScreen(int x, int y, void* screenptr, cpp::Game::Camera* cameraptr) {
-        auto screen = io::PtrToTexture(screenptr, true);
+        auto screen = util::PtrToTexture(screenptr, true);
         cameraptr->DrawToScreen(x, y, screen);
     }

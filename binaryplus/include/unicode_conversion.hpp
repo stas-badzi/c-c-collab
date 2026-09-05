@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdlib>
 #include <string>
 #include <cstdint>
 #include <limits>
@@ -89,10 +90,9 @@ inline utfchar UnicodeToNative(unichar unicode) {
     auto old_loc = setlocale(LC_CTYPE,"C.UTF-8");
     std::mbstate_t state{};
     char32_t utf32 = unicode;
-    char* temp = new char[4];
+    char temp[4];
     ssize_t len = std::c32rtomb(temp, utf32, &state);
     assert(len>0);
-    delete[] temp;
     std::string mbstr(len,' ');
     std::c32rtomb(&mbstr[0], utf32, &state);
     setlocale(LC_CTYPE,old_loc);
@@ -357,9 +357,8 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         std::string out;
         for (int i = 0; unicodes[i] != 0; ++i) {
             char32_t utf32 = unicodes[i];
-            char* temp = new char[4];
+            char temp[4];
             std::size_t len = std::c32rtomb(temp, utf32, &state);
-            delete[] temp;
             std::string mbstr(len,' ');
             std::c32rtomb(&mbstr[0], utf32, &state);
             out.append(mbstr);
@@ -410,8 +409,8 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
         return out;
     }
 #else
-static auto UnderlyingStringToUnicode = NativeStringToUnicode;
-static auto UnicodeToUnderlyingString = UnicodeToNativeString;
+[[maybe_unused]] static auto UnderlyingStringToUnicode = NativeStringToUnicode;
+[[maybe_unused]] static auto UnicodeToUnderlyingString = UnicodeToNativeString;
 #endif
 
 } // namespace uniconv

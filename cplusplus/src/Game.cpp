@@ -21,7 +21,7 @@
 #endif
 
 using namespace cpp;
-using namespace io;
+using namespace util;
 using std::vector;
 
 // public:

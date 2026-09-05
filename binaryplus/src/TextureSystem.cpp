@@ -4,7 +4,7 @@
 
 using namespace uniconv;
 using namespace std;
-using namespace io;
+using namespace util;
 using namespace cpp;
 
 vector<u16string> TextureSystem::ImportText(u16string filename) {
@@ -12,29 +12,27 @@ vector<u16string> TextureSystem::ImportText(u16string filename) {
 
 
     vector<u16string> utftext;
-    for (size_t i = 0; true; i++) {
+    for (size_t i = 0; textptr[i]; i++) {
         u16string utfline;
         for (size_t j = 0; textptr[i][j] > 0; j++) {
             utfline.push_back(UnicodeToChar16(textptr[i][j]));
         }
-        delete[] textptr[i];
-        if (utfline.size() == 0) { break; }
+        free(textptr[i]);
         utftext.push_back(utfline);
     }
 
-    delete[] textptr;
+    free(textptr);
 
     return utftext;
     
 }
 
 void TextureSystem::ExportText(u16string file, vector<u16string> lines) {
-    unichar** unilines = new unichar*[lines.size()];
+    unichar** unilines = new unichar*[lines.size()+1];
 
-    for (size_t i = 0; i < lines.size(); i++) {
+    for (size_t i = 0; i < lines.size(); i++)
         unilines[i] = U16StringToUnicode(lines[i]);
-    }
-    unilines[lines.size()] = new unichar[1]{0};
+    unilines[lines.size()] = NULL;
     
     cppimp::TextureSystem_ExportText(U16StringToUnicode(file),unilines);
 }
@@ -46,11 +44,11 @@ vector<vector<Console::Symbol> > TextureSystem::TextureFromFile(u16string filepa
     return PtrToTexture(ret);
 }
 
-void TextureSystem::FileFromTexture(u16string filepath, const vector<vector<Console::Symbol> >& texture, bool recycle) {
+void TextureSystem::FileFromTexture(u16string filepath, const vector<vector<Console::Symbol> >& texture) {
     unichar* filepathPtr = U16StringToUnicode(filepath);
     void* texturePtr = TextureToPtr((vector<vector<Console::Symbol> >&)texture);
 
-    cppimp::TextureSystem_FileFromTexture(filepathPtr, texturePtr, recycle);
+    cppimp::TextureSystem_FileFromTexture(filepathPtr, texturePtr);
 }
 
 void TextureSystem::DrawTextureToScreen(int x, int y, const std::vector<std::vector<Console::Symbol> >& texture, std::vector<std::vector<Console::Symbol>>& screen) {
@@ -82,7 +80,7 @@ void TextureSystem::DrawTextureToScreen(int x, int y, const std::vector<std::vec
     }
 }
 
-vector<vector<Console::Symbol> > io::PtrToTexture(nint ptr, bool direct) {
+vector<vector<Console::Symbol> > util::PtrToTexture(nint ptr, bool direct) {
     vector<vector<Console::Symbol> > ret;
 
     const int int32_size = sizeof(int32_t);
@@ -112,7 +110,7 @@ vector<vector<Console::Symbol> > io::PtrToTexture(nint ptr, bool direct) {
     return ret;
 }
 
-void* io::TextureToPtr(vector<vector<Console::Symbol> >& texture) {
+void* util::TextureToPtr(vector<vector<Console::Symbol> >& texture) {
     const int int32_size = sizeof(int32_t);
     const int intptr_size = sizeof(void*);
     int32_t size, count;

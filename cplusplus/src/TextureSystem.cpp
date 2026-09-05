@@ -16,7 +16,7 @@
 using namespace uniconv;
 using namespace std;
 using namespace cpp;
-using namespace io;
+using namespace util;
 
 vector<u16string> TextureSystem::ImportText(u16string filename) {
     FILE* f = nfopen(U16StringToNative(filename).c_str(),N("r"));
@@ -75,13 +75,14 @@ vector<vector<Console::Symbol>> TextureSystem::TextureFromFile(u16string filepat
     return symbols;
 }
 
-void TextureSystem::FileFromTexture(u16string filepath, vector<vector<Console::Symbol> > texture, bool recycle) {
+void TextureSystem::FileFromTexture(u16string filepath, vector<vector<Console::Symbol> > texture) {
     unichar* filepathPtr = U16StringToUnicode(filepath);
     void* texturePtr = TextureToPtr(texture);
 
     // [TODO] implement
     //csimp::TextureSystem_FileFromTexture(filepathPtr, texturePtr, recycle);
 }
+static const auto tab = UnicodeToNative(U'\t');
 void TextureSystem::DrawTextureToScreen(int x, int y, const std::vector<std::vector<Console::Symbol> >& texture, std::vector<std::vector<Console::Symbol>>& screen) {
     int height = texture.size();
     int scrHeight = screen.size();
@@ -97,7 +98,7 @@ void TextureSystem::DrawTextureToScreen(int x, int y, const std::vector<std::vec
         for (int j = 0; j < width; j++) {
             if (y+i >= 0 && y+i < scrHeight && x+j >= 0 && x+j < scrWidth) {
                 auto elem = texture[i][j];
-                if (elem.character[0] != '\t') {
+                if (elem.character != tab) {
                     screen[y+i][x+j].character = elem.character;
                 }
                 if (elem.foreground < 16) {

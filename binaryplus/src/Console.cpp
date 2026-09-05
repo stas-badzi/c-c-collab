@@ -12,7 +12,7 @@ using namespace cppimp;
 using namespace uniconv;
 using namespace std;
 using namespace cpp;
-using namespace io;
+using namespace util;
 
 void Console::Init(void) {
     Console_sub$define(Console_sub);
