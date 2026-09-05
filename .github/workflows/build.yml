@@ -17,7 +17,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
       - name: Compile c#
         shell: cmd
         run: |
@@ -121,16 +121,12 @@ jobs:
           cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Install Programs
         shell: pwsh
-        run: |
-          Invoke-WebRequest -Uri "https://github.com/maweil/MakeForWindows/releases/download/v4.4.1/make-bin-win64.zip" -OutFile "make-bin.zip" -Verbose
-          Expand-Archive -Force make-bin.zip .
-          del make-bin.zip
-          copy make-4.4.1\dist\* .
+        run: choco install make
       - name: Compile code
         shell: C:\cygwin64\bin\bash.exe --login -o igncr '{0}'
         run: |
           cd "$(cygpath -u '${{ github.workspace }}')"
-          ./make.exe sudo=0 archchk=0 nodep=1 c-compiler=/bin/gcc cpp-compiler=/bin/g++
+          make sudo=0 archchk=0 nodep=1 c-compiler=/bin/gcc cpp-compiler=/bin/g++
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -208,7 +204,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
       - name: Compile c#
         shell: cmd
         run: |
@@ -313,7 +309,7 @@ jobs:
         shell: C:\cygwin\bin\bash.exe --login -o igncr '{0}'
         run: |
           cd $(cygpath -u '${{ github.workspace }}')
-          make sudo=0 archchk=0 nodep=1 c-compiler=gcc cpp-compiler=g++
+          make sudo=0 archchk=0 nodep=1 c-compiler=gcc cpp-compiler=g++ tgarch=i686
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -392,7 +388,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
       - name: Compile c#
         shell: cmd
         run: |
@@ -522,7 +518,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
       - name: Set up GCC
         run: sudo apt install gcc-14
       - name: Compile code
@@ -549,7 +545,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
       - name: Set up GCC
         run: sudo apt install gcc-14
       - name: Compile code
@@ -565,27 +561,27 @@ jobs:
           name: UbuntuArm64CsBin
           path: bin/Cs.*.tar.gz
 
-  build-debian-x64:
-    permissions:
-      contents: none
-    name: Build program using Debian
-    runs-on: [self-hosted, debian]
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
-      - name: Compile code
-        shell: bash
-        run: make sudo=0 c-compiler=gcc cpp-compiler=g++
-      - name: Upload C++ binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: DebianCppBin
-          path: bin/Cpp.*.tar.gz
-      - name: Upload C# binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: DebianCsBin
-          path: bin/Cs.*.tar.gz
+#  build-debian-x64:
+#    permissions:
+#      contents: none
+#    name: Build program using Debian
+#    runs-on: [self-hosted, debian]
+#    steps:
+#      - name: Checkout source code
+#        uses: actions/checkout@v4
+#      - name: Compile code
+#        shell: bash
+#        run: make sudo=0 c-compiler=gcc cpp-compiler=g++
+#      - name: Upload C++ binaries
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: DebianCppBin
+#          path: bin/Cpp.*.tar.gz
+#      - name: Upload C# binaries
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: DebianCsBin
+#          path: bin/Cs.*.tar.gz
   
   build-macos-arm64:
     permissions:
@@ -598,7 +594,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
       - name: Compile code
         shell: bash
         run: |
@@ -618,15 +614,15 @@ jobs:
   build-macos-x64:
     permissions:
       contents: read
-    name: Build program using x64 MacOS 13
-    runs-on: macos-13
+    name: Build program using x64 MacOS 15
+    runs-on: macos-15-intel
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
       - name: Compile code
         shell: bash
         run: |
@@ -654,7 +650,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
       - name: Compile code
         shell: bash
         run: |
@@ -686,7 +682,7 @@ jobs:
 #      - name: Setup .NET
 #        uses: actions/setup-dotnet@v4
 #        with:
-#          dotnet-version: '9.0.x'
+#          dotnet-version: '10.0.x'
 #      - name: Compile code
 #        shell: bash
 #        run: |

@@ -27,7 +27,7 @@ sources = Console.cpp TextureSystem.cpp System.cpp Game.cpp dllexport.cpp SoundS
 #> header files
 headers = Console.hpp TextureSystem.hpp TextureSystem.ipp Game.hpp dllimport.hpp System.hpp System.ipp smart_ref.hpp smart_ref.ipp SoundSystem.hpp
 #> include files
-includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h quick_exit.h control_heap.h operating_system.h quick_exit/defines.h utils/cextern.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp apple/keyboard.h apple/openfile.h linux/ledctrl.h linux/mousefd.h windows/thread_safe/queue windows/thread_safe/vector promise.hpp
+includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h quick_exit.h operating_system.h quick_exit/defines.h utils/cextern.h linux/key.hpp windows/key.hpp apple/key.hpp apple/keyboard.h apple/openfile.h linux/ledctrl.h linux/mousefd.h windows/thread_safe/queue windows/thread_safe/vector promise.hpp
 #> name the dynamic library
 name = factoryrushplus
 # *******************************
@@ -38,7 +38,7 @@ binsources = main.cpp Console.cpp TextureSystem.cpp System.cpp Control.cpp dllex
 #> header files
 binheaders = dllimport.hpp Console.hpp TextureSystem.hpp System.hpp defines.h Control.hpp SoundSystem.hpp Game.hpp
 #> include files
-binincludes = dynamic_library.h unicode_conversion.hpp control_heap.h utils/cextern.h control_heap.h utils/dllalloc.h linux/key.hpp windows/key.hpp apple/key.hpp
+binincludes = dynamic_library.h unicode_conversion.hpp utils/cextern.h linux/key.hpp windows/key.hpp apple/key.hpp
 #> name the binary file
 binname = cpp-factoryrush
 #********************************
@@ -110,12 +110,14 @@ endif
 empty =
 space = $(empty) $(empty)
 
+sanitze = 
 ifeq ($(findstring arm, $(shell uname -m)),arm)
 arch = arm64
 else
 ifeq ($(findstring aarch, $(shell uname -m)),aarch)
 arch = arm64
 else
+sanitize = -fsanitize=address,undefined
 arch = x64
 endif
 endif
@@ -220,8 +222,9 @@ ldb = /DEBUG /PDB:bin/$(name).pdb
 bldb = /DEBUG /PDB:bin/$(binname).pdb
 bpdb = /MTd /Z7
 else
-cdb = -g -Og
-bpdb = -g -Og
+cdb = -g -Og -D_DEBUG $(sanitze)
+bpdb = -g -Og -D_DEBUG $(sanitze)
+clnk = $(sanitze)
 endif
 else
 configuration = Release
@@ -234,6 +237,7 @@ bpdb = /MT /O2
 else
 cdb = -s -Ofast
 bpdb = -s -Ofast
+clnk =
 endif
 endif
 
@@ -388,7 +392,7 @@ else
 ifeq ($(shell uname -s),Darwin)
 #macos
 nulldir =  /dev/null
-binflags = -lapplecuchar -L../assets/$(arch2)
+binflags = -lutfchar -L../assets/$(arch2)
 admin = sudo$(space)
 adminend =
 staticgen = libtool -static -o$(space)
@@ -440,6 +444,13 @@ endif
 endif
 endif
 
+i686cygwin = 
+ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
+ifeq ($(arch),i686)
+i686cygwin = 1
+endif
+endif
+
 ifeq ($(genwin),1)
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 libdir = $(symcyglib)
@@ -480,7 +491,7 @@ old_arch = $(shell cat __arch.dat 2> /dev/null || echo > __arch.dat)
 ifneq ($(old_arch),$(build-type))
 archfile = $(shell echo $(old_arch) > __oldarch.dat && echo $(build-type) > __arch.dat && echo __arch.dat)
 else
-archfile = __arch.dat
+archfile =
 endif
 
 package: release
@@ -598,7 +609,7 @@ ifeq ($(findstring MSYS, $(shell uname -s)),MSYS)
 	@echo "Version file. Remove to enable recompile" > $@
 endif
 
-resources: $(check_arch) source/setkbdmode.c source/killterm.c source/getfd.c source/getfd.h source/keyboard.h source/keyboard.m source/openfile.h source/openfile.m source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/cuchar.cpp source/mousefd.c source/mousefd.h source/killwindow.c source/resources.rc assets/images/icon.ico source/beep.c source/startprogram.c
+resources: $(check_arch) source/setkbdmode.c source/killterm.c source/getfd.c source/getfd.h source/keyboard.h source/keyboard.m source/openfile.h source/openfile.m source/globals.c assets/a.tux source/ledctrl.c source/ledctrl.h source/utfchar.c source/mousefd.c source/mousefd.h source/killwindow.c source/resources.rc assets/images/icon.ico source/beep.c source/startprogram.c
 	@echo MAKE RESOURCES
 	
 	-@mkdir objects/$(arch)/ assets/$(arch) cplusplus/obj/$(arch)/
@@ -606,8 +617,8 @@ resources: $(check_arch) source/setkbdmode.c source/killterm.c source/getfd.c so
 ifneq ($(msvc),1)
 ifeq ($(binary),exe)
 	$(c-compiler) -c source/killwindow.c source/beep.c -pedantic -Wall -Wextra -Wpedantic -DUNICODE $(_cflags) $(cdb) -std=c2x && mv *.o objects/$(arch)/
-	$(c-compiler) -o binaryplus/bin/killwindow.exe objects/$(arch)/killwindow.o
-	$(c-compiler) -o binaryplus/bin/beep.exe objects/$(arch)/beep.o
+	$(c-compiler) -o binaryplus/bin/killwindow.exe objects/$(arch)/killwindow.o $(clnk)
+	$(c-compiler) -o binaryplus/bin/beep.exe objects/$(arch)/beep.o $(clnk)
 endif
 	$(c-compiler) -c source/globals.c -pedantic -Wall -Wextra -Wpedantic $(_cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/$(arch)/
 	$(staticgen)assets/$(arch)/libglobals.$(static) objects/$(arch)/globals.o
@@ -673,9 +684,14 @@ else
 	@cp README.md binaryplus/share/factoryrush/assets
 endif
 else
+ifeq ($(i686cygwin),1)
+	$(c-compiler) -c source/utfchar.c -pedantic -Wall -Wextra -Wpedantic $(_cflags) $(cdb) -Isource && mv *.o objects/$(arch)/
+	$(staticgen)assets/$(arch)/libutfchar.a objects/$(arch)/utfchar.o
+endif
+
 ifeq ($(shell uname -s),Darwin)
-	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wall -Wextra -Wpedantic $(_cxxflags) $(cdb) -Isource -std=c++2b && mv *.o objects/$(arch)/
-	$(staticgen)assets/$(arch)/libapplecuchar.a objects/$(arch)/cuchar.o
+	$(c-compiler) -c source/utfchar.c -pedantic -Wall -Wextra -Wpedantic $(_cflags) $(cdb) -Isource  && mv *.o objects/$(arch)/
+	$(staticgen)assets/$(arch)/libutfchar.a objects/$(arch)/utfchar.o
 	$(c-compiler) -c source/keyboard.m source/openfile.m -framework CoreGraphics -framework CoreServices -pedantic -Wall -Wextra -Wpedantic $(_cflags) $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/$(arch)/
 	$(c-compiler) -dynamiclib $(archif) -o assets/$(arch)/libapplectrl.dylib objects/$(arch)/keyboard.o objects/$(arch)/openfile.o -framework CoreGraphics -framework CoreServices
 
@@ -683,8 +699,8 @@ ifeq ($(shell uname -s),Darwin)
 	$(c-compiler) $(archif) -o assets/$(arch)/killterm objects/$(arch)/killterm.o
 
 ifeq ($(universal2),1)
-	$(cpp-compiler) -c source/cuchar.cpp -pedantic -Wall -Wextra -Wpedantic $(cxxflags) -arch arm64 $(cdb) -Isource -std=c++2b && mv *.o objects/arm64/
-	$(staticgen)assets/arm64/libapplecuchar.a objects/arm64/cuchar.o
+	$(c-compiler) -c source/utfchar.c -pedantic -Wall -Wextra -Wpedantic $(_cflags) -arch arm64 $(cdb) -Isource && mv *.o objects/arm64/
+	$(staticgen)assets/arm64/libutfchar.a objects/arm64/utfchar.o
 
 	$(c-compiler) -c source/keyboard.m source/openfile.m -framework CoreGraphics -framework CoreServices -pedantic -Wall -Wextra -Wpedantic $(cflags) -arch arm64 $(cdb) -Isource -Icplusplus/include -std=c2x && mv *.o objects/arm64/
 	$(c-compiler) -dynamiclib -arch arm64 -o assets/arm64/libapplectrl.dylib objects/arm64/keyboard.o objects/arm64/openfile.o -framework CoreGraphics -framework CoreServices
@@ -761,18 +777,22 @@ else
 ifeq ($(shell uname -s),windows32)
 	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets/$(arch) -lglobals -ldbghelp -lshlwapi -lshell32 $(static-libc++) $(static-libc) $(ldarg)
 else
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets/$(arch) -lglobals -ldbghelp -lshlwapi -lshell32 $(static-libc++) $(static-libc) $(ldarg)
+ifeq ($(i686cygwin),1)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets/$(arch) -lglobals -ldbghelp -lshlwapi -lshell32 -lutfchar $(flib) $(static-libc++) $(static-libc) $(ldarg)
+else
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets/$(arch) -lglobals -ldbghelp -lshlwapi -lshell32 $(flib) $(static-libc++) $(static-libc) $(ldarg)
+endif
 endif
 endif
 #
 else
 ifeq ($(shell uname -s),Darwin)
 #macos
-	cd cplusplus && $(cpp-compiler) -dynamiclib $(archif) -o bin/lib$(name).dylib $(objects) -L../assets/$(arch2) -L../assets/$(arch) -L$(flibdir) -lapplecuchar -lapplectrl -lglobals $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -dynamiclib $(archif) -o bin/lib$(name).dylib $(objects) -L../assets/$(arch2) -L../assets/$(arch) -L$(flibdir) -lutfchar -lapplectrl -lglobals $(static-libc++) $(static-libc) $(ldarg)
 	utilities/custom/dylib-fix.sh "cplusplus/bin/lib$(name).dylib" "applectrl"
 
 ifeq ($(universal2),1)
-	cd cplusplus && $(cpp-compiler) -dynamiclib -arch arm64 -o bin/lib$(name).arm64.dylib $(foreach file,$(sources),obj/arm64/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file))))) -L../assets/$(arch2) -L../assets/arm64 -L$(flibdir) -lapplecuchar -lapplectrl -lglobals $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -dynamiclib -arch arm64 -o bin/lib$(name).arm64.dylib $(foreach file,$(sources),obj/arm64/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file))))) -L../assets/$(arch2) -L../assets/arm64 -L$(flibdir) -lutfchar -lapplectrl -lglobals $(static-libc++) $(static-libc) $(ldarg)
 	utilities/custom/dylib-fix.sh "cplusplus/bin/lib$(name).arm64.dylib" "applectrl"
 
 	lipo -create cplusplus/bin/lib$(name).dylib cplusplus/bin/lib$(name).arm64.dylib -output cplusplus/bin/lib$(name).dylib

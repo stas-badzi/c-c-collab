@@ -5,7 +5,7 @@
 #include <array>
 #include <bitset>
 #include <utility>
-#include <clang_constexpr.h>
+#include <cpp20_constexpr.hpp>
 #include <sstream>
 #include <fstream>
 #include <filesystem>
@@ -44,7 +44,6 @@
     #include <iostream>
     #include <unordered_map>
     #include <bit>
-    #include <conio.h>
     #include <windows/thread_safe/queue>
     #include <windows/thread_safe/vector>
 #ifndef _MSC_VER
@@ -178,7 +177,7 @@ namespace cpp {
             bool primary; // is down
             bool secondary; // is down
             bool middle; // is down
-            std::pair<bool,bool> scroll; // (is scrolling),(up or down)[windows/linux/freebsd - scroll up == move scroll whell (fingers on touchbad) up; down == move down | macos scroll like tablet/phone (opposite)]
+            std::pair<bool,bool> scroll; // (is scrolling),(up or down)[windows/linux/freebsd - scroll up == move scroll whell (fingers on touchpad) up; down == move down | macos scroll like tablet/phone (opposite)]
             unsigned int x; // in console chracters
             unsigned int y; // in console chracters
             MouseStatus(void);

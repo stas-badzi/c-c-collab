@@ -8,7 +8,6 @@
 #include "System.hpp"
 #include "TextureSystem.hpp"
 #include "Game.hpp"
-#include <control_heap.h>
 
 
 using namespace uniconv;
@@ -158,7 +157,7 @@ using namespace uniconv;
     libexport unichar** Console_GetArgV(void) {
         int _argc = cpp::Console::GetArgC();
         utfcstr* _argv = cpp::Console::GetArgV();
-        unichar** out = (unichar**)__dllalloc(sizeof(unichar*)*_argc);
+        unichar** out = (unichar**)malloc(sizeof(unichar*)*_argc);
         for (int i = 0; i < _argc; i++)
             out[i] = NativeStringToUnicode(_argv[i]);;
         return out;
@@ -251,102 +250,59 @@ using namespace uniconv;
     // Symbol
         libexport void* Console_Symbol_Construct$smb(cpp::Console::Symbol* src) {
             void* out = (void*) new cpp::Console::Symbol(*src);
-        #ifdef _DEBUG
-            __save$SYMBOLS(out);
-        #endif
             return out;
         }
 
         libexport void* Console_Symbol_Construct$cfb(unichar character, uint8_t foreground = 7, uint8_t background = 0) {
             void* out = new cpp::Console::Symbol(UnicodeToNative(character), foreground, background);
-        #ifdef _DEBUG
-            __save$SYMBOLS(out);
-        #endif
             return out;
         }
 
         #ifdef _WIN32
             libexport void* Console_Symbol_Construct$atr(uint8_t attribute) {
                 void* out = (void*) new cpp::Console::Symbol(attribute);
-            #ifdef _DEBUG
-                __save$SYMBOLS(out);
-            #endif
                 return out;
             }
             
             libexport void Console_Symbol_SetAttribute(cpp::Console::Symbol* smb, uint8_t attribute) {
-            #ifdef _DEBUG
-                __check$SYMBOLS(smb);
-            #endif
                 smb->SetAttribute(attribute);
             }
 
             libexport uint8_t Console_Symbol_GetAttribute(cpp::Console::Symbol* smb) {
-            #ifdef _DEBUG
-                __check$SYMBOLS(smb);
-            #endif
                 return smb->GetAttribute();
             }
         #endif
 
         libexport void Console_Symbol_character$set(cpp::Console::Symbol* smb, unichar character) {
-        #ifdef _DEBUG
-            __check$SYMBOLS(smb);
-        #endif
-            smb->character = UnicodeToNative(character);
+        smb->character = UnicodeToNative(character);
         }
 
         libexport unichar Console_Symbol_character$get(cpp::Console::Symbol* smb) {
-        #ifdef _DEBUG
-            __check$SYMBOLS(smb);
-        #endif
-            return NativeToUnicode(smb->character);
+        return NativeToUnicode(smb->character);
         }
 
         libexport void Console_Symbol_foreground$set(cpp::Console::Symbol* smb, uint8_t foreground) {
-        #ifdef _DEBUG
-            __check$SYMBOLS(smb);
-        #endif
-            smb->foreground = foreground;
+        smb->foreground = foreground;
         }
 
         libexport uint8_t Console_Symbol_foreground$get(cpp::Console::Symbol* smb) {
-        #ifdef _DEBUG
-            __check$SYMBOLS(smb);
-        #endif
-            return smb->foreground;
+        return smb->foreground;
         }
 
         libexport void Console_Symbol_background$set(cpp::Console::Symbol* smb, uint8_t background) {
-        #ifdef _DEBUG
-            __check$SYMBOLS(smb);
-        #endif
-            smb->background = background;
+        smb->background = background;
         }
 
         libexport uint8_t Console_Symbol_background$get(cpp::Console::Symbol* smb) {
-        #ifdef _DEBUG
-            __check$SYMBOLS(smb);
-        #endif
-            return smb->background;
+        return smb->background;
         }
 
         libexport void Console_Symbol_Destruct(cpp::Console::Symbol* smb) {
-        #ifdef _DEBUG
-            __free$SYMBOLS(smb);
-        #endif
             delete smb;
         }
 
         libexport void* Console_Symbol_operator$eq(cpp::Console::Symbol* cp, cpp::Console::Symbol* src) {
-        #ifdef _DEBUG
-            __check$SYMBOLS(src);
-            __check$SYMBOLS(cp);
-        #endif
             void* out = (void*) new cpp::Console::Symbol( (*cp) = (*src) );
-        #ifdef _DEBUG
-            __save$SYMBOLS(out);
-        #endif
             return out;
         }
 
@@ -612,29 +568,3 @@ using namespace uniconv;
         auto screen = cs::PtrToTexture(screenptr, true);
         cameraptr->DrawToScreen(x, y, screen);
     }
-#ifdef _DEBUG
-// control_heap
-    libexport void ControlHeap__save$ALLOCATIONS(void* arg1, unsigned long arg2) {
-        return __save$ALLOCATIONS(arg1,arg2);
-    }
-
-    libexport void ControlHeap__free$ALLOCATIONS(void* arg1) {
-        return __free$ALLOCATIONS(arg1);
-    }
-
-    libexport void ControlHeap__check$ALLOCATIONS(void* arg1, unsigned long arg2) {
-        return __check$ALLOCATIONS(arg1,arg2);
-    }
-
-    libexport void ControlHeap__save$SYMBOLS(void* arg1) {
-        return __save$SYMBOLS(arg1);
-    }
-
-    libexport void ControlHeap__free$SYMBOLS(void* arg1) {
-        return __free$SYMBOLS(arg1);
-    }
-
-    libexport void ControlHeap__check$SYMBOLS(void* arg1) {
-        return __check$SYMBOLS(arg1);
-    }
-#endif
