@@ -252,7 +252,6 @@ wfsrc = $(foreach src,$(sources),src/$(src))
 fbsrc = $(foreach bsrc,$(binsources),binaryplus/src/$(bsrc))
 os = $(subst $(space),-,$(shell echo $$(uname -s) $$(uname -r).$$(uname -m)))
 ifeq ($(msvc),1)
-flib = ../csharp/bin/lib/$(filename).lib
 fsrc = $(foreach src,$(sources),cplusplus\\src\\$(src))
 objects = $(foreach file,$(sources),obj/$(arch)/$(subst .c,.obj,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
 fbobj = $(foreach file,$(binsources),obj/$(arch)/$(subst .c,.obj,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
@@ -518,57 +517,39 @@ ifneq ($(wildcard release),release)
 	@rmdir /f bin
 endif
 	@mkdir bin\cpp
-	@mkdir bin\cs
 
 	@copy binaryplus\bin\$(binname).$(binary) bin\cpp
 	@copy cplusplus\bin\$(dllname) bin\cpp
-	@copy csharp\bin\lib\$(libname) bin\cpp
-
-	@copy binarysharp\bin\exe\$(binfile).$(binary) bin\cs
-	@copy cplusplus\bin\$(dllname) bin\cs
-	@copy csharp\bin\lib\$(libname) bin\cs
 
 	@cd bin && ren cpp Cpp.$(release)
 
 	@cd bin && powershell Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/raw/master/bin/zip.exe" -OutFile "zip.exe" -Verbose
 
 	@zip -r bin/Cpp.$(release).$(os).zip bin/Cpp.$(release)
-	@zip -r bin/Cs.$(release).$(os).zip bin/Cs.$(release)
 
 else
 ifeq ($(wildcard release),release)
 	@rm -rf bin
 endif
 	@mkdir -p bin/cpp
-	@mkdir -p bin/cs
 	@cp binaryplus/bin/$(binname).$(binary) bin/cpp
 	@cp cplusplus/bin/$(dllname) bin/cpp
-	@cp csharp/bin/lib/$(libname) bin/cpp
-
-	@cp binarysharp/bin/exe/$(binfile).$(binary) bin/cs
-	@cp cplusplus/bin/$(dllname) bin/cs
-	@cp csharp/bin/lib/$(libname) bin/cs
 
 	@cd bin && mv cpp Cpp.$(release)
 
 ifeq ($(findstring windows32, $(shell uname -s)),windows32)
 	zip -r bin/Cpp.$(release).$(os).zip bin/Cpp.$(release)
-	zip -r bin/Cs.$(release).$(os).zip bin/Cs.$(release)
 else
 ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
 	zip -r bin/Cpp.$(release).$(os).zip bin/Cpp.$(release)
-	zip -r bin/Cs.$(release).$(os).zip bin/Cs.$(release)
 else
 ifeq ($(findstring NT, $(shell uname -s)),NT)
 	zip -r bin/Cpp.$(release).$(os).zip bin/Cpp.$(release)
-	zip -r bin/Cs.$(release).$(os).zip bin/Cs.$(release)
 else
 ifeq ($(shell uname -s),Darwin)
 	cd bin && tar -czvf Cpp.$(release).$(os).tgz Cpp.$(release)
-	cd bin && tar -czvf Cs.$(release).$(os).tgz Cs.$(release)
 else
 	cd bin && tar -czvf Cpp.$(release).$(os).tar.gz Cpp.$(release)
-	cd bin && tar -czvf Cs.$(release).$(os).tar.gz Cs.$(release)
 endif
 endif
 endif
@@ -582,7 +563,7 @@ all: resources dll cppbin fixmintty-cygwin fixmintty-msys2
 dll: cpp
 	@echo "Version file. Remove to enable recompile" > $@
 
-clean: cppclean csclean
+clean: cppclean
 
 cppclean:
 ifeq ($(shell echo "check quotes"),"check quotes")
@@ -762,7 +743,6 @@ ifeq ($(msvc),1)
 ifeq ($(debug),1)
 	@cp cplusplus/bin/$(filename).pdb binarysharp/bin/exe
 	@cp cplusplus/bin/$(filename).pdb binaryplus/bin
-	@cp cplusplus/bin/$(filename).pdb csharp/bin/lib
 endif
 
 ifeq ($(copylibs),1)
@@ -770,7 +750,6 @@ ifeq ($(copylibs),1)
 else
 	@cp cplusplus/bin/$(dllname) binaryplus/bin
 	@cp cplusplus/bin/$(dllname) binarysharp/bin/exe
-	@cp cplusplus/bin/$(dllname) csharp/bin/lib
 endif
 
 else
@@ -819,7 +798,6 @@ ifeq ($(copylibs),1)
 else
 	@copy cplusplus\bin\$(dllname) binaryplus\bin
 	@copy cplusplus\bin\$(dllname) binarysharp\bin\exe
-	@copy cplusplus\bin\$(dllname) csharp\bin\lib
 endif
 else
 #other
@@ -828,7 +806,6 @@ ifeq ($(copylibs),1)
 else
 	@cp cplusplus/bin/$(dllname) binaryplus/bin
 	@cp cplusplus/bin/$(dllname) binarysharp/bin/exe
-	@cp cplusplus/bin/$(dllname) csharp/bin/lib
 endif
 endif
 endif
@@ -882,7 +859,7 @@ endif
 cppbin: cpp compile-cppbin
 	@echo MAKE CPPBIN
 ifeq ($(msvc),1)
-	echo "cd binaryplus && link /OUT:bin/$(binname).$(binary) $(bldb) ../cplusplus/bin/$(name).lib ../csharp/bin/lib/$(filename).lib $(fbobj) USER32.lib ../objects/$(arch)/resources.res" > run.bat
+	echo "cd binaryplus && link /OUT:bin/$(binname).$(binary) $(bldb) ../cplusplus/bin/$(name).lib $(fbobj) USER32.lib ../objects/$(arch)/resources.res" > run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
 else
