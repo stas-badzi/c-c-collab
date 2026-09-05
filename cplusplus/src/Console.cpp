@@ -1053,7 +1053,7 @@ void Console::XtermMouseAndFocus(void) {
             System::CygwinPathToWindows
             #endif
             (GetTerminalExecutableName());
-            while (conemuc.back() != sep[0]) conemuc.pop_back();
+            while (conemuc.back() != *sep) conemuc.pop_back();
             conemuc += L"vendor\\conemu-maximus5\\ConEmu\\ConEmuC";
         #ifdef _WIN64
             conemuc += L"64";
@@ -5257,7 +5257,7 @@ newpidgen:
     args[add+argc+2] = nullptr;
 #if defined(_WIN32) || defined (__CYGWIN__)
     if (wt) { // for some reason, WindowsTerminal.exe doesn't work, but wt.exe does
-        term2 = term; while (term2.back() != sep) term2.pop_back(); term2.append(N("wt.exe"));
+        term2 = term; while (term2.back() != *sep) term2.pop_back(); term2.append(N("wt.exe"));
         if (System::RunProgramAsync(term2.c_str(), args)) goto contcons;
     }
     if (tabby) {
@@ -5793,7 +5793,7 @@ newpidgen:
     args[add+argc+2] = nullptr;
 #if defined(_WIN32) || defined (__CYGWIN__) // for some reason, WindowsTerminal.exe doesn't work, but wt.exe does
     if (wt) {
-        term2 = term; while (term2.back() != '\\') term2.pop_back(); term2.append(N("wt.exe"));
+        term2 = term; while (term2.back() != *sep) term2.pop_back(); term2.append(N("wt.exe"));
         if (System::RunProgramAsync(term2.c_str(), args)) goto contcons;
     }
     if (tabby) {
@@ -5895,7 +5895,7 @@ newpidgen:
         newconsicon =  N("-new_console:C:"); newconsicon.append(System::GetRootDir()).append(N("\\assets\\images\\icon.ico"));
         args[4] = newconsicon.c_str();
         if (cmder) {
-            term2 = term; while (term2.back() != '\\') term2.pop_back(); term2.append(N("vendor\\git-for-windows\\usr\\bin\\mintty.exe"));
+            term2 = term; while (term2.back() != *sep) term2.pop_back(); term2.append(N("vendor\\git-for-windows\\usr\\bin\\mintty.exe"));
             args[5] = term2.c_str();
             nstring cmdargs;
             for (int i = 0; i < argc + 2 + 7 - 1; i++)
