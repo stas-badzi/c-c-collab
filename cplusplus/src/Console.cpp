@@ -12,7 +12,11 @@
 #endif
 #ifndef _WIN32
     #include <dirent.h>
-    #define fwrite fwrite_unlocked
+#endif
+
+#if defined(__linux__) || defined (__CYGWIN__)
+#define fwrite fwrite_unlocked
+#define fgetc fgetc_unlocked
 #endif
 
 extern int Main(void);
@@ -55,7 +59,7 @@ constexpr auto& ncerr = std::cerr;
 typedef std::stringstream nstringstream;
 #define sep "/"
 #define topen fopen
-#define fgetnc fgetc_unlocked
+#define fgetnc fgetc
 #define nstrlen strlen
 #ifdef __CYGWIN__
 #undef ERROR_PATH_NOT_FOUND
@@ -854,10 +858,9 @@ void Console::XtermMouseAndFocus(void) {
         return (thread_ret_t)1;
     }
 
-    size_t sleepmcs(size_t mcs) {
-        auto start = std::chrono::high_resolution_clock::now();
-        while (std::chrono::high_resolution_clock::now() - start < std::chrono::microseconds(mcs)) __asm__("nop");
-        return i;
+    void sleepmcs(size_t mcs) {
+        auto end = std::chrono::high_resolution_clock::now()+std::chrono::microseconds(mcs);
+        while (std::chrono::high_resolution_clock::now() < end) __asm__("nop");
     }
 
     struct __conemuhandletabs_arg { atomic<bool>* focused; DWORD pid; };
