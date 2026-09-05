@@ -64,30 +64,6 @@ jobs:
       - name: Clean MacOSAmdCppBin
         shell: sh
         run: rm -rf *
-
-      - name: Download MacOSArmCsBin
-        uses: dawidd6/action-download-artifact@v6
-        with:
-          workflow: build.yml
-          branch: main
-          name: MacOSArmCsBin
-          path: .
-      - name: Get Name of MacOSArmCsBin
-        shell: sh
-        id: macos-cs-bin-name
-        run: "echo path=$(ls) >> $GITHUB_OUTPUT"
-      - name: Upload MacOSArmCsBin
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ${{ steps.macos-cs-bin-name.outputs.path }}
-          asset_name: ${{ steps.macos-cs-bin-name.outputs.path }}
-          asset_content_type: application/x-tar
-      - name: Clean MacOSArmCsBin
-        shell: sh
-        run: rm -rf *
         
       - name: Download MacOSx64CppBin
         uses: dawidd6/action-download-artifact@v6
@@ -110,30 +86,6 @@ jobs:
           asset_name: ${{ steps.macosx64-cpp-bin-name.outputs.path }}
           asset_content_type: application/x-tar
       - name: Clean MacOSAmdCppBin
-        shell: sh
-        run: rm -rf *
-
-      - name: Download MacOSAmdCsBin
-        uses: dawidd6/action-download-artifact@v6
-        with:
-          workflow: build.yml
-          branch: main
-          name: MacOSAmdCsBin
-          path: .
-      - name: Get Name of MacOSAmdCsBin
-        shell: sh
-        id: macosx64-cs-bin-name
-        run: "echo path=$(ls) >> $GITHUB_OUTPUT"
-      - name: Upload MacOSAmdCsBin
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ${{ steps.macosx64-cs-bin-name.outputs.path }}
-          asset_name: ${{ steps.macosx64-cs-bin-name.outputs.path }}
-          asset_content_type: application/x-tar
-      - name: Clean MacOSAmdCsBin
         shell: sh
         run: rm -rf *
 
@@ -161,30 +113,6 @@ jobs:
         shell: sh
         run: rm -rf *
 
-      - name: Download UbuntuCsBin
-        uses: dawidd6/action-download-artifact@v6
-        with:
-          workflow: build.yml
-          branch: main
-          name: UbuntuCsBin
-          path: .
-      - name: Get Name of UbuntuCsBin
-        shell: sh
-        id: ubuntu-cs-bin-name
-        run: "echo path=$(ls) >> $GITHUB_OUTPUT"
-      - name: Upload UbuntuCsBin
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ${{ steps.ubuntu-cs-bin-name.outputs.path }}
-          asset_name: ${{ steps.ubuntu-cs-bin-name.outputs.path }}
-          asset_content_type: application/x-tar
-      - name: Clean UbuntuCsBin
-        shell: sh
-        run: rm -rf *
-
       - name: Download DebianCppBin
         uses: dawidd6/action-download-artifact@v6
         with:
@@ -206,30 +134,6 @@ jobs:
           asset_name: ${{ steps.debian-cpp-bin-name.outputs.path }}
           asset_content_type: application/x-tar
       - name: Clean DebianCppBin
-        shell: sh
-        run: rm -rf *
-
-      - name: Download DebianCsBin
-        uses: dawidd6/action-download-artifact@v6
-        with:
-          workflow: build.yml
-          branch: main
-          name: DebianCsBin
-          path: .
-      - name: Get Name of DebianCsBin
-        shell: sh
-        id: debian-cs-bin-name
-        run: "echo path=$(ls) >> $GITHUB_OUTPUT"
-      - name: Upload DebianCsBin
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ${{ steps.debian-cs-bin-name.outputs.path }}
-          asset_name: ${{ steps.debian-cs-bin-name.outputs.path }}
-          asset_content_type: application/x-tar
-      - name: Clean DebianCsBin
         shell: sh
         run: rm -rf *
 
@@ -257,30 +161,6 @@ jobs:
         shell: sh
         run: rm -rf *
 
-      - name: Download WindowsCsBin
-        uses: dawidd6/action-download-artifact@v6
-        with:
-          workflow: build.yml
-          branch: main
-          name: WindowsCsBin
-          path: .
-      - name: Get Name of WindowsCsBin
-        shell: sh
-        id: win-cs-bin-name
-        run: "echo path=$(ls) >> $GITHUB_OUTPUT"
-      - name: Upload WindowsCsBin
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ${{ steps.win-cs-bin-name.outputs.path }}
-          asset_name: ${{ steps.win-cs-bin-name.outputs.path }}
-          asset_content_type: application/zip
-      - name: Clean WindowsCsBin
-        shell: sh
-        run: rm -rf *
-
       - name: Download Msys2x64CppBin
         uses: dawidd6/action-download-artifact@v6
         with:
@@ -302,30 +182,6 @@ jobs:
           asset_name: ${{ steps.msys-x64-cpp-bin-name.outputs.path }}
           asset_content_type: application/zip
       - name: Clean Msys2x64CppBin
-        shell: sh
-        run: rm -rf *
-
-      - name: Download Msys2x64CsBin
-        uses: dawidd6/action-download-artifact@v6
-        with:
-          workflow: build.yml
-          branch: main
-          name: Msys2x64CsBin
-          path: .
-      - name: Get Name of Msys2x64CsBin
-        shell: sh
-        id: msys-x64-cs-bin-name
-        run: "echo path=$(ls) >> $GITHUB_OUTPUT"
-      - name: Upload Msys2x64CsBin
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ${{ steps.msys-x64-cs-bin-name.outputs.path }}
-          asset_name: ${{ steps.msys-x64-cs-bin-name.outputs.path }}
-          asset_content_type: application/zip
-      - name: Clean Msys2CsBin
         shell: sh
         run: rm -rf *
 
@@ -353,30 +209,6 @@ jobs:
         shell: sh
         run: rm -rf *
 
-      - name: Download Msys2i686CsBin
-        uses: dawidd6/action-download-artifact@v6
-        with:
-          workflow: build.yml
-          branch: main
-          name: Msys2i686CsBin
-          path: .
-      - name: Get Name of Msys2i686CsBin
-        shell: sh
-        id: msys-i686-cs-bin-name
-        run: "echo path=$(ls) >> $GITHUB_OUTPUT"
-      - name: Upload Msys2i686CsBin
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ${{ steps.msys-i686-cs-bin-name.outputs.path }}
-          asset_name: ${{ steps.msys-i686-cs-bin-name.outputs.path }}
-          asset_content_type: application/zip
-      - name: Clean Msys2i686CsBin
-        shell: sh
-        run: rm -rf *
-
       - name: Download CygwinCppBin
         uses: dawidd6/action-download-artifact@v6
         with:
@@ -400,31 +232,3 @@ jobs:
       - name: Clean CygwinCppBin
         shell: sh
         run: rm -rf *
-
-      - name: Download CygwinCsBin
-        uses: dawidd6/action-download-artifact@v6
-        with:
-          workflow: build.yml
-          branch: main
-          name: CygwinCsBin
-          path: .
-      - name: Get Name of CygwinCsBin
-        shell: sh
-        id: cygwin-cs-bin-name
-        run: "echo path=$(ls) >> $GITHUB_OUTPUT"
-      - name: Upload CygwinCsBin
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ${{ steps.cygwin-cs-bin-name.outputs.path }}
-          asset_name: ${{ steps.cygwin-cs-bin-name.outputs.path }}
-          asset_content_type: application/zip
-      - name: Clean CygwinCsBin
-        shell: sh
-        run: rm -rf *
-      
-
-
-  

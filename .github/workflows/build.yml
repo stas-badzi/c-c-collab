@@ -6,47 +6,10 @@ on:
       - '**'
 
 jobs:
-  compile-cs-windows-x64:
-    permissions:
-      contents: read
-    name: Compile C# for Windows (x64)
-    runs-on: windows-2022
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-      - name: Compile c#
-        shell: cmd
-        run: |
-    
-
-          make cs sudo=0 archchk=0 nodep=1 msvc=1
-          make csbin sudo=0 archchk=0 nodep=1
-          cd csharp/bin/lib
-      - name: Export dynamic library
-        uses: actions/upload-artifact@v4
-        with:
-          name: CSharpWinx64Dll
-          path: csharp/bin/lib/factoryrushsharp.dll
-      - name: Export dynamic library linkage 
-        uses: actions/upload-artifact@v4
-        with:
-          name: CSharpWinx64DllLib
-          path: csharp/bin/lib/factoryrushsharp.lib
-      - name: Export executable
-        uses: actions/upload-artifact@v4
-        with:
-          name: CSharpWinx64Exe
-          path: binarysharp/bin/exe/cs-factoryrush.exe
-
   build-msys-x64:
     permissions:
       contents: read
     name: Build program using MSYS2 (x64)
-    needs: compile-cs-windows-x64
     runs-on: windows-2022
     steps:
       - name: Setup MSYS2
@@ -56,22 +19,6 @@ jobs:
           install: make git zip mingw-w64-x86_64-binutils mingw-w64-x86_64-gcc
       - name: Checkout source code
         uses: actions/checkout@v4
-      - name: Import C# compiled dynamic library
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinx64Dll
-          path: csharp/bin/lib
-      - name: Import C# compiled executable
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinx64Exe
-          path: binarysharp/bin/exe
-      - name: Copy C# where it's needed
-        shell: msys2 {0}
-        run: |
-          touch cs csbin
-          cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
-          cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Compile code
         shell: msys2 {0}
         run: /msys2_shell.cmd -defterm -no-start -mingw64 -here -l -c 'make sudo=0 nodep=1 c-compiler=gcc cpp-compiler=g++ archchk=0'
@@ -80,17 +27,11 @@ jobs:
         with:
           name: Msys2x64CppBin
           path: bin/Cpp.*.zip
-      - name: Upload C# binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: Msys2x64CsBin
-          path: bin/Cs.*.zip
   
   build-cygwin-x64:
     permissions:
       contents: read
     name: Build program using Cygwin (x64)
-    needs: compile-cs-windows-x64
     runs-on: windows-2022
     steps:
       - name: Install Cygwin
@@ -102,23 +43,6 @@ jobs:
           Do {Start-Sleep -Milliseconds 100} Until (Test-Path "C:\cygwin64\usr\share\man\man7\openssl_user_macros.7ossl.gz")
       - name: Checkout source code
         uses: actions/checkout@v4
-      - name: Import C# compiled dynamic library
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinx64Dll
-          path: csharp/bin/lib
-      - name: Import C# compiled executable
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinx64Exe
-          path: binarysharp/bin/exe
-      - name: Copy C# where it's needed
-        shell: pwsh
-        run: |
-          echo $null >> cs
-          echo $null >> csbin
-          cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
-          cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Install Programs
         shell: pwsh
         run: choco install make
@@ -132,47 +56,19 @@ jobs:
         with:
           name: Cygwinx64CppBin
           path: bin/Cpp.*.zip
-      - name: Upload C# binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: Cygwinx64CsBin
-          path: bin/Cs.*.zip
   
   build-windows-x64:
     permissions:
       contents: read
     name: Build program using MSVC (x64)
     runs-on: windows-2022
-    needs: compile-cs-windows-x64
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-      - name: Import C# compiled dynamic library
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinx64Dll
-          path: csharp/bin/lib
-      - name: Import C# compiled dynamic linkage
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinx64DllLib
-          path: csharp/bin/lib
-      - name: Import C# compiled executable
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinx64Exe
-          path: binarysharp/bin/exe
-      - name: Copy C# where it's needed
-        shell: cmd
-        run: |
-          echo $null >> cs
-          echo $null >> csbin
-          copy csharp\bin\lib\factoryrushsharp.dll cplusplus\bin\factoryrushsharp.dll
-          copy csharp\bin\lib\factoryrushsharp.dll binaryplus\bin\factoryrushsharp.dll
-          del "C:\Program Files\LLVM\bin\clang-cl.exe"
       - name: Install Programs
         shell: pwsh
         run: |
+          del "C:\Program Files\LLVM\bin\clang-cl.exe"
           Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/archive/refs/heads/master.zip" -OutFile "gnuwin32.zip" -Verbose
           Expand-Archive -Force gnuwin32.zip .
           del gnuwin32.zip
@@ -187,51 +83,11 @@ jobs:
         with:
           name: Windowsx64CppBin
           path: bin/Cpp.*.zip
-      - name: Upload C# binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: Windowsx64CsBin
-          path: bin/Cs.*.zip
-
-  compile-cs-windows-x86:
-    permissions:
-      contents: read
-    name: Compile C# for Windows (x86)
-    runs-on: windows-2022
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-      - name: Compile c#
-        shell: cmd
-        run: |
-          make cs tgarch=x86 sudo=0 archchk=0 nodep=1 msvc=1
-          make csbin tgarch=x86 sudo=0 archchk=0 nodep=1
-          cd csharp/bin/lib
-      - name: Export dynamic library
-        uses: actions/upload-artifact@v4
-        with:
-          name: CSharpWinx86Dll
-          path: csharp/bin/lib/factoryrushsharp.dll
-      - name: Export dynamic library linkage
-        uses: actions/upload-artifact@v4
-        with:
-          name: CSharpWinx86DllLib
-          path: csharp/bin/lib/factoryrushsharp.lib
-      - name: Export executable
-        uses: actions/upload-artifact@v4
-        with:
-          name: CSharpWinx86Exe
-          path: binarysharp/bin/exe/cs-factoryrush.exe
 
   build-msys-x86:
     permissions:
       contents: read
     name: Build program using MSYS2 (i686)
-    needs: compile-cs-windows-x86
     runs-on: windows-2022
     steps:
       - name: Setup MSYS2
@@ -241,22 +97,6 @@ jobs:
           install: make git zip mingw-w64-i686-binutils mingw-w64-i686-gcc
       - name: Checkout source code
         uses: actions/checkout@v4
-      - name: Import C# compiled dynamic library
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinx86Dll
-          path: csharp/bin/lib
-      - name: Import C# compiled executable
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinx86Exe
-          path: binarysharp/bin/exe
-      - name: Copy C# where it's needed
-        shell: msys2 {0}
-        run: |
-          touch cs csbin
-          cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
-          cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Compile code
         shell: msys2 {0}
         run: /msys2_shell.cmd -defterm -no-start -mingw32 -here -l -c 'make sudo=0 nodep=1 c-compiler=gcc cpp-compiler=g++ archchk=0 tgarch=i686'
@@ -265,17 +105,11 @@ jobs:
         with:
           name: Msys2i686CppBin
           path: bin/Cpp.*.zip
-      - name: Upload C# binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: Msys2i686CsBin
-          path: bin/Cs.*.zip
   
   build-cygwin-x86:
     permissions:
       contents: read
     name: Build program using Cygwin x86
-    needs: compile-cs-windows-x86
     runs-on: windows-2022
     steps:
       - name: Install Cygwin
@@ -288,23 +122,6 @@ jobs:
           Do {Start-Sleep -Milliseconds 100} Until (Test-Path "C:\cygwin\usr\share\man\man1\openssl.1.gz")
       - name: Checkout source code
         uses: actions/checkout@v4
-      - name: Import C# compiled dynamic library
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinx86Dll
-          path: csharp/bin/lib
-      - name: Import C# compiled executable
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinx86Exe
-          path: binarysharp/bin/exe
-      - name: Copy C# where it's needed
-        shell: pwsh
-        run: |
-          echo $null >> cs
-          echo $null >> csbin
-          cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
-          cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Compile code
         shell: C:\cygwin\bin\bash.exe --login -o igncr '{0}'
         run: |
@@ -315,47 +132,19 @@ jobs:
         with:
           name: Cygwinx86CppBin
           path: bin/Cpp.*.zip
-      - name: Upload C# binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: Cygwinx86CsBin
-          path: bin/Cs.*.zip
   
   build-windows-x86:
     permissions:
       contents: read
     name: Build program using MSVC (x86)
     runs-on: windows-2022
-    needs: compile-cs-windows-x86
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-      - name: Import C# compiled dynamic library
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinx86Dll
-          path: csharp/bin/lib
-      - name: Import C# compiled dynamic linkage
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinx86DllLib
-          path: csharp/bin/lib
-      - name: Import C# compiled executable
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinx86Exe
-          path: binarysharp/bin/exe
-      - name: Copy C# where it's needed
-        shell: cmd
-        run: |
-          echo $null >> cs
-          echo $null >> csbin
-          copy csharp\bin\lib\factoryrushsharp.dll cplusplus\bin\factoryrushsharp.dll
-          copy csharp\bin\lib\factoryrushsharp.dll binaryplus\bin\factoryrushsharp.dll
-          del "C:\Program Files\LLVM\bin\clang-cl.exe"
       - name: Install Programs
         shell: pwsh
         run: |
+          del "C:\Program Files\LLVM\bin\clang-cl.exe"
           Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/archive/refs/heads/master.zip" -OutFile "gnuwin32.zip" -Verbose
           Expand-Archive -Force gnuwin32.zip .
           del gnuwin32.zip
@@ -364,58 +153,17 @@ jobs:
           del link.exe
       - name: Compile code
         shell: cmd /c {0}
-        run: |
-          utilities\custom\vsdevcmd-x86.bat .\make.exe resources cpp cppbin release package archchk=0 sudo=0 msvc=1 tgarch=x86 nodep=1 c-compiler=clang-cl cpp-compiler=clang-cl
+        run: utilities\custom\vsdevcmd-x86.bat .\make.exe resources cpp cppbin release package archchk=0 sudo=0 msvc=1 tgarch=x86 nodep=1 c-compiler=clang-cl cpp-compiler=clang-cl
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
           name: Windowsx86CppBin
           path: bin/Cpp.*.zip
-      - name: Upload C# binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: Windowsx86CsBin
-          path: bin/Cs.*.zip
-  
-  compile-cs-windows-arm64:
-    permissions:
-      contents: read
-    name: Compile C# for Windows (arm64)
-    runs-on: windows-11-arm
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-      - name: Compile c#
-        shell: cmd
-        run: |
-          make cs tgarch=arm64 sudo=0 archchk=0 nodep=1 msvc=1
-          make csbin tgarch=arm64 sudo=0 archchk=0 nodep=1 
-          cd csharp/bin/lib
-      - name: Export dynamic library
-        uses: actions/upload-artifact@v4
-        with:
-          name: CSharpWinArm64Dll
-          path: csharp/bin/lib/factoryrushsharp.dll
-      - name: Export dynamic library linkage
-        uses: actions/upload-artifact@v4
-        with:
-          name: CSharpWinArm64DllLib
-          path: csharp/bin/lib/factoryrushsharp.lib
-      - name: Export executable
-        uses: actions/upload-artifact@v4
-        with:
-          name: CSharpWinArm64Exe
-          path: binarysharp/bin/exe/cs-factoryrush.exe
 
   build-msys-arm64:
     permissions:
       contents: read
     name: Build program using MSYS2 (aarch64)
-    needs: compile-cs-windows-arm64
     runs-on: windows-11-arm
     steps:
       - name: Setup MSYS2
@@ -425,68 +173,23 @@ jobs:
           install: make git zip mingw-w64-clang-aarch64-binutils mingw-w64-clang-aarch64-gcc
       - name: Checkout source code
         uses: actions/checkout@v4
-      - name: Import C# compiled dynamic library
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinArm64Dll
-          path: csharp/bin/lib
-      - name: Import C# compiled executable
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinArm64Exe
-          path: binarysharp/bin/exe
-      - name: Copy C# where it's needed
-        shell: msys2 {0}
-        run: |
-          touch cs csbin
-          cp csharp/bin/lib/factoryrushsharp.dll cplusplus/bin/factoryrushsharp.dll
-          cp csharp/bin/lib/factoryrushsharp.dll binaryplus/bin/factoryrushsharp.dll
       - name: Compile code
         shell: msys2 {0}
-        run: |
-          /msys2_shell.cmd -defterm -no-start -clangarm64 -here -l -c 'make sudo=0 nodep=1 c-compiler=gcc cpp-compiler=g++ archchk=0'
+        run: /msys2_shell.cmd -defterm -no-start -clangarm64 -here -l -c 'make sudo=0 nodep=1 c-compiler=gcc cpp-compiler=g++ archchk=0'
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
           name: Msys2aarch64CppBin
           path: bin/Cpp.*.zip
-      - name: Upload C# binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: Msys2aarch64CsBin
-          path: bin/Cs.*.zip
 
   build-windows-arm64:
     permissions:
       contents: read
     name: Build program using MSVC (arm64)
     runs-on: windows-11-arm
-    needs: compile-cs-windows-arm64
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-      - name: Import C# compiled dynamic library
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinArm64Dll
-          path: csharp/bin/lib
-      - name: Import C# compiled dynamic linkage
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinArm64DllLib
-          path: csharp/bin/lib
-      - name: Import C# compiled executable
-        uses: actions/download-artifact@v4
-        with:
-          name: CSharpWinArm64Exe
-          path: binarysharp/bin/exe
-      - name: Copy C# where it's needed
-        shell: cmd
-        run: |
-          echo $null >> cs
-          echo $null >> csbin
-          copy csharp\bin\lib\factoryrushsharp.dll cplusplus\bin\factoryrushsharp.dll
-          copy csharp\bin\lib\factoryrushsharp.dll binaryplus\bin\factoryrushsharp.dll
       - name: Install Programs
         shell: pwsh
         run: |
@@ -501,11 +204,6 @@ jobs:
         with:
           name: Windowsarm64CppBin
           path: bin/Cpp.*.zip
-      - name: Upload C# binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: Windowsarm64CsBin
-          path: bin/Cs.*.zip
 
   build-ubuntu-x64:
     permissions:
@@ -528,11 +226,6 @@ jobs:
         with:
           name: UbuntuCppBin
           path: bin/Cpp.*.tar.gz
-      - name: Upload C# binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: UbuntuCsBin
-          path: bin/Cs.*.tar.gz
 
   
 
@@ -555,11 +248,6 @@ jobs:
         with:
           name: UbuntuArm64CppBin
           path: bin/Cpp.*.tar.gz
-      - name: Upload C# binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: UbuntuArm64CsBin
-          path: bin/Cs.*.tar.gz
 
 #  build-debian-x64:
 #    permissions:
@@ -577,11 +265,6 @@ jobs:
 #        with:
 #          name: DebianCppBin
 #          path: bin/Cpp.*.tar.gz
-#      - name: Upload C# binaries
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: DebianCsBin
-#          path: bin/Cs.*.tar.gz
   
   build-macos-arm64:
     permissions:
@@ -605,11 +288,6 @@ jobs:
         with:
           name: MacOSArmCppBin
           path: bin/Cpp.*.tgz
-      - name: Upload C# binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: MacOSArmCsBin
-          path: bin/Cs.*.tgz
   
   build-macos-x64:
     permissions:
@@ -633,11 +311,6 @@ jobs:
         with:
           name: MacOSAmdCppBin
           path: bin/Cpp.*.tgz
-      - name: Upload C# binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: MacOSAmdCsBin
-          path: bin/Cs.*.tgz
   
   build-macos-universal2:
     permissions:
@@ -661,11 +334,6 @@ jobs:
         with:
           name: MacOSUniversal2CppBin
           path: bin/Cpp.*.tgz
-      - name: Upload C# binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: MacOSUniversal2CsBin
-          path: bin/Cs.*.tgz
   
 #  build-macos-docker-x64:
 #    permissions:
@@ -693,8 +361,3 @@ jobs:
 #        with:
 #          name: MacOSAmdCppBin
 #          path: bin/Cpp.*.tgz
-#      - name: Upload C# binaries
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: MacOSAmdCsBin
-#          path: bin/Cs.*.tgz
