@@ -12,7 +12,7 @@ using namespace cppimp;
 using namespace uniconv;
 using namespace std;
 using namespace cpp;
-using namespace cs;
+using namespace io;
 
 void Console::Init(void) {
     Console_sub$define(Console_sub);
@@ -102,7 +102,7 @@ char16_t** Console::GetArgV(void) {
     char16_t** out = (char16_t**)malloc(sizeof(char16_t*)*length); // i think it doesn't mean anything anymore -> // 4 is max utf bytes in one char
     for (int i = 0; i < length; i++) {
         u16string arg = UnicodeToU16String(ret[i]);
-        out[i] = (char16_t*)System::AllocateMemory(sizeof(char16_t)*arg.size()+1);
+        out[i] = (char16_t*)System::AllocateMemory(sizeof(char16_t)*(arg.size()+1));
         for (size_t j = 0; j < arg.size(); j++) out[i][j] = arg[j];
         out[i][arg.size()] = L'\0';
     }
@@ -110,27 +110,15 @@ char16_t** Console::GetArgV(void) {
     return out;
 }
 
-Console::Symbol::Symbol(void) {
-    symbol = Console_Symbol_Construct$cfb(u' ', Color::DEFAULT, Color::DEFAULT);
-}
+Console::Symbol::Symbol(void) : symbol(Console_Symbol_Construct$cfb(u' ', Color::DEFAULT, Color::DEFAULT)) {}
 
-Console::Symbol::Symbol(const Symbol &cp) {
-    symbol = Console_Symbol_Construct$smb(cp.symbol);
-}
+Console::Symbol::Symbol(const Symbol &cp) : symbol(Console_Symbol_Construct$smb(cp.symbol)) {}
 
+Console::Symbol::Symbol(void* ptr, bool direct) : symbol(direct?ptr:Console_Symbol_Construct$smb(ptr)) {}
 
-Console::Symbol::Symbol(void* ptr, bool direct) {
-    if (direct) symbol = ptr;
-    else symbol = Console_Symbol_Construct$smb(ptr);
-}
+Console::Symbol::Symbol(char16_t character, uint8_t foreground, uint8_t background) : symbol(Console_Symbol_Construct$cfb(Char16ToUnicode(character),foreground,background)) {}
 
-Console::Symbol::Symbol(char16_t character, uint8_t foreground, uint8_t background) {
-    symbol = Console_Symbol_Construct$cfb(Char16ToUnicode(character),foreground,background);
-}
-
-Console::Symbol::~Symbol() {
-    Console_Symbol_Destruct(symbol);
-}
+Console::Symbol::~Symbol() {Console_Symbol_Destruct(symbol);}
 
 Console::Symbol Console::Symbol::operator=(const Console::Symbol &src) {
     Console_Symbol_operator$eq(this->symbol,src.symbol);
@@ -208,28 +196,19 @@ vector<vector<Console::Symbol> > Console::Symbol::CreateTexture(u16string charac
     return out;
 }
 
-char16_t Console::Symbol::character(void)
-{
-    return UnicodeToChar16(Console_Symbol_character$get(symbol));
-}
-
-void Console::Symbol::character(char16_t val) {
-    return Console_Symbol_character$set(symbol, Char16ToUnicode(val));
-}
-
-uint8_t Console::Symbol::foreground(void) {
+uint8_t Console::Symbol::_foreground(void) {
     return Console_Symbol_foreground$get(symbol);
 }
 
-void Console::Symbol::foreground(uint8_t val) {
+void Console::Symbol::_foreground(uint8_t val) {
     return Console_Symbol_foreground$set(symbol, val);
 }
 
-uint8_t Console::Symbol::background(void) {
+uint8_t Console::Symbol::_background(void) {
     return Console_Symbol_background$get(symbol);
 }
 
-void Console::Symbol::background(uint8_t val) {
+void Console::Symbol::_background(uint8_t val) {
     return Console_Symbol_background$set(symbol, val);
 }
 

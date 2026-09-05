@@ -98,7 +98,7 @@ using namespace uniconv;
     }
 
     libexport void Console_FillScreen(void* ptr) {
-        std::vector<std::vector<cpp::Console::Symbol> > texture = cs::Convert2dVector<cpp::Console::Symbol>(cs::PtrToTexture(ptr));
+        std::vector<std::vector<cpp::Console::Symbol> > texture = io::Convert2dVector<cpp::Console::Symbol>(io::PtrToTexture(ptr));
         return cpp::Console::FillScreen(texture);
     }
 
@@ -552,19 +552,13 @@ using namespace uniconv;
         return ret;
     }
 
-    libexport void* Game_Camera_ViewportCenter(void* cameraptr) {
-        auto ret = (cpp::Game::MatrixPosition*)System::AllocateMemory(sizeof(cpp::Game::MatrixPosition));
-        *ret = ((cpp::Game::Camera*)cameraptr)->ViewportCenter();
-        return ret;
-    }
-
     libexport void Game_Camera_DrawTexture(int x, int y, void* textureptr, void* cameraptr) {
-        const auto texture = cs::PtrToTexture(textureptr, true);
-        const auto real_texture = cs::Convert2dVector<Console::Symbol>(texture);
+        const auto texture = io::PtrToTexture(textureptr, true);
+        const auto real_texture = io::Convert2dVector<Console::Symbol>(texture);
         ((cpp::Game::Camera*)cameraptr)->DrawTexture(x, y, real_texture);
     }
 
     libexport void Game_Camera_DrawToScreen(int x, int y, void* screenptr, cpp::Game::Camera* cameraptr) {
-        auto screen = cs::PtrToTexture(screenptr, true);
+        auto screen = io::PtrToTexture(screenptr, true);
         cameraptr->DrawToScreen(x, y, screen);
     }

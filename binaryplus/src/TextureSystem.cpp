@@ -2,14 +2,13 @@
 #include "System.hpp"
 #include "dllimport.hpp"
 
-using namespace csimp;
 using namespace uniconv;
 using namespace std;
-using namespace cs;
+using namespace io;
 using namespace cpp;
 
 vector<u16string> TextureSystem::ImportText(u16string filename) {
-    unichar** textptr = TextureSystem_ImportText(U16StringToUnicode(filename));
+    unichar** textptr = cppimp::TextureSystem_ImportText(U16StringToUnicode(filename));
 
 
     vector<u16string> utftext;
@@ -37,31 +36,53 @@ void TextureSystem::ExportText(u16string file, vector<u16string> lines) {
     }
     unilines[lines.size()] = new unichar[1]{0};
     
-    TextureSystem_ExportText(U16StringToUnicode(file),unilines);
+    cppimp::TextureSystem_ExportText(U16StringToUnicode(file),unilines);
 }
 
 vector<vector<Console::Symbol> > TextureSystem::TextureFromFile(u16string filepath) {
     unichar* arg1 = U16StringToUnicode(filepath);
-    void* ret = csimp::TextureSystem_TextureFromFile(arg1);
+    void* ret = cppimp::TextureSystem_TextureFromFile(arg1);
 
     return PtrToTexture(ret);
 }
 
-void TextureSystem::FileFromTexture(u16string filepath, vector<vector<Console::Symbol> > texture, bool recycle) {
+void TextureSystem::FileFromTexture(u16string filepath, const vector<vector<Console::Symbol> >& texture, bool recycle) {
     unichar* filepathPtr = U16StringToUnicode(filepath);
-    void* texturePtr = TextureToPtr(texture);
+    void* texturePtr = TextureToPtr((vector<vector<Console::Symbol> >&)texture);
 
-    csimp::TextureSystem_FileFromTexture(filepathPtr, texturePtr, recycle);
+    cppimp::TextureSystem_FileFromTexture(filepathPtr, texturePtr, recycle);
 }
 
-void TextureSystem::DrawTextureToScreen(int x, int y, vector<vector<Console::Symbol> > texture, vector<vector<Console::Symbol> >& screen) {
-    auto texturePtr = TextureToPtr(texture);
-    auto screenPtr = TextureToPtr(screen);
+void TextureSystem::DrawTextureToScreen(int x, int y, const std::vector<std::vector<Console::Symbol> >& texture, std::vector<std::vector<Console::Symbol>>& screen) {
+    int height = texture.size();
+    int scrHeight = screen.size();
 
-    csimp::TextureSystem_DrawTextureToScreen(x, y, texturePtr, screenPtr);
+    for (int i = 0; i < height; i++) {
+        if (y + i < 0) {
+            i = -(y + 1);
+            continue;
+        }
+        else if (y + i >= scrHeight) break;
+        int width = texture[i].size();
+        int scrWidth = screen[y + i].size();
+        for (int j = 0; j < width; j++) {
+            if (y+i >= 0 && y+i < scrHeight && x+j >= 0 && x+j < scrWidth) {
+                auto elem = texture[i][j];
+                if (elem.character != u'\t') {
+                    screen[y+i][x+j].character = elem.character;
+                }
+                if (elem.foreground < 16) {
+                    screen[y+i][x+j].foreground = elem.foreground;
+                }
+                if (elem.background < 16) {
+                    screen[y+i][x+j].background = elem.background;
+                }
+            }
+        }
+    }
 }
 
-vector<vector<Console::Symbol> > cs::PtrToTexture(nint ptr, bool direct) {
+vector<vector<Console::Symbol> > io::PtrToTexture(nint ptr, bool direct) {
     vector<vector<Console::Symbol> > ret;
 
     const int int32_size = sizeof(int32_t);
@@ -91,7 +112,7 @@ vector<vector<Console::Symbol> > cs::PtrToTexture(nint ptr, bool direct) {
     return ret;
 }
 
-void* cs::TextureToPtr(vector<vector<Console::Symbol> >& texture) {
+void* io::TextureToPtr(vector<vector<Console::Symbol> >& texture) {
     const int int32_size = sizeof(int32_t);
     const int intptr_size = sizeof(void*);
     int32_t size, count;

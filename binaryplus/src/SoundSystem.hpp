@@ -4,7 +4,7 @@
 #undef PlaySound
 #endif
 
-namespace cs {
+namespace cpp {
     class SoundSystem {
     public:
         static void PlaySound(std::u16string filepath, bool wait = false);

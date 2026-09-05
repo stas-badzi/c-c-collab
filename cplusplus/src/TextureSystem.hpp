@@ -5,7 +5,7 @@
 #include <unicode_conversion.hpp>
 #include "Console.hpp"
 #include "smart_ref.hpp"
-
+#include <dynamic_library.h>
 namespace io {
 
     template<typename Tout, typename Tin>

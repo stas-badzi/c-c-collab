@@ -270,25 +270,10 @@ namespace cppimp {
     // Camera
         libimport void* Game_MartixPosition_Construct(int iIndex, int jIndex);
         libimport void* Game_Camera_Construct(int height, int width, void* symptr);
-        libimport void* Game_Camera_ViewportCenter(void* cameraptr);
         libimport void Game_Camera_DrawTexture(int x, int y, void* textureptr, void* cameraptr);
         libimport void Game_Camera_DrawToScreen(int x, int y, void* screenptr, void* cameraptr);
 
-} // namespace CppImp
-
-namespace csimp {
-// TextureSystem    
-    libimport uniconv::unichar** TextureSystem_ImportText(uniconv::unichar* file);
-    
-    libimport void TextureSystem_ExportText(uniconv::unichar* file, uniconv::unichar** content);
-
-    libimport void* TextureSystem_TextureFromFile(uniconv::unichar* arg1);
-
-    libimport void TextureSystem_FileFromTexture(uniconv::unichar* filepathPtr, void* texturePtr, bool recycle);
-
-    libimport void TextureSystem_DrawTextureToScreen(int x, int y, void* texturePtr, void* screenPtr);
-// Control
-    libimport void Control_CleanMemory(void);
-// SoundSystem
+    // SoundSystem
     libimport void SoundSystem_PlaySound(uniconv::unichar* filepathPtr, bool wait);
-} // namespace csimp
+
+} // namespace CppImp

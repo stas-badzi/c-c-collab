@@ -2,8 +2,8 @@
 #include "TextureSystem.hpp"
 #include "SoundSystem.hpp"
 #include "System.hpp"
-#include "Control.hpp"
 #include "Game.hpp"
+#include "Texture.hpp"
 
 #include <iostream>
 #include <string>
@@ -23,6 +23,11 @@
 #define kill_thread(x) pthread_kill(x.native_handle(), SIGTERM)
 #endif
 
+#ifdef __linux__
+#include <limits.h>
+#include <fcntl.h>
+#endif
+
 typedef std::basic_stringstream<char16_t> u16stringstream;
 
 #define exit(x) cpp::Exit(x)
@@ -37,11 +42,18 @@ typedef std::basic_stringstream<char16_t> u16stringstream;
 inline size_t u16strlen(const char16_t* str) { size_t i = 0; while (str[i]) i++; return i; }
 
 #define IsCtrlDown() (Console::IsKeyDown(Key::Enum::CTRL) || Console::IsKeyDown(Key::Enum::CTRLL) || Console::IsKeyDown(Key::Enum::CTRLR))
+#define IsShiftDown() (Console::IsKeyDown(Key::Enum::SHIFT) || Console::IsKeyDown(Key::Enum::SHIFTL) || Console::IsKeyDown(Key::Enum::SHIFTR))
 
 using namespace std;
 using namespace uniconv;
 using namespace cpp;
-using namespace cs;
+using namespace io;
+
+int touch(const char* path) {
+    int fd = open(path, O_CREAT | O_WRONLY, 0600);
+    close(fd);
+    return 0;
+}
 
 wchar_t getChar(wchar_t current) {
     auto texture = Console::Symbol::CreateTexture(u"Press 0-9 to change the symbol\nESC to cancel\n...\n");
@@ -175,29 +187,88 @@ int Main_(void) {
 
 void ColorPopup(int argc, const char16_t* argv[]);
 
-int _____Main(void) {
-    Console::Init();
-    Console::SetTitle(u"FactoryRush");
-
-    while (true) {
-
-        int width = Console::GetWindowWidth();
-        int height = Console::GetWindowHeight();
-
-        vector<vector<Console::Symbol>> screen(height, vector<Console::Symbol>(width, Console::Symbol(L'▒',(uint8_t)12,(uint8_t)16)));
-        Console::HandleMouseAndFocus();
-        auto mouse = Console::GetMouseStatus();
-        // ERROR HERE
-        Game::Camera camera(9,9, Console::Symbol(L'a',(uint8_t)16,(uint8_t)11));
-        camera.DrawToScreen(0, 0, screen);
-
-        Console::FillScreen(screen);
-        Console::Sleep(0.5);
+int Main_Game(int argc, char16_t* argv[]) {
+    using namespace std;
+    Console::HideCursor();
+    vector<vector<vector<Console::Symbol>>> anim;
+    Texture sand(TextureSystem::TextureFromFile(u"/home/stas/sand.1.tux"));
+    anim.push_back(TextureSystem::TextureFromFile(u"/home/stas/grass1.tux"));
+    anim.push_back(TextureSystem::TextureFromFile(u"/home/stas/grass2.tux"));
+    anim.push_back(TextureSystem::TextureFromFile(u"/home/stas/grass3.tux"));
+    anim.push_back(TextureSystem::TextureFromFile(u"/home/stas/grass4.tux"));
+    anim.push_back(TextureSystem::TextureFromFile(u"/home/stas/grass5.tux"));
+    anim.push_back(TextureSystem::TextureFromFile(u"/home/stas/grass6.tux"));
+    Animation grass(anim, 500000);
+    WoodChopper woodchp(chrono::duration_cast<chrono::microseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+    vector<vector<Animation>> screen;
+    vector<vector<WoodChopper>> screen2;
+    vector<vector<Texture*>> texture_map;
+    size_t columns = 10;
+    size_t rows = 11;
+    srand(time(0));
+    for (size_t i=0;i<rows;++i) {
+        screen.push_back({});screen2.push_back({});
+        for (size_t j=0;j<columns-(i&1);++j)
+            {screen.back().push_back(grass);screen2.back().push_back(woodchp);}
     }
-    return EXIT_SUCCESS;
+    for (size_t i=0;i<rows;++i) {
+        texture_map.push_back({});
+        for (size_t j=0;j<columns-(i&1);++j)
+            if (random()&1)
+                texture_map.back().push_back(&(screen.at(i).at(j)));
+            else texture_map.back().push_back(&(screen2.at(i).at(j)));
+    }
+            
+    int xoffset=0, yoffset=0;
+
+    while (1) {
+        uint64_t time = chrono::duration_cast<chrono::microseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
+        auto width = Console::GetWindowWidth(), height = Console::GetWindowHeight();
+        vector<vector<Console::Symbol>> display(height,vector<Console::Symbol>(width,Console::Symbol(u'*',15,4)));
+        int offsetx, offsety=0; bool push=false;
+        for (auto&& row : texture_map) {
+            if (!row.size()) break;
+            offsetx = push ? (grass.Buffer().front().size()/2) : 0;
+            for (auto&& cell : row) {
+                cell->Update(texture_map,{0,0},time);
+                TextureSystem::DrawTextureToScreen(offsetx+xoffset,offsety+yoffset,cell->Buffer(),display);
+                offsetx += cell->Buffer().front().size();
+            }
+            offsety += (row.front()->Buffer().size()/2) + 1;
+            push = !push;
+        }
+        for (int i=0; i<to_string(wood).size();++i) {
+            display.at(max(0ul,display.size()-2)).at(max(0ul,display.at(max(0ul,display.size()-3)).size()-to_string(wood).size()-2+i)).character = to_u16string(wood).at(i);
+        }
+        Console::FillScreen(display);
+        Console::HandleKeyboard();
+        switch (Console::KeyPressed())
+        {
+        case Key::Enum::w:
+            ++yoffset;
+            break;
+        case Key::Enum::s:
+            --yoffset;
+            break;
+        case Key::Enum::a:
+            ++xoffset;
+            break;
+        case Key::Enum::d:
+            --xoffset;
+            break;
+        case Key::Enum::q:
+            goto finish;
+        default:
+            break;
+        }
+        Console::HandleMouseAndFocus();
+        if (Console::MouseButtonClicked().first == MOUSE_BUTTON_PRIMARY) goto finish;
+    }
+    finish:
+    return 0;
 }
 
-int Main(void) {
+int Main_Paint(void) {
     Console::Init();
     Console::SetTitle(u"FactoryRush");
     Console::SetCursorSize(0);
@@ -346,13 +417,12 @@ int Main(void) {
 
     Console::HandleKeyboard();
 
-    u16string a = System::GetRootDir();
-    a.append(u"/assets/a.tux");
     u16string file = (argc < 2) ? System::ToNativePath(getPath(u"./unnamed.tux")) : System::ToNativePath(u16string(argv[1])); // Load the texture to edit
 
     vector<vector<Console::Symbol>> texture;
-
+    bool nofile = false;
     if (!System::IsFile(file)) {
+        nofile = true;
         auto res = Console::PopupWindow(6,0,nullptr);
         if (!res.has_value() || res.value().first != 0) return EXIT_FAILURE;
         auto str = res.value().second;
@@ -368,8 +438,19 @@ int Main(void) {
             nheight *= 10;
             nheight += str[i] - u'0';
         }
-        texture = vector<vector<Console::Symbol>>(nheight, vector<Console::Symbol>(nwidth, Console::Symbol()));
+        texture = vector<vector<Console::Symbol>>(nheight, vector<Console::Symbol>(nwidth, Console::Symbol(u'\t')));
     } else texture = TextureSystem::TextureFromFile(file); // Load the texture to edit
+
+#ifdef __linux__
+    if (nofile) touch(U16StringToNative(file).c_str());
+    char actualpath[PATH_MAX+1];
+    u16string absolute = NativeToU16String(realpath(U16StringToNative(file).c_str(),actualpath));
+    if (nofile) unlink(U16StringToNative(file).c_str());
+#else
+    u16string& absolute = file;
+#endif
+    Console::SetTitle(u"FactoryRush - " + absolute);
+
     char16_t symchar = brushlist[1];
     uint8_t __symback = 16;
     uint8_t __symfore = 16;
@@ -494,7 +575,6 @@ int Main(void) {
             // QUIT
             for (int i = 1; i < 7; ++i) menu[0][i].ReverseColors();
             if (Console::MouseButtonClicked().first == MOUSE_BUTTON_PRIMARY) {
-                Control::CleanMemory();
                 kill_thread(handle_color_popup);
                 handle_color_popup.join();
                 return EXIT_SUCCESS;
@@ -502,8 +582,16 @@ int Main(void) {
         } else if (mouse.x > 7 && mouse.y == 0 && mouse.x < 14) {
             // SAVE
             for (int i = 8; i < 14; ++i) menu[0][i].ReverseColors();
-            if (Console::MouseButtonClicked().first == MOUSE_BUTTON_PRIMARY) {
-                TextureSystem::FileFromTexture(file, texture);
+            if (Console::MouseButtonClicked().first == MOUSE_BUTTON_PRIMARY || Console::MouseButtonClicked().first == MOUSE_BUTTON_SECONDARY) {
+                if (IsShiftDown() || Console::MouseButtonClicked().first == MOUSE_BUTTON_SECONDARY) { // doesn't report mouse cklick with in some terminals (e.g. gnome-terminal) for some reason
+                    // Save as => set new file name
+                    file = System::ToNativePath(getPath(file));
+                    TextureSystem::FileFromTexture(file, texture);
+                #ifdef __linux__
+                    absolute = NativeToU16String(realpath(U16StringToNative(file).c_str(),actualpath));
+                #endif
+                    Console::SetTitle(u"FactoryRush - " + absolute);
+                } else TextureSystem::FileFromTexture(file, texture);
             }
         } else if (mouse.x > 14 && mouse.y == 0 && mouse.x < 20) {
             // NEW
@@ -524,10 +612,20 @@ int Main(void) {
                     nheight *= 10;
                     nheight += str[i] - u'0';
                 }
-                texture = vector<vector<Console::Symbol>>(nheight, vector<Console::Symbol>(nwidth, Console::Symbol()));
+                texture = vector<vector<Console::Symbol>>(nheight, vector<Console::Symbol>(nwidth, Console::Symbol(u'\t')));
                 auto dir = file;
                 while (dir.size() && dir.back() != u'/' && dir.back() != u'\\') dir.pop_back();
                 file = System::ToNativePath(getPath(dir));
+                #ifdef __linux__
+                if (System::IsFile(file)) {
+                    absolute = NativeToU16String(realpath(U16StringToNative(file).c_str(),actualpath));
+                } else {
+                    touch(U16StringToNative(file).c_str());
+                    absolute = NativeToU16String(realpath(U16StringToNative(file).c_str(),actualpath));
+                    unlink(U16StringToNative(file).c_str());
+                }
+                Console::SetTitle(u"FactoryRush - " + absolute);
+                #endif
             }
         } else if (mouse.x > 20 && mouse.y == 0 && mouse.x < 27) {
             // OPEN
@@ -550,8 +648,12 @@ int Main(void) {
                         nheight *= 10;
                         nheight += str[i] - u'0';
                     }
-                    texture = vector<vector<Console::Symbol>>(nheight, vector<Console::Symbol>(nwidth, Console::Symbol()));
+                    texture = vector<vector<Console::Symbol>>(nheight, vector<Console::Symbol>(nwidth, Console::Symbol(u'\t')));
                 } else texture = TextureSystem::TextureFromFile(file);
+                #ifdef __linux__
+                    absolute = NativeToU16String(realpath(U16StringToNative(file).c_str(),actualpath));
+                #endif
+                Console::SetTitle(u"FactoryRush - " + absolute);
             }
         } else if (mouse.x > 27 && mouse.y == 0 && mouse.x < 34) {
             // EDIT/VIEW
@@ -647,12 +749,14 @@ int Main(void) {
                 if (line < 0 || column < 0) goto endminput;
                 if ((size_t)line >= texture.size() || (size_t)column >= texture[line].size()) goto endminput;
                 auto&& elem = texture[line][column];
-                elem.character(u' ');
+                elem.character(u'\t');
                 elem.foreground(Color::DEFAULT);
                 elem.background(Color::DEFAULT);
             }
         }
 endminput:
+        vector<vector<Console::Symbol>> back(texture.size(),vector<Console::Symbol>(texture.front().size(),Console::Symbol(' ')));
+        TextureSystem::DrawTextureToScreen(2,2,back,screen);
 
         TextureSystem::DrawTextureToScreen(2,2,texture,screen);
         TextureSystem::DrawTextureToScreen(0,0,menu,screen);
@@ -1565,4 +1669,12 @@ int sub(int type) {
             return res.first;
     }
     return EXIT_FAILURE;
+}
+
+int Mainx() {return Main_Paint();}
+int Main() {
+    Console::Init();
+    auto argc = Console::GetArgC();
+    auto argv = Console::GetArgV();
+    return Main_Game(argc,argv);
 }

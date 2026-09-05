@@ -92,6 +92,7 @@ namespace cpp {
                 this->y = 0;
             }
         };
+
         struct Symbol {
             // pass the size
             static std::vector<std::vector<Symbol> > CreateTexture(std::u16string characters[], size_t size, const uint8_t backgrounds[], const uint8_t foregrounds[]);
@@ -106,14 +107,41 @@ namespace cpp {
             // \n is treated as the end of a row
             static std::vector<std::vector<Symbol> > CreateTexture(std::u16string characters);
 
-            char16_t character(void);
-            void character(char16_t val);
+            static char16_t __character(void* ptr) {return uniconv::UnicodeToChar16(cppimp::Console_Symbol_character$get(ptr));}
 
-            uint8_t foreground(void);
-            void foreground(uint8_t val);
+            static void __character(void* ptr,char16_t val) {cppimp::Console_Symbol_character$set(ptr, uniconv::Char16ToUnicode(val));}
 
-            uint8_t background(void);
-            void background(uint8_t val);
+            template<typename T,T(*get)(void*),void(*set)(void*,T)>
+            class funcvar {
+                void* ptr = nullptr;
+            public:
+                funcvar(void) {}
+                funcvar(void* ptr) : ptr(ptr) {}
+                funcvar(const T& val) {set(ptr,val);}
+                funcvar(void* ptr,const T& val) : ptr(ptr) {set(ptr,val);}
+                funcvar& operator=(const T& val) {set(ptr,val);return *this;}
+                funcvar& operator=(const funcvar& copy) {set(ptr,copy());return *this;}
+                operator T() const {return get(ptr);}
+                T operator()() const {return get(ptr);}
+                void operator()(const T& val) const {set(ptr,val);}
+            };
+
+        protected:
+            void* symbol;
+        public:
+
+            char16_t _character(void) const {return __character(symbol);}
+            void _character(char16_t val) {__character(symbol,val);}
+
+            uint8_t _foreground(void);
+            void _foreground(uint8_t val);
+
+            uint8_t _background(void);
+            void _background(uint8_t val);
+
+            funcvar<char16_t,__character,__character> character{symbol};
+            funcvar<uint8_t,cppimp::Console_Symbol_foreground$get,cppimp::Console_Symbol_foreground$set> foreground{symbol};
+            funcvar<uint8_t,cppimp::Console_Symbol_background$get,cppimp::Console_Symbol_background$set> background{symbol};
 
             void ReverseColors(void);
 
@@ -132,9 +160,6 @@ namespace cpp {
                 uint8_t GetAttribute(void);
                 void SetAttribute(uint8_t attribute);
             #endif
-
-        private:
-            void* symbol;
         };
         static void Init(void);
         static void Fin(void);
@@ -189,4 +214,5 @@ namespace cpp {
     extern std::basic_istream<wchar_t>& win;
     extern std::basic_ostream<wchar_t>& wout;
 #endif
+
 }

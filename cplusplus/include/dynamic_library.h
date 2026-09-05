@@ -3,7 +3,9 @@
 #if defined _WIN32
     #if defined __cplusplus
         #define libexport extern "C" __declspec(dllexport)
+        #define libexportplusplus  __declspec(dllexport)
         #define libimport extern "C" __declspec(dllimport)
+        #define libimportplusplus __declspec(dllimport)
     #else
         #define libexport __declspec(dllexport)
         #define libimport __declspec(dllimport)
@@ -11,10 +13,13 @@
 #else
     #if defined __cplusplus
         #define libimport extern "C"
+        #define libimportplusplus
         #ifdef __clang__
             #define libexport extern "C" __attribute__((visibility("default")))
+            #define libexportplusplus __attribute__((visibility("default")))
         #else
             #define libexport extern "C" __attribute__((visibility("default"),externally_visible))
+            #define libexportplusplus __attribute__((visibility("default"),externally_visible))
         #endif
     #else
         #define libimport

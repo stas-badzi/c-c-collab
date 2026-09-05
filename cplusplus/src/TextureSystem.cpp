@@ -1,12 +1,16 @@
 #include "TextureSystem.hpp"
 #include "System.hpp"
 #include "dllimport.hpp"
+#include "unicode_conversion.hpp"
 
 #ifdef _WIN32
 #define nfopen _wfopen
 #define tfgetc fgetwc
+#define nstoi wstoi
 #else
+#define nfopen fopen
 #define tfgetc fgetc
+#define nstoi stoi
 #endif
 
 using namespace uniconv;
@@ -56,11 +60,9 @@ static int ByteToHex(uint8_t input) {
 
 vector<vector<Console::Symbol>> TextureSystem::TextureFromFile(u16string filepath) {
     auto file = ImportText(filepath); // Imported List<string>
-    auto symbols = Texture(); // Final symbol list
+    auto symbols = vector<vector<Console::Symbol>>(); // Final symbol list
 
-    int width=stoi(fileImported[0]),height=stoi(fileImported[1]);
-    
-    if (!int.TryParse(fileImported[1], out int height)) Console::ThrowMsg("Parsing height failed");
+    int width=nstoi(uniconv::U16StringToNative(file[0])),height=nstoi(uniconv::U16StringToNative(file[1]));
 
     int remainingSymbols = width * 3 * height;
     for (int i = 0; i < height; i++) {
@@ -69,7 +71,6 @@ vector<vector<Console::Symbol>> TextureSystem::TextureFromFile(u16string filepat
             symbolLine.emplace_back(UnicodeToNative(file[i][j]), HexToByte(file[i][j+1]), HexToByte(file[i][j+2]));
         symbols.emplace_back().swap(symbolLine);
     }
-    
 
     return symbols;
 }
@@ -78,13 +79,34 @@ void TextureSystem::FileFromTexture(u16string filepath, vector<vector<Console::S
     unichar* filepathPtr = U16StringToUnicode(filepath);
     void* texturePtr = TextureToPtr(texture);
 
-    csimp::TextureSystem_FileFromTexture(filepathPtr, texturePtr, recycle);
+    // [TODO] implement
+    //csimp::TextureSystem_FileFromTexture(filepathPtr, texturePtr, recycle);
 }
+void TextureSystem::DrawTextureToScreen(int x, int y, const std::vector<std::vector<Console::Symbol> >& texture, std::vector<std::vector<Console::Symbol>>& screen) {
+    int height = texture.size();
+    int scrHeight = screen.size();
 
-void TextureSystem::DrawTextureToScreen(int x, int y, const vector<vector<Console::Symbol> >& texture, vector<vector<Console::Symbol> >& screen)
-{
-    auto texturePtr = TextureToPtr(texture);
-    auto screenPtr = TextureToPtr(screen);
-
-    csimp::TextureSystem_DrawTextureToScreen(x, y, texturePtr, screenPtr);
+    for (int i = 0; i < height; i++) {
+        if (y + i < 0) {
+            i = -(y + 1);
+            continue;
+        }
+        else if (y + i >= scrHeight) break;
+        int width = texture[i].size();
+        int scrWidth = screen[y + i].size();
+        for (int j = 0; j < width; j++) {
+            if (y+i >= 0 && y+i < scrHeight && x+j >= 0 && x+j < scrWidth) {
+                auto elem = texture[i][j];
+                if (elem.character[0] != '\t') {
+                    screen[y+i][x+j].character = elem.character;
+                }
+                if (elem.foreground < 16) {
+                    screen[y+i][x+j].foreground = elem.foreground;
+                }
+                if (elem.background < 16) {
+                    screen[y+i][x+j].background = elem.background;
+                }
+            }
+        }
+    }
 }

@@ -15,7 +15,7 @@ std::vector<std::vector<Tout>> Convert2dVector(const std::vector<std::vector<Tin
     return out;
 }
 
-namespace cs {
+namespace io {
     inline std::vector<std::vector<smart_ref<Console::Symbol> > > PtrToTexture(void* ptr, bool direct = false) {
         auto sym = std::vector<std::vector<smart_ref<Console::Symbol> > >();
 
@@ -137,7 +137,39 @@ namespace cs {
         return ret;
     }
 
+    /*inline void TextureSystem::DrawTextureToScreen(int x, int y, const std::vector<std::vector<Console::Symbol> >& texture, std::vector<std::vector<smart_ref<Console::Symbol>>>& screen) {
+        auto texturePtr = TextureToPtr(texture);
+        auto screenPtr = TextureToPtr(screen);
+
+        csimp::TextureSystem_DrawTextureToScreen(x, y, texturePtr, screenPtr);
+    }*/
+
     inline void TextureSystem::DrawTextureToScreen(int x, int y, const std::vector<std::vector<Console::Symbol> >& texture, std::vector<std::vector<smart_ref<Console::Symbol>>>& screen) {
-        return; // implemented somewhere
+        int height = texture.size();
+        int scrHeight = screen.size();
+
+        for (int i = 0; i < height; i++) {
+            if (y + i < 0) {
+                i = -(y + 1);
+                continue;
+            }
+            else if (y + i >= scrHeight) break;
+            int width = texture[i].size();
+            int scrWidth = screen[y + i].size();
+            for (int j = 0; j < width; j++) {
+                if (y+i >= 0 && y+i < scrHeight && x+j >= 0 && x+j < scrWidth) {
+                    auto elem = texture[i][j];
+                    if (elem.character[0] != '\t') {
+                        screen[y+i][x+j].ptr()->character = elem.character;
+                    }
+                    if (elem.foreground < 16) {
+                        screen[y+i][x+j].ptr()->foreground = elem.foreground;
+                    }
+                    if (elem.background < 16) {
+                        screen[y+i][x+j].ptr()->background = elem.background;
+                    }
+                }
+            }
+        }
     }
 }

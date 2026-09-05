@@ -5,7 +5,6 @@
 #include <array>
 #include <bitset>
 #include <utility>
-#include <cpp20_constexpr.hpp>
 #include <sstream>
 #include <fstream>
 #include <filesystem>
@@ -68,6 +67,7 @@
     #include <string>
     #include <string.h>
     #include <iostream>
+    #include <clocale>
 #ifdef __linux__
     #include <linux/getfd.h>
     #include <linux/mousefd.h>
@@ -299,7 +299,6 @@ namespace cpp {
         //static std::pair<uint16_t,uint16_t> xyoffset;
         //static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
     #else
-        static bool custom_handling;
         static std::ofstream real_out;
         static const char* subdir;
         static struct termios old_termios;
@@ -310,6 +309,11 @@ namespace cpp {
         static inline HWND GetHwnd(void);
     #endif
     #ifdef __linux__
+        // command switches
+        static bool custom_handling;
+        static bool enable_multiplexers; // -m --multiplexers
+        static bool inline_popups; // -i --inline-popups
+
         static uid_t ruid;
         static struct termios old_fdterm;
         static int old_kbdmode;
@@ -327,6 +331,7 @@ namespace cpp {
         static std::string GetTerminalExecuteSwitch(void);
         static void Custom_HandleKeyboard(void);
         static void Custom_GetWindowSize(void);
+        static std::string FindTerminalEmulator(const char* term_prog = nullptr);
     #endif
     #ifdef __APPLE__
         static pid_t ppid;

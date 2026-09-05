@@ -1621,7 +1621,7 @@ int System::RunProgram(uniconv::utfcstr path, uniconv::utfcstr const args[]
 
     #ifdef __linux__
         if (suid) {
-            int res = setuid(suid);
+            __attribute__((unused)) int res = setuid(suid);
             res = setegid(getgid());
             int nulfl = open("/dev/null", O_WRONLY);
             dup2(nulfl, STDOUT_FILENO);
@@ -1722,7 +1722,6 @@ bool System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[
         signal(SIGTSTP, SIG_DFL);
         signal(SIGTTIN, SIG_DFL);
         signal(SIGTTOU, SIG_DFL);
-        
         char* args_c[256]{nullptr};
         args_c[0] = (char*)path;
         for (int i = 1; i < 256; i++)
@@ -1730,7 +1729,7 @@ bool System::RunProgramAsync(uniconv::utfcstr path, uniconv::utfcstr const args[
             else args_c[i] = (char*)args[i-1];
 
     #ifdef __linux__
-        if (suid) { int res = setuid(suid); }
+        if (suid) __attribute__((unused)) int res = setuid(suid);
     #endif
 
         execv(path, args_c);

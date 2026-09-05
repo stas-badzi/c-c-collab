@@ -1,9 +1,15 @@
 #include "Game.hpp"
+#include "Texture.hpp"
 
 #include <iostream>
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#include <vector>
+#include <iostream>
+#include <utility>
+#include <cassert>
+#include <chrono>
 #include "Console.hpp"
 #include "TextureSystem.hpp"
 
@@ -15,7 +21,7 @@
 #endif
 
 using namespace cpp;
-using namespace cs;
+using namespace io;
 using std::vector;
 
 // public:
@@ -29,18 +35,6 @@ Game::Camera::Camera(int height, int width, Console::Symbol sym) {
 	this->buffer_ = vector<vector<Console::Symbol>>(height, vector<Console::Symbol>(width, sym));
 }
 
-Game::MatrixPosition Game::Camera::ViewportCenter() {
-    return {static_cast<int>(this->buffer().size() / 2), static_cast<int>(this->buffer()[0].size() / 2)};
-}
-
 vector<vector<Console::Symbol>> Game::Camera::buffer() {
     return this->buffer_;
-}
-
-// private:
-
-void Game::ValidateViewport(
-    __attribute__((unused)) MatrixPosition vpc) {
-    return;
-
 }

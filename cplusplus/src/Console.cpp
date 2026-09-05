@@ -12,6 +12,7 @@
 #endif
 #ifndef _WIN32
     #include <dirent.h>
+    #define fwrite fwrite_unlocked
 #endif
 
 extern int Main(void);
@@ -54,7 +55,7 @@ constexpr auto& ncerr = std::cerr;
 typedef std::stringstream nstringstream;
 #define sep "/"
 #define topen fopen
-#define fgetnc fgetc
+#define fgetnc fgetc_unlocked
 #define nstrlen strlen
 #ifdef __CYGWIN__
 #undef ERROR_PATH_NOT_FOUND
@@ -105,7 +106,7 @@ nstring Console::GetTerminalExecutableName(void) { return Console::terminal_name
 
 char_t Console::GetChar(void) {
     if (Console::buf_it >= 0 && Console::buf[Console::buf_it]) { ++buf_it; return Console::buf[buf_it-1]; }
-    Console::buf[buf_it] = getnch(); if (buf_it < 127) Console::buf[++buf_it] = '\0'; else ThrowMsg("No more space in buffer");
+    Console::buf[buf_it] = getnch(); if (buf_it < 127) Console::buf[++buf_it] = '\0'; else ThrowMsg("No more space in buffer\n");
     return Console::buf[buf_it-1];
 };
 
@@ -120,7 +121,7 @@ void Console::PushChar(char_t c) {
     size_t siz = mbrtowc(&wc, &c, 1, &Console::streammbs);
     switch (siz) {
     case static_cast<size_t>(-1):
-        ThrowMsg("mbrtowc error");
+        ThrowMsg("mbrtowc error\n");
     case static_cast<size_t>(-2):
         return;
     }
@@ -224,7 +225,7 @@ void Console::XtermMouseAndFocus(void) {
 #endif
     if (!bytes) return;
     bytes += nstrlen(Console::buf);
-    
+    Console::screen_lock.lock();    
 
     while (bytes > 0) {
         buf_it = 0;
@@ -355,7 +356,7 @@ void Console::XtermMouseAndFocus(void) {
                 if (byte == N('m')) { mousedown = false; break; }
 
                 int num = byte - N('0');
-                if (num < 0 || num > 9) ThrowMsg("Invalid mouse status input");
+                if (num < 0 || num > 9) ThrowMsg("Invalid mouse status input\n");
 
                 val[pos] *= 10;
                 val[pos] += num;
@@ -445,7 +446,7 @@ void Console::XtermMouseAndFocus(void) {
                     if (bytes == 0) return;
                     c = GetChar(); --bytes;
                 }
-                if (c != N('~')) ThrowMsg("Invalid getc() input");
+                if (c != N('~')) ThrowMsg("Invalid getc() input\n");
                 Console::out << L"Macro: " << num; Console::out_endl();
                 int i = 0;
                 while (buf_it+i < 127 && buf[buf_it+i] != N('\0'))
@@ -462,6 +463,7 @@ void Console::XtermMouseAndFocus(void) {
             buf[i] = buf[buf_it+i];
         buf[i] = N('\0');}
     }
+    Console::screen_lock.unlock();
 }
 
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -853,9 +855,8 @@ void Console::XtermMouseAndFocus(void) {
     }
 
     size_t sleepmcs(size_t mcs) {
-        size_t i = 0;
         auto start = std::chrono::high_resolution_clock::now();
-        while (std::chrono::high_resolution_clock::now() - start < std::chrono::microseconds(mcs)) ++i;
+        while (std::chrono::high_resolution_clock::now() - start < std::chrono::microseconds(mcs)) __asm__("nop");
         return i;
     }
 
@@ -1041,7 +1042,7 @@ void Console::XtermMouseAndFocus(void) {
         if (mintty) Console::EscSeqSetTitle(WStringToNative(title).c_str());
         else if (!SetConsoleTitle(Console::window_title.c_str())) {
             Console::out << L"SetConsoleTitle failed: " << GetLastError(); out_endl();
-            ThrowMsg("SetConsoleTitle failed");
+            ThrowMsg("SetConsoleTitle failed\n");
         }
         if (cmder) {
             wstring conemuc = 
@@ -1843,17 +1844,17 @@ void Console::XtermMouseAndFocus(void) {
                             // launched as popup
                             fixmintty = false;
                             Console::sub_proc = true;
-                            if (wcslen(arg) < 3) ThrowMsg("Invalid argument 1");
+                            if (wcslen(arg) < 3) ThrowMsg("Invalid argument 1\n");
                             sub_process = 0;
                             narg = arg + 2;
                             while (narg[0] != L'~') {
-                                if (narg[0] < L'0' || narg[0] > L'9') ThrowMsg("Invalid argument 2");
+                                if (narg[0] < L'0' || narg[0] > L'9') ThrowMsg("Invalid argument 2\n");
                                 sub_process *= 10;
                                 sub_process += narg[0] - L'0';
                                 ++narg;
                             }
                             for (size_t i = 1; narg[i] != L'~'; i++){
-                                if (narg[i] == L'\0') ThrowMsg("Invalid argument 3");
+                                if (narg[i] == L'\0') ThrowMsg("Invalid argument 3\n");
                                 sdir.push_back(narg[i]);
                             }
                             Console::subdir = new const wchar_t[wcslen(sdir.c_str())+1]{0};
@@ -1861,7 +1862,7 @@ void Console::XtermMouseAndFocus(void) {
                             ++j; --i; --Console::argc;
                             break;
                         case L'\\':
-                            ThrowMsg("IDK Argument");
+                            ThrowMsg("IDK Argument\n");
                             break;
                         case L'#':
                             fixmintty = false;
@@ -1880,17 +1881,17 @@ void Console::XtermMouseAndFocus(void) {
             else exit(0x73);
 
             wchar_t* tmpappdata = _wgetenv(L"APPDATA");
-            if (!tmpappdata) ThrowMsg("\"APPDATA\" env variable not set");
+            if (!tmpappdata) ThrowMsg("\"APPDATA\" env variable not set\n");
             Console::user_data = tmpappdata;
             user_data.append(L"\\.factoryrush\\");
 
             wchar_t* tmptmpdata = _wgetenv(L"TEMP");
-            if (!tmptmpdata) ThrowMsg("\"TEMP\" env variable not set");
+            if (!tmptmpdata) ThrowMsg("\"TEMP\" env variable not set\n");
             Console::tmp_data = tmptmpdata;
             tmp_data.append(L"\\.factoryrush\\");
 
             wchar_t* tmpdevdata = _wgetenv(L"ProgramData");
-            if (!tmpdevdata) ThrowMsg("\"ProgramData\" env variable not set");
+            if (!tmpdevdata) ThrowMsg("\"ProgramData\" env variable not set\n");
             Console::dev_data = tmpdevdata;
             dev_data.append(L"\\Factoryrush\\");
             Console::log_data = Console::dev_data + L"logs\\";
@@ -2048,15 +2049,15 @@ void Console::XtermMouseAndFocus(void) {
                 goto subdirset;
             }
             
-            if (System::MakeDirectory(tmp_data.c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + tmp_data + L"\"");
+            if (System::MakeDirectory(tmp_data.c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + tmp_data + L"\"\n");
 
-            if (System::MakeDirectory(user_data.c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + user_data + L"\"");
+            if (System::MakeDirectory(user_data.c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + user_data + L"\"\n");
 
-            if (System::MakeDirectory(dev_data.c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + dev_data + L"\"");
+            if (System::MakeDirectory(dev_data.c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + dev_data + L"\"\n");
 
-            if (System::MakeDirectory((log_data).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + (dev_data) + L"\"");
+            if (System::MakeDirectory((log_data).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + (dev_data) + L"\"\n");
 
-            if (System::MakeDirectory(pipedir) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + pipedir + L"\"");
+            if (System::MakeDirectory(pipedir) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + pipedir + L"\"\n");
 
             Console::subdir = new const wchar_t[to_wstring(Console::pid).size() + 2]{0};
             wcscpy((wchar_t*)Console::subdir, to_wstring(Console::pid).c_str());
@@ -2090,11 +2091,11 @@ void Console::XtermMouseAndFocus(void) {
             
         subdirset:
 
-            if (System::MakeDirectory((tmp_data+subdir).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + (tmp_data+subdir) + L"\"");
+            if (System::MakeDirectory((tmp_data+subdir).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + (tmp_data+subdir) + L"\"\n");
 
-            if (System::MakeDirectory((tmp_data+subdir+L"proc").c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + (tmp_data+subdir+L"proc") + L"\"");
+            if (System::MakeDirectory((tmp_data+subdir+L"proc").c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + (tmp_data+subdir+L"proc") + L"\"\n");
             
-            if (System::MakeDirectory((wstring(pipedir)+subdir).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + (wstring(pipedir)+subdir) + L"\"");
+            if (System::MakeDirectory((wstring(pipedir)+subdir).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg(wstring(L"Couldn't create directory: \"") + (wstring(pipedir)+subdir) + L"\"\n");
 
             delete sec_atrs;
 
@@ -2569,7 +2570,7 @@ void Console::XtermMouseAndFocus(void) {
 
     bool terminator = false;
 
-    inline cpp20_constexpr string GenerateEscapeSequence(uint8_t,uint8_t);
+    inline constexpr string GenerateEscapeSequence(uint8_t,uint8_t);
 
     inline constexpr int parse_input(int show_keycodes, const char * buf, int n) {
         int out = 0;
@@ -2591,7 +2592,6 @@ void Console::XtermMouseAndFocus(void) {
     static int getparent(int pid) {
         int ppid;
         char buf[BUFSIZ*2];
-        char procname[32];
 
         FILE *fl = fopen(string("/proc/" + to_string(pid) + "/status").c_str(), "r");
         size_t ret = fread(buf, sizeof(char), BUFSIZ*2-1, fl);
@@ -2621,6 +2621,7 @@ void Console::XtermMouseAndFocus(void) {
             else {
                 if (errno == EINVAL)
                     break;
+                else if (errno == ENOENT || errno == EISDIR) return NULL;
                 perror("readlink");
                 exit(1);
             }
@@ -2673,9 +2674,6 @@ void Console::XtermMouseAndFocus(void) {
         "sudo",
         "doas",
 
-        "tmux",
-        "screen",
-
         "gdb",
         "lldb",
 
@@ -2683,6 +2681,12 @@ void Console::XtermMouseAndFocus(void) {
         "cpp-factoryrush",
         "factoryrush",
 
+        nullptr
+    };
+
+    const char *const term_multiplex[] {
+        "tmux",
+        "screen",
         nullptr
     };
 
@@ -2706,11 +2710,12 @@ void Console::XtermMouseAndFocus(void) {
         nullptr
     };
 
-    string GetPidTerminal(int pid) {
-        char path[PATH_MAX+1];
-        int siz = readlink( string("/proc/" + to_string(pid) + "/exe").c_str() , path, PATH_MAX);
+    string GetPidTerminal(int pid, bool allow_terminal_multiplexers = false) {
+        char path[256];
+        int siz = readlink( string("/proc/" + to_string(pid) + "/exe").c_str() , path, 256);
         path[siz] = '\0';
         string pth(path);
+        if (pth == System::GetSelfPath()) return GetPidTerminal(getparent(pid),allow_terminal_multiplexers);
         string prog;
         while (pth.back() != '/') {
             prog = pth.back() + prog;
@@ -2719,14 +2724,27 @@ void Console::XtermMouseAndFocus(void) {
         for (int i=0; not_term[i]; ++i)
             if (not_term[i][0] == '@')
                 if (prog.find(not_term[i] + 1) != string::npos)
-                    return GetPidTerminal(getparent(pid));
+                    return GetPidTerminal(getparent(pid),allow_terminal_multiplexers);
                 else continue;
             else if (not_term[i][0] == '*')
-                if (prog.size() >= strlen(not_term[i]+1) && prog.substr(prog.size() - strlen(not_term[i]+1)) == string(not_term[i] + 1))
+                if (prog.substr(prog.size() - strlen(not_term[i]+1)) == string(not_term[i] + 1))
                     return GetPidTerminal(getparent(pid));
                 else continue;
             else if (prog == string(not_term[i]))
-                return GetPidTerminal(getparent(pid));
+                return GetPidTerminal(getparent(pid),allow_terminal_multiplexers);
+        if (!allow_terminal_multiplexers) {
+            for (int i=0; term_multiplex[i]; ++i)
+                if (term_multiplex[i][0] == '@')
+                    if (prog.find(term_multiplex[i] + 1) != string::npos)
+                        return GetPidTerminal(getparent(pid));
+                    else continue;
+                else if (term_multiplex[i][0] == '*')
+                    if ((long)prog.size() - (long)strlen(term_multiplex[i]+1) >= 0 && prog.substr(prog.size() - strlen(term_multiplex[i]+1)) == string(term_multiplex[i] + 1))
+                        return GetPidTerminal(getparent(pid));
+                    else continue;
+                else if (prog == string(term_multiplex[i]))
+                    return GetPidTerminal(getparent(pid));
+        }
 
         string spath = path;
         if (spath.size() >= 30 && spath[spath.size()-1] == 'r' && spath[spath.size()-2] == 'e' && spath[spath.size()-3] == 'v' && spath[spath.size()-4] == 'r' && spath[spath.size()-5] == 'e' && spath[spath.size()-6] == 's' && spath[spath.size()-7] == '-' && spath[spath.size()-8] == 'l' && spath[spath.size()-9] == 'a' && spath[spath.size()-10] == 'n' && spath[spath.size()-11] == 'i' && spath[spath.size()-12] == 'm' && spath[spath.size()-13] == 'r' && spath[spath.size()-14] == 'e' && spath[spath.size()-15] == 't' && spath[spath.size()-16] == '-' && spath[spath.size()-17] == 'e' && spath[spath.size()-18] == 'm' && spath[spath.size()-19] == 'o' && spath[spath.size()-20] == 'n' && spath[spath.size()-21] == 'g' && spath[spath.size()-22] == '/' && spath[spath.size()-23] == 'c' && spath[spath.size()-24] == 'e' && spath[spath.size()-25] == 'x' && spath[spath.size()-26] == 'e' && spath[spath.size()-27] == 'b' && spath[spath.size()-28] == 'i' && spath[spath.size()-29] == 'l' && spath[spath.size()-30] == '/') {
@@ -2752,28 +2770,39 @@ void Console::XtermMouseAndFocus(void) {
         for (int i=0; not_term[i]; ++i)
             if (not_term[i][0] == '@') {
                 if (prog.find(not_term[i] + 1) != string::npos)
-                    return GetPidTerminal(getparent(pid));
+                    return GetPidTerminal(getparent(pid),allow_terminal_multiplexers);
             } else if (not_term[i][0] == '*') {
-                if (prog.size() >= strlen(not_term[i]+1) && prog.substr(prog.size() - strlen(not_term[i]+1)) == string(not_term[i] + 1))
+                if (prog.substr(prog.size() - strlen(not_term[i]+1)) == string(not_term[i] + 1))
                     return GetPidTerminal(getparent(pid));
             } else if (prog == string(not_term[i]))
-                return GetPidTerminal(getparent(pid));
+                return GetPidTerminal(getparent(pid),allow_terminal_multiplexers);
 
         return args[1];
     }
 
-    inline string FindTerminalEmulator(const char* term_prog = nullptr) {
-        string term = (term_prog) ? term_prog : GetPidTerminal(getppid());
+    string Console::FindTerminalEmulator(const char* term_prog) {
+        if (Console::inline_popups) return string();
+
+        auto ppid = getppid();
+        if (term_prog) {
+            struct stat st;
+            if (stat(term_prog, &st) != 0) ThrowMsg(string(program_invocation_short_name) + ": " + term_prog + "No such file or directory\n");
+            if (S_ISDIR(st.st_mode)) ThrowMsg(string(program_invocation_short_name) + ": " + term_prog + "Is a directory\n");
+        }
+
+        if (!enable_multiplexers && !Console::emulator) {Console::out << L"No gui - enabling terminal multiplexers"; out_endl(); enable_multiplexers = true;}
+        string term = (term_prog) ? term_prog : GetPidTerminal(ppid,enable_multiplexers);
 
         if (term.find("wavesrv") != string::npos) {
             string arch;
-        findarch:
+            __attribute__((unused)) bool gobackwin = true;
+        findarch: if (0) goto findarch; // silence warnings
             while (term.back() != '.') {
                 arch = term.back() + arch;
                 term.pop_back();
             }
         #ifdef __WIN32
-            goto findarch; // first finds ".exe" so we need to continue to the second '.'
+            if (gobackwin) {gobackwin=false;goto findarch;} // first finds ".exe" so we need to continue to the second '.'
         #endif
             while (term.back() != '/')
                 term.pop_back();
@@ -2784,13 +2813,13 @@ void Console::XtermMouseAndFocus(void) {
             if (d) {
                 while ((dir = readdir(d)) != NULL)
                     if (dir->d_type == DT_REG && dir->d_name[0] == 'w' && dir->d_name[1] == 's' && dir->d_name[2] == 'h' && dir->d_name[3] == '-') {
-                        int dotnum = 0;
+                        //int dotnum = 0;
                         int i = 4; while (dir->d_name[i] != '-' && dir->d_name[i] != '\0') ++i;
                         term.append(dir->d_name, i);
                         break;
                     }
                 closedir(d);
-            } else Console::ThrowMsg("opendir failed");
+            } else Console::ThrowMsg("opendir failed\n");
 
 
             term.append(
@@ -2809,19 +2838,38 @@ void Console::XtermMouseAndFocus(void) {
         }
         if (term.find("warp-terminal") != string::npos) term = "warp-terminal";
 
+        if (term.find("systemd") != string::npos) term.clear();
+
         // ...
-        if (term.empty()) term = "/usr/bin/x-terminal-emulator";
+        if (term.empty())
+            if (Console::emulator) {
+                Console::out << "No terminal emulator" << (Console::enable_multiplexers ? " or multiplexer ": " ") << "found - trying the system default /usr/bin/x-terminal-emulator"; Console::out_endl();
+                term = "/usr/bin/x-terminal-emulator";
+            }
+
         if (term.size() > 8 && term.substr(term.size()-8,8) == ".wrapper" && System::IsFile(term.substr(0,term.size()-8).c_str())) term = term.substr(0,term.size()-8);
-        term = folow_symlink(term.c_str());
+        auto __term = term.size() ? folow_symlink(term.c_str()) : "";
+        if (__term) term = __term;
+        else if (Console::enable_multiplexers) term = "";
+        else {
+            Console::out << NativeToWString(term) << " doesn't exist or is a broken symlink - trying to fall back to a terminal multiplexer"; out_endl();
+            term = GetPidTerminal(ppid,true);
+        }
         if (term.size() > 8 && term.substr(term.size()-8,8) == ".wrapper" && System::IsFile(term.substr(0,term.size()-8).c_str())) term = term.substr(0,term.size()-8);
         terminator = (term.size() > 10 && term.substr(term.size()-10,10) == "terminator");
 
         tabby = term.find("/Tabby/tabby") != string::npos;
 
+        if (term.size()) Console::out << L"Terminal emulator(multiplexer):" << term.c_str();
+        else Console::out << L"No terminal emulator or multiplexer found - falling back to inline popups" << term.c_str();
+        Console::out_endl();
+        
         return term;
     }
 
     bool Console::custom_handling = false;
+    bool Console::enable_multiplexers = false;
+    bool Console::inline_popups = false;
 
     void Console::Init(void) {
         if (!initialised) {
@@ -2888,7 +2936,7 @@ void Console::XtermMouseAndFocus(void) {
                     default:
                         exit(0x3F);
                     }
-                    arg = 0; size = 0;
+                    free(arg); arg = 0; size = 0;
                     out = getdelim(&arg, &size, 0, cmdline);
                 } else if (custom_handling && fd < 0) {
                     Console::fd = open(arg,O_RDONLY);
@@ -2897,7 +2945,7 @@ void Console::XtermMouseAndFocus(void) {
                         perror(("Failed to open file \"" + string(arg) + "\" error " + to_string(errno)).c_str());
                         exit(1);
                     }
-                    arg = 0; size = 0;
+                    free(arg); arg = 0; size = 0;
                     out = getdelim(&arg, &size, 0, cmdline);
                 } else if (custom_handling && fb_fd < 0) {
                     Console::fb_fd = open(arg,O_RDONLY);
@@ -2905,46 +2953,68 @@ void Console::XtermMouseAndFocus(void) {
                         perror(("Failed to open file \"" + string(arg) + "\" error " + to_string(errno)).c_str());
                         exit(1);
                     }
-                    arg = 0; size = 0;
+                    free(arg); arg = 0; size = 0;
                     out = getdelim(&arg, &size, 0, cmdline);
                 } else if (arg[1] != '\0' && arg[0] == '-') {
-                    if (arg[2] == '\0')
-                        switch (arg[1]) {
-                        case 'c':
-                            Console::custom_handling = true;
-                            Console::max_popup_startup_wait *= 2;
-                            if (fd < 0)
-                            Console::fd = -1;
-                            break;
-                        case 't':
-                            arg = 0; size = 0;
-                            out = getdelim(&arg, &size, 0, cmdline);
-                            if (out == -1) {fprintf(stderr,"usage: [-t <terminal_path>] \n"); exit(1);}
-                            Console::terminal_name = arg;
-                            break;
-                        case 's':
-                            arg = 0; size = 0;
-                            out = getdelim(&arg, &size, 0, cmdline);
-                            if (out == -1) {fprintf(stderr,"usage: [-s <terminal_switch>] \n"); exit(1);}
-                            Console::terminal_switch = arg;
-                            break;
-                        case 'e':
-                            empty_switch = true;
-                            break;
+                    char* argnow = arg+1;
+                    char* arghere; size_t sizehere;
+                nextarg:
+                    switch (*argnow) {
+                    case 'c':
+                        Console::custom_handling = true;
+                        Console::max_popup_startup_wait *= 2;
+                        if (fd < 0)
+                        Console::fd = -1;
+                        break;
+                    case 't':
+                        out = getdelim(&arghere, &sizehere, 0, cmdline);
+                        if (out == -1) {fprintf(stderr,"%s",(string(program_invocation_short_name) + ": option requires an argument -- 't'\n").c_str()); exit(1);}
+                        Console::terminal_name = arghere;
+                        free(arghere); arghere = 0; sizehere = 0;
+                        break;
+                    case 's':
+                        out = getdelim(&arghere, &sizehere, 0, cmdline);
+                        if (out == -1) {fprintf(stderr,"%s",(string(program_invocation_short_name) + ": option requires an argument -- 's'\n").c_str()); exit(1);}
+                        Console::terminal_switch = arghere;
+                        free(arghere); arghere = 0; sizehere = 0;
+                        break;
+                    case 'e':
+                        empty_switch = true;
+                        break;
+                    case 'm':
+                        Console::enable_multiplexers = true;
+                        break;
+                    case 'i':
+                        Console::inline_popups = true;
+                        break;
+                    case '-':
+                        if (0) {
+
+                        } else {fprintf(stderr,"%s",(string(program_invocation_short_name) + ": unrecognized option '-" + argnow + "'\n").c_str());exit(1);
                         }
-                    arg = 0; size = 0;
+                        // TODO - long options
+                        free(arg); arg = 0; size = 0;
+                        out = getdelim(&arg, &size, 0, cmdline);
+                        continue;
+                    default:
+                        fprintf(stderr,"%s",(string(program_invocation_short_name) + ": invalid option -- '" + string(argnow,1) + "\'\n").c_str());
+                        exit(1);
+                    }
+                    if (*(++argnow)) goto nextarg;
+                    free(arg); arg = 0; size = 0;
                     out = getdelim(&arg, &size, 0, cmdline);
                 } else {
-                    Console::argv = (const char**)realloc(Console::argv,++Console::argc); Console::argv[Console::argc-1] = arg;
+                    Console::argv = (const char**)realloc(Console::argv,(++Console::argc)*sizeof(const char*)); Console::argv[Console::argc-1] = arg;
                     arg = 0; size = 0;
                     out = getdelim(&arg, &size, 0, cmdline);
                 }
             }
+            if (arg) free(arg);
             fclose(cmdline);
 
             //if (Console::custom_handling) fprintf(stderr,"Custom handling\n");
             
-            if (Console::emulator || Console::custom_handling)
+            if ((Console::emulator || Console::custom_handling) && !(Console::sub_proc && Console::inline_popups))
                 fwrite("\033[?1049h", sizeof(char), 8, stderr);
 
             Console::ruid = getuid();
@@ -3033,6 +3103,7 @@ void Console::XtermMouseAndFocus(void) {
             }
 
             fd = Console::custom_handling ? fd : getfd(0);
+            if (!Console::custom_handling) fb_fd = 0;
             if (!Console::emulator && !Console::custom_handling) {
                 if (stat("/etc/init.d/gpm", &st) == -1) Console::no_gpm = true;
                 else {
@@ -3059,8 +3130,8 @@ void Console::XtermMouseAndFocus(void) {
                 Console::mouse_status.y = window_size.ws_row/2;
 
                 mouse_fd = getmousefd(nullptr);
+                empty_switch = true;
             }
-            if (!custom_handling) fb_fd = 0;
 
             if (fd < 0 || fb_fd < 0 || mouse_fd < 0) {
                 if (sub_proc) exit(0x34);
@@ -3084,9 +3155,10 @@ void Console::XtermMouseAndFocus(void) {
                 fwrite("\033[H", sizeof(char), 3, stderr);
                 fwrite("\033[J", sizeof(char), 3, stderr);
 
-                for (int i = 0; i < Console::argc; i++)
+                for (int i = 0; i < Console::argc; i++) {
                     args_c.append(Console::argv[i]);
                     args_c.push_back(' ');
+                }
                 
                 args_c.push_back(ESCAPE);
                 args_c.push_back('+');
@@ -3105,11 +3177,11 @@ void Console::XtermMouseAndFocus(void) {
 
                 auto log = (GenerateEscapeSequence(1,16) + "\nCouldn\'t get a file descriptor referring to the console." + GenerateEscapeSequence(16,16) + "\nTry logging in" + (issu ? "\n[su] " : "\n"));
                 fwrite(log.c_str(), sizeof(char), log.size(), stderr);
-                int code = System::Shell(args_c.c_str()); 
+                __attribute__((unused)) int code = System::Shell(args_c.c_str()); 
 
                 fl = fopen((tmp_data + subdir + "proc").c_str(), "r");
                 int isinit = 1; 
-                auto retx = fscanf(fl, "%d", &isinit);
+                __attribute__((unused)) auto retx = fscanf(fl, "%d", &isinit);
                 fclose(fl);
 
                 remove((string("/tmp/.factoryrush/") + Console::subdir + "pid.dat").c_str());
@@ -3123,7 +3195,7 @@ void Console::XtermMouseAndFocus(void) {
                     term_ios.c_lflag &= ~(ICANON | ECHO);
                     tcsetattr(STDIN_FILENO, TCSANOW, &term_ios);
                     char x[1];
-                    int res = read(STDIN_FILENO, x, 1);
+                    __attribute__((unused)) int res = read(STDIN_FILENO, x, 1);
                     tcsetattr(STDIN_FILENO, TCSANOW, &old_termios);
                     fwrite("\033[?1049l", sizeof(char), 8, stderr);
                     exit(EXIT_FAILURE);
@@ -3181,7 +3253,7 @@ void Console::XtermMouseAndFocus(void) {
 
             tcgetattr(STDIN_FILENO,&old_termios);
             termios term_ios = old_termios;
-            term_ios.c_lflag &= ~(ICANON | ECHO);
+            term_ios.c_lflag &= ~(ICANON | ECHO | ISIG);
             tcsetattr(STDIN_FILENO, TCSANOW, &term_ios);
 
             tcgetattr(fd,&old_fdterm);
@@ -3192,81 +3264,90 @@ void Console::XtermMouseAndFocus(void) {
             term_ios.c_cc[VTIME] = 1;
             tcsetattr(fd, TCSANOW, &term_ios);
 
-            if (Console::emulator || Console::custom_handling)
+            if ((Console::emulator || Console::custom_handling) && !(Console::sub_proc && Console::inline_popups))
                 Console::XtermInitTracking();
             
-            if (Console::custom_handling) goto initdone;
+            if (!Console::custom_handling) {
 
-            for (auto t = 0; t < MAX_NR_KEYMAPS; t++) {
-                if (t > UCHAR_MAX) {
-                    exit(18);
-                }
-                for (auto i = 0; i < NR_KEYS; i++) {
-                    if (i > UCHAR_MAX) {
+                setlocale(LC_ALL, "");
+                bool does_super_exist = false;
+                for (auto t = 0; t < MAX_NR_KEYMAPS; t++) {
+                    if (t > UCHAR_MAX) {
                         exit(18);
                     }
+                    for (auto i = 0; i < NR_KEYS; i++) {
+                        if (i > UCHAR_MAX) {
+                            exit(18);
+                        }
 
-	                struct kbentry ke;
-                    ke.kb_table = (unsigned char) t;
-                    ke.kb_index = (unsigned char) i;
-                    ke.kb_value = 0;
+                        struct kbentry ke;
+                        ke.kb_table = (unsigned char) t;
+                        ke.kb_index = (unsigned char) i;
+                        ke.kb_value = 0;
 
-                    if (ioctl(fd, KDGKBENT, (unsigned long)&ke)) {
-                        exit(19);
+                        if (ioctl(fd, KDGKBENT, (unsigned long)&ke)) {
+                            exit(19);
+                        }
+
+                        if (!i && ke.kb_value == K_NOSUCHMAP)
+                            break;
+                        
+                        if (KTYP(ke.kb_value) == KT_LETTER)
+                            ke.kb_value = K(KT_LATIN, KVAL(ke.kb_value));
+                        printf("%d ",ke.kb_value);
+
+                        if (ke.kb_value == UINT16_MAX) {
+                            // ? idk mabe just push back UNDEFIEND
+                            exit(20);
+                        }
+                        key_chart[t][i] = Key::Class::ToEnum(ke.kb_value);
+                        if (key_chart[t][i] == Key::Enum::SUPERL || key_chart[t][i] == Key::Enum::SUPERR) does_super_exist = true;
                     }
-
-                    if (!i && ke.kb_value == K_NOSUCHMAP)
-                        break;
-                    
-                    if (KTYP(ke.kb_value) == KT_LETTER)
-                        ke.kb_value = K(KT_LATIN, KVAL(ke.kb_value));
-
-                    if (ke.kb_value == UINT16_MAX) {
-                        // ? idk mabe just push back UNDEFIEND
-                        exit(20);
-                    }
-                    key_chart[t][i] = Key::Class::ToEnum(ke.kb_value);
+                    putc('\n',stdout);
                 }
-            }
-            if (key_chart[0][125] == Key::Enum::HOLE) key_chart[0][125] = Key::Enum::SUPERL; // not presesnt in most keymaps so we add it ourselves
-            if (key_chart[0][126] == Key::Enum::HOLE) key_chart[0][126] = Key::Enum::SUPERR; // not presesnt in most keymaps so we add it ourselves
-
-            if (terminal_name.empty())
-                Console::terminal_name = FindTerminalEmulator();
-            else Console::terminal_name = FindTerminalEmulator(terminal_name.c_str());
-            if (terminal_switch.empty() && !empty_switch)
-                Console::terminal_switch = GetTerminalExecuteSwitch();
-
-            //
-            
-            /*HandleToggles once so next time we can see if they changed
-            {
-                char flags, leds;
-                if (ioctl(Console::fd, KDGKBLED, &flags) == -1)
-                    exit(12);
-            
-                if (ioctl(Console::fd, KDGETLED, &leds) == -1)
-                    exit(11);
+                if (!does_super_exist && key_chart[0][125] == Key::Enum::HOLE) key_chart[0][125] = Key::Enum::SUPERL; // not presesnt in most keymaps so we add it ourselves
+                if (!does_super_exist && key_chart[0][126] == Key::Enum::HOLE) key_chart[0][126] = Key::Enum::SUPERR; // not presesnt in most keymaps so we add it ourselves
                 
+                // if no display generate some things
 
-                short mode = (flags & 0x7);
-                short light = (leds & 0x7);
-                Console::keys_toggled.ScrollLock = mode & LED_SCR;
+                // ****
 
-                // toggled keys get
-                int capslock = getled("capslock") > 0 || mode & LED_CAP || light & LED_CAP;
-                int scrolllock = getled("scrolllock") > 0 || mode & LED_SCR || light & LED_SCR;
-                int numlock = getled("numlock") > 0 || mode & LED_NUM || light & LED_NUM;
-                int micmute = getled("micmute") > 0; // unused for now
 
-                Console::keys_toggled.ScrollLock = getled("scrolllock");
-                Console::keys_toggled.NumLock = getled("numlock");
-                Console::keys_toggled.CapsLock = getled("capslock");
-            }//*/
+                if (terminal_name.empty())
+                    Console::terminal_name = FindTerminalEmulator();
+                else Console::terminal_name = FindTerminalEmulator(terminal_name.c_str());
+                if (terminal_switch.empty() && !empty_switch && !Console::inline_popups)
+                    Console::terminal_switch = GetTerminalExecuteSwitch();
 
-        initdone:
+                //
+                
+                /*HandleToggles once so next time we can see if they changed
+                {
+                    char flags, leds;
+                    if (ioctl(Console::fd, KDGKBLED, &flags) == -1)
+                        exit(12);
+                
+                    if (ioctl(Console::fd, KDGETLED, &leds) == -1)
+                        exit(11);
+                    
 
-            setlocale(LC_CTYPE, "");
+                    short mode = (flags & 0x7);
+                    short light = (leds & 0x7);
+                    Console::keys_toggled.ScrollLock = mode & LED_SCR;
+
+                    // toggled keys get
+                    int capslock = getled("capslock") > 0 || mode & LED_CAP || light & LED_CAP;
+                    int scrolllock = getled("scrolllock") > 0 || mode & LED_SCR || light & LED_SCR;
+                    int numlock = getled("numlock") > 0 || mode & LED_NUM || light & LED_NUM;
+                    int micmute = getled("micmute") > 0; // unused for now
+
+                    Console::keys_toggled.ScrollLock = getled("scrolllock");
+                    Console::keys_toggled.NumLock = getled("numlock");
+                    Console::keys_toggled.CapsLock = getled("capslock");
+                }//*/
+            }
+
+            setlocale(LC_CTYPE, "C.UTF-8");
 
             initialised = true;
 
@@ -3337,40 +3418,39 @@ void Console::XtermMouseAndFocus(void) {
 
             delete[] Console::subdir;
 
-            if (Console::emulator || Console::custom_handling) {
+            if ((Console::emulator || Console::custom_handling) && !(Console::sub_proc && Console::inline_popups)) {
                 Console::XtermFinishTracking();
-                Console::EscSeqRestoreCursor();
                 if (Console::custom_handling) close(fb_fd);
             } else {
                 close(fb_fd);
                 close(mouse_fd);
                 if (!Console::no_gpm) System::RunProgram("/etc/init.d/gpm", "start", nullptr);
             }
+            Console::EscSeqRestoreCursor();
             
-            //ioctl(fd, KDSETMODE, old_kbdmode);
-            tcsetattr(fd,TCSANOW,&old_fdterm);
+            if (tcsetattr(fd,TCSANOW,&old_fdterm) < 0) fprintf(stderr,"errno: %i",errno);
             close(fd);
 
-            tcsetattr(STDIN_FILENO,TCSANOW,&old_termios);
+            int infd = open("/proc/self/fd/0",O_RDWR);
+            if (tcsetattr(infd,TCSANOW,&old_termios) < 0) {
+                //if (errno == 9) System::Shell("reset"); // run a new program to fix its
+                fprintf(stderr,"errno: %i",errno);
+            }
+            
+            //ioctl(fd, KDSETMODE, old_kbdmode);
         
             if (Console::custom_handling) goto kbdmode_set;
 
-            {char path[PATH_MAX+1];
-            auto length = readlink( "/proc/self/exe" , path, PATH_MAX);
-            path[length]='\0';
+            {char path[256];
+            auto length = readlink( "/proc/self/exe" , path, 256);
             string command = path;
             while (command.back() != '/') command.pop_back();
             command.append("../share/factoryrush/bin/setkbdmode");
             char val[2] = "0"; val[0] += old_kbdmode;
-            auto ret2 = System::RunProgram(command.c_str(),val,nullptr);
-            old_kbdmode = ret2;
-            if (ret2 < 0) {
-                throw("setkbdmode error");
-            }}
+            __attribute__((unused)) auto ret2 = System::RunProgram(command.c_str(),val,nullptr);}
         kbdmode_set:
 
             for (int i = 0; i < argc; i++) free((void*)Console::argv[i]);
-            Console::argv = (const char**)realloc(Console::argv,0);
             Console::argc = 0;
 
             if (!Console::emulator && !Console::custom_handling) {
@@ -3393,14 +3473,14 @@ void Console::XtermMouseAndFocus(void) {
         Console::mouse_buttons_down[3] = false;
         Console::mouse_buttons_down[4] = false;
         Console::mouse_status.scroll = {false,false};
-        // redirect cin to Console::in
-        int bytes;
+        // redirect cin to Console::in (We don't 'cause it's raw mode and it's litterly trash)
+        /*int bytes;
         ioctl(STDIN_FILENO, FIONREAD, &bytes);
         while (bytes > 0) {
             char c = getc(stdin);
             Console::PushChar(c);
             --bytes;
-        }
+        }*/
 
         // mouse cursor emulation
         input_event ie;
@@ -3448,11 +3528,11 @@ void Console::XtermMouseAndFocus(void) {
                         button = 5-(events[i].value > 0);
                         mousedown = true;
                         break;
+                    case REL_HWHEEL:
                     case REL_Z:
                     case REL_RX:
                     case REL_RY:
                     case REL_RZ:
-                    case REL_HWHEEL:
                     case REL_DIAL:
                     case REL_WHEEL_HI_RES:
                         break;
@@ -3611,19 +3691,28 @@ void Console::XtermMouseAndFocus(void) {
 
         ioctl(Console::fd, FIONREAD, &bytes);
         if (!bytes) goto HandleToggles;
-    
+
+        setlocale(LC_CTYPE,"");
     ReadKeyboardAction:
         len = read(Console::fd, buf, sizeof(buf)); bytes -= len;
-        // TODO -> parse multi-byte sequences
+        // TODO[?(they aren't used anywhere i think)] -> parse multi-byte sequences
 
         if (len <= 0) {
             if (len < 0) { fprintf(stderr, "\nread error: %d\n", errno); exit(15); } 
+            setlocale(LC_CTYPE,"C.UTF-8");
             goto HandleToggles;
         }
 
         //fprintf(stderr, "bytes: %d\n", bytes);
 
         parsed = parse_input(true,buf,len);
+        if (!Console::emulator && !(parsed / KEYBOARD_MAX)) {
+            int shiftstate = Console::keys_toggled.CapsLock ^ IsKeyDown(Key::Enum::SHIFT);
+            unsigned short mask = shiftstate | (IsKeyDown(Key::Enum::ALTGR) << 1) | (IsKeyDown(Key::Enum::CTRL) << 2) | (IsKeyDown(Key::Enum::ALT) << 3) | (IsKeyDown(Key::Enum::SHIFTL) << 4) | (IsKeyDown(Key::Enum::SHIFTR) << 5) | (IsKeyDown(Key::Enum::CTRLL) << 6) | (IsKeyDown(Key::Enum::CTRLL) << 7) | (IsKeyDown(Key::Enum::CAPSSHIFT) << 8);
+            Key::Enum key = Console::key_chart[mask][parsed % KEYBOARD_MAX];
+            Console::out << L"Key " << static_cast<uint16_t>(key); out_endl();
+            if (key <= Key::Enum::y_diaeresis/*255*/) Console::PushChar((unsigned char)key);
+        } 
 
         //fprintf(stdout, "\n\n x:%x\nparsed: %d,rel:%d\n\told: %d\n\n", buf[0], parsed%KEYBOARD_MAX, parsed/KEYBOARD_MAX, (int)(key_states[parsed % KEYBOARD_MAX]));
         if ( (!key_states[parsed % KEYBOARD_MAX]) && (!(parsed / KEYBOARD_MAX)) ) key_hit = parsed % KEYBOARD_MAX;
@@ -3645,6 +3734,8 @@ void Console::XtermMouseAndFocus(void) {
         }
         old_hit = Console::key_hit;
         if (bytes > 0) goto ReadKeyboardAction;
+        
+        setlocale(LC_CTYPE,"C.UTF-8");
 
     HandleToggles:
 
@@ -3655,7 +3746,7 @@ void Console::XtermMouseAndFocus(void) {
         int capslock = getled("capslock") > 0 || mode & LED_CAP || light & LED_CAP;
         int scrolllock = getled("scrolllock") > 0 || mode & LED_SCR || light & LED_SCR;
         int numlock = getled("numlock") > 0 || mode & LED_NUM || light & LED_NUM;
-        int micmute = getled("micmute") > 0; // unused for now
+        __attribute__((unused)) int micmute = getled("micmute") > 0; // unused for now
 
         Console::keys_toggled.ScrollLock = scrolllock;
         Console::keys_toggled.NumLock = numlock;
@@ -4642,7 +4733,7 @@ void Console::XtermMouseAndFocus(void) {
 #endif
 
 // all non windows
-    inline cpp20_constexpr string GenerateEscapeSequence(uint8_t i1, uint8_t i2) {
+    inline constexpr string GenerateEscapeSequence(uint8_t i1, uint8_t i2) {
         string val = "\033[";
         if (i1 < 8) {
             val.append(to_string(30 + i1));
@@ -4671,7 +4762,7 @@ void Console::XtermMouseAndFocus(void) {
             uint16_t width, height;
             int res = read(Console::fb_fd, &width, sizeof(uint16_t));
             if (res < 0) ThrowMsg("Failed to read from 2nd custom pipe (w)");
-            read(Console::fb_fd, &height, sizeof(uint16_t));
+            res = read(Console::fb_fd, &height, sizeof(uint16_t));
             if (res < 0) ThrowMsg("Failed to read from 2nd custom pipe (h)");
             Console::window_size.ws_col = width;
             Console::window_size.ws_row = height;
@@ -5042,7 +5133,7 @@ newpidgen:
 
     const nchar_t** args = (const nchar_t**)System::AllocateMemory(sizeof(void*) * (argc+3
 #ifdef __linux__
-    +2+4*wave
+    +2+4*wave-term.empty()+3
 #else
     +6*wave
 #endif
@@ -5055,6 +5146,11 @@ newpidgen:
 #endif
     ));
 
+#if defined(_WIN32) || defined(__CYGWIN__)
+    #define topen _wfopen
+#else
+    #define topen fopen
+#endif
     nstring procdir = nstring(N("proc")) + sep + to_nstring(npid) + sep;
     if (System::MakeDirectory((Console::tmp_data + subdir + procdir).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg((nstring(N("Couldn't create directory: \"")) + Console::tmp_data + sep + subdir + procdir + N("\"")).c_str());
     if (System::MakeDirectory((Console::log_data + to_nstring(type) + sep).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg((nstring(N("Couldn't create directory: \"")) + Console::log_data + to_nstring(type) + sep + N("\"")).c_str());
@@ -5133,7 +5229,7 @@ newpidgen:
         args[++add] = "-X";
         args[++add] = "--";
         ++add;
-    } else if (!custom_handling) {
+    } else if (!custom_handling && !term.empty()) {
         startproc = System::GetRootDir() + "/share/factoryrush/bin/startprogram.bin";
         args[0] = term.c_str();
         ++add;
@@ -5149,11 +5245,7 @@ newpidgen:
         ++add;
     }
 #endif
-    args[add] = (
-#ifdef __CYGWIN__
-    winpath = System::CygwinPathToWindowsUtf8
-#endif
-    (root_pth)).c_str();
+    args[add] = root_pth.c_str();
     args[add+1] = info.c_str();
     for (int i = 1; i <= argc; i++) args[add+i+1] = argv[i-1];
     args[add+argc+2] = nullptr;
@@ -5304,6 +5396,9 @@ newpidgen:
         printmsg.pop_back();
         printmsg.push_back('\007');
         fwrite(printmsg.c_str(),1,printmsg.size(),stderr);
+    } else if (term.empty()) {
+        System::RunProgramAsync(root_pth.c_str(), args);
+        Console::refresh_screen = true;
     } else {
         if (terminator) { // startup gliches weirdly so we create a shell script and run it
             string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".sh";
@@ -5370,15 +5465,14 @@ contcons:
         }
     #endif
         SysSleep(1000);
-        Console::out << L"Waiting for popup to start: " << chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count(); out_endl();
     }
     if (chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() >= max_popup_startup_wait) {
-    #ifdef DISABLED_WIN32
+    #ifdef _WIN32
         ResumeThread(Hinput_thread);
     #endif
         return nullopt;
     }
-    Console::out << L"Popup launched successfully" << L'\n';
+    Console::out << L"Popup launched successfully after waiting " << chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count()  << L"ms"; Console::out_endl();
     Console::HandleOutput();
     FILE* fl = topen((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str(), N("r"));
     if (!fl) {
@@ -5388,7 +5482,7 @@ contcons:
         return nullopt;
     }
     pid_t spid = 0;
-    int res = fread(&spid, sizeof(pid_t), 1, fl);
+    __attribute__((unused)) int res = fread(&spid, sizeof(pid_t), 1, fl);
     fclose(fl);
     Console::popup_pids.push_back(spid);
 
@@ -5433,8 +5527,8 @@ contcons:
     auto olddisplay = Console::old_symbols;
     while (!System::IsFile((Console::tmp_data + subdir + procdir + N("exit.dat")).c_str())) {
         if (SLEEP_POPUP_CHECK) SysSleep(1000);
-        Console::FillScreen(olddisplay);
-        Console::HandleMouseAndFocus();
+        if (!term.empty()) Console::FillScreen(olddisplay);
+        if (!term.empty()) Console::HandleMouseAndFocus();
         if (IsFocused() && !oldfocus) Console::Beep();
     #if defined(_WIN32) || defined(__CYGWIN__)
         if (Console::focused) {
@@ -5517,10 +5611,10 @@ contcons:
         return nullopt;
     }
     unsigned long long len = 0;
-    fread(&len, sizeof(unsigned long long), 1, fl);
+    res = fread(&len, sizeof(unsigned long long), 1, fl);
     if (len) {
-        nchar_t* buf = new nchar_t[len+1];
-        fread(buf, sizeof(nchar_t), len, fl);
+        char_t* buf = new char_t[len+1];
+        fread(buf, sizeof(char_t), len, fl);
         buf[len] = 0;
         result = buf;
         delete[] buf;
@@ -5590,6 +5684,11 @@ newpidgen:
 #endif
     ));
 
+#if defined(_WIN32) || defined(__CYGWIN__)
+    #define topen _wfopen
+#else
+    #define topen fopen
+#endif
     nstring procdir = nstring(N("proc")) + sep + to_nstring(npid) + sep;
     if (System::MakeDirectory((Console::tmp_data + subdir + procdir).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg((nstring(N("Couldn't create directory: \"")) + Console::tmp_data + sep + subdir + procdir + N("\"")).c_str());
     if (System::MakeDirectory((Console::log_data + to_nstring(type) + sep).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg((nstring(N("Couldn't create directory: \"")) + Console::log_data + to_nstring(type) + sep + N("\"")).c_str());
@@ -5905,15 +6004,14 @@ contcons:
         }
     #endif
         SysSleep(1000);
-        Console::out << L"Waiting for popup to start: " << chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count(); out_endl();
     }
     if (chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() >= max_popup_startup_wait) {
-    #ifdef DISABLED_WIN32
+    #ifdef _WIN32
         ResumeThread(Hinput_thread);
     #endif
         return nullopt;
     }
-    Console::out << L"Popup launched successfully" << L'\n';
+    Console::out << L"Popup launched successfully after waiting " << chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count()  << L"ms"; Console::out_endl();
     Console::HandleOutput();
     FILE* fl = topen((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str(), N("r"));
     if (!fl) {
@@ -5957,10 +6055,10 @@ contcons:
         if (!fl) return nullopt;
 
         unsigned long long len = 0;
-        fread(&len, sizeof(unsigned long long), 1, fl);
+        res = fread(&len, sizeof(unsigned long long), 1, fl);
         if (len) {
-            nchar_t* buf = new nchar_t[len+1];
-            fread(buf, sizeof(nchar_t), len, fl);
+            char_t* buf = new char_t[len+1];
+            fread(buf, sizeof(char_t), len, fl);
             buf[len] = 0;
             result = buf;
             delete[] buf;
@@ -6359,15 +6457,14 @@ contcons:
         }
     #endif
         SysSleep(1000);
-        Console::out << L"Waiting for popup to start: " << chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count(); out_endl();
     }
     if (chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() >= max_popup_startup_wait) {
-    #ifdef DISABLED_WIN32
+    #ifdef _WIN32
         ResumeThread(Hinput_thread);
     #endif
         return nullopt;
     }
-    Console::out << L"Popup launched successfully" << L'\n';
+    Console::out << L"Popup launched successfully after waiting " << chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count()  << L"ms"; Console::out_endl();
     Console::HandleOutput();
     FILE* fl = topen((Console::tmp_data + subdir + procdir + N("pid.dat")).c_str(), N("r"));
     if (!fl) {
@@ -6410,10 +6507,10 @@ contcons:
         fl = topen((retdir + N("result.dat")).c_str(), N("r"));
         if (!fl) return nullopt;
         unsigned long long len = 0;
-        fread(&len, sizeof(unsigned long long), 1, fl);
+        res = fread(&len, sizeof(unsigned long long), 1, fl);
         if (len) {
-            nchar_t* buf = new nchar_t[len+1];
-            fread(buf, sizeof(nchar_t), len, fl);
+            char_t* buf = new char_t[len+1];
+            fread(buf, sizeof(char_t), len, fl);
             buf[len] = 0;
             result = buf;
             delete[] buf;

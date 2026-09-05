@@ -19,7 +19,6 @@ namespace {
         T* ptr(void);
         ~smart_ref();
     };
-
 }
 
 #include "smart_ref.ipp"

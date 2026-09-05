@@ -19,17 +19,12 @@ Game::Camera::Camera(int height, int width, Console::Symbol sym) {
     internal = cppimp::Game_Camera_Construct(height, width, sym.Get());
 }
 
-Game::MatrixPosition Game::Camera::ViewportCenter() {
-    auto imp = (Game::MatrixPosition*) cppimp::Game_Camera_ViewportCenter(internal);
-    return Game::MatrixPosition(imp->iIndex, imp->jIndex);
-}
-
 void Game::Camera::DrawTexture(int x, int y, std::vector<std::vector<Console::Symbol>>& texture) {
-    auto textureptr = cs::TextureToPtr(texture);
+    auto textureptr = io::TextureToPtr(texture);
     cppimp::Game_Camera_DrawTexture(x, y, textureptr, internal);
 }
 
 void Game::Camera::DrawToScreen(int x, int y, std::vector<std::vector<Console::Symbol>>& screen) {
-    auto screenptr = cs::TextureToPtr(screen);
+    auto screenptr = io::TextureToPtr(screen);
     cppimp::Game_Camera_DrawToScreen(x, y, screenptr, internal);
 }
