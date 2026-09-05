@@ -3306,12 +3306,15 @@ void Console::XtermMouseAndFocus(void) {
                         key_chart[t][i] = Key::Class::ToEnum(ke.kb_value);
                         if (key_chart[t][i] == Key::Enum::SUPERL || key_chart[t][i] == Key::Enum::SUPERR) does_super_exist = true;
                     }
-                    putc('\n',stdout);
+                    //putc('\n',stdout); the hell?
                 }
-                if (!does_super_exist && key_chart[0][125] == Key::Enum::HOLE) key_chart[0][125] = Key::Enum::SUPERL; // not presesnt in most keymaps so we add it ourselves
-                if (!does_super_exist && key_chart[0][126] == Key::Enum::HOLE) key_chart[0][126] = Key::Enum::SUPERR; // not presesnt in most keymaps so we add it ourselves
+                // SUPER(WINDOWS) keys not presesnt in most keymaps so we add it ourselves
+                if (!does_super_exist && key_chart[0][125] == Key::Enum::HOLE) key_chart[0][125] = Key::Enum::SUPERL; 
+                if (!does_super_exist && key_chart[0][126] == Key::Enum::HOLE) key_chart[0][126] = Key::Enum::SUPERR;
                 
                 // if no display generate some things
+
+                // what was I talking about...
 
                 // ****
 
@@ -3324,7 +3327,7 @@ void Console::XtermMouseAndFocus(void) {
 
                 //
                 
-                /*HandleToggles once so next time we can see if they changed
+                //Retrieve initial toggled values
                 {
                     char flags, leds;
                     if (ioctl(Console::fd, KDGKBLED, &flags) == -1)
@@ -3333,21 +3336,26 @@ void Console::XtermMouseAndFocus(void) {
                     if (ioctl(Console::fd, KDGETLED, &leds) == -1)
                         exit(11);
                     
-
                     short mode = (flags & 0x7);
                     short light = (leds & 0x7);
-                    Console::keys_toggled.ScrollLock = mode & LED_SCR;
-
-                    // toggled keys get
-                    int capslock = getled("capslock") > 0 || mode & LED_CAP || light & LED_CAP;
-                    int scrolllock = getled("scrolllock") > 0 || mode & LED_SCR || light & LED_SCR;
-                    int numlock = getled("numlock") > 0 || mode & LED_NUM || light & LED_NUM;
-                    int micmute = getled("micmute") > 0; // unused for now
 
                     Console::keys_toggled.ScrollLock = getled("scrolllock");
                     Console::keys_toggled.NumLock = getled("numlock");
                     Console::keys_toggled.CapsLock = getled("capslock");
-                }//*/
+                    bool micmute = getled("micmute");
+
+                    if ((mode&LED_SCR)!=(keys_toggled.ScrollLock?LED_SCR:0))mode^=LED_SCR;
+                    if ((mode&LED_NUM)!=(keys_toggled.ScrollLock?LED_NUM:0))mode^=LED_NUM;
+                    if ((mode&LED_CAP)!=(keys_toggled.CapsLock?LED_CAP:0))mode^=LED_CAP;
+                    if ((light&LED_SCR)!=(keys_toggled.ScrollLock?LED_SCR:0))light^=LED_SCR;
+                    if ((light&LED_NUM)!=(keys_toggled.ScrollLock?LED_NUM:0))light^=LED_NUM;
+                    if ((light&LED_CAP)!=(keys_toggled.CapsLock?LED_CAP:0))light^=LED_CAP;
+                    if (ioctl(Console::fd, KDSKBLED, flags) == -1)
+                        exit(14);
+                
+                    if (ioctl(Console::fd, KDSETLED, leds) == -1)
+                        exit(13);
+                }
             }
 
             setlocale(LC_CTYPE, "C.UTF-8");
@@ -5149,11 +5157,6 @@ newpidgen:
 #endif
     ));
 
-#if defined(_WIN32) || defined(__CYGWIN__)
-    #define topen _wfopen
-#else
-    #define topen fopen
-#endif
     nstring procdir = nstring(N("proc")) + sep + to_nstring(npid) + sep;
     if (System::MakeDirectory((Console::tmp_data + subdir + procdir).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg((nstring(N("Couldn't create directory: \"")) + Console::tmp_data + sep + subdir + procdir + N("\"")).c_str());
     if (System::MakeDirectory((Console::log_data + to_nstring(type) + sep).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg((nstring(N("Couldn't create directory: \"")) + Console::log_data + to_nstring(type) + sep + N("\"")).c_str());
@@ -5190,9 +5193,9 @@ newpidgen:
 
 #ifdef _WIN32
     if (mintty && !conemu && !good) {
-        if (term.find(L"mintty") == std::wstring::npos) {
+        if (term.find(L"mintty") == std::wstring::npos)
             Console::window = GetForegroundWindow();
-        }
+        
         term = Console::GetTerminalExecutableName();
         if (!(good = term.find(L"mintty") != std::wstring::npos))
             goto console;
@@ -5201,20 +5204,16 @@ newpidgen:
 #elif __CYGWIN__
     nstring winpath;
     if (!term.size()) {
-        term.append("/bin/mintty"); // todo - if mintty doesn't exists the use default
+        term.append("/bin/mintty"); // [TODO] - if mintty doesn't exists the use default
     }
 #elif __APPLE__
     if (!term.size()) {
-        term.append("/System/Applications/Utilities/Terminal.app"); // idk if this is the actual path
+        term.append("/System/Applications/Utilities/Terminal.app");
     }
 #elif __linux__
     string script;
     // empty string handled in GetTerminalExecutableName()
     // x-terminal-emulator btw (following symlinks)
-#else
-    if (!term.size()) {
-        return nullopt;
-    }
 #endif
 #if defined(_WIN32) || defined (__CYGWIN__)
     if (wt) {
@@ -5248,13 +5247,17 @@ newpidgen:
         ++add;
     }
 #endif
-    args[add] = root_pth.c_str();
+    args[add] = (
+#ifdef __CYGWIN__
+    winpath = System::CygwinPathToWindowsUtf8
+#endif
+    (root_pth)).c_str();
     args[add+1] = info.c_str();
     for (int i = 1; i <= argc; i++) args[add+i+1] = argv[i-1];
     args[add+argc+2] = nullptr;
-#if defined(_WIN32) || defined (__CYGWIN__) // for some reason, WindowsTerminal.exe doesn't work, but wt.exe does
-    if (wt) {
-        term2 = term; while (term2.back() != '\\') term2.pop_back(); term2.append(N("wt.exe"));
+#if defined(_WIN32) || defined (__CYGWIN__)
+    if (wt) { // for some reason, WindowsTerminal.exe doesn't work, but wt.exe does
+        term2 = term; while (term2.back() != sep) term2.pop_back(); term2.append(N("wt.exe"));
         if (System::RunProgramAsync(term2.c_str(), args)) goto contcons;
     }
     if (tabby) {
@@ -5264,6 +5267,7 @@ newpidgen:
          * than runs the `term` to create a new window
          * and after launch runs the batch file with the `term`
         */
+        // [TODO] - port to cygwin
        #ifndef __CYGWIN__
        {
             wstring runps = Console::tmp_data + subdir + L"proc\\" + to_wstring(npid) + L".ps1";
@@ -5470,7 +5474,7 @@ contcons:
         SysSleep(1000);
     }
     if (chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() >= max_popup_startup_wait) {
-    #ifdef _WIN32
+    #ifdef DISABLED_WIN32
         ResumeThread(Hinput_thread);
     #endif
         return nullopt;
@@ -5674,7 +5678,7 @@ newpidgen:
 
     const nchar_t** args = (const nchar_t**)System::AllocateMemory(sizeof(void*) * (argc+3
 #ifdef __linux__
-    +2+4*wave
+    +2+4*wave-term.empty()+3
 #else
     +6*wave
 #endif
@@ -5687,11 +5691,6 @@ newpidgen:
 #endif
     ));
 
-#if defined(_WIN32) || defined(__CYGWIN__)
-    #define topen _wfopen
-#else
-    #define topen fopen
-#endif
     nstring procdir = nstring(N("proc")) + sep + to_nstring(npid) + sep;
     if (System::MakeDirectory((Console::tmp_data + subdir + procdir).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg((nstring(N("Couldn't create directory: \"")) + Console::tmp_data + sep + subdir + procdir + N("\"")).c_str());
     if (System::MakeDirectory((Console::log_data + to_nstring(type) + sep).c_str()) == ERROR_PATH_NOT_FOUND) ThrowMsg((nstring(N("Couldn't create directory: \"")) + Console::log_data + to_nstring(type) + sep + N("\"")).c_str());
@@ -5760,8 +5759,6 @@ newpidgen:
         ++add;
     }
 #elif defined(__linux__)
-    string startproc;
-
     if (wave) {
         args[add] = "run";
         args[++add] = "--delay";
@@ -5771,14 +5768,14 @@ newpidgen:
         args[++add] = "--";
         ++add;
     } else if (!custom_handling) {
-        startproc = System::GetRootDir() + "/share/factoryrush/bin/startprogram.bin";
-        args[0] = term.c_str();
+        args[add] = term.c_str();
         ++add;
         if (Console::terminal_switch.size()) {
             Console::real_out << "Terminal execute switch: " << terminal_switch << '\n' << flush;
             args[add] = terminal_switch.c_str();
             ++add;
         }
+        term=System::GetRootDir() + "/share/factoryrush/bin/startprogram.bin";
     }
     if (tabby) {
         args[add] = "--no-sandbox";
@@ -5946,7 +5943,7 @@ newpidgen:
             string runpth = string("/tmp/.factoryrush/") + subdir + "proc/" + to_nstring(npid) + ".sh";
             auto file = fopen(runpth.c_str(), "w");
             fwrite("#!/bin/sh\nrm -f $0\n", sizeof(char), 19, file);
-            for (int i = add; args[i]; i++)
+            for (int i = add; args[i]; ++i)
                 { fwrite("\"",sizeof(char),1,file); fwrite(args[i], sizeof(char), strlen(args[i]), file); fwrite("\" ", sizeof(char), 2, file); }
             fwrite("\n", sizeof(char), 1, file);
             fchmod(fileno(file), 0755);
@@ -5957,11 +5954,9 @@ newpidgen:
         if (tabby) {
             const char* launchargs[3] { term.c_str() ,"--no-sandbox", nullptr };
             if (System::RunProgram(root_pth.c_str(), launchargs, Console::ruid) != 0) return nullopt;
-            ::usleep(900000); // 0.9 seconds
+            ::usleep(900'000); // 0.9 seconds
         }
-        if (wave) {
-            if (System::RunProgram(term.c_str(), args, Console::ruid) != 0) return nullopt;
-        } else if (System::RunProgram(startproc.c_str(), args, Console::ruid) != 0) return nullopt;
+        if (System::RunProgram(term.c_str(), args, Console::ruid) != 0) return nullopt;
     }
 #endif
 #else
@@ -6009,7 +6004,7 @@ contcons:
         SysSleep(1000);
     }
     if (chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() >= max_popup_startup_wait) {
-    #ifdef _WIN32
+    #ifdef DISABLED_WIN32
         ResumeThread(Hinput_thread);
     #endif
         return nullopt;
@@ -6132,7 +6127,7 @@ newpidgen:
 
     const nchar_t** args = (const nchar_t**)System::AllocateMemory(sizeof(void*) * (argc+3
 #ifdef __linux__
-    +2+4*wave
+    +2+4*wave-term.empty()+3
 #else
     +6*wave
 #endif
@@ -6462,7 +6457,7 @@ contcons:
         SysSleep(1000);
     }
     if (chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - start).count() >= max_popup_startup_wait) {
-    #ifdef _WIN32
+    #ifdef DISABLED_WIN32
         ResumeThread(Hinput_thread);
     #endif
         return nullopt;
