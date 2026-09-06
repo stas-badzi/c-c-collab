@@ -2,15 +2,20 @@
 #include "System.hpp"
 #include "dllimport.hpp"
 #include "unicode_conversion.hpp"
+#include <cstdint>
+#include <cstdio>
 
 #ifdef _WIN32
 #define nfopen _wfopen
 #define tfgetc fgetwc
-#define nstoi wstoi
+#define ntoi _wtoi
 #else
+#ifndef __APPLE__
+#define fread fread_unlocked
+#endif
 #define nfopen fopen
 #define tfgetc fgetc
-#define nstoi stoi
+#define ntoi atoi
 #endif
 
 using namespace uniconv;
@@ -47,40 +52,47 @@ void TextureSystem::ExportText(u16string filename, vector<u16string> lines) {
     fclose(f);
 }
 
-static uint8_t HexToByte(int input) {
-    if (input>='0'&&input<='9')return input-'0';
-    if (input>='A'&&input<='F')return input-'A'+10;
-    return 16;
-}
-static int ByteToHex(uint8_t input) {
-    if (input<10)return input+'0';
-    if (input<16)return input+'A'-10;
-    return '-';
-}
+vector<vector<Console::Symbol>> TextureSystem::TextureFromFile(u16string filename) {
+    auto symbols = vector<vector<Console::Symbol>>();
+    FILE* f = nfopen(U16StringToNative(filename).c_str(),N("r"));
 
-vector<vector<Console::Symbol>> TextureSystem::TextureFromFile(u16string filepath) {
-    auto file = ImportText(filepath); // Imported List<string>
-    auto symbols = vector<vector<Console::Symbol>>(); // Final symbol list
+    uint32_t width,height;
+    fread(&width,sizeof(uint32_t),1,f);
+    fread(&height,sizeof(uint32_t),1,f);
 
-    int width=nstoi(uniconv::U16StringToNative(file[0])),height=nstoi(uniconv::U16StringToNative(file[1]));
-
-    int remainingSymbols = width * 3 * height;
-    for (int i = 0; i < height; i++) {
+    for (uint32_t i = 0; i < height; i++) {
         auto symbolLine = vector<Console::Symbol>();
-        for (int j = 0; j < width * 3; j+=3)
-            symbolLine.emplace_back(UnicodeToNative(file[i][j]), HexToByte(file[i][j+1]), HexToByte(file[i][j+2]));
+        for (uint32_t j = 0; j < width; ++j) {
+            unichar ch;
+            fread(&ch,sizeof(unichar),1,f);
+            uint8_t fg,bg;
+            fread(&fg,sizeof(uint8_t),1,f);
+            fread(&bg,sizeof(uint8_t),1,f);
+            symbolLine.emplace_back(UnicodeToNative(ch), fg, bg);
+        }
         symbols.emplace_back().swap(symbolLine);
     }
+    fclose(f);
 
     return symbols;
 }
 
 void TextureSystem::FileFromTexture(u16string filepath, vector<vector<Console::Symbol> > texture) {
-    unichar* filepathPtr = U16StringToUnicode(filepath);
-    void* texturePtr = TextureToPtr(texture);
+    FILE* f = nfopen(U16StringToNative(filepath).c_str(),N("w"));
+    uint32_t height=texture.size(),width=height?texture.front().size():0;
+    fwrite(&width,sizeof(uint32_t),1,f);
+    fwrite(&height,sizeof(uint32_t),1,f);
+    for (size_t i = 0; i < height; i++)
+    {
+        for (size_t j = 0; j < width; j++) {
+            unichar ch = NativeToUnicode(texture[i][j].character);
+            fwrite(&ch,sizeof(unichar),1,f);
+            fwrite(&(texture[i][j].foreground),sizeof(uint8_t),1,f);
+            fwrite(&(texture[i][j].background),sizeof(uint8_t),1,f);
+        }
 
-    // [TODO] implement
-    //csimp::TextureSystem_FileFromTexture(filepathPtr, texturePtr, recycle);
+    }
+    fclose(f);
 }
 static const auto tab = UnicodeToNative(U'\t');
 void TextureSystem::DrawTextureToScreen(int x, int y, const std::vector<std::vector<Console::Symbol> >& texture, std::vector<std::vector<Console::Symbol>>& screen) {

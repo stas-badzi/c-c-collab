@@ -5215,12 +5215,7 @@ newpidgen:
     // empty string handled in GetTerminalExecutableName()
     // x-terminal-emulator btw (following symlinks)
 #endif
-#if defined(_WIN32) || defined (__CYGWIN__)
-    if (wt) {
-        args[add] = N("-f");
-        ++add;
-    }
-#elif defined(__linux__)
+#ifdef __linux__
     string startproc;
 
     if (wave) {
@@ -5753,12 +5748,7 @@ newpidgen:
         return nullopt;
     }
 #endif
-#if defined(_WIN32) || defined (__CYGWIN__)
-    if (wt) {
-        args[add] = N("-f");
-        ++add;
-    }
-#elif defined(__linux__)
+#ifdef __linux__
     if (wave) {
         args[add] = "run";
         args[++add] = "--delay";
@@ -6202,12 +6192,7 @@ newpidgen:
         return nullopt;
     }
 #endif
-#if defined(_WIN32) || defined (__CYGWIN__)
-    if (wt) {
-        args[add] = N("-f");
-        ++add;
-    }
-#elif defined(__linux__)
+#ifdef __linux__
     string startproc;
 
     if (wave) {

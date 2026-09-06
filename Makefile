@@ -28,7 +28,7 @@ sources = Console.cpp TextureSystem.cpp System.cpp Game.cpp dllexport.cpp SoundS
 headers = Console.hpp TextureSystem.hpp TextureSystem.ipp Game.hpp dllimport.hpp System.hpp System.ipp smart_ref.hpp smart_ref.ipp SoundSystem.hpp Texture.hpp
 #> include files
 includes = dynamic_library.h unicode_conversion.hpp linux/getfd.h quick_exit.h operating_system.h quick_exit/defines.h utils/cextern.h linux/key.hpp windows/key.hpp apple/key.hpp apple/keyboard.h apple/openfile.h linux/ledctrl.h linux/mousefd.h windows/thread_safe/queue windows/thread_safe/vector promise.hpp
-#> name the dynamic library
+#> name of the dynamic library
 name = factoryrushplus
 # *******************************
 
@@ -39,7 +39,7 @@ binsources = main.cpp Console.cpp TextureSystem.cpp System.cpp dllexport.cpp Sou
 binheaders = dllimport.hpp Console.hpp TextureSystem.hpp System.hpp defines.h SoundSystem.hpp Game.hpp Texture.hpp
 #> include files
 binincludes = dynamic_library.h unicode_conversion.hpp utils/cextern.h linux/key.hpp windows/key.hpp apple/key.hpp
-#> name the binary file
+#> name of the binary file
 binname = cpp-factoryrush
 #********************************
 
@@ -210,7 +210,7 @@ ifeq ($(arch),x86)
 	archarg = 
 	archarg = 
 endif
-	clstd = /std:c17 $(archarg)
+	clstd = /std:clatest $(archarg)
 	clstdpp = /std:c++latest $(archarg)
 
 else
@@ -226,7 +226,7 @@ ifeq ($(msvc),1)
 cdb = /MDd /Z7
 ldb = /DEBUG /PDB:bin/$(name).pdb
 bldb = /DEBUG /PDB:bin/$(binname).pdb
-bpdb = /MTd /Z7
+bpdb = /MDd /Z7
 else
 cdb = -g -Og -pg -D_DEBUG $(sanitze)
 bpdb = -g -Og -pg -D_DEBUG $(sanitze)
@@ -236,10 +236,10 @@ else
 configuration = Release
 binconfig = Release
 ifeq ($(msvc),1)
-cdb = /MD /O2
+cdb = /MD /O3
 ldb = /CGTHREADS:8
 bldb = /CGTHREADS:8
-bpdb = /MT /O2
+bpdb = /MD /O3
 else
 cdb = -s -Ofast
 bpdb = -s -Ofast
@@ -256,7 +256,6 @@ fsrc = $(foreach src,$(sources),cplusplus\\src\\$(src))
 objects = $(foreach file,$(sources),obj/$(arch)/$(subst .c,.obj,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
 fbobj = $(foreach file,$(binsources),obj/$(arch)/$(subst .c,.obj,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
 else
-flib = -l$(filename)
 fsrc = $(foreach src,$(sources),cplusplus/src/$(src))
 objects = $(foreach file,$(sources),obj/$(arch)/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
 fbobj = $(foreach file,$(binsources),obj/$(arch)/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
@@ -311,7 +310,6 @@ static = lib
 dynamic = dll
 prefix = $(empty)
 dllname = '$(name).$(dynamic)'
-libname = '$(filename).$(dynamic)'
 libdir = $(winlib)
 bindir = $(winbin)
 #
@@ -330,7 +328,6 @@ static = lib
 prefix = $(empty)
 dynamic = dll
 dllname = '$(name).$(dynamic)'
-libname = '$(filename).$(dynamic)'
 libdir = $(winlib)
 bindir = $(winbin)
 #
@@ -391,7 +388,6 @@ nulldir = nul
 staticgen = ar -rcs$(space)
 os_name = win-$(arch)
 dllname = '$(name).$(dynamic)'
-libname = '$(filename).$(dynamic)'
 #
 else
 ifeq ($(shell uname -s),Darwin)
@@ -433,7 +429,6 @@ endif
 staticgen = ar rcs$(space)
 run = ./
 os_name = linux-$(arch)
-libname = 'lib$(filename).so'
 dllname = 'lib$(name).so'
 binary = bin
 static = a
@@ -444,7 +439,6 @@ bindir = $(linuxbin)
 #
 endif
 dllname = "lib$(name).$(dynamic)"
-libname = "lib$(filename).$(dynamic)"
 endif
 endif
 endif
@@ -741,8 +735,8 @@ ifeq ($(msvc),1)
 	@cmd.exe /c run.bat
 	@rm run.bat
 ifeq ($(debug),1)
-	@cp cplusplus/bin/$(filename).pdb binarysharp/bin/exe
-	@cp cplusplus/bin/$(filename).pdb binaryplus/bin
+	@cp cplusplus/bin/$(name).pdb binarysharp/bin/exe
+	@cp cplusplus/bin/$(name).pdb binaryplus/bin
 endif
 
 ifeq ($(copylibs),1)
@@ -763,9 +757,9 @@ ifeq ($(shell uname -s),windows32)
 	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets/$(arch) -lglobals -ldbghelp -lshlwapi -lshell32 $(static-libc++) $(static-libc) $(ldarg)
 else
 ifeq ($(i686cygwin),1)
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets/$(arch) -lglobals -ldbghelp -lshlwapi -lshell32 -lutfchar $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets/$(arch) -lglobals -ldbghelp -lshlwapi -lshell32 -lutfchar $(static-libc++) $(static-libc) $(ldarg)
 else
-	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets/$(arch) -lglobals -ldbghelp -lshlwapi -lshell32 $(flib) $(static-libc++) $(static-libc) $(ldarg)
+	cd cplusplus && $(cpp-compiler) -shared -o bin/$(name).dll $(objects) -L../assets/$(arch) -lglobals -ldbghelp -lshlwapi -lshell32 $(static-libc++) $(static-libc) $(ldarg)
 endif
 endif
 endif
@@ -872,10 +866,8 @@ endif
 ifeq ($(shell uname -s),Darwin)
 #macos
 	utilities/custom/dylib-fix.sh "binaryplus/bin/$(binname).$(binary)" "$(name)"
-	utilities/custom/dylib-fix.sh "binaryplus/bin/$(binname).$(binary)" "$(filename)"
 ifeq ($(universal2),1)
 	utilities/custom/dylib-fix.sh "binaryplus/bin/$(binname).arm64.$(binary)" "$(name)"
-	utilities/custom/dylib-fix.sh "binaryplus/bin/$(binname).arm64.$(binary)" "$(filename)"
 	lipo -create binaryplus/bin/$(binname).$(binary) binaryplus/bin/$(binname).arm64.$(binary) -output binaryplus/bin/$(binname).$(binary)
 endif
 ifneq ($(give-ctrl),0)

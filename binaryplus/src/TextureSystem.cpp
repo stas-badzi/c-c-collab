@@ -80,7 +80,7 @@ void TextureSystem::DrawTextureToScreen(int x, int y, const std::vector<std::vec
     }
 }
 
-vector<vector<Console::Symbol> > util::PtrToTexture(nint ptr, bool direct) {
+vector<vector<Console::Symbol> > util::PtrToTexture(nint ptr) {
     vector<vector<Console::Symbol> > ret;
 
     const int int32_size = sizeof(int32_t);
@@ -98,7 +98,8 @@ vector<vector<Console::Symbol> > util::PtrToTexture(nint ptr, bool direct) {
 
         for (int32_t j = 0; j < width; j++) {
             nint sym = System::ReadPointer<nint>(now_ptr);
-            now.push_back(Console::Symbol(sym,direct));
+            now.push_back(Console::Symbol(sym));
+            cppimp::Console_Symbol_Destruct(sym);
             now_ptr = System::MovePointer(now_ptr, intptr_size);
         }
 
@@ -131,7 +132,7 @@ void* util::TextureToPtr(vector<vector<Console::Symbol> >& texture) {
         System::WritePointer<int32_t>(where,texture[i].size());
         where = System::MovePointer(where, int32_size);
         for (size_t j = 0; j < texture[i].size(); j++) {
-            System::WritePointer<nint>(where, texture[i][j].Get());
+            System::WritePointer<nint>(where, cppimp::Console_Symbol_Construct$smb(texture[i][j].Get()));
             where = System::MovePointer(where, intptr_size);
         }
     }

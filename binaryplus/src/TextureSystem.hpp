@@ -16,5 +16,5 @@ namespace util {
     };
  
     void* TextureToPtr(std::vector<std::vector<cpp::Console::Symbol> >& texture);
-    std::vector<std::vector<cpp::Console::Symbol> > PtrToTexture(void* ptr, bool direct = false);
+    std::vector<std::vector<cpp::Console::Symbol> > PtrToTexture(void* ptr);
 }

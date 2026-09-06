@@ -568,7 +568,7 @@ using namespace uniconv;
     }
 
     libexport void TextureSystem_FileFromTexture(uniconv::unichar* filepathPtr, void* texturePtr) {
-        util::TextureSystem::FileFromTexture(UnicodeToU16String(filepathPtr), util::Convert2dVector(util::PtrToTexture(texturePtr)));
+        util::TextureSystem::FileFromTexture(UnicodeToU16String(filepathPtr), util::PtrToTexture(texturePtr));
     }
 
     libexport void TextureSystem_DrawTextureToScreen(int x, int y, void* texturePtr, void* screenPtr);
@@ -593,12 +593,12 @@ using namespace uniconv;
     }
 
     libexport void Game_Camera_DrawTexture(int x, int y, void* textureptr, void* cameraptr) {
-        const auto texture = util::PtrToTexture(textureptr, true);
-        const auto real_texture = util::Convert2dVector<Console::Symbol>(texture);
-        ((cpp::Game::Camera*)cameraptr)->DrawTexture(x, y, real_texture);
+        const auto texture = util::PtrToTexture(textureptr);
+        // [TODO] -> maybe fix
+        //((cpp::Game::Camera*)cameraptr)->DrawTexture(x, y, texture);
     }
 
     libexport void Game_Camera_DrawToScreen(int x, int y, void* screenptr, cpp::Game::Camera* cameraptr) {
-        auto screen = util::PtrToTexture(screenptr, true);
+        auto screen = util::PtrToTexture(screenptr);
         cameraptr->DrawToScreen(x, y, screen);
     }

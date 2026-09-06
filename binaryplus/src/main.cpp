@@ -49,11 +49,13 @@ using namespace uniconv;
 using namespace cpp;
 using namespace util;
 
+#ifdef __linux__
 int touch(const char* path) {
     int fd = open(path, O_CREAT | O_WRONLY, 0600);
     close(fd);
     return 0;
 }
+#endif
 
 wchar_t getChar(wchar_t current) {
     auto texture = Console::Symbol::CreateTexture(u"Press 0-9 to change the symbol\nESC to cancel\n...\n");
@@ -191,13 +193,13 @@ int Main_Game(int argc, char16_t* argv[]) {
     using namespace std;
     Console::HideCursor();
     vector<vector<vector<Console::Symbol>>> anim;
-    Texture sand(TextureSystem::TextureFromFile(u"/home/stas/sand.1.tux"));
-    anim.push_back(TextureSystem::TextureFromFile(u"/home/stas/grass1.tux"));
-    anim.push_back(TextureSystem::TextureFromFile(u"/home/stas/grass2.tux"));
-    anim.push_back(TextureSystem::TextureFromFile(u"/home/stas/grass3.tux"));
-    anim.push_back(TextureSystem::TextureFromFile(u"/home/stas/grass4.tux"));
-    anim.push_back(TextureSystem::TextureFromFile(u"/home/stas/grass5.tux"));
-    anim.push_back(TextureSystem::TextureFromFile(u"/home/stas/grass6.tux"));
+    Texture sand(TextureSystem::TextureFromFile(u"sand.tux"));
+    anim.push_back(TextureSystem::TextureFromFile(u"grass1.tux"));
+    anim.push_back(TextureSystem::TextureFromFile(u"grass2.tux"));
+    anim.push_back(TextureSystem::TextureFromFile(u"grass3.tux"));
+    anim.push_back(TextureSystem::TextureFromFile(u"grass4.tux"));
+    anim.push_back(TextureSystem::TextureFromFile(u"grass5.tux"));
+    anim.push_back(TextureSystem::TextureFromFile(u"grass6.tux"));
     Animation grass(anim, 500000);
     WoodChopper woodchp(chrono::duration_cast<chrono::microseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
     vector<vector<Animation>> screen;
@@ -214,7 +216,7 @@ int Main_Game(int argc, char16_t* argv[]) {
     for (size_t i=0;i<rows;++i) {
         texture_map.push_back({});
         for (size_t j=0;j<columns-(i&1);++j)
-            if (random()&1)
+            if (rand()&1)
                 texture_map.back().push_back(&(screen.at(i).at(j)));
             else texture_map.back().push_back(&(screen2.at(i).at(j)));
     }
@@ -237,8 +239,8 @@ int Main_Game(int argc, char16_t* argv[]) {
             offsety += (row.front()->Buffer().size()/2) + 1;
             push = !push;
         }
-        for (int i=0; i<to_string(wood).size();++i) {
-            display.at(max(0ul,display.size()-2)).at(max(0ul,display.at(max(0ul,display.size()-3)).size()-to_string(wood).size()-2+i)).character = to_u16string(wood).at(i);
+        for (size_t i=0; i<to_string(wood).size();++i) {
+            display.at(max<size_t>(0,display.size()-2)).at(max<size_t>(0,display.at(max<size_t>(0,display.size()-3)).size()-to_string(wood).size()-2+i)).character = to_u16string(wood).at(i);
         }
         Console::FillScreen(display);
         Console::HandleKeyboard();
@@ -750,7 +752,7 @@ int Main_Paint(void) {
             }
         }
 endminput:
-        vector<vector<Console::Symbol>> back(texture.size(),vector<Console::Symbol>(texture.front().size(),Console::Symbol(' ')));
+        vector<vector<Console::Symbol>> back(texture.size(),vector<Console::Symbol>(texture.front().size(),Console::Symbol(u' ')));
         TextureSystem::DrawTextureToScreen(2,2,back,screen);
 
         TextureSystem::DrawTextureToScreen(2,2,texture,screen);
@@ -1666,8 +1668,8 @@ int sub(int type) {
     return EXIT_FAILURE;
 }
 
-int Mainx() {return Main_Paint();}
-int Main() {
+int Main() {return Main_Paint();}
+int Mainx() {
     Console::Init();
     auto argc = Console::GetArgC();
     auto argv = Console::GetArgV();

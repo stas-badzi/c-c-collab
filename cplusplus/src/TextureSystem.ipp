@@ -32,8 +32,8 @@ namespace util {
         return out;
     }
 
-    inline std::vector<std::vector<smart_ref<Console::Symbol> > > PtrToTexture(void* ptr, bool direct = false) {
-        auto sym = std::vector<std::vector<smart_ref<Console::Symbol> > >();
+    inline std::vector<std::vector<Console::Symbol>> PtrToTexture(void* ptr) {
+        auto sym = std::vector<std::vector<Console::Symbol>>();
 
         const int int32_size = sizeof(int32_t);
         const int intptr_size = sizeof(void*);
@@ -46,17 +46,15 @@ namespace util {
         for (int32_t i = 0; i < height; i++) {
             int32_t width = System::ReadPointer<int32_t>(now_ptr);
             now_ptr = System::MovePointer(now_ptr, int32_size);
-            std::vector<smart_ref<Console::Symbol> > now;
+            std::vector<Console::Symbol> now;
 
             for (int32_t j = 0; j < width; j++) {
                 Console::Symbol* sym = (Console::Symbol*)System::ReadPointer<nint>(now_ptr);
-                if (direct) now.push_back(smart_ref(sym));
-                else now.push_back(smart_ref(Console::Symbol(*sym)));
+                now.push_back(*sym);
+                delete sym;
                 now_ptr = System::MovePointer(now_ptr, intptr_size);
             }
-
-            if (direct) sym.push_back(now);
-            else sym.push_back(now);
+            sym.emplace_back().swap(now);
         }
 
         System::FreeMemory(ptr);
@@ -85,8 +83,7 @@ namespace util {
             System::WritePointer<int32_t>(where,texture[i].size());
             where = System::MovePointer(where, int32_size);
             for (size_t j = 0; j < texture[i].size(); j++) {
-                const void* ptr = (const void*)&(texture[i][j]);
-                System::WritePointer(where, ptr);
+                System::WritePointer(where, new Console::Symbol(texture[i][j]));
                 where = System::MovePointer(where, intptr_size);
             }
         }
@@ -115,7 +112,7 @@ namespace util {
             System::WritePointer<int32_t>(where,texture[i].size());
             where = System::MovePointer(where, int32_size);
             for (size_t j = 0; j < texture[i].size(); j++) {
-                System::WritePointer<nint>(where, &texture[i][j]);
+                System::WritePointer<nint>(where, new Console::Symbol(texture[i][j]));
                 where = System::MovePointer(where, intptr_size);
             }
         }
@@ -145,7 +142,7 @@ namespace util {
             System::WritePointer<int32_t>(where,texture[i].size());
             where = System::MovePointer(where, int32_size);
             for (size_t j = 0; j < texture[i].size(); j++) {
-                System::WritePointer<nint>(where, texture[i][j].ptr());
+                System::WritePointer<nint>(where, new Console::Symbol(texture[i][j]));
                 where = System::MovePointer(where, intptr_size);
             }
         }

@@ -147,7 +147,7 @@ namespace cpp {
 
             Symbol(void);
             Symbol(const Symbol &cp);
-            Symbol(void* ptr, bool direct = false);
+            Symbol(void* ptr);
             Symbol(char16_t character, uint8_t foreground = 16, uint8_t background = 16);
             ~Symbol();
 

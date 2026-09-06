@@ -114,7 +114,7 @@ Console::Symbol::Symbol(void) : symbol(Console_Symbol_Construct$cfb(u' ', Color:
 
 Console::Symbol::Symbol(const Symbol &cp) : symbol(Console_Symbol_Construct$smb(cp.symbol)) {}
 
-Console::Symbol::Symbol(void* ptr, bool direct) : symbol(direct?ptr:Console_Symbol_Construct$smb(ptr)) {}
+Console::Symbol::Symbol(void* ptr) : symbol(Console_Symbol_Construct$smb(ptr)) {}
 
 Console::Symbol::Symbol(char16_t character, uint8_t foreground, uint8_t background) : symbol(Console_Symbol_Construct$cfb(Char16ToUnicode(character),foreground,background)) {}
 
