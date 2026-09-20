@@ -755,21 +755,21 @@ void System::SendSignal(int signal) {
 
 #ifdef __CYGWIN__
 
-string System::WindowsPathToCygwin(wstring path) {
+string System::WindowsPathToCygwin(const wstring& path) {
     char buf[PATH_MAX+1];
     int siz = cygwin_conv_path(CCP_WIN_W_TO_POSIX,path.c_str(),buf,PATH_MAX+1); // NUL-terminated
     if (siz < 0) return string();
     return buf;
 }
 
-wstring System::CygwinPathToWindows(string path) {
+wstring System::CygwinPathToWindows(const string& path) {
     wchar_t buf[PATH_MAX+1];
     int siz = cygwin_conv_path(CCP_POSIX_TO_WIN_W,path.c_str(),buf,PATH_MAX+1); // NUL-terminated
     if (siz < 0) return wstring();
     return buf;
 }
 
-string System::CygwinPathToWindowsUtf8(string path) {
+string System::CygwinPathToWindowsUtf8(const string& path) {
     char buf[PATH_MAX+1];
     int siz = cygwin_conv_path(CCP_POSIX_TO_WIN_A,path.c_str(),buf,PATH_MAX+1); // NUL-terminated
     if (siz < 0) return string();

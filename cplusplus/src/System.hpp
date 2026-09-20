@@ -110,7 +110,7 @@ namespace cpp {
         static bool IsDirectory(uniconv::utfcstr path);
         static bool DoesPathExist(uniconv::utfcstr path);
     #ifdef __CYGWIN__
-        static uniconv::nstring WindowsPathToCygwin(std::wstring path);
+        static uniconv::nstring WindowsPathToCygwin(const std::wstring& path);
         static std::wstring CygwinPathToWindows(uniconv::nstring path);
         static std::string CygwinPathToWindowsUtf8(uniconv::nstring path);
         static int RunProgram0(const char* cpath, const wchar_t* args, ...); // mintty fix

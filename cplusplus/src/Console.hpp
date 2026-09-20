@@ -295,7 +295,7 @@ namespace cpp {
         //static RECT old_rect;
         static HANDLE super_thread;
         static std::wofstream real_out;
-        static size_t write_out(std::wstring str);
+        static size_t write_out(const std::wstring& str);
         //static std::pair<uint16_t,uint16_t> xyoffset;
         //static inline std::pair<uint16_t,uint16_t> GetXYCharOffset();
     #else
@@ -440,8 +440,8 @@ namespace cpp {
 
         static void ThrowMsg(const char* msg);
         static void ThrowMsg(const wchar_t* msg);
-        static void ThrowMsg(const std::string msg);
-        static void ThrowMsg(const std::wstring msg);
+        static void ThrowMsg(const std::string& msg);
+        static void ThrowMsg(const std::wstring& msg);
 
         static void SetDoubleClickMaxWait(unsigned short milliseconds);
         static unsigned short GetDoubleClickMaxWait(void);

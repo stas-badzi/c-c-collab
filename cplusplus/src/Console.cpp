@@ -43,7 +43,7 @@ namespace cpp {
 #define fgetnc fgetwc
 #define nstrlen wcslen
 #define write_out(str) Console::write_out(str)
-    size_t Console::write_out(std::wstring wstr) {
+    size_t Console::write_out(const std::wstring& wstr) {
         if (mintty) {
             std::string str;
             for (auto&& wc : wstr) str.push_back(static_cast<char>(wc));
@@ -94,13 +94,13 @@ void Console::ThrowMsg(const wchar_t* msg) {
     exit(0x100);
 }
 
-void Console::ThrowMsg(const string msg) {
+void Console::ThrowMsg(const string& msg) {
     Console::Fin();
     fwrite(msg.c_str(), sizeof(char), msg.size(), stderr);
     exit(0x100);
 }
 
-void Console::ThrowMsg(const wstring msg) {
+void Console::ThrowMsg(const wstring& msg) {
     Console::Fin();
     fwrite(msg.c_str(), sizeof(wchar_t), msg.size(), stderr);
     exit(0x100);
