@@ -616,10 +616,10 @@ else
 	@cmd.exe /c run.bat
 	@mv *.obj objects/$(arch)/
 
-	@echo "link /OUT:binaryplus/bin/killwindow.exe objects/$(arch)/killwindow.obj USER32.lib" > run.bat
+	@echo "link $(linkflags) /OUT:binaryplus/bin/killwindow.exe objects/$(arch)/killwindow.obj USER32.lib" > run.bat
 	@cmd.exe /c run.bat
 
-	@echo "link /OUT:binaryplus/bin/beep.exe objects/$(arch)/beep.obj USER32.lib" > run.bat
+	@echo "link $(linkflags) /OUT:binaryplus/bin/beep.exe objects/$(arch)/beep.obj USER32.lib" > run.bat
 	@cmd.exe /c run.bat
 
 	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) source/globals.c /Icplusplus\include $(clstd)" > run.bat
@@ -731,7 +731,7 @@ cpp: $(resdep) $(foreach obj,$(objects),cplusplus/$(obj)) $(foreach head,$(heade
 	@echo MAKE CPP
 
 ifeq ($(msvc),1)
-	echo "cd cplusplus && link /OUT:bin/$(name).dll $(ldb) /DLL $(objects) ../assets/$(arch)/globals.lib USER32.lib Gdi32.lib Shell32.lib Shlwapi.lib Dbghelp.lib" > run.bat
+	echo "cd cplusplus && link $(linkflags) /OUT:bin/$(name).dll $(ldb) /DLL $(objects) ../assets/$(arch)/globals.lib USER32.lib Gdi32.lib Shell32.lib Shlwapi.lib Dbghelp.lib" > run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
 ifeq ($(debug),1)
@@ -819,7 +819,7 @@ ifeq ($(msvc),1)
 	echo "$(cpp-compiler) /EHsc /c /DUNICODE $(bpdb) source/launcher.cpp $(clstdpp)" > run.bat
 	@cmd.exe /c run.bat
 	@$(movefl) -f launcher.obj objects
-	echo "link /OUT:binaryplus/launcher.exe /CGTHREADS:8 objects/launcher.obj objects/$(arch)/resources.res" > run.bat
+	echo "link $(linkflags) /OUT:binaryplus/launcher.exe /CGTHREADS:8 objects/launcher.obj objects/$(arch)/resources.res" > run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
 
@@ -853,7 +853,7 @@ endif
 cppbin: cpp compile-cppbin
 	@echo MAKE CPPBIN
 ifeq ($(msvc),1)
-	echo "cd binaryplus && link /OUT:bin/$(binname).$(binary) $(bldb) ../cplusplus/bin/$(name).lib $(fbobj) USER32.lib ../objects/$(arch)/resources.res" > run.bat
+	echo "cd binaryplus && link $(linkflags) /OUT:bin/$(binname).$(binary) $(bldb) ../cplusplus/bin/$(name).lib $(fbobj) USER32.lib ../objects/$(arch)/resources.res" > run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
 else
