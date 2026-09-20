@@ -68,13 +68,9 @@ jobs:
       - name: Install Programs
         shell: pwsh
         run: |
+          choco install make
+          choco install zip
           del "C:\Program Files\LLVM\bin\clang-cl.exe"
-          Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/archive/refs/heads/master.zip" -OutFile "gnuwin32.zip" -Verbose
-          Expand-Archive -Force gnuwin32.zip .
-          del gnuwin32.zip
-          ren gnuwin32.mirror-master gnuwin32
-          copy gnuwin32\bin\* .
-          del link.exe
       - name: Compile code
         shell: cmd /c {0}
         run: utilities\custom\vsdevcmd-x64.bat .\make.exe resources cpp cppbin release package archchk=0 sudo=0 msvc=1 nodep=1 c-compiler=clang-cl cpp-compiler=clang-cl
@@ -144,13 +140,9 @@ jobs:
       - name: Install Programs
         shell: pwsh
         run: |
+          choco install make
+          choco install zip
           del "C:\Program Files\LLVM\bin\clang-cl.exe"
-          Invoke-WebRequest -Uri "https://github.com/leok7v/gnuwin32.mirror/archive/refs/heads/master.zip" -OutFile "gnuwin32.zip" -Verbose
-          Expand-Archive -Force gnuwin32.zip .
-          del gnuwin32.zip
-          ren gnuwin32.mirror-master gnuwin32
-          copy gnuwin32\bin\* .
-          del link.exe
       - name: Compile code
         shell: cmd /c {0}
         run: utilities\custom\vsdevcmd-x86.bat .\make.exe resources cpp cppbin release package archchk=0 sudo=0 msvc=1 tgarch=x86 nodep=1 c-compiler=clang-cl cpp-compiler=clang-cl
@@ -209,7 +201,7 @@ jobs:
     permissions:
       contents: read
     name: Build program using MSVC (arm32)
-    runs-on: windows-11-arm
+    runs-on: windows-11
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -221,7 +213,7 @@ jobs:
           del "C:\Program Files\LLVM\bin\clang-cl.exe"
       - name: Compile code
         shell: cmd /c {0}
-        run: utilities\custom\vsdevcmd-arm.bat make resources cpp cppbin release package archchk=0 sudo=0 msvc=1 nodep=1 tgarch=arm c-compiler=clang-cl cpp-compiler=clang-cl linkflags=/MACHINE:ARM
+        run: utilities\custom\vsdevcmd-arm.bat make resources cpp cppbin release package archchk=0 sudo=0 msvc=1 nodep=1 tgarch=arm c-compiler=clang-cl cpp-compiler=clang-cl
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
@@ -236,10 +228,6 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
       - name: Set up GCC
         run: sudo apt install gcc-14
       - name: Compile code
@@ -247,10 +235,8 @@ jobs:
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
-          name: UbuntuCppBin
+          name: Ubuntux64CppBin
           path: bin/Cpp.*.tar.gz
-
-  
 
   build-ubuntu-arm64:
     name: Build program using Ubuntu (aarch64)
@@ -258,10 +244,6 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
       - name: Set up GCC
         run: sudo apt install gcc-14
       - name: Compile code
@@ -297,10 +279,6 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
       - name: Compile code
         shell: bash
         run: |
@@ -320,10 +298,6 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
       - name: Compile code
         shell: bash
         run: |
@@ -343,10 +317,6 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
       - name: Compile code
         shell: bash
         run: |
@@ -370,10 +340,6 @@ jobs:
 #    steps:
 #      - name: Checkout source code
 #        uses: actions/checkout@v4
-#      - name: Setup .NET
-#        uses: actions/setup-dotnet@v4
-#        with:
-#          dotnet-version: '10.0.x'
 #      - name: Compile code
 #        shell: bash
 #        run: |

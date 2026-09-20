@@ -88,76 +88,172 @@ jobs:
       - name: Clean MacOSAmdCppBin
         shell: sh
         run: rm -rf *
-
-      - name: Download UbuntuCppBin
+        
+      - name: Download MacOSUniversal2CppBin
         uses: dawidd6/action-download-artifact@v6
         with:
           workflow: build.yml
           branch: main
-          name: UbuntuCppBin
+          name: MacOSUniversal2CppBin
           path: .
-      - name: Get Name of UbuntuCppBin
+      - name: Get Name of MacOSUniversal2CppBin
         shell: sh
-        id: ubuntu-cpp-bin-name
+        id: macos-universal2-cpp-bin-name
         run: "echo path=$(ls) >> $GITHUB_OUTPUT"
-      - name: Upload UbuntuCppBin
+      - name: Upload MacOSUniversal2CppBin
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ${{ steps.ubuntu-cpp-bin-name.outputs.path }}
-          asset_name: ${{ steps.ubuntu-cpp-bin-name.outputs.path }}
+          asset_path: ${{ steps.macos-universal2-cpp-bin-name.outputs.path }}
+          asset_name: ${{ steps.macos-universal2-cpp-bin-name.outputs.path }}
           asset_content_type: application/x-tar
-      - name: Clean UbuntuCppBin
+      - name: Clean MacOSUniversal2CppBin
         shell: sh
         run: rm -rf *
 
-      - name: Download DebianCppBin
+      - name: Download Ubuntux64CppBin
         uses: dawidd6/action-download-artifact@v6
         with:
           workflow: build.yml
           branch: main
-          name: DebianCppBin
+          name: Ubuntux64CppBin
           path: .
-      - name: Get Name of DebianCppBin
+      - name: Get Name of Ubuntux64CppBin
         shell: sh
-        id: debian-cpp-bin-name
+        id: ubuntux64-cpp-bin-name
         run: "echo path=$(ls) >> $GITHUB_OUTPUT"
-      - name: Upload DebianCppBin
+      - name: Upload Ubuntux64CppBin
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ${{ steps.debian-cpp-bin-name.outputs.path }}
-          asset_name: ${{ steps.debian-cpp-bin-name.outputs.path }}
+          asset_path: ${{ steps.ubuntux64-cpp-bin-name.outputs.path }}
+          asset_name: ${{ steps.ubuntux64-cpp-bin-name.outputs.path }}
           asset_content_type: application/x-tar
-      - name: Clean DebianCppBin
+      - name: Clean Ubuntux64CppBin
         shell: sh
         run: rm -rf *
 
-      - name: Download WindowsCppBin
+      - name: Download UbuntuArm64CppBin
         uses: dawidd6/action-download-artifact@v6
         with:
           workflow: build.yml
           branch: main
-          name: WindowsCppBin
+          name: UbuntuArm64CppBin
           path: .
-      - name: Get Name of WindowsCppBin
+      - name: Get Name of UbuntuArm64CppBin
         shell: sh
-        id: win-cpp-bin-name
+        id: ubuntuarm64-cpp-bin-name
         run: "echo path=$(ls) >> $GITHUB_OUTPUT"
-      - name: Upload WindowsCppBin
+      - name: Upload UbuntuArm64CppBin
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ${{ steps.win-cpp-bin-name.outputs.path }}
-          asset_name: ${{ steps.win-cpp-bin-name.outputs.path }}
+          asset_path: ${{ steps.ubuntuarm64-cpp-bin-name.outputs.path }}
+          asset_name: ${{ steps.ubuntuarm64-cpp-bin-name.outputs.path }}
+          asset_content_type: application/x-tar
+      - name: Clean UbuntuArm64CppBin
+        shell: sh
+        run: rm -rf *
+
+      - name: Download Windowsx64CppBin
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: build.yml
+          branch: main
+          name: Windowsx64CppBin
+          path: .
+      - name: Get Name of Windowsx64CppBin
+        shell: sh
+        id: winx64-cpp-bin-name
+        run: "echo path=$(ls) >> $GITHUB_OUTPUT"
+      - name: Upload Windowsx64CppBin
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ${{ steps.winx64-cpp-bin-name.outputs.path }}
+          asset_name: ${{ steps.winx64-cpp-bin-name.outputs.path }}
           asset_content_type: application/zip
-      - name: Clean WindowsCppBin
+      - name: Clean Windowsx64CppBin
+        shell: sh
+        run: rm -rf *
+
+      - name: Download Windowsx86CppBin
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: build.yml
+          branch: main
+          name: Windowsx86CppBin
+          path: .
+      - name: Get Name of Windowsx86CppBin
+        shell: sh
+        id: winx86-cpp-bin-name
+        run: "echo path=$(ls) >> $GITHUB_OUTPUT"
+      - name: Upload Windowsx86CppBin
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ${{ steps.winx86-cpp-bin-name.outputs.path }}
+          asset_name: ${{ steps.winx86-cpp-bin-name.outputs.path }}
+          asset_content_type: application/zip
+      - name: Clean Windowsx86CppBin
+        shell: sh
+        run: rm -rf *
+
+      - name: Download Windowsarm64CppBin
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: build.yml
+          branch: main
+          name: Windowsarm64CppBin
+          path: .
+      - name: Get Name of Windowsarm64CppBin
+        shell: sh
+        id: winarm64-cpp-bin-name
+        run: "echo path=$(ls) >> $GITHUB_OUTPUT"
+      - name: Upload Windowsarm64CppBin
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ${{ steps.winarm64-cpp-bin-name.outputs.path }}
+          asset_name: ${{ steps.winarm64-cpp-bin-name.outputs.path }}
+          asset_content_type: application/zip
+      - name: Clean Windowsarm64CppBin
+        shell: sh
+        run: rm -rf *
+
+      - name: Download Windowsarm32CppBin
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: build.yml
+          branch: main
+          name: Windowsarm32CppBin
+          path: .
+      - name: Get Name of Windowsarm32CppBin
+        shell: sh
+        id: winarm32-cpp-bin-name
+        run: "echo path=$(ls) >> $GITHUB_OUTPUT"
+      - name: Upload Windowsarm32CppBin
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ${{ steps.winarm32-cpp-bin-name.outputs.path }}
+          asset_name: ${{ steps.winarm32-cpp-bin-name.outputs.path }}
+          asset_content_type: application/zip
+      - name: Clean Windowsarm32CppBin
         shell: sh
         run: rm -rf *
 
@@ -170,7 +266,7 @@ jobs:
           path: .
       - name: Get Name of Msys2x64CppBin
         shell: sh
-        id: msys-x64-cpp-bin-name
+        id: msysx64-cpp-bin-name
         run: "echo path=$(ls) >> $GITHUB_OUTPUT"
       - name: Upload Msys2x64CppBin
         uses: actions/upload-release-asset@v1
@@ -178,8 +274,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ${{ steps.msys-x64-cpp-bin-name.outputs.path }}
-          asset_name: ${{ steps.msys-x64-cpp-bin-name.outputs.path }}
+          asset_path: ${{ steps.msysx64-cpp-bin-name.outputs.path }}
+          asset_name: ${{ steps.msysx64-cpp-bin-name.outputs.path }}
           asset_content_type: application/zip
       - name: Clean Msys2x64CppBin
         shell: sh
@@ -194,7 +290,7 @@ jobs:
           path: .
       - name: Get Name of Msys2i686CppBin
         shell: sh
-        id: msys-i686-cpp-bin-name
+        id: msysi686-cpp-bin-name
         run: "echo path=$(ls) >> $GITHUB_OUTPUT"
       - name: Upload Msys2i686CppBin
         uses: actions/upload-release-asset@v1
@@ -202,33 +298,81 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ${{ steps.msys-i686-cpp-bin-name.outputs.path }}
-          asset_name: ${{ steps.msys-i686-cpp-bin-name.outputs.path }}
+          asset_path: ${{ steps.msysi686-cpp-bin-name.outputs.path }}
+          asset_name: ${{ steps.msysi686-cpp-bin-name.outputs.path }}
           asset_content_type: application/zip
       - name: Clean Msys2i686CppBin
         shell: sh
         run: rm -rf *
 
-      - name: Download CygwinCppBin
+      - name: Download Msys2aarch64CppBin
         uses: dawidd6/action-download-artifact@v6
         with:
           workflow: build.yml
           branch: main
-          name: CygwinCppBin
+          name: Msys2aarch64CppBin
           path: .
-      - name: Get Name of CygwinCppBin
+      - name: Get Name of Msys2aarch64CppBin
         shell: sh
-        id: cygwin-cpp-bin-name
+        id: msysaarch64-cpp-bin-name
         run: "echo path=$(ls) >> $GITHUB_OUTPUT"
-      - name: Upload CygwinCppBin
+      - name: Upload Msys2aarch64CppBin
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ${{ steps.cygwin-cpp-bin-name.outputs.path }}
-          asset_name: ${{ steps.cygwin-cpp-bin-name.outputs.path }}
+          asset_path: ${{ steps.msysaarch64-cpp-bin-name.outputs.path }}
+          asset_name: ${{ steps.msysaarch64-cpp-bin-name.outputs.path }}
           asset_content_type: application/zip
-      - name: Clean CygwinCppBin
+      - name: Clean Msys2aarch64CppBin
+        shell: sh
+        run: rm -rf *
+
+      - name: Download Cygwinx64CppBin
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: build.yml
+          branch: main
+          name: Cygwinx64CppBin
+          path: .
+      - name: Get Name of Cygwinx64CppBin
+        shell: sh
+        id: cygwinx64-cpp-bin-name
+        run: "echo path=$(ls) >> $GITHUB_OUTPUT"
+      - name: Upload Cygwinx64CppBin
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ${{ steps.cygwinx64-cpp-bin-name.outputs.path }}
+          asset_name: ${{ steps.cygwinx64-cpp-bin-name.outputs.path }}
+          asset_content_type: application/zip
+      - name: Clean Cygwinx64CppBin
+        shell: sh
+        run: rm -rf *
+
+      - name: Download Cygwinx86CppBin
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: build.yml
+          branch: main
+          name: Cygwinx86CppBin
+          path: .
+      - name: Get Name of Cygwinx86CppBin
+        shell: sh
+        id: cygwinx86-cpp-bin-name
+        run: "echo path=$(ls) >> $GITHUB_OUTPUT"
+      - name: Upload Cygwinx86CppBin
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ${{ steps.cygwinx86-cpp-bin-name.outputs.path }}
+          asset_name: ${{ steps.cygwinx86-cpp-bin-name.outputs.path }}
+          asset_content_type: application/zip
+      - name: Clean Cygwinx86CppBin
         shell: sh
         run: rm -rf *
