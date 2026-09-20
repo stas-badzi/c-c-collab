@@ -221,7 +221,7 @@ jobs:
           del "C:\Program Files\LLVM\bin\clang-cl.exe"
       - name: Compile code
         shell: cmd /c {0}
-        run: utilities\custom\vsdevcmd-arm64.bat make resources cpp cppbin release package archchk=0 sudo=0 msvc=1 nodep=1 tgarch=arm64 c-compiler="clang-cl --target=arm64-pc-windows-msvc" cpp-compiler="clang-cl --target=arm64-pc-windows-msvc" linkflags=/MACHINE:ARM
+        run: utilities\custom\vsdevcmd-arm64.bat make resources cpp cppbin release package archchk=0 sudo=0 msvc=1 nodep=1 tgarch=arm64 c-compiler="clang-cl --target=arm-pc-windows-msvc" cpp-compiler="clang-cl --target=arm-pc-windows-msvc" linkflags=/MACHINE:ARM
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
