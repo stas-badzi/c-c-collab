@@ -228,8 +228,8 @@ ldb = /DEBUG /PDB:bin/$(name).pdb
 bldb = /DEBUG /PDB:bin/$(binname).pdb
 bpdb = /MDd /Z7
 else
-cdb = -g -Og -pg -D_DEBUG $(sanitze)
-bpdb = -g -Og -pg -D_DEBUG $(sanitze)
+cdb = -g -Og -D_DEBUG $(sanitze)
+bpdb = -g -Og -D_DEBUG $(sanitze)
 clnk = $(sanitze)
 endif
 else
@@ -256,6 +256,7 @@ fsrc = $(foreach src,$(sources),cplusplus\\src\\$(src))
 objects = $(foreach file,$(sources),obj/$(arch)/$(subst .c,.obj,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
 fbobj = $(foreach file,$(binsources),obj/$(arch)/$(subst .c,.obj,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
 else
+flib = -l$(filename)
 fsrc = $(foreach src,$(sources),cplusplus/src/$(src))
 objects = $(foreach file,$(sources),obj/$(arch)/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
 fbobj = $(foreach file,$(binsources),obj/$(arch)/$(subst .c,.o,$(subst .cc,.c,$(subst .cpp,.cc,$(file)))))
