@@ -48,6 +48,23 @@ using namespace std;
 using namespace uniconv;
 using namespace cpp;
 using namespace util;
+    
+static const char16_t chars[10] = {
+    u' ',
+    u'\u2588', // █
+    u'\u2593', // ▓
+    u'\u2592', // ▒
+    u'\u2591', // ░
+    u'#',
+    u'$',
+    u'%',
+    u'&',
+    u'@'
+};
+//L'‾'
+static const wchar_t LT=L'\u203e';
+//u'✢'
+static const char16_t uP=u'\u2722';
 
 #ifdef __linux__
 int touch(const char* path) {
@@ -86,7 +103,7 @@ wchar_t getChar(wchar_t current) {
     if (Console::IsKeyDown(Key::Enum::SIX)) return L'%';
     if (Console::IsKeyDown(Key::Enum::SEVEN)) return L'#';
     if (Console::IsKeyDown(Key::Enum::EIGHT)) return L'@';
-    if (Console::IsKeyDown(Key::Enum::NINE)) return L'▒';
+    if (Console::IsKeyDown(Key::Enum::NINE)) return chars[3];
     if (Console::IsKeyDown(Key::Enum::ZERO)) return L' ';
     return current;
 }
@@ -135,7 +152,7 @@ int __Main(void) {
         for (int16_t l = 0; l < height; l++) {
             screen.push_back(vector<Console::Symbol>());
             for (int16_t i = 0; i < width; i++) {
-                auto sym = Console::Symbol(L'▒',(uint8_t)16,(uint8_t)16);
+                auto sym = Console::Symbol(chars[3],(uint8_t)16,(uint8_t)16);
                 screen.back().push_back(sym);
             }
         }
@@ -351,8 +368,6 @@ int Main_Paint(void) {
     long double avg = 0;
     long double old_avg = -1;
     unsigned long long counter = 0;
-
-    char16_t brushlist[10] = {u' ',u'█',u'▓',u'▒',u'░',u'#',u'$',u'%',u'&',u'@'};
     //auto last_mouse = Console::GetMouseStatus();
     //while (true){
     /*
@@ -363,7 +378,7 @@ int Main_Paint(void) {
         for (int16_t l = 0; l < height; l++) {
             screen.push_back(vector<Console::Symbol>());
             for (int16_t i = 0; i < width; i++) {
-                auto sym = Console::Symbol(L'▒',(uint8_t)16,(uint8_t)16);
+                auto sym = Console::Symbol(chars[3],(uint8_t)16,(uint8_t)16);
                 screen.back().push_back(sym);
             }
         }
@@ -453,6 +468,8 @@ int Main_Paint(void) {
 #endif
     Console::SetTitle(u"FactoryRush - " + absolute);
 
+    char16_t brushlist[10];
+    for (int i=0;i<10;++i)brushlist[i]=chars[i];
     char16_t symchar = brushlist[1];
     uint8_t __symback = 16;
     uint8_t __symfore = 16;
@@ -533,7 +550,7 @@ int Main_Paint(void) {
         for (int16_t l = 0; l < height; l++) { // Fill screen with empty symbols
             screen.push_back(vector<Console::Symbol>());
             for (int16_t i = 0; i < width; i++) {
-                auto sym = Console::Symbol(L'▒',(uint8_t)16,(uint8_t)16);
+                auto sym = Console::Symbol(chars[3],(uint8_t)16,(uint8_t)16);
                 screen.back().push_back(sym);
             }
         }
@@ -548,7 +565,7 @@ int Main_Paint(void) {
         auto menu = Console::Symbol::CreateTexture((edit ? u"| Quit | Save | New | Open | View | Help |     ⦿   ✎|" : u"| Quit | Save | New | Open | Edit | Help |     ⦿   ✎|"), array<uint8_t,100>{'\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7','\7'}.data(), array<uint8_t,100>{'\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0'}.data());
         for (int i=0; i<10; i++) menu.front().push_back(Console::Symbol(brushlist[i],0,15));
         menu.front().push_back(Console::Symbol(u' ',0,7));
-        menu.front().push_back(Console::Symbol(u'✢',0,7));
+        menu.front().push_back(Console::Symbol(uP,0,7));
 
         
         ++frame;
@@ -847,8 +864,8 @@ pair<int,u16string> ErrorPopup(int argc, const char16_t* argv[]) {
         scr.push_back(vector<Console::Symbol>());
         for (int j = 0; j < (width/2); j++)
             scr.back().push_back(Console::Symbol(L' ',16,16));
-        scr.back().push_back(Console::Symbol(L'‾',16,16));
-        scr.back().push_back(Console::Symbol(L'‾',16,16));
+        scr.back().push_back(Console::Symbol(LT,16,16));
+        scr.back().push_back(Console::Symbol(LT,16,16));
         while (++i < height)
             scr.push_back(vector<Console::Symbol>());
 
@@ -1007,7 +1024,6 @@ pair<int,u16string> GetFilePopup(int argc, const char16_t* argv[]) {
         Console::Sleep(0.01);
     }
 }
-
 pair<int,u16string> NewFilePopup(int argc, const char16_t* argv[]) {
     Console::SetTitle(u"New File");
     int flwidth = 20;
@@ -1078,24 +1094,24 @@ pair<int,u16string> NewFilePopup(int argc, const char16_t* argv[]) {
             scr.back().push_back(Console::Symbol(L' ',16,16));
 
         scr.back().push_back(Console::Symbol(L' ',16,16));  
-        scr.back().push_back(Console::Symbol(L'‾',16,16));
-        scr.back().push_back(Console::Symbol(L'‾',16,16));
-        scr.back().push_back(Console::Symbol(L'‾',16,16));
-        scr.back().push_back(Console::Symbol(L'‾',16,16));
-        scr.back().push_back(Console::Symbol(L'‾',16,16));
-        scr.back().push_back(Console::Symbol(L'‾',16,16));
-        scr.back().push_back(Console::Symbol(L'‾',16,16));
-        scr.back().push_back(Console::Symbol(L'‾',16,16));
+        scr.back().push_back(Console::Symbol(LT,16,16));
+        scr.back().push_back(Console::Symbol(LT,16,16));
+        scr.back().push_back(Console::Symbol(LT,16,16));
+        scr.back().push_back(Console::Symbol(LT,16,16));
+        scr.back().push_back(Console::Symbol(LT,16,16));
+        scr.back().push_back(Console::Symbol(LT,16,16));
+        scr.back().push_back(Console::Symbol(LT,16,16));
+        scr.back().push_back(Console::Symbol(LT,16,16));
         scr.back().push_back(Console::Symbol(L' ',16,16));
         
         for (int j = scr.back().size(); j < (width*2/3)-3; j++)
             scr.back().push_back(Console::Symbol(L' ',16,16));
 
         scr.back().push_back(Console::Symbol(L' ',16,16));
-        scr.back().push_back(Console::Symbol(L'‾',16,16));
-        scr.back().push_back(Console::Symbol(L'‾',16,16));
-        scr.back().push_back(Console::Symbol(L'‾',16,16));
-        scr.back().push_back(Console::Symbol(L'‾',16,16));
+        scr.back().push_back(Console::Symbol(LT,16,16));
+        scr.back().push_back(Console::Symbol(LT,16,16));
+        scr.back().push_back(Console::Symbol(LT,16,16));
+        scr.back().push_back(Console::Symbol(LT,16,16));
         scr.back().push_back(Console::Symbol(L' ',16,16));
 
         while (++i < height)
@@ -1302,19 +1318,19 @@ void ColorPopup(int argc, const char16_t* argv[]) {
         pair<array<pair<uint16_t,uint16_t>,17>,array<pair<uint16_t,uint16_t>,17>> colortable;
 
         vector<vector<Console::Symbol>> screen;
-        screen.push_back(vector<Console::Symbol>(width,Console::Symbol(u'▒',16,16)));
+        screen.push_back(vector<Console::Symbol>(width,Console::Symbol(chars[3],16,16)));
         screen.push_back(vector<Console::Symbol>());
         auto textcur = u"Current Brush Style: \u25cf";
         for (size_t i = 0; i <= (width-u16strlen(textcur))/2; i++) 
-            screen.back().push_back(Console::Symbol(L'▒',16,16));
+            screen.back().push_back(Console::Symbol(chars[3],16,16));
         for (size_t i = 0; i < u16strlen(textcur); i++)
             screen.back().push_back(Console::Symbol(textcur[i],16,16));
         screen.back().back().foreground(color.first); 
         screen.back().back().background(color.second);
         while (screen.back().size() < (uint16_t)width)
-            screen.back().push_back(Console::Symbol(u'▒',16,16));
+            screen.back().push_back(Console::Symbol(chars[3],16,16));
 
-        screen.push_back(vector<Console::Symbol>(width,Console::Symbol(u'▒',16,16)));
+        screen.push_back(vector<Console::Symbol>(width,Console::Symbol(chars[3],16,16)));
         screen.push_back(vector<Console::Symbol>());
 
         auto textcur2 = u"Background Color:";
@@ -1331,19 +1347,19 @@ void ColorPopup(int argc, const char16_t* argv[]) {
         int colnum = 0;
     nextline2:
         i-=2; --colnum; while ((i+=2) < width-1 && ++colnum <= 16) {
-            screen.back().push_back(Console::Symbol(u'▒',16,16));
+            screen.back().push_back(Console::Symbol(chars[3],16,16));
             screen.back().push_back(Console::Symbol(u'\u25cf',color.first,colnum));
             colortable.second[colnum] = pair<uint16_t,uint16_t>({screen.back().size()-1,screen.size()-1});
         }
         if (i >= width-1) {
-            if (i < width) screen.back().push_back(Console::Symbol(u'▒',16,16));
+            if (i < width) screen.back().push_back(Console::Symbol(chars[3],16,16));
             screen.push_back(vector<Console::Symbol>());
             i = 0;
             goto nextline2;
         } else while (++i <= width)
-            screen.back().push_back(Console::Symbol(u'▒',16,16));
+            screen.back().push_back(Console::Symbol(chars[3],16,16));
 
-        screen.push_back(vector<Console::Symbol>(width,Console::Symbol(u'▒',16,16)));
+        screen.push_back(vector<Console::Symbol>(width,Console::Symbol(chars[3],16,16)));
         screen.push_back(vector<Console::Symbol>());
 
         auto textcur3 = u"Foreground Color:";
@@ -1360,36 +1376,36 @@ void ColorPopup(int argc, const char16_t* argv[]) {
         colnum = 0;
     nextline4:
         i -= 2; --colnum; while ((i+=2) < width-1 && ++colnum <= 16) {
-            screen.back().push_back(Console::Symbol(u'▒',16,16));
+            screen.back().push_back(Console::Symbol(chars[3],16,16));
             screen.back().push_back(Console::Symbol(u'\u25cf',colnum, color.second));
             colortable.first[colnum] = pair<uint16_t,uint16_t>({screen.back().size()-1,screen.size()-1});
         }
         if (i >= width-1) {
-            if (i < width) screen.back().push_back(Console::Symbol(u'▒',16,16));
+            if (i < width) screen.back().push_back(Console::Symbol(chars[3],16,16));
             screen.push_back(vector<Console::Symbol>());
             i = 0;
             goto nextline4;
         } else while (++i <= width)
-            screen.back().push_back(Console::Symbol(u'▒',16,16));
+            screen.back().push_back(Console::Symbol(chars[3],16,16));
 
         auto endtext = screen.size();
 
-        screen.push_back(vector<Console::Symbol>(width,Console::Symbol(u'▒',16,16)));
+        screen.push_back(vector<Console::Symbol>(width,Console::Symbol(chars[3],16,16)));
 
         while (screen.size() < (uint16_t)(endtext+(3*(height-endtext)/4)))
-            screen.push_back(vector<Console::Symbol>(width,Console::Symbol(u'▒',16,16)));
+            screen.push_back(vector<Console::Symbol>(width,Console::Symbol(chars[3],16,16)));
 
         auto textcur4 = u" CLOSE ";
-        screen.push_back(vector<Console::Symbol>((width-u16strlen(textcur4))/2,Console::Symbol(u'▒',16,16)));
+        screen.push_back(vector<Console::Symbol>((width-u16strlen(textcur4))/2,Console::Symbol(chars[3],16,16)));
         for (size_t i = 0; i < u16strlen(textcur4); i++)
             screen.back().push_back(Console::Symbol(textcur4[i],16,16));
 
         pair<uint16_t,uint16_t> closepos = pair<uint16_t,uint16_t>(screen.back().size(),screen.size()-1);
         while (screen.back().size() < (uint16_t)width)
-            screen.back().push_back(Console::Symbol(u'▒',16,16));
+            screen.back().push_back(Console::Symbol(chars[3],16,16));
 
         while (screen.size() < (uint16_t)height)
-            screen.push_back(vector<Console::Symbol>(width,Console::Symbol(u'▒',16,16)));
+            screen.push_back(vector<Console::Symbol>(width,Console::Symbol(chars[3],16,16)));
 
         Console::HandleMouseAndFocus();
         

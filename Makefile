@@ -236,10 +236,10 @@ else
 configuration = Release
 binconfig = Release
 ifeq ($(msvc),1)
-cdb = /MD /O3
+cdb = /MD /O2
 ldb = /CGTHREADS:8
 bldb = /CGTHREADS:8
-bpdb = /MD /O3
+bpdb = /MD /O2
 else
 cdb = -s -Ofast
 bpdb = -s -Ofast
