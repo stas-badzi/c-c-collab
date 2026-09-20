@@ -860,7 +860,7 @@ void Console::XtermMouseAndFocus(void) {
 
     void sleepmcs(size_t mcs) {
         auto end = std::chrono::high_resolution_clock::now()+std::chrono::microseconds(mcs);
-        while (std::chrono::high_resolution_clock::now() < end) __asm("nop");
+        while (std::chrono::high_resolution_clock::now() < end);
     }
 
     struct __conemuhandletabs_arg { atomic<bool>* focused; DWORD pid; };
@@ -1101,9 +1101,9 @@ void Console::XtermMouseAndFocus(void) {
 #endif
 
     DWORD WINAPI WaitClrScrBuf(
-#ifdef __GNUC__
-        __attribute__((unused))
-#endif
+    #ifdef __GNUC__
+            __attribute__((unused))
+    #endif
         LPVOID lpParam) {
         ::Sleep(1000);
         Console::ClearScreenBuffer();
@@ -5484,7 +5484,10 @@ contcons:
         return nullopt;
     }
     pid_t spid = 0;
-    __attribute__((unused)) int res = fread(&spid, sizeof(pid_t), 1, fl);
+#ifndef _MSC_VER
+    __attribute__((unused))
+#endif
+    int res = fread(&spid, sizeof(pid_t), 1, fl);
     fclose(fl);
     Console::popup_pids.push_back(spid);
 
@@ -6009,7 +6012,10 @@ contcons:
         return nullopt;
     }
     pid_t spid = 0;
-    __attribute__((unused)) int res = fread(&spid, sizeof(pid_t), 1, fl);
+#ifndef _MSC_VER
+    __attribute__((unused))
+#endif
+    int res = fread(&spid, sizeof(pid_t), 1, fl);
     fclose(fl);
     Console::popup_pids.push_back(spid);
 
@@ -6035,7 +6041,11 @@ contcons:
         FILE* fl = topen((retdir + N("exit.dat")).c_str(), N("r"));
         if (!fl) ThrowMsg(nstring(N("Couldn't open file: ")) + retdir + N("exit.dat"));
         int pret = 0;
-        __attribute__((unused)) int res = fread(&pret, sizeof(int), 1, fl);
+        
+    #ifndef _MSC_VER
+        __attribute__((unused))
+    #endif
+        int res = fread(&pret, sizeof(int), 1, fl);
         fclose(fl);
 
         nstring result;
@@ -6457,7 +6467,10 @@ contcons:
         return nullopt;
     }
     pid_t spid = 0;
-    __attribute__((unused)) int res = fread(&spid, sizeof(pid_t), 1, fl);
+#ifndef _MSC_VER
+    __attribute__((unused))
+#endif
+    int res = fread(&spid, sizeof(pid_t), 1, fl);
     fclose(fl);
     Console::popup_pids.push_back(spid);
 
@@ -6483,7 +6496,10 @@ contcons:
         FILE* fl = topen((retdir + N("exit.dat")).c_str(), N("r"));
         if (!fl) ThrowMsg(nstring(N("Couldn't open file: ")) + retdir + N("exit.dat"));
         int pret = 0;
-        __attribute__((unused)) int res = fread(&pret, sizeof(int), 1, fl);
+    #ifndef _MSC_VER
+        __attribute__((unused))
+    #endif
+        int res = fread(&pret, sizeof(int), 1, fl);
         fclose(fl);
 
         nstring result;
