@@ -133,7 +133,7 @@ jobs:
     permissions:
       contents: read
     name: Build program using MSVC (x86)
-    runs-on: windows-2025
+    runs-on: windows-2022
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -210,10 +210,11 @@ jobs:
         run: |
           choco install make
           choco install zip
-          cp "C:\Program Files\LLVM\bin\clang-cl.exe" .
+#          cp "C:\Program Files\LLVM\bin\clang-cl.exe" .
       - name: Compile code
         shell: cmd /c {0}
-        run: utilities\custom\vsdevcmd-arm.bat make resources cpp cppbin release package archchk=0 sudo=0 msvc=1 nodep=1 tgarch=arm c-compiler="clang-cl --target=arm-pc-windows-msvc" cpp-compiler="clang-cl --target=arm-pc-windows-msvc"
+        run: utilities\custom\vsdevcmd-arm.bat make resources cpp cppbin release package archchk=0 sudo=0 msvc=1 nodep=1 tgarch=arm
+#c-compiler="clang-cl --target=arm-pc-windows-msvc" cpp-compiler="clang-cl --target=arm-pc-windows-msvc"
       - name: Upload C++ binaries
         uses: actions/upload-artifact@v4
         with:
