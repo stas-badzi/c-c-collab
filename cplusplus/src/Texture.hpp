@@ -55,13 +55,13 @@ namespace cpp {
         Animation(const std::vector<std::vector<std::vector<cpp::Console::Symbol>>>& frames, std::pair<long long,long long> offset) {Animation(frames,1,offset);}
         Animation(const std::vector<std::vector<std::vector<cpp::Console::Symbol>>>& frames, long long x_offset, long long y_offset)  {Animation(frames,1,x_offset,y_offset);}
 
-        virtual void Update(__attribute__((unused)) std::vector<std::vector<Texture*>>& map, __attribute__((unused)) std::pair<int,int> whereami, unsigned long long timestamp) override {
+        virtual void Update(std::vector<std::vector<Texture*>>&, std::pair<int,int>, unsigned long long timestamp) override {
             if ((timestamp / frame_wait) != last_frame_num) this->buffer = &(frames.at((last_frame_num=timestamp/frame_wait)%frames.size()));
         }
     };
 
-    std::vector<std::vector<cpp::Console::Symbol>> __WoodChopperTexture0;
-    auto& WoodChopperTexture0() {if(__WoodChopperTexture0.empty()) __WoodChopperTexture0=util::TextureSystem::TextureFromFile(u"/home/stas/sand.1.tux");return __WoodChopperTexture0;}
+    static std::vector<std::vector<cpp::Console::Symbol>> __WoodChopperTexture0;
+    static auto& WoodChopperTexture0() {if(__WoodChopperTexture0.empty()) __WoodChopperTexture0=util::TextureSystem::TextureFromFile(u"/home/stas/sand.1.tux");return __WoodChopperTexture0;}
 
     class WoodChopper : public Animation {
     private:

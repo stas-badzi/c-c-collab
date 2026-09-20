@@ -5618,11 +5618,10 @@ contcons:
     unsigned long long len = 0;
     res = fread(&len, sizeof(unsigned long long), 1, fl);
     if (len) {
-        char_t* buf = new char_t[len+1];
+        char_t* buf = (char_t*)calloc(len+1,sizeof(char_t));
         fread(buf, sizeof(char_t), len, fl);
-        buf[len] = 0;
         result = buf;
-        delete[] buf;
+        free(buf);
     }
     fclose(fl);
 
@@ -6055,11 +6054,10 @@ contcons:
         unsigned long long len = 0;
         res = fread(&len, sizeof(unsigned long long), 1, fl);
         if (len) {
-            char_t* buf = new char_t[len+1];
+            char_t* buf = (char_t*)calloc(len+1,sizeof(char_t));
             fread(buf, sizeof(char_t), len, fl);
-            buf[len] = 0;
             result = buf;
-            delete[] buf;
+            free(buf);
         }
         fclose(fl);
 
@@ -6508,11 +6506,10 @@ contcons:
         unsigned long long len = 0;
         res = fread(&len, sizeof(unsigned long long), 1, fl);
         if (len) {
-            char_t* buf = new char_t[len+1];
+            char_t* buf = (char_t*)calloc(len+1,sizeof(char_t));
             fread(buf, sizeof(char_t), len, fl);
-            buf[len] = 0;
             result = buf;
-            delete[] buf;
+            free(buf);
         }
         fclose(fl);
 
