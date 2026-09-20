@@ -6,10 +6,6 @@ where link
 echo WindowsSdkDir=%WindowsSdkDir%
 echo LIB=%LIB%
 
-dir "%WindowsSdkDir%Lib\*\um\arm\USER32.lib"
-if errorlevel 1 (
-    echo ARM32 USER32.lib was not found
-    exit /b 1
-)
+dir "%WindowsSdkDir%Lib\10.0.26100.0\um\arm"
 
 %*
