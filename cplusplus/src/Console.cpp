@@ -860,7 +860,7 @@ void Console::XtermMouseAndFocus(void) {
 
     void sleepmcs(size_t mcs) {
         auto end = std::chrono::high_resolution_clock::now()+std::chrono::microseconds(mcs);
-        while (std::chrono::high_resolution_clock::now() < end) __asm__("nop");
+        while (std::chrono::high_resolution_clock::now() < end) __asm("nop");
     }
 
     struct __conemuhandletabs_arg { atomic<bool>* focused; DWORD pid; };
