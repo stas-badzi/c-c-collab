@@ -4200,8 +4200,9 @@ void Console::XtermMouseAndFocus(void) {
         HWND hwndFound;
         wchar_t pszNewWindowTitle[1024];
         char NewWindowTitle[1024];
-        wsprintf(pszNewWindowTitle,L"%d/%d",GetTickCount(),GetCurrentProcessId());
-        sprintf(NewWindowTitle,"%d/%d",GetTickCount(),GetCurrentProcessId());
+        DWORD tick = GetTickCount(), pid = GetCurrentProcessId();
+        wsprintf(pszNewWindowTitle,L"%d/%d",tick,pid);
+        sprintf(NewWindowTitle,"%d/%d",tick,pid);
         if (mintty) Console::EscSeqSetTitle(NewWindowTitle);
         else SetConsoleTitle(pszNewWindowTitle);
         SysSleep(40e3);
@@ -5615,8 +5616,8 @@ contcons:
     unsigned long long len = 0;
     res = fread(&len, sizeof(unsigned long long), 1, fl);
     if (len) {
-        char_t* buf = new char_t[len+1];
-        fread(buf, sizeof(char_t), len, fl);
+        nchar_t* buf = new nchar_t[len+1];
+        fread(buf, sizeof(nchar_t), len, fl);
         buf[len] = 0;
         result = buf;
         delete[] buf;
@@ -6045,8 +6046,8 @@ contcons:
         unsigned long long len = 0;
         res = fread(&len, sizeof(unsigned long long), 1, fl);
         if (len) {
-            char_t* buf = new char_t[len+1];
-            fread(buf, sizeof(char_t), len, fl);
+            nchar_t* buf = new nchar_t[len+1];
+            fread(buf, sizeof(nchar_t), len, fl);
             buf[len] = 0;
             result = buf;
             delete[] buf;
@@ -6492,8 +6493,8 @@ contcons:
         unsigned long long len = 0;
         res = fread(&len, sizeof(unsigned long long), 1, fl);
         if (len) {
-            char_t* buf = new char_t[len+1];
-            fread(buf, sizeof(char_t), len, fl);
+            nchar_t* buf = new nchar_t[len+1];
+            fread(buf, sizeof(nchar_t), len, fl);
             buf[len] = 0;
             result = buf;
             delete[] buf;
