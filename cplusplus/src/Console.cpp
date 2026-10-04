@@ -2573,7 +2573,7 @@ void Console::XtermMouseAndFocus(void) {
 
     bool terminator = false;
 
-    inline constexpr string GenerateEscapeSequence(uint8_t,uint8_t);
+    inline constexpr20 string GenerateEscapeSequence(uint8_t,uint8_t);
 
     inline constexpr int parse_input(int show_keycodes, const char * buf, int n) {
         int out = 0;
@@ -4745,7 +4745,7 @@ void Console::XtermMouseAndFocus(void) {
 #endif
 
 // all non windows
-    inline constexpr string GenerateEscapeSequence(uint8_t i1, uint8_t i2) {
+    inline constexpr20 string GenerateEscapeSequence(uint8_t i1, uint8_t i2) {
         string val = "\033[";
         if (i1 < 8) {
             val.append(to_string(30 + i1));
