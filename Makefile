@@ -613,7 +613,7 @@ else
 	@echo "rc /nologo /fo objects\$(arch)\resources.res source\resources.rc" > run.bat
 	@cmd.exe /c run.bat
 
-	@echo "$(c-compiler) /c /DUNICODE /D_MSVC /D_CRT_SECURE_NO_DEPRECATE $(cdb) source/killwindow.c source/beep.c $(clstd)" > run.bat
+	@echo "$(c-compiler) /c /DUNICODE /D_MSVC /D_CRT_SECURE_NO_DEPRECATE /utf-8 $(cdb) source/killwindow.c source/beep.c $(clstd)" > run.bat
 	@cmd.exe /c run.bat
 	@mv *.obj objects/$(arch)/
 
@@ -623,7 +623,7 @@ else
 	@echo "link $(linkflags) /OUT:binaryplus/bin/beep.exe objects/$(arch)/beep.obj USER32.lib" > run.bat
 	@cmd.exe /c run.bat
 
-	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC $(cdb) source/globals.c /Icplusplus\include $(clstd)" > run.bat
+	@echo "$(cpp-compiler) /c /DUNICODE /D_MSVC /utf-8 $(cdb) source/globals.c /Icplusplus\include $(clstd)" > run.bat
 	@cmd.exe /c run.bat
 	@dir
 	@mv *.obj objects/$(arch)/
@@ -817,14 +817,14 @@ compile-cppbin: $(foreach src,$(binsources),binaryplus/src/$(src)) $(foreach hea
 
 	-@mkdir binaryplus/obj/$(arch)/
 ifeq ($(msvc),1)
-	echo "$(cpp-compiler) /EHsc /c /DUNICODE $(bpdb) source/launcher.cpp $(clstdpp)" > run.bat
+	echo "$(cpp-compiler) /EHsc /c /DUNICODE /utf-8 $(bpdb) source/launcher.cpp $(clstdpp)" > run.bat
 	@cmd.exe /c run.bat
 	@$(movefl) -f launcher.obj objects
 	echo "link $(linkflags) /OUT:binaryplus/launcher.exe /CGTHREADS:8 objects/launcher.obj objects/$(arch)/resources.res" > run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
 
-	echo "$(cpp-compiler) /EHsc /c $(bpdb) $(fbsrc) /Ibinaryplus\include $(clstdpp)" > run.bat
+	echo "$(cpp-compiler) /EHsc /c /utf-8 $(bpdb) $(fbsrc) /Ibinaryplus\include $(clstdpp)" > run.bat
 	@cmd.exe /c run.bat
 	@$(movefl) -f $(subst obj/$(arch)/,$(empty),$(fbobj)) binaryplus/obj/$(arch)/
 else
@@ -911,7 +911,7 @@ ifeq ($(findstring $(subst cplusplus/src/,$(empty),$<),$(sources)),$(subst cplus
 
 ifeq ($(msvc),1)
 #msvc
-	@echo "$(cpp-compiler) /EHsc /c /DUNICODE /D_CRT_SECURE_NO_DEPRECATE /D_MSVC $(cdb) $< /Icplusplus\include $(clstdpp)" > run.bat
+	@echo "$(cpp-compiler) /EHsc /c /DUNICODE /D_CRT_SECURE_NO_DEPRECATE /utf-8 /D_MSVC $(cdb) $< /Icplusplus\include $(clstdpp)" > run.bat
 ####@type run.bat
 	@cmd.exe /c run.bat
 	@rm run.bat
