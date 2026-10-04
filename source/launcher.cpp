@@ -69,7 +69,6 @@ using namespace std;
         if (!status) { cerr << "CreateProcess failed: " << GetLastError() << endl; exit(0x63); }
         CloseHandle(pi.hThread);
         WaitForSingleObject(pi.hProcess, INFINITE);
-        bool isdone = false;
         DWORD exitcode = -1;
         if (GetExitCodeProcess(pi.hProcess, &exitcode)) {
             return exitcode;
