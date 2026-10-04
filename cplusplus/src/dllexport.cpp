@@ -560,7 +560,6 @@ using namespace uniconv;
             text.push_back(UnicodeToU16String(content[i]));
         free(content);
         util::TextureSystem::ExportText(UnicodeToU16String(file),text);
-        free(file);
     }
     
     libexport void* TextureSystem_TextureFromFile(uniconv::unichar* arg1) {

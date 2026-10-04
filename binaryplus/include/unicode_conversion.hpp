@@ -281,7 +281,7 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
             char_bits[0] = a8; char_bits[1] = a7; char_bits[2] = a6; char_bits[3] = a5; char_bits[4] = a4; char_bits[5] = a3; char_bits[6] = a2; char_bits[7] = a1; 
         }
     #ifdef _DEBUG
-        int Q1=char_bits[0],Q2=char_bits[1],Q3=char_bits[2],Q4=char_bits[3],Q5=char_bits[4],Q6=char_bits[5],Q7=char_bits[6],Q8=char_bits[7];
+        [[maybe_unused]] int Q1=char_bits[0],Q2=char_bits[1],Q3=char_bits[2],Q4=char_bits[3],Q5=char_bits[4],Q6=char_bits[5],Q7=char_bits[6],Q8=char_bits[7];
     #endif
         uint8_t bytes;
         if (char_bits[0] == 0) {
@@ -317,7 +317,7 @@ inline constexpr unichar Char16ToUnicode(char16_t char16) {
                 char_bits[0] = a8; char_bits[1] = a7; char_bits[2] = a6; char_bits[3] = a5; char_bits[4] = a4; char_bits[5] = a3; char_bits[6] = a2; char_bits[7] = a1; 
             }
         #ifdef _DEBUG
-            int Q1=char_bits[0],Q2=char_bits[1],Q3=char_bits[2],Q4=char_bits[3],Q5=char_bits[4],Q6=char_bits[5],Q7=char_bits[6],Q8=char_bits[7];
+            [[maybe_unused]] int Q1=char_bits[0],Q2=char_bits[1],Q3=char_bits[2],Q4=char_bits[3],Q5=char_bits[4],Q6=char_bits[5],Q7=char_bits[6],Q8=char_bits[7];
         #endif
 
             if (char_bits[0] != 1 || char_bits[1] != 0) {

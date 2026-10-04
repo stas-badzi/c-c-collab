@@ -110,14 +110,17 @@ endif
 empty =
 space = $(empty) $(empty)
 
-sanitze = 
+sanitize = 
 ifeq ($(findstring arm, $(shell uname -m)),arm)
 arch = arm64
 else
 ifeq ($(findstring aarch, $(shell uname -m)),aarch)
 arch = arm64
 else
-sanitize = -fsanitize=address,undefined
+ifeq ($(findstring CYGWIN, $(shell uname -s)),CYGWIN)
+else
+sanitize = 
+endif
 arch = x64
 endif
 endif
@@ -228,9 +231,9 @@ ldb = /DEBUG /PDB:bin/$(name).pdb
 bldb = /DEBUG /PDB:bin/$(binname).pdb
 bpdb = /MDd /Z7
 else
-cdb = -g -Og -D_DEBUG $(sanitze)
-bpdb = -g -Og -D_DEBUG $(sanitze)
-clnk = $(sanitze)
+cdb = -g -Og -D_DEBUG $(sanitize)
+bpdb = -g -Og -D_DEBUG $(sanitize)
+clnk = $(sanitize)
 endif
 else
 configuration = Release
